@@ -1,7 +1,7 @@
 # Makefile for Inferno Kernel AGI Modules
 
 LIMBO = limbo
-MODULES = atomspace attention reasoning learning memory
+MODULES = atomspace attention reasoning learning memory cogserver ure pln
 
 .PHONY: all clean install test
 
@@ -15,17 +15,30 @@ attention:
 @echo "Building Attention kernel module..."
 cd attention && $(LIMBO) attention_kern.b
 
+cogserver:
+@echo "Building CogServer Limbo module..."
+cd limbo && $(LIMBO) cogserver.b
+
+ure:
+@echo "Building URE Limbo module..."
+cd limbo && $(LIMBO) ure.b
+
+pln:
+@echo "Building PLN Limbo module..."
+cd limbo && $(LIMBO) pln.b
+
 reasoning:
-@echo "Building Reasoning kernel module..."
-@echo "TODO: Implement reasoning module"
+@echo "Building Reasoning application..."
+cd appl/reasoning && $(LIMBO) simple_inference.b
 
 learning:
-@echo "Building Learning kernel module..."
-@echo "TODO: Implement learning module"
+@echo "Building Learning application..."
+cd appl/learning && $(LIMBO) learning.b
 
 memory:
-@echo "Building Memory kernel module..."
-@echo "TODO: Implement memory module"
+@echo "Building Perception and Action applications..."
+cd appl/perception && $(LIMBO) perception.b
+cd appl/action && $(LIMBO) action.b
 
 clean:
 @echo "Cleaning build artifacts..."
@@ -55,6 +68,10 @@ help:
 @echo "Modules:"
 @echo "  atomspace - AtomSpace hypergraph kernel service"
 @echo "  attention - ECAN attention allocation kernel service"
-@echo "  reasoning - PLN/URE reasoning kernel service"
-@echo "  learning  - MOSES learning kernel service"
-@echo "  memory    - Memory management kernel service"
+@echo "  cogserver - CogServer Limbo module"
+@echo "  ure       - Unified Rule Engine Limbo module"
+@echo "  pln       - Probabilistic Logic Networks Limbo module"
+@echo "  reasoning - PLN/URE reasoning application"
+@echo "  learning  - MOSES/pattern-learning application"
+@echo "  memory    - Perception and Action applications"
+

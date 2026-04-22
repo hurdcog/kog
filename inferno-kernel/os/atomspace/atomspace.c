@@ -301,6 +301,75 @@ linkcreate(ushort type, ulong *targets, uint ntargets)
 }
 
 /*
+ * Delete an atom by ID
+ */
+int
+atomdelete(ulong id)
+{
+    uint i;
+    
+    if(kernelspace == nil)
+        return -1;
+    
+    lock(&kernelspace->lock);
+    
+    for(i = 0; i < kernelspace->natoms; i++) {
+        Atom *atom = kernelspace->atoms[i];
+        if(atom->id == id) {
+            /* Free atom resources */
+            if(atom->name != nil)
+                free(atom->name);
+            if(atom->outgoing != nil)
+                free(atom->outgoing);
+            free(atom);
+            /* Compact the table */
+            kernelspace->atoms[i] = kernelspace->atoms[--kernelspace->natoms];
+            unlock(&kernelspace->lock);
+            return 0;
+        }
+    }
+    
+    unlock(&kernelspace->lock);
+    return -1;
+}
+
+/*
+ * Propagate truth values through atom links (forward)
+ */
+int
+atomtvpropagate(ulong id, int depth)
+{
+    Atom *atom;
+    uint i;
+    int count = 0;
+    
+    if(depth <= 0)
+        return 0;
+    
+    atom = atomget(id);
+    if(atom == nil)
+        return 0;
+    
+    lock(&atom->lock);
+    for(i = 0; i < atom->noutgoing; i++) {
+        Atom *target = atom->outgoing[i];
+        if(target == nil) continue;
+        /* Propagate TV: update target if source has higher confidence or better strength */
+        lock(&target->lock);
+        if(atom->tv.confidence > target->tv.confidence ||
+           (atom->tv.confidence == target->tv.confidence &&
+            atom->tv.strength > target->tv.strength))
+            target->tv = atom->tv;
+        unlock(&target->lock);
+        count++;
+        count += atomtvpropagate(target->id, depth - 1);
+    }
+    unlock(&atom->lock);
+    
+    return count;
+}
+
+/*
  * Query atoms by type
  */
 int
