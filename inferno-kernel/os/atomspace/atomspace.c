@@ -354,9 +354,11 @@ atomtvpropagate(ulong id, int depth)
     for(i = 0; i < atom->noutgoing; i++) {
         Atom *target = atom->outgoing[i];
         if(target == nil) continue;
-        /* Simple truth propagation: target.tv = min(source.tv, target.tv) */
+        /* Propagate TV: update target if source has higher confidence or better strength */
         lock(&target->lock);
-        if(atom->tv.confidence > target->tv.confidence)
+        if(atom->tv.confidence > target->tv.confidence ||
+           (atom->tv.confidence == target->tv.confidence &&
+            atom->tv.strength > target->tv.strength))
             target->tv = atom->tv;
         unlock(&target->lock);
         count++;

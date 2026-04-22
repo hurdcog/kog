@@ -47,14 +47,20 @@ atomspreadattn(ulong id, float factor)
     source->av.sti -= (short)(sti_spread * factor);
     unlock(&source->lock);
 
-    for(i = 0; i < count; i++) {
+    lock(&source->lock);
+    for(i = 0; i < source->noutgoing; i++) {
         Atom *target = source->outgoing[i];
         if(target == nil) continue;
-        short delta = (short)((sti_spread * factor) / count);
+        /*
+         * Weighted spread: proportional to factor, divided among fan-out.
+         * Cast to float first to avoid integer overflow.
+         */
+        short delta = (short)((float)sti_spread * factor / (float)count);
         lock(&target->lock);
         target->av.sti += delta;
         unlock(&target->lock);
     }
+    unlock(&source->lock);
 
     return count;
 }

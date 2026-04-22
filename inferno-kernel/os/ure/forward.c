@@ -41,6 +41,7 @@ ureforward(ulong source_id, int max_depth, ulong *results, int maxresults)
     whead = 0;
     wtail = 0;
     count = 0;
+    depth = 0;
 
     /* Seed the working list with the source atom */
     if(atomget(source_id) == nil)

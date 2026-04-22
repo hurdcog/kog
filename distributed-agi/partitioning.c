@@ -51,6 +51,9 @@ enum {
 /* High-attention threshold for replication */
 #define REPLICATION_STI_THRESHOLD 500
 
+/* Long-term importance threshold for replication */
+#define REPLICATION_LTI_THRESHOLD 10
+
 /*
  * atom_home_node - Determine the primary home node for an atom.
  *
@@ -90,7 +93,7 @@ atom_home_node(ushort atom_type, short sti)
 int
 atom_should_replicate(short sti, int lti)
 {
-    return (sti >= REPLICATION_STI_THRESHOLD || lti > 10);
+    return (sti >= REPLICATION_STI_THRESHOLD || lti > REPLICATION_LTI_THRESHOLD);
 }
 
 /*

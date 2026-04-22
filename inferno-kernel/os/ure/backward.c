@@ -61,9 +61,11 @@ urebackward(ulong goal_id, int max_depth, float *confidence_out)
      */
     lock(&goal->lock);
     for(i = 0; i < goal->nincoming; i++) {
-        Link *rule = (Link*)goal->incoming[i];
-        if(rule == nil) continue;
-
+        Atom *incoming_atom = goal->incoming[i];
+        if(incoming_atom == nil) continue;
+        /* Only process links (type > ATOM_TYPE_LINK) */
+        if(incoming_atom->type <= ATOM_TYPE_LINK) continue;
+        Link *rule = (Link*)incoming_atom;
         if(rule->atom.type == ATOM_TYPE_INHERITANCE_LINK && rule->ntargets >= 2) {
             Atom *premise = rule->targets[0];
             if(premise == nil) continue;

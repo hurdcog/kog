@@ -91,7 +91,7 @@ TruthValue.deduction(tv: self ref TruthValue, bc: ref TruthValue,
     sB  := link_tv.strength;
 
     sAC := sAB * sBC;
-    if(sB < 1.0)
+    if(sB < 1.0 - 1.0e-6)
         sAC += (1.0 - sAB) * (sB - sBC * sB) / (1.0 - sB);
 
     nAB := confidence_to_count(tv.confidence);

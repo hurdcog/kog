@@ -3,7 +3,7 @@ implement J9System;
 #
 # j9 - J-Surface Elementary Differentials (orgalhost)
 #
-# Implements distribution compute gradients for orgalhost topology net.
+# Implements distribution compute gradients for the orgalhost topology net.
 # J-surface differentials track how atom importance and truth values
 # change across the distributed cognitive network, enabling gradient-based
 # coordination of distributed learning and inference.

@@ -75,7 +75,7 @@ create_membrane(name: string, pool_size: int): ref Membrane
     pool.id       = pool_counter++;
     pool.size     = pool_size;
     pool.active   = 0;
-    pool.endpoint = "/net/globalhost/pool_" + string pool.id;
+    pool.endpoint = sys->sprint("/net/globalhost/pool_%d", pool.id);
 
     m.pool = pool;
     return m;

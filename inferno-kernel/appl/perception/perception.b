@@ -24,6 +24,9 @@ include "atomspace_kern.m";
     atomspace: AtomSpaceKern;
     Atom, TruthValue, AttentionValue: import atomspace;
 
+# Scale factor: maps perception confidence [0,1] to STI range [0, MAX_PERCEPT_STI]
+MAX_PERCEPT_STI := 200;
+
 init(ctxt: ref Draw->Context, args: list of string)
 {
     sys = load Sys Sys->PATH;
@@ -85,7 +88,7 @@ process_percept(s: string)
     }
 
     # Stimulate attention proportional to confidence
-    sti := int(confidence * 200.0);
+    sti := int(confidence * real MAX_PERCEPT_STI);
     av := ref AttentionValue;
     av.sti = sti;
     av.lti = 0;

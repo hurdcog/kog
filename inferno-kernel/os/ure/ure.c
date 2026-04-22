@@ -143,7 +143,7 @@ ureread(Chan *c, void *buf, long n, vlong offset)
             URERule *r;
             int total = 0;
             for(r = ure->rulebase->rules; r != nil && total < n - 64; r = r->next)
-                total += snprint(p + total, n - total, "%uld %s %.3f\n",
+                total += snprint(p + total, n - total, "%lu %s %.3f\n",
                     r->id, r->name ? r->name : "(unnamed)", r->weight);
             return total;
         }

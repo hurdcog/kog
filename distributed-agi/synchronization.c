@@ -71,11 +71,12 @@ sync_tick(void)
 
 /*
  * sync_update - Merge an incoming clock value (Lamport receive rule).
+ * Correct Lamport rule: local_clock = max(local_clock, remote_clock) + 1
  */
 void
 sync_update(ulong remote_clock)
 {
-    if(remote_clock >= local_clock)
+    if(remote_clock > local_clock)
         local_clock = remote_clock + 1;
     else
         local_clock++;

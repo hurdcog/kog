@@ -141,11 +141,17 @@ serialize(tree: ref BTree): array of byte
 
 deserialize(data: array of byte): ref BTree
 {
-    # Simplified: create empty tree from serialized root ID
+    # Simplified: create empty tree
+    # A production implementation would parse the serialized format
     s := string data;
     root_id := 0;
-    if(len s > 10)
-        root_id = int s[7:];   # Skip "BTree(root="
+    # Find "root=" in the string and parse the integer that follows
+    for(i := 0; i + 5 < len s; i++) {
+        if(s[i:i+5] == "root=") {
+            root_id = int s[i+5:];
+            break;
+        }
+    }
     return create_tree(root_id);
 }
 
