@@ -1,0 +1,325 @@
+[[!meta copyright="Copyright © 2007, 2008, 2010, 2011 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+The Hurd's primary filesystem is ext2, which works but lacks modern
+features.  Ext2 does not have a journal, so Hurd users occasionally
+have to deal with filesystem corruption.  `fsck` can fix most of the
+issues (with loss of random data), but without a proper journal the
+Hurd currently is not a good a OS for long-term data storage.
+
+Bcachefs is a modern COW (copy-on-write) open source filesystem for
+Linux, which intends to replace Btrfs and ZFS while having the
+performance of ext4 or XFS.  It is almost 100,000 lines of code.
+Btrfs is 150,000 lines of code.  Bcachefs is structured as a
+filesystem built on top of a database.  There is a clean small
+database transaction layer.  That core database library is maybe
+25,000 lines of code.
+
+Some Hurd developers recently [[talked with
+Bcachefs|https://youtube.com/watch?v=bcWsrYvc5Fg]] author Kent
+Overstreat about porting bcachefs to the Hurd.  There are currently no
+concrete plans to do so due to lack of developer man power.
+
+90% of the Bcachefs filesystem code builds and runs in userspace.  It
+uses a shim layer that makes maps kernel locking primatives to
+pthreads, the kernel io API is mapped to AIO, etc.  Bcachefs does
+intend to eventually rewrite most or all of its current codebase into
+rust.
+
+Kent is ok with us merging a shim layer for libstore that maps to the
+Unix filesystem API.  That would be a header file that goes into the
+bcachefs code.
+
+There is a somewhat working FUSE port of bcachefs, but Kent is not
+certain that is a good way to run bcachefs in userspace.  Kent wants
+to use the FUSE port to help in debbugging.  Suppose bcachefs starts
+acting up, then you could switch to running it in userspace and attach
+GDB to the running process.  This is currently not possible.
+
+We could port bcachefs to the Hurd's native filesystem API: libdiskfs.
+
+One interesting aspect of the conversation was Kent's goal of re-using
+kernel code in userspace. The Linux kernel hashtable code is high
+performance, resizeable, lockless, and builds and runs in userspace.
+As long as you have liburcu, then you can use the kernel hashtable in
+userspace on the Hurd.  This might be useful to use on the Hurd.
+
+Bcachefs is liscensed as GPLv2, and many of Kent's previous employers
+own the patents, including Google. Kent is ok with potentially making
+the license GPLv2+, as long as there was not a promise to keep
+bcachefs GPLv2 only.
+
+# IRC logs
+
+https://logs.guix.gnu.org/hurd/2023-09-26.log
+
+    <solid_black>	maybe I'm wrong though, do you know much about fuse? or file systems?
+    <damo22>	no i dont know much about filesystems
+    <damo22>	what is bcachefs?
+    <solid_black>	see? :D
+    <azert>	I agree that someone intimate in the Mach pager api, libdiskfs and fuse would be great at that meeting
+    <solid_black>	I do kind of understand Mach VM / paging, I must say
+    <solid_black>	from the looks of it, I even understand it best among those who have looked at it recently
+    <solid_black>	and I mostly understand libdiskfs
+    <damo22>	so go to the meeting
+    <damo22>	what is fuse? do we even need it for hurd?
+    <damo22>	file systems in userspace
+    <solid_black>	FUSE is "filesystem in user space", it's both the name for the concept, and the name of Linux's specific mechanism, of offloading fs to userland
+    <damo22>	yeah, i think it may be unneeded for filesystem on hurd
+    <solid_black>	it's basically a giant hack that pretends to be a fileystem implementation to the rest of the kernel, and then sends requests and receives responses from a userland program that _actually_ implements the fs
+    <solid_black>	on the Hurd, *of course* filesystems are implemented in userland, that's the only and tnhe natural way everything works
+    <solid_black>	but that's where the similarities end
+    <solid_black>	you cannot just take a linux fuse fs, using libfuse, and run it on the Hurd
+    <solid_black>	there has been a project make a library that would have the same API as libfuse, but act as a Hurd translator, specifically to facilitate porting linux filesystems
+    <damo22>	i imagine fuse has an api
+    <solid_black>	last I heard, it was never completed, but who knows
+    <solid_black>	it has a kerne    <->userland protocol and a userspace library (libfuse) for implementing that protocol, yes
+    <damo22>	solid_black: you seem to know more about fuse than you admitted
+    <solid_black>	https://www.gnu.org/software/hurd/hurd/libfuse.html 
+    <solid_black>	I know the basics, around as much as I have just told you
+    <azert>	I think that gnucode idea was that this would be the easiest to port bcachefs to the Hurd, but I doubt it would be the best
+    <solid_black>	I have also hacked on a C++ fuse fs (darling-dmg), though I don't think I interacted with the fuse parts of it much
+    <azert>	Or even the easier
+    <solid_black>	yeah, I don't think it'd be the best or the easiest one either
+    <damo22>	if someone implemented libfuse api and made it as a hurd translator, surely it would work natively?
+    <damo22>    <braunr> zacts: the main problem seems to be the interactions between the fuse file system and virtual memory (including caching)
+    <braunr> something the hurd doesn't excel at
+    <braunr> it *may* be possible to find existing userspace implementations that don't use the system cache (e.g. implement their own)
+    <azert>	Yes, that’s a possibility that needs to be kept open for discussion
+    <nikolar>	Sounds interesting 
+    <solid_black>	youpi: ping
+    <youpi>	pong
+    <solid_black>	hello!
+    <solid_black>	any thoughts on the above discussion? are you going to participate in the call that's being set up?
+    <youpi>	I don't have time for it
+    <youpi>	(AFAIK the fuse hurd implementation does work to some extent)
+    <solid_black>	I should at least try out Hurd's fuse before the call, good idea
+    <solid_black>	maybe read up on the Linux's fuse
+    <solid_black>	thoughts on using fuse vs libdiskfs for bcachefs?
+    <youpi>	using fuse would probably be less work
+    <youpi>	and it'd probably mean fixing things in libfuse, which can benefit many other FS anyway
+    <solid_black>	is it true that the "low level" API of libfuse is unimplemented and unimplementable?
+    <youpi>	I don't know what that "low level" API is
+    <solid_black>	this IIUC https://github.com/libfuse/libfuse/blob/master/include/fuse_lowlevel.h 
+    <solid_black>	> libfuse offers two APIs: a "high-level", synchronous API, and a "low-level" asynchronous API. In both cases, incoming requests from the kernel are passed to the main program using callbacks. When using the high-level API, the callbacks may work with file names and paths instead of inodes, and processing of a request finishes when the callback function returns. When using the low-level API, the callbacks must work with inodes and responses must be se
+    <solid_black>	nt explicitly using a separate set of API functions.
+    <youpi>	where did you read that it'd be unimplementable ?
+    <solid_black>	https://git.savannah.gnu.org/cgit/hurd/incubator.git/tree/README?h=libfuse/master 
+    <solid_black>	> This is simply because it is to specific to the Linux kernel and (besides that) it is not farly used now.
+    <youpi>	In case the latter should change in the future, we might want to re-think about that issue though.
+    <solid_black>	so, sounds like it's perhaps implementable in theory, but that'd require additional work and design
+    <youpi>	see the sentence below...
+    <solid_black>	the low-level API is what bcachefs uses
+    <youpi>	well, additional work and design, of course
+    <solid_black>	seems to, at least, from a quick glance
+    <youpi>	any async API needs some
+    <youpi>	but I don't see why it would not be possible
+    <youpi>	mig precisely supports asynchronous stubs
+    <solid_black>	bcachefs-tools/cmd_fusermount.c is just 1274 lines, which inspires some hope
+    <solid_black>	asynchrony is not the problem, I imagine (but I haven't looked), but being too tied to Linux might be
+    <youpi>	it's not really tied, as in it doesn't seem to use linux-specific functions
+    <youpi>	but it uses linux-like notions, which indeed need to be translated to the hurdish notions
+    <youpi>	but that's not something really tough
+    <youpi>	just needs to be worked on
+ 
+https://logs.guix.gnu.org/hurd/2023-09-27.log#103329
+
+    <solid_black> libfuse as shipped as Debian doesn't seem very
+    functional, I can't even build a simple program against it:
+    'i386-gnu/libfuse.so: undefined reference to `assert''
+
+    <solid_black>	(assert is of course a macro in glibc)
+    <solid_black>	and it segfaults in fuse_main_real
+    <solid_black>	lowleve fuse ops do seem to map to netfs concept nicely, as far as I can see so far
+    <solid_black>	and (again, so far) I don't see any asynchrony in how bcachefs uses fuse, i.e. they always fuse_reply() inside the method implementation
+
+    <solid_black>	but if we had to implement low-level fuse API, this would be an issue
+    <solid_black>	because netfs is syncronous
+    <solid_black>	this is again a place where I don't think netfs is actually that useful
+    <solid_black>	libfuse should be its own standalone tranlator library, a peer to lib{disk,net,triv}fs
+    <solid_black>	yell at me if you disagree
+    <youpi>	or perhaps make it use libdiskfs ?
+    <youpi>	there's significant code in libdiskfs that you'd probably not want to reimplement in libfuse
+    <solid_black>	like what?
+    <youpi>	starting a translator
+    <youpi>	all the posix semantic bits
+    <solid_black>	(this is another thing, I don't believe there is a significant difference that explains libdiskfs and libnetfs being two separate libraries. but it's too late to merge them, and I'm not an fs dev)
+
+    <solid_black>	starting a translator is abstracted into libfshelp specifically so it can be easily reused?
+    <solid_black>	is libdiskfs synchronous?
+    <youpi>	I'm just saying things out of my memory
+    <solid_black>	scratch that, diskfs does not work like that at all
+    <youpi>	piece of it is in fshelp yes
+    <solid_black>	it works on pagers, always
+    <youpi>	but significant pieces are in libdiskfs too
+    <youpi>	and you are saying you are not an FS person :)
+    <youpi>	you do know libdiskfs etc. well beyond the average
+    <youpi>	perhaps not the ext2 FS structure, but that's not really important here
+    <youpi>	see e.g. the short-circuits in file-get-trans.c
+    <solid_black>	I may understand how the Hurd's translator libraries work, somewhat better than the avergae person :)
+    <youpi>	and the code around fshelp_fetch_root
+    <solid_black>	but I don't know about how filesystems are actually organized, on-disk (beyond the basics that there any inodes and superblocks and journaled writes and btrees etc)
+    <youpi>	you don't really need to know more about that
+    <solid_black>	nor do I know the million little things about how filesystem code should be written to be robust and performant
+    <solid_black>	yeah so as I was saying, libdiskfs expects files to be mappable (diskfs_get_filemap_pager_struct), and then all I/O is implemented on top of that
+    <solid_black>	e.g. to read, libdiskfs queries that pager from the impl, maps it into memory, and copies data from there to the reply message
+    <solid_black>	I must have mentioned that already, I'd like to rewrite that code path some day to do less copying
+    <solid_black>	I imagine this might speed up I/O heavy workloads
+    <youpi>	? it doesn't copy into the reply
+    <youpi>	it transfers map
+    <solid_black>	it does, let me find the code
+    <youpi>	in some corner cases yes
+    <youpi>	but not normal case
+    <youpi>	https://darnassus.sceen.net/~hurd-web/hurd/io_path/ 
+    <solid_black>	libdiskfs/rdwr-internal.c, it does pager_memcpy, which is a glorified memcpy + fault handling
+    <solid_black>	don't trust that wiki page
+    <youpi>	why not ?
+    <youpi>	not, pager_memcpy is not just a memcpy
+    <youpi>	it's using vm_copy whenever it can
+    <youpi>	i.e. map transfer
+    <solid_black>	well yes, but doesn't the regular memcpy also attempt to do that?
+    <youpi>	it happens to do so indeed
+    <youpi>	but that' doesn't matter: I do mean it's trying *not* copying
+    <youpi>	by going through the mm
+    <youpi>	note: if a wiki page is bogus, propose a fix
+    <solid_black>	I think there was another copy on the path somewhere (in the server, there's yet another in the client of course), but I can't quite remember where
+    <solid_black>	and I wouldn't rely on that vm_copy optimization
+    <solid_black>	it's may be useful when it working, but we have to design for there to not be a need to make a copy in the first place
+    <solid_black>	ah well, pager_read_page does the other copy
+    <youpi>	when things are not aligned etC. you'll have to do a copy anyway
+    <solid_black>	but then again, this is all my idle observations, I'm not an fs person, I haven't done any profiling, and perhaps indeed all these copies are optimized away with vm_copy
+    <youpi>	where in pager_read_page do you see a copy?
+    <youpi>	it should be doing a store_read
+    <youpi>	passing the pointer to the driver
+    <solid_black>	ext2fs/pager.c:file_pager_read_page (at line 220 here, but I haven't pulled in a while)
+    <solid_black>	it does do a store_read, and that returns a buffer, and then it may have to copy that into the buffer it's trying to return
+    <solid_black>	though in the common case hopefully it'll read everything in a single read op
+    <youpi>	it's in the new_buf != *buf + offs case
+    <youpi>	which is not supposed to be the usual case
+    <solid_black>	but now imagine how much overhead this all is
+    <youpi>	what? the ifs?
+    <solid_black>	we're inside io_read, we already have a buffer where we should put the data into
+    <youpi>	I have to go give a course, gotta go
+    <solid_black>	we could just device_read() into there
+    <youpi>	you also want to use a cache
+    <youpi>	otherwise it'll be the disk that'll kill yiour performance
+    <youpi>	so at some point you do have to copy from the cache to the application
+    <youpi>	that's unavoidable
+    <youpi>	or if it's large, you can vm_copy + copy-on-write
+    <youpi>	but basically, the presence of the cache means you can have to do copies
+    <youpi>	and that's far less costly than re-reading from the disk
+    <solid_black>	why can't you return the cache page directly from io_read RPC?
+    <youpi>	that's vm_copy, yes
+    <youpi>	but then if the app modifies the piece, you have to copy-on-write
+    <youpi>	anywauy, really gottago
+    <solid_black>	that part is handled by Mach
+    <solid_black>	right, so once you're back: my conclusion from looking at libfuse is that it should be rewritten, and should not be using netfs (nor diskfs), but be its own independent translator framework
+    <solid_black>	and it just sounds like I'm going to be the one who is going to do it
+    <solid_black>	and we could indeed use bcachefs as a testbed for the low level api, and darling-dmg for the high level api
+    <solid_black>	I installed avfs from Debian (one of the few packages that depend on libfuse), and sure enough: avfs: symbol lookup error: /lib/i386-gnu/libfuse.so.1: undefined symbol: assert_perror
+    <solid_black>	upstream fuse is built with Meson 🤩️
+    <solid_black>	I'm wondering whether this would be better done as a port in the upstream libfuse, or as a Hurd-specific libfuse lookalike that borrows some code from the upstream one (as now)
+    <damo22>	solid_black: what is your argument to rewrite a translator framework for fuse?
+    <damo22>	i dont understand
+    <solid_black>	hi
+    <damo22>	hi
+    <solid_black>	basically, 1. while the concepts of libfuse *lowlevel* api seem to match that of hurd / netfs, they seem sufficiently different to not be easily implementable on top of netfs
+    <solid_black>	particularly, the async-ness of it, while netfs expects you to do everything synchronously
+    <damo22>	is that a bug in netfs?
+    <solid_black>	this could be maybe made to work, by putting the netfs thread doing the request to sleep on a condition variable that would get signalled once the answer is provided via the fuse api... but I don't think that's going to be any nicer than designing for the asynchrony from the start
+    <solid_black>	it's not a bug, it's just a design decision, most Hurd tranalators are structured that way
+    <damo22>	maybe you can rewrite netfs to be asynchronous and replace it
+    <solid_black>	i.e.: it's rare that translators use MIG_NO_REPLY + explicit reply, it's much more common to just block the thread
+    <solid_black>	2. the current state is not "somewhat working", it's "clearly broken"
+    <damo22>	why not start by trying to implement rumpdisk async
+    <damo22>	and see what parts are missing
+    <solid_black>	wdym rumpdisk async?
+    <damo22>	rumpdisk has a todo to make it asynchronous
+    <damo22>	let me find the stub
+    <damo22>	* FIXME:
+    <damo22>	* Long term strategy:
+    <damo22>	*
+    <damo22>	* Call rump_sys_aio_read/write and return MIG_NO_REPLY from
+    <damo22>	* device_read/write, and send the mig reply once the aio request has
+    <damo22>	* completed. That way, only the aio request will be kept in rumpdisk
+    <damo22>	* memory instead of a whole thread structure.
+    <solid_black>	ah right, that reminds me: we still don't have proper mig support for returning errors asynchronously
+    <damo22>	if the disk driver is not asynchronous, what is the point of making the filesystem asynchronous?
+    <solid_black>	the way this works, being asynchronous or not is an implementatin detail of a server
+    <solid_black>	it doesn't matter to others, the RPC format is the same
+    <solid_black>	there's probably not much point in asynchrony for a real disk fs like bcachefs, which must be why they don't use it and reply immediately
+    <solid_black>	but imagine you're implementing an over-the-network fs with fuse, then you'd want asynchrony
+    <damo22>	what is your goal here? do you want to fix libfuse?
+    <solid_black>	I don't know
+    <solid_black>	I'm preparing for the call with Kent
+    <solid_black>	but it looks like I'm going to have to rewrite libfuse, yes
+    <damo22>	possibly the caching is important
+    <damo22>	ie, where does it happen
+    <solid_black>	maybe, yes
+    <solid_black>	does fuse support mmap?
+    <damo22>	idk
+    <damo22>	good q for kent
+    <solid_black>	one essential fs property is coherence between mmap and r/w
+    <solid_black>	so it you change a byte in an mmaped file area, a read() of that byte after that should already return the new value
+    <solid_black>	same for write() + read from memory
+    <solid_black>	this is why libdiskfs insists on reading/writing files via the pager and not via callbacks
+    <solid_black>	I wonder how fuse deals with this
+    <damo22>	good point, no idea
+    <solid_black>	does fuse really make the kernel handle O_CREAT / O_EXCL? I can't imagine how that would work without racing
+    <solid_black>	guess it could be done by trying opening/creating in a loop, if creation itself is atomic, but this is not nice
+    <damo22>	something is still slowing down smp
+    <damo22>	it cant possibly be executing as fast as possible on all cores
+    <damo22>	if more cores are available to run threads, it should boot faster not slower
+    <azert>	Hi damo22, your reasoning would hold if the kernel wouldn’t be “wasting” most of its time running in kernel mode tasks
+    <azert>	If replacing CPU_NUMBER by a better implementation gave you a two digits improvement, that kind of implies that the kernel is indeed taking most of the cpu
+    <damo22>	yes i mean, something in the kernel is slowing down smp
+    <azert>	What about vm_map and all thread tasks synchronization
+    <azert>	?
+    <damo22>	i dont understand how the scheduler can halt the APs in machine_idle() and not end up wasting time
+    <damo22>	how does anything ever run after HLT
+    <damo22>	in that code path
+    <damo22>	if the idle thread halts the processor the only way it can wake up is with an interrupt
+    <damo22>	but then, does MARK_CPU_ACTIVE() ever run?
+    <damo22>	hmm it does
+    <azert>	I think that normally the cpu would be running scheduler code and get a thread by itself.
+    <damo22>	thats not how it works
+    <damo22>	most of the cpus are in idle_continue
+    <damo22>	then on a clock interrupt or ast interrupt, they are woken to choose a thread i think
+    <damo22>	s/choose/run
+    <azert>	If they are in cpu_idle then that’s what happens, yea
+    <azert>	But normally they wouldn’t be in cpu idle but running the schedule and just a thread on their own
+    <azert>	Cpu_idle basically turns off the cpu
+    <azert>	To save power
+    <damo22>	every time i interrupt the kernel debugger, its in cpu-idle
+    <damo22>	i dont know if it waits until it is in that state so maybe thats why
+    <azert>	That means that there is nothing to schedule
+    <azert>	Or yea that’s another explanation
+    <damo22>	yes, exactly i think it is seemingly running out of threads to schedule
+    <azert>	A bug in the debugger
+    <damo22>	i need to print the number of threads in the queue
+    <youpi>	adding a show subcommand for the scheduler state would probably be useful
+    <youpi>	solid_black: btw, about copies, there's a todo in rumpdisk's rumpdisk_device_read : /* directly write at *data when it is aligned */
+    <solid_black>	youpi: indeed, that looks relevant, and wouldn't be hard to do
+    <solid_black>	ideally, it should all be zero-copy (or: minimal number of copies), from the device buffer (DMA? idk how this works, can dma pages be then used as regular vm pages?) all the way to the data a unix process receives from read() or something like that
+    <solid_black>	without "slow" memcpies, and ideally with little vm_copies too, though transferring ages in Mach messages is ok
+    <solid_black>	s/ages/pages/
+    <solid_black>	read() requires ones copy purely because it writes into the provided buffer (and not returns a new one), and we don't have mach_msg_overwrite
+    <solid_black>	though again one would hope vm_copy would help there
+    <solid_black>	...I do think that it'd be easier to port bcachefs over to netfs than to rewrite libfuse though
+    <solid_black>	but then nothing is going to motivate me to work on libfuse
+    <azert>	solid_black: I never work on things that don’t motivate me somehow
+    <azert>	Btw, if you want zerocopy for IO, I think you need to do asynchronous io
+    <azert>	At least that’s the only way for me to make sense of zerocopy
+    <solid_black>	I don't think sync vs async has much to do with zero-copy-ness? w
+
+

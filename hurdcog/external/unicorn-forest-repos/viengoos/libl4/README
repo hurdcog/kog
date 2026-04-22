@@ -1,0 +1,149 @@
+GNU libl4
+=========
+
+A user-space "library" for L4.
+
+
+Why use this user space library for L4 and not the official one?
+----------------------------------------------------------------
+
+If the official one does what you want, there is no need to use this
+one.  The reasons why I wrote this one are:
+
+* A leaner and more convenient C interface.  Although the same
+interface could be implemented on top of the official L4 library, it
+is probably not more work to just write a new one from scratch, as the
+actual code contained in the library is little.  This also applies to
+names of functions and data types, which follow the GNU coding
+standard (except for the compatibility interface).
+
+* Interface extensions.  The official L4 API is pretty minimalistic.
+Some generic convenience functions should just be provided by libl4.
+Having a separate code base means we can deal in the interface as we
+see fit, and be more oriented towards usability in the GNU system
+rather than tight definition.
+
+* No struct returns.  Many small data types in the official interface
+are defined to be of an opaque struct type.  This is nice from a data
+encapsulation point of view, but causes problems in the C language.
+Although all functions the interface defines are usually inlined,
+user-defined functions on top of the official interface might use
+structure types as return types of functions.  However, there are two
+calling conventions in use for that, one compatible to PCC which
+passes the struct on the stack, and a more efficient one that uses
+registers for small structures.  Unfortunately, the less efficient one
+is the default for some platforms.  This makes these data types less
+optimal for use in C programs.
+
+* Making best use of available tools.  Some additional requirements
+lead to code that can be simpler to understand and sometimes even more
+efficient.  For example, gcc 3.2 supports more than 10 parameters in
+asm bindings, and named asm operands.  The official libl4 supports
+older versions of gcc, too, and does not make use of this feature.
+
+* Complete backward compatibility.  This library is supposed to
+provide, in addition to the new interface, the same interface as the
+official libl4 (unless you define _L4_NOT_COMPAT).  This allows you to
+double-check that you only use the official interface in your
+programs, and makes this library a drop-in replacement for the
+official convenience interface.
+
+
+How to use it
+-------------
+
+Normally, you can just include <l4.h> or one of the more specific
+header files <l4/*.h> and use the data types and functions.  All
+functions are always inlined, irregardless of optimization level.
+
+
+Why is linking with libl4 not necessary?
+----------------------------------------
+
+All functions are inlined.  There is no library you can use for
+linking.
+
+The dynamic linker will fix up the system calls to point directly to
+the system call gate in the kernel interface page.  It will also
+provide its own versions of the global variables (from <l4/globals.h>).
+
+
+What if I am not using the dynamic linker?
+------------------------------------------
+
+If you are not using the dynamic linker, include <l4/globals.h> and
+<l4/stubs.h> somewhere (but only once each!) in your program.  You
+also have to run l4_init() (defined in <l4/init.h>) and
+l4_init_stubs() (defined in <l4/stubs-init.h>) to initialize the
+global variables and fixup the system call stubs.
+
+
+What compiler do I need?
+------------------------
+
+You need a recent gcc (3.2).  Other compilers are not known to be
+supported.  GCC earlier than 3.1 is known not to be supported.  The
+requirements are:
+
+* Support for a variety of GCC extensions, like:
+** Inline assembler, including named input and output arguments.
+** Attributes like always_inline, const, pure, and type.
+** Builtin functions like __builtin_const_p.
+
+* Internal representation of bit-fields that tightly packs all
+  bit-fields (which sizes add up to word size) in the order of the
+  endianess of the architecture into a single word, and the bits
+  within the individual bit-fields in the same order.
+
+* Your compiler must provide a __builtin_memcpy that optimizes copies
+  of fixed small size (one or two machine words).  The memcpy's are
+  necessary to not break strict aliasing rules.  (But on the plus
+  side, you can use strict aliasing optimization).
+
+
+What is the status of the library?
+----------------------------------
+
+The following interfaces are provided
+
+compat	Enabled by default or if _L4_INTERFACE_L4 is defined, can
+	be disabled by defining _L4_NOT_COMPAT.
+
+The compat interface is supposed to (eventually) be a drop-in
+replacement for the official libl4 library.  Currently, this is not
+the case, though.  Some inofficial interfaces are not implemented, and
+the system call stubs behave differently (the official library
+initializes them lazily, while in GNU libl4 they have to be
+initialized explicitely or implicitely by the linker).
+
+gnu	Enabled if _GNU_SOURCE of _L4_INTERFACE_GNU is defined.
+
+The GNU interface is the interface of our choice.  It provides all of
+the functionality of the official interface, and more.  It does not
+provide a C++ API, though.
+
+
+Overall status:
+
+The operations on the TIME data type have not been implemented
+(_L4_time_point, _L4_time_add_usec, etc) yet.
+
+Architecture specific status:
+
+i386	complete and up-to-date
+powerpc	complete and up-to-date 
+others	not implemented
+
+See also the file TODO if you want to help.
+
+
+Copyright 2003, 2004 Free Software Foundation, Inc.
+Written by Marcus Brinkmann <marcus@gnu.org>
+
+This file is free software; as a special exception the author gives
+unlimited permission to copy and/or distribute it, with or without
+modifications, as long as this notice is preserved.
+ 
+This file is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

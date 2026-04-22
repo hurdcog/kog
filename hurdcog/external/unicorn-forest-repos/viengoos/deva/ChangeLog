@@ -1,0 +1,115 @@
+2005-04-06  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c: Include <hurd/anonymous.h>.
+	(mmap): Call hurd_anonymous_allocate, not hurd_vm_allocate.
+	(munmap): Call hurd_vm_release, not hurd_vm_deallocate.
+
+2005-02-03  Marcus Brinkmann  <marcus@gnu.org>
+
+	* deva.c (setup_threads): Allocate one more thread for all those
+	IRQ handlers.
+	(create_bootstrap_caps): Hand out a serial device cap as bogus
+	master.
+
+	* device-console.c (console_init): Create the kbd irq handler with
+	a higher priority than normal threads.
+
+	* Makefile.am (deva_SOURCES): Add device-serial.c
+	* device-serial.c: New file.
+	* device.h (struct device): Add new members serial.input_wait and
+	serial.output_wait.
+	* device.c (device_alloc): Enable the DEVICE_SERIAL case.
+
+2005-02-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* deva.h (deva_alloc): Renamed to device_alloc.
+	(deva_class_init): Renamed to device_class_init and add new device
+	type argument.
+	(enum device_type): New enum.
+	* deva.c (create_bootstrap_caps): Call device_alloc, not
+	deva_alloc, and pass device type argument.
+	(main): Call device_class_init, not deva_class_init.
+	* deva-class.c: Removed file.
+	* device.h, device.c, device-console.c: New files.
+	* Makefile.am (deva_SOURCES): Remove deva-class.c and add
+	device.h, device.c, device-console.c.
+
+2005-01-11  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (deva_SOURCES): Remove physmem-user.h and
+	physmem-user.c.
+	(deva_LDADD): Add ../libhurd-btree/libhurd-btree.a and
+	../libhurd-mm/libhurd-mm.a.
+	* ia32-cmain.c: Include <hurd/mm.h>.
+	(pager_tid): New global variable.
+	(cmain): Allocate a thread that the memory management subsystem
+	can use as the pager thread.  Call hurd_mm_init.  Set the
+	PAGER_TID as the current thread's pager.
+	* mmap.c: Rewrite to use new interfaces.
+	* physmem-user.h: Remove obsolete file.
+	* physmem-user.c: Likewise.
+
+2005-01-07  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (debug): Preface __VA_ARGS__ with ## thereby making it
+	optional.
+
+2004-12-01  Neal H. Walfield  <neal@gnu.org>
+
+	* physmem-user.h (physmem_map): Change CONT from a hurd_cap_id_t
+	to a hurd_cap_handle_t.
+	* physmem-user.c (physmem_map): Likewise.
+	* task-user.h (task_thread_alloc): Change TASK from a
+	hurd_cap_id_t to a hurd_cap_handle_t.
+	* task-user.c (task_thread_alloc): Likewise.
+
+2004-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* deva.c (bootstrap_final): New function.
+	(main): Call bootstrap_final as per the start up protocol to tell
+	wortel that deva is up and running and that it should now start the
+	root fs.
+
+2004-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (bootdir): New variable.
+	(boot_PROGRAMS): Use this instead of noinst_PROGRAMS.
+
+2004-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (debug): Include program_name and __FUNCTION__ in
+	output.
+
+2004-11-02  Marcus Brinkmann  <marcus@gnu.org>
+
+	* deva-class.c (SIMPLE_CONSOLE): Define.
+	[SIMPLE_CONSOLE]: A lot of new code that is only used for testing.
+	(deva_io_read): New function.
+	(deva_demuxer): Add handling for deva_io_read.
+	* deva.c (create_bootstrap_caps): Allocate only one object, and
+	copy it out several times.  Call wortel_get_deva_cap_reply, not
+	wortel_get_task_cap_reply.
+
+	* Makefile.am (deva_SOURCES): Add task-user.h and task-user.c.
+	* task-user.h, task-user.c: New files.
+	* deva.c: Include "task-user.h".
+	(create_bootstrap_caps): Remove variable startup_cap.
+	(setup_threads): Implement it.
+
+2004-11-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* deva-class.c (struct deva): Remove member obj (and add dummy
+	member foo).
+	(deva_reinit): Use hurd_cap_obj_to_user instead of cast.
+	(deva_class_init): Replace size and alignment with type.
+	(deva_alloc): New variable OBJ.  Use it with hurd_cap_class_alloc.
+	Use hurd_cap_obj_to_user to get at the deva object.
+
+2004-10-29  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32-cmain.c (switch_thread): Correct start of small sub stack
+	address.  Reported by Rian Hunter <hurd@thelaststop.net>.
+
+2004-10-28  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.

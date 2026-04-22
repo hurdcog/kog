@@ -1,0 +1,72 @@
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/04-gc-alloc-c.patch: Remove file.
+	* patches/05-viengoos-scheduler.patch: Merge changes into this
+	one.  Remove cruft.  Update profile code.  Tweak scheduler.
+	* Makefile.am (patch_files): Remove 04-gc-alloc-c.patch.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/05-viengoos-scheduler.patch: Fix profile.h chunk.
+
+2008-06-28  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/05-viengoos-scheduler.patch: Include profile.h in patch.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/05-viengoos-scheduler.patch: Update to use activity_info
+	in place of activity_stats.  Listen for pressure messages and act
+	appropriately.  Tighten adaptive code.  Improve profiling code.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (noinst_LIBRARIES): Remove target.
+	(gc-build/build-stamp): Remove target.
+	(libgc.a): Remove target.
+	(all-local): Depend on gc-build/configure-stamp.  Build the Boehm
+	GC.  Only run make install if gc-build/libgc.la has changed.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/05-viengoos-scheduler.patch: Update to use madvise and
+	to fix overflow in profiling code.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/05-viengoos-scheduler.patch: New file.
+	* Makefile.am (patch_files): Add 05-viengoos-scheduler.patch.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (patch_files): Add 03-gc-configure-ac.patch and
+	04-gc-alloc-c.patch.
+	* patches/03-gc-configure-ac.patch: New file.
+	* patches/04-gc-alloc-c.patch: Likewise.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/01-gc-include-private-gcconfig-h.patch: Define
+	USE_MUNMAP.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/01-gc-include-private-gcconfig-h.patch: Define USE_MMAP.
+
+2008-05-31  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (libgc.a): Link to the `gc-install/lib/libgc.a' one.
+
+	* Makefile.am (gc-install/install-stamp): New target.  Used to decouple
+	``make install'' from ``make all''.
+
+	* Makefile.am (gc_snapshot): Fix URL.
+	(gc-build/configure-stamp): Don't run `autoreconf'.  Support
+	separate-build-dir builds.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am: New file.
+	* patches: New directory.
+	* patches/01-gc-include-private-gcconfig-h.patch: New file.
+	* patches/02-gc-mach_dep-c.patch: New file.

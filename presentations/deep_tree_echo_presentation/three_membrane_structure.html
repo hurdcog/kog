@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three-Membrane Structure Separates Key Concerns</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 50px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 24px;
+        }
+        .membranes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .membrane-column {
+            border: 2px solid #0f4c81;
+            background: rgba(15, 76, 129, 0.02);
+            padding: 20px 18px;
+            min-height: 320px;
+            position: relative;
+        }
+        .membrane-label {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            background: #0f4c81;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            letter-spacing: 1px;
+        }
+        .membrane-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+        .membrane-role {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
+        }
+        .sub-membranes {
+            margin-bottom: 14px;
+        }
+        .sub-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0f4c81;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .sub-item {
+            font-size: 12px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.5;
+            margin-bottom: 3px;
+            padding-left: 12px;
+            position: relative;
+        }
+        .sub-item:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #0f4c81;
+        }
+        .membrane-function {
+            font-size: 12px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.5;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #0f4c81;
+        }
+        .interaction-section {
+            border: 2px solid #e94560;
+            background: rgba(233, 69, 96, 0.03);
+            padding: 18px 20px;
+        }
+        .interaction-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .interaction-points {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .interaction-point {
+            font-size: 12px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.5;
+            padding-left: 18px;
+            position: relative;
+        }
+        .interaction-point:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #e94560;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Title -->
+        <div class="slide-title">Three-Membrane Structure Separates Key Concerns</div>
+        <div class="title-line"></div>
+        
+        <!-- Membranes Grid -->
+        <div class="membranes-grid">
+            
+            <!-- Cognitive Membrane -->
+            <div class="membrane-column">
+                <div class="membrane-label">MEMBRANE 01</div>
+                <div class="membrane-name">Cognitive<br>Membrane</div>
+                <div class="membrane-role">Core Processing</div>
+                
+                <div class="sub-membranes">
+                    <div class="sub-label">Sub-Membranes</div>
+                    <div class="sub-item">Memory Membrane<br>(Storage & Retrieval)</div>
+                    <div class="sub-item">Reasoning Membrane<br>(Inference & Logic)</div>
+                    <div class="sub-item">Grammar Membrane<br>(Symbolic Processing)</div>
+                </div>
+                
+                <div class="membrane-function">
+                    <strong>Function:</strong> Isolates core processing from external interference. Creates protected space for cognitive operations where external inputs must pass through boundaries before affecting internal state.
+                </div>
+            </div>
+            
+            <!-- Extension Membrane -->
+            <div class="membrane-column">
+                <div class="membrane-label">MEMBRANE 02</div>
+                <div class="membrane-name">Extension<br>Membrane</div>
+                <div class="membrane-role">Plugin Container</div>
+                
+                <div class="sub-membranes">
+                    <div class="sub-label">Sub-Membranes</div>
+                    <div class="sub-item">Browser Membrane<br>(Web Interaction)</div>
+                    <div class="sub-item">ML Membrane<br>(Neural Processing)</div>
+                    <div class="sub-item">Introspection Membrane<br>(Self-Monitoring)</div>
+                </div>
+                
+                <div class="membrane-function">
+                    <strong>Function:</strong> Provides sandboxed plugin execution with controlled access to core resources. Extensions can request services but cannot directly modify core structures, enabling safe experimentation.
+                </div>
+            </div>
+            
+            <!-- Security Membrane -->
+            <div class="membrane-column">
+                <div class="membrane-label">MEMBRANE 03</div>
+                <div class="membrane-name">Security<br>Membrane</div>
+                <div class="membrane-role">Validation & Control</div>
+                
+                <div class="sub-membranes">
+                    <div class="sub-label">Sub-Membranes</div>
+                    <div class="sub-item">Authentication Membrane<br>(Identity Verification)</div>
+                    <div class="sub-item">Validation Membrane<br>(Correctness Checking)</div>
+                    <div class="sub-item">Emergency Membrane<br>(Critical Failures)</div>
+                </div>
+                
+                <div class="membrane-function">
+                    <strong>Function:</strong> Implements defense-in-depth where multiple security layers must be bypassed for attacks to succeed. Verifies identity, ensures correctness, and provides failsafe mechanisms.
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Interaction Section -->
+        <div class="interaction-section">
+            <div class="interaction-title">Controlled Interaction Principles</div>
+            <div class="interaction-points">
+                <div class="interaction-point">
+                    <strong>Boundary Control:</strong> Information flows through controlled channels with explicit permissions and logging
+                </div>
+                <div class="interaction-point">
+                    <strong>Defense-in-Depth:</strong> Multiple security layers prevent unauthorized access while maintaining functionality
+                </div>
+                <div class="interaction-point">
+                    <strong>Isolation Guarantee:</strong> Core cannot be directly manipulated; extensions operate in sandboxed environments
+                </div>
+                <div class="interaction-point">
+                    <strong>Dynamic Reconfiguration:</strong> Membrane structure adapts based on threat level and operational needs
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

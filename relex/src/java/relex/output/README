@@ -1,0 +1,90 @@
+                 RelEx Output Modules
+                 --------------------
+
+There are several distinct, code-wise unrelated, but conceptually
+similar systems in this directory.  All of these are focused on
+providing printed output of the RelEx graph, or the concept frames.
+
+There are other (older) output routines in other directories, including
+printZHeads and LinakbleView.  These older output routines should
+probably be removed.
+
+This directory contains:
+
+SimpleView.java:
+	Provides a very simple, simplistic printing of the RelEx
+	relationship graph. This code should be consulted as an
+	example for how to write new output classes.
+
+RawView.java:
+	Provides a full, complete dump of the entire RelEx graph.
+	It is *very* verbose.
+
+CompactView.java:
+	Provides a "compact-format" file, using an amalgamation of common
+	public linguistic file formats. The goal of this file format is to
+	be human-readable, fairly compact and extremely easy to parse (at
+	least, when using perl regex's). This is currently the default
+	output format for generating large databases of pre-parsed text.
+	Strongly recommended for large projects. See goals below.
+	See also http://wiki.opencog.org/w/RelEx_compact_output
+
+LinkGraphGenerator.java:
+	Output GraphViz style markup, suitable for running through the
+	GraphViz software.
+
+OpenCogScheme.java:
+OpenCogSchemeRel.java:
+OpenCogSchemeLink.java:
+	Generates OpenCog Scheme. Only the OpenCog class is public; the
+	other two are helpers.  SchemeRel generates output that corresponds
+	to the basic RelEx feature graph.  SchemeLink generates the
+	link-grammar relations.  See documentation at:
+	http://wiki.opencog.org/w/RelEx_OpenCog_format
+	https://github.com/opencog/opencog/tree/master/opencog/nlp/wsd
+
+OWLView.java:
+	Generates W3C Semantic Web OWL format. The org.semanticweb jar files
+	need to be installed in order for this to be compiled.
+
+PrologList.java:
+	Generate Prolog output.
+
+NLGInputView.java:
+	Modification based on SimpleView using numbered indices.
+
+StandfordView.java:
+	Priting Stanford-parser relations.
+
+
+========================================================
+       Design Notes for the "Compact" file format
+
+The goal of the generic parse output format is to allow the results of
+parsing a text to be stored in a relatively compact, simple format that
+is easily read by humans as well as machines.  Because NLP parsing is
+a relatively CPU-intensive computational task, having a collection
+of pre-parsed texts offers a reasonable jumping-off point for more
+sophisticated experiments in NLP search, reasoning and general AI systems.
+
+See the web page:
+http://opencog.org/wiki/RelEx_compact_output
+for further details.
+
+The output format should meet these design requirements:
+ * Easily machine readable using regex (e.g. perl)
+ * Logs dates and versions
+ * Sentence order is important!
+
+-- indicate data format version
+-- indicate parse date
+-- indicate parser version
+-- indicate URI's of source text
+-- store all unary and binary relations
+-- store contituent tree.
+-- store parse ranking meta-info
+
+-- ideally, use triples (a la RDF)
+-- Use s-expressions, or possibly JSON
+
+-- Don't forget: unique word-instance ID's.

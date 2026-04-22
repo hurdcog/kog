@@ -1,0 +1,398 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_llvm]]
+
+Here's what's to be done for maintaining [[/LLVM]].
+
+Apart from the target-specific configuration machinery, there shouldn't be any
+major differences within LLVM between the GNU/Hurd and GNU/Linux ports, for
+example.  Especially all the compiler magic is all the same.
+
+[[!toc levels=2]]
+
+
+# [[General information|/llvm]]
+
+
+## Rebuild of the Debian archive with clang
+
+From [[!message-id "20120305195308.GA1904@zouish.org"]]:
+<http://sylvestre.ledru.info/blog/sylvestre/2012/02/29/rebuild_of_the_debian_archive_with_clang>,
+<http://clang.debian.net/>.
+
+
+# [[Sources|source_repositories/llvm]]
+
+
+# Configuration
+
+<!--
+
+For all of llvm, clang, compiler-rt, test-suite:
+
+git checkout reviewed
+git log --reverse --topo-order --pretty=fuller --stat=$COLUMNS,$COLUMNS -w -p -C --cc ..upstream/master
+-i
+/^commit |^merge:|^---$|hurd|gnu|linux|nacl|nptl|glibc|[^e]gs:|/proc
+
+-->
+
+Last reviewed up to the [[Git mirror's sources|source_repositories/llvm]]: llvm
+6f7becfe23f38e8c28e9422d883263974058aeed (2013-03-24), clang
+495cfa46300979642acde8d93a1f21c9291dac98 (2013-03-23), compiler-rt
+a06fe9183fbffb78798a444da9bc3040fdd444aa (2013-03-23), test-suite
+5a05572d268568fb15b48f374f9fc9f882adecd2 (2013-03-23).
+
+  * <http://anonscm.debian.org/viewvc/pkg-llvm/llvm/trunk/debian/patches/>.
+
+  * [low] Some more `PATH_MAX`/`MAXPATHLEN` things.
+
+  * `gs:` usage
+
+      * `lib/Target/X86/`, `test/CodeGen/X86/`, `test/MC/X86/`.
+
+      * `tools/clang/`
+
+            tools/clang/docs/LanguageExtensions.rst:          movl    %gs:(%eax), %eax
+            tools/clang/test/Sema/asm.c:  asm volatile ("movb %%gs:%P2,%b0" : "=q"(b) : "0"(0), "i"(5L));
+
+      * `compiler-rt` and `test-suite` not yet examined.
+
+  * [low] Linuxisms
+
+      * In some CMake files (`CMakeLists.txt`, for example).
+
+      * `test/`, `unittests`, `tools/clang/test/`, `tools/clang/unittests/` not
+        yet examined.
+
+          * In clang's `test/Driver/` a lot of testing can be generalized from
+            *Linux* to *GNU environment*, adding GNU/Hurd testing, too.
+
+      * LLVM commit 98fbe27ac8f0766ea94b89b8c03418131b72bea4 `Support for
+        HiPE-compatible code emission`
+
+        Only relevant for `CallingConv::HiPE`.
+
+            +  assert(ST->isTargetLinux() &&
+            +         "HiPE prologue is only supported on Linux operating systems.");
+
+      * `compiler-rt` and `test-suite` not yet examined.
+
+  * `/proc` usage
+
+      * `compiler-rt` and `test-suite` not yet examined.
+
+  * `libc++` (not currently using)
+
+    Some Hurd-porting work is said to have been done as Google Summer of Code
+    2012 Debian project,
+    <http://wiki.debian.org/SummerOfCode2012/StudentApplications/AndrejBelym>.
+
+  * [[sanitizers|_san]]
+
+    A lot of Linux-specific things.
+
+  * IRC, OFTC, #debian-hurd, 2013-09-05:
+
+        <gg0> how can this fix it on {kf,hurd}-i386?
+          http://anonscm.debian.org/viewvc/pkg-llvm/llvm-toolchain/branches/3.3/debian/patches/libstdc%2B%2B-header-i386.diff?view=markup&sortby=date&pathrev=830
+        <pinotree> what makes you think it does?
+        <pinotree> it fixes #714890, which has nothing to do with hurd or
+          kfreebsd
+        <gg0> i simple wouldn't add a patch that fixes it on one i386 arch
+          only, being aware there are others
+        <pinotree> meet sylvestre
+
+  * IRC, freenode, #hurd, 2013-09-05:
+
+        <pinotree> tschwinge: iirc you were working on llvm/clang, weren't you?
+        <tschwinge> pinotree: That's right.  I have patches to
+          follow-up/rework.  Stalled at the moment, as you probably already
+          guessed...  %-)
+        <pinotree> tschwinge: <Sylvestre> by the way, pinotree if you have time
+          for hurd stuff, I would be glad to have your help to port
+          llvm-toolchain-3.3 to hurd. I am having some issues with threading
+          aspects https://paste.debian.net/35466/
+        <pinotree> he's the debian packager of llvm
+        <tschwinge> That paste is for LLDB -- which I'd not assume to be in a
+          shape usable for Hurd.
+        <tschwinge> (I didn't look at it at all.)
+        <pinotree> tschwinge: if you look at the latest llvm-toolchain-3.3
+          debian source, there's a lldb-hurd.diff patch, which starts some
+          include header dance
+
+
+# Build
+
+Here's a log of a LLVM build run; this is from our [[Git repository's
+sources|source_repositories/llvm]], llvm
+dc218fb6ae3241f4b66e9bf2c9d6352efecc0a14 (2013-03-24), clang
+744290b5ecd48bddb4a6cf96d68cdc4a57e24e36 (2013-03-24), compiler-rt
+a06fe9183fbffb78798a444da9bc3040fdd444aa (2013-03-23), test-suite
+1821ab0ef1c73430705356fdfde3769460092382 (2013-03-24), run on
+kepler.SCHWINGE and coulomb.SCHWINGE.
+
+    $ export LC_ALL=C
+    $ (cd ../Horace_Silver/ && ln -sfn ../../../clang/tschwinge/Hank_Mobley tools/clang)
+    $ (cd ../Horace_Silver/ && ln -sfn ../../../compiler-rt/tschwinge/Doug_Watkins projects/compiler-rt)
+    $ (cd ../Horace_Silver/ && ln -sfn ../../../test-suite/tschwinge/Art_Blakey projects/test-suite)
+    $ ../Horace_Silver/configure --prefix="$PWD".install --enable-optimized SHELL=/bin/dash CC=gcc-4.7 CXX=g++-4.7 2>&1 | tee log_build
+    $ make VERBOSE=1 2>&1 | tee log_build_
+
+Different hosts may default to different shells and compiler versions; thus
+harmonized.
+
+Passing `--enable-debug-symbols`, the GNU/Hurd build on coulomb.SCHWINGE
+terminates with a SIGBUS
+when linking `Release+Debug+Asserts/bin/clang` (which is bigger than 500 MiB
+for the corresponding GNU/Linux build).  Using `--enable-debug-symbols
+--enable-shared`, the GNU/Hurd build hang after `make[1]: Leaving directory
+[...]/tools/llvm-shlib`, after (successfully) linking
+`Release+Debug+Asserts/lib/libLLVM-3.3svn.so` (which is bigger than 250 MiB for
+the corresponding GNU/Linux build).  Also there is a separate
+`--enable-debug-runtime`.
+
+This takes up around 3.2 GiB, and needs roughly 1.5 h on kepler.SCHWINGE and
+5.25 h on coulomb.SCHWINGE.
+
+Configuring without `--enable-optimized` even crashes mighty darnassus,
+probably because of too-big files when linking.  Configuring with
+`--enable-optimized --enable-expensive-checks --disable-threads
+--enable-debug-symbols --enable-debug-runtime` is fine.
+
+<!--
+
+    $ (make VERBOSE=1 && touch .go-install) 2>&1 | tee log_build_ && test -f .go-install && (make VERBOSE=1 install && touch .go-test) 2>&1 | tee log_install && test -f .go-test && { make -k VERBOSE=1 LIT_ARGS='-v --threads=1' check-all 2>&1 | tee log_test_check-all; make -k -C projects/test-suite/ 2>&1 | tee log_test_test-suite; }
+
+    $ (PATH=$HOME/tmp/source/autoconf/AUTOCONF-2.60.build.install/bin:$HOME/tmp/source/automake/automake-1.9.6.build.install/bin:$HOME/tmp/source/libtool/release-1-5-22.build.install/bin:$PATH; ./AutoRegen.sh)
+
+-->
+
+
+## Analysis
+
+    $ toolchain/logs/process llvm build
+
+        -checking for mmap of files... yes
+        +checking for mmap of files... no
+         checking if /dev/zero is needed for mmap... no
+        +configure: WARNING: mmap() of files required but not found
+
+   Due to [[mmap_write-only]].
+
+        +In file included from [...]/lib/Support/Process.cpp:85:0:
+        +[...]/lib/Support/Unix/Process.inc: In function 'unsigned int getColumns(int)':
+        +[...]/lib/Support/Unix/Process.inc:227:21: warning: enumeral and non-enumeral type in conditional expression [enabled by default]
+
+           225    // Try to determine the width of the terminal.
+           226    struct winsize ws;
+           227    if (ioctl(FileID, TIOCGWINSZ, &ws) == 0)
+
+        include/llvm/Config/*
+        Makefile.config
+
+TODO
+
+
+# Install
+
+    $ make VERBOSE=1 install 2>&1 | tee log_install
+
+This takes up around 400 MiB, and needs roughly 1 min on kepler.SCHWINGE and 12
+min on coulomb.SCHWINGE.
+
+
+## Analysis
+
+    $ toolchain/logs/process llvm install
+
+TODO
+
+
+# Testsuite
+
+    $ make -k VERBOSE=1 LIT_ARGS='-v --threads=1' check-all 2>&1 | tee log_test_check-all
+    $ make -k -C projects/test-suite/ 2>&1 | tee log_test_test-suite
+
+`LIT_ARGS=-v` is default for `VERBOSE=1`, but we want only one worker thread,
+for stable order and usable test output log.
+
+This needs roughly 10 min (`check-all`) + 150 min (test-suite) = 160 min on
+kepler.SCHWINGE and 45 min (`check-all`) + 165 min (test-suite) = 210 min on
+coulomb.SCHWINGE.
+
+
+## Analysis
+
+    $ toolchain/logs/process llvm test
+
+  * `LLVM :: CodeGen/X86/mult-alt-generic-i686.ll`
+
+    This one, as well as a really large set of test from the test-suite fail on
+    coulomb.SCHWINGE no matter whether a GNU/Hurd or GNU/Linux system is booted
+    -- so all these are specific to the Athlon XP processor, hopefully.
+
+  * `Clang :: Index/crash-recovery-modules.m`
+
+    Also fails on GNU/Linux.  Tested `--enable-optimized
+    --enable-expensive-checks --disable-threads --enable-debug-symbols
+    --enable-debug-runtime`.  [[!LLVM_bug 11974]].
+
+  * `Clang :: Misc/dev-fd-fs.c`
+
+        $ cat < [...]/test/Misc/dev-fd-fs.c | Release+Debug+Asserts+Checks/bin/clang -x c /dev/fd/0 -E
+        clang: error: no such file or directory: '/dev/fd/0'
+        clang: error: no input files
+
+    Compare to:
+
+        $ cat < [...]/test/Misc/dev-fd-fs.c | gcc -x c /dev/fd/0 -E
+        gcc: error: /dev/fd/0: (ipc/mig) bad request message ID
+        gcc: warning: '-x c' after last input file has no effect
+        gcc: fatal error: no input files
+        compilation terminated.
+
+    These work:
+
+        $ Release+Debug+Asserts+Checks/bin/clang -x c /dev/fd/0 -E < [...]/test/Misc/dev-fd-fs.c
+        [...]
+        int x;
+        $ gcc -x c /dev/fd/0 -E < [...]/test/Misc/dev-fd-fs.c
+        [...]
+        int x;
+
+        #include <stdio.h>
+        #include <unistd.h>
+        
+        int main(int argc, char *argv[])
+        {   
+          while (argc > 0)
+            {
+              int err;
+              char *f = argv[argc -1];
+        
+              err = access(f, F_OK);
+              if (err < 0)
+                printf("%s: %m\n", f);
+        
+              argc--;
+            }
+        
+          return 0;
+        }
+
+        $ ./a.out /dev/fd/0 < /dev/null
+        $ cat < /dev/null | ./a.out /dev/fd/0
+        /dev/fd/0: (ipc/mig) bad request message ID
+
+    `file_check_access` fails with `MIG_BAD_ID`, meaning this RPC is not
+    implemented.
+
+    The difference is that the former directly refers to the `/dev/null`
+    instance, whereas the latter goes through an intermediate pflocal instance.
+
+    Similarly:
+
+        $ stat /dev/fd/0 < /dev/null
+          File: `/dev/fd/0'
+          Size: 0               Blocks: 0          IO Block: 1048576 character special file
+        Device: 17h/23d Inode: 342820      Links: 1     Device type: 0,0
+        Access: (0666/crw-rw-rw-)  Uid: (    0/    root)   Gid: (    0/    root)
+        Access: 2012-11-27 16:03:19.000000000 +0100
+        Modify: 2012-11-27 16:03:19.000000000 +0100
+        Change: 2012-11-27 16:03:19.000000000 +0100
+         Birth: -
+        $ cat < /dev/null | stat /dev/fd/0
+          File: `/dev/fd/0'
+          Size: 0               Blocks: 0          IO Block: 65536  fifo
+        Device: 9h/9d   Inode: 0           Links: 0
+        Access: (0000/p---------)  Uid: (    0/    root)   Gid: (    0/    root)
+        Access: 1970-01-01 01:00:00.000000000 +0100
+        Modify: 1970-01-01 01:00:00.000000000 +0100
+        Change: 1970-01-01 01:00:00.000000000 +0100
+         Birth: -
+
+    `io_stat_request` fills in these values.    
+
+  * `Clang :: Tooling/clang-check-builtin-headers.cpp`
+
+    Fails: `fatal error: 'stddef.h' file not found`; succeeds when ran
+    manually.
+
+  * With `--enable-optimized --enable-expensive-checks --disable-threads
+    --enable-debug-symbols --enable-debug-runtime`, there are a few new FAILs
+    for both GNU/Linux and GNU/Hurd:
+
+      * `Clang :: Tooling/auto-detect-from-source-parent-of-cwd.cpp`
+
+      * `Clang :: Tooling/auto-detect-from-source-parent.cpp`
+
+      * `Clang :: Tooling/clang-check-autodetect-dir.cpp`
+
+    For all three, the `clang-check` invocation fails.  [[!LLVM_bug 15194]].
+
+  * Several tests are not considered on GNU/Hurd.
+
+        -PASS: Clang-Unit :: ASTMatchers/[...]/tschwinge/Horace_Silver.build/tools/clang/unittests/ASTMatchers/Release+Asserts/ASTMatchersTests/HasNameDeathTest.DiesOnEmptyName
+        -PASS: Clang-Unit :: ASTMatchers/[...]/tschwinge/Horace_Silver.build/tools/clang/unittests/ASTMatchers/Release+Asserts/ASTMatchersTests/HasNameDeathTest.DiesOnEmptyPattern
+        -PASS: Clang-Unit :: ASTMatchers/[...]/tschwinge/Horace_Silver.build/tools/clang/unittests/ASTMatchers/Release+Asserts/ASTMatchersTests/IsDerivedFromDeathTest.DiesOnEmptyBaseName
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.SemanticsDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringDecimalDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringDecimalExponentDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringDecimalSignificandDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringHexadecimalDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringHexadecimalExponentDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APFloatTest.StringHexadecimalSignificandDeath
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/APIntTest.StringDeath
+        -PASS: LLVM-Unit :: Support/[...]/tschwinge/Horace_Silver.build/unittests/Support/Release+Asserts/SupportTests/LeakDetector.Death1
+        -PASS: LLVM-Unit :: Support/[...]/tschwinge/Horace_Silver.build/unittests/Support/Release+Asserts/SupportTests/ValueHandle.AssertingVH_Asserts
+
+        GTEST_HAS_DEATH_TEST utils/unittest/googletest/include/gtest/internal/gtest-port.h
+
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/PackedVectorTest.SignedValues
+        -PASS: LLVM-Unit :: ADT/[...]/tschwinge/Horace_Silver.build/unittests/ADT/Release+Asserts/ADTTests/PackedVectorTest.UnsignedValues
+
+        EXPECT_DEBUG_DEATH utils/unittest/googletest/include/gtest/gtest-death-test.h
+
+  * Differences in test-suite, that are not evidently floating-point issues,
+    GNU/Linux vs. GNU/Hurd on coulomb.SCHWINGE:
+
+         gcc-4.6 -I/media/erich/home/thomas/tmp/llvm/tschwinge/Horace_Silver.build/projects/test-suite/SingleSource/UnitTests -I/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/SingleSource/UnitTests -I/home/thomas/tmp/llvm/tschwinge/Horace_Silver.build/projects/test-suite/../../../Horace_Silver/projects/test-suite/include -I../../include -I/home/thomas/tmp/llvm/tschwinge/Horace_Silver.build/include -I/home/thomas/tmp/llvm/tschwinge/Horace_Silver/include -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -DNDEBUG  -O3  /media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/SingleSource/UnitTests/2007-04-25-weak.c -lm -o Output/2007-04-25-weak.native  -lstdc++ 
+        +/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/SingleSource/UnitTests/2007-04-25-weak.c:3:1: warning: 'weak_import' attribute directive ignored [-Wattributes]
+        +/tmp/ccWGwKvo.o: In function `main':
+        +2007-04-25-weak.c:(.text.startup+0x7): undefined reference to `test_weak'
+        +collect2: ld returned 1 exit status
+        +make[2]: [Output/2007-04-25-weak.native] Error 1 (ignored)
+
+    On GNU/Linux, the clamav tests are compiled with `-DC_LINUX`.
+
+        +/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/MultiSource/Applications/lambda-0.1.3/lambda.cc:63:12: error: use of undeclared identifier 'MAXPATHLEN'
+        +                char buf[MAXPATHLEN+1];
+
+    ..., with follow-up failures.
+
+    `projects/test-suite/MultiSource/Applications/obsequi` is not at all
+    considered for GNU/Hurd.
+
+        +/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/MultiSource/Benchmarks/Olden/voronoi/newvor.c:178:25: warning: implicit declaration of function 'memalign' is invalid in C99 [-Wimplicit-function-declaration]
+        +    char* base = (char*)memalign(align_size, alloc_size);
+        +                        ^
+        +1 warning generated.
+
+        +/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/MultiSource/Benchmarks/Prolangs-C/archie-client/get_vdir.c:213:20: error: use of undeclared identifier 'MAXPATHLEN'
+        +                    char        l_name[MAX_DIR_LINESIZE];
+        +                                       ^
+        +/media/erich/home/thomas/tmp/llvm/test-suite/tschwinge/Art_Blakey/MultiSource/Benchmarks/Prolangs-C/archie-client/pprot.h:39:37: note: expanded from macro 'MAX_DIR_LINESIZE'
+        +#define        MAX_DIR_LINESIZE 160+MAXPATHLEN /* Max linesize in directory */
+        +                                    ^
+
+    ..., and several more.

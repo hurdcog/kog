@@ -1,0 +1,57 @@
+[[!meta copyright="Copyright © 2010, 2011, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc open_issue_porting]]
+
+There is a [[!FF_project 274]][[!tag bounty]] on this task.
+
+There are now specialized variants of Debian's libc package, libc0.3-i686 and
+libc0.3-xen.
+
+
+On Thu, Oct 07, 2010 at 11:22:46AM +0200, Samuel Thibault wrote:
+> Thomas Schwinge, le Thu 07 Oct 2010 10:11:07 +0200, a écrit :
+> > Also, this text says ``will be selected instead when running under Xen''
+> > -- is this meant to be automatically done?
+>
+> It's supposed to be, we need to add support for it.
+>
+> > If so, then it didn't work.
+>
+> Yes, you need to copy it by hand. Same for libc0.3-i686, we just need to
+> steal the cpuid code from the kfreebsd port of glibc.
+
+
+# IRC, freenode, #hurd, 2013-06-30
+
+    <pinotree> other than that, the hwcap system is not working for us yet,
+      right?
+    <youpi> no but we'd like to use e.g. cpuid for that
+    <youpi> like kfreebsd does
+    <pinotree> do they use cpuid for that?
+    <pinotree> i kind of lost myself in glibc's loading internals, trying to
+      find out where the hwcap bits come from
+    <youpi> on linux it comes from the kernel
+    <youpi> on kfreebsd aiui they use cpuid to figure it out from the process
+      itself
+    <pinotree> do you have any pointer to the kfreebsd way? iirc i had a look
+      in their sysdeps, but found nothing related to that
+    <youpi> it's in local-sysdeps.diff aiui
+    <youpi> +dl_platform_kfreebsd_i386_init
+    <youpi> which fills dl_hwcap
+    <youpi> called at _dl_sysdep_start
+    <pinotree> interesting
+
+
+---
+
+Having working CPUID code inside [[glibc]] is also a prerequisite for proper
+[[IFUNC]] support.

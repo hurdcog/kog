@@ -1,0 +1,14 @@
+--- a/opencog-server.sh
++++ b/opencog-server.sh
+@@ -22,9 +22,8 @@
+ VM_OPTS="-Xmx2048m"
+ 
+ RELEX_OPTS="\
+-	-Djava.library.path=/usr/lib:/usr/lib/jni:/usr/local/lib:/usr/local/lib/jni \
+-	-Drelex.algpath=data/relex-semantic.algs \
+-	-Dwordnet.configfile=data/wordnet/file_properties.xml \
++	-Drelex.algpath=/usr/share/relex/data/relex-semantic.algs \
++	-Dwordnet.configfile=/usr/share/relex/data/wordnet/file_properties.xml \
+ 	"
+ 
+ CLASSPATH='-classpath ./target/classes:./target/lib/*'

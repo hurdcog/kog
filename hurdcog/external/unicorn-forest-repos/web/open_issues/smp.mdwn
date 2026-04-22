@@ -1,0 +1,358 @@
+[[!meta copyright="Copyright © 2012, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="SMP"]]
+
+[[!tag open_issue_glibc open_issue_gnumach open_issue_hurd]]
+
+<!-- This paragraph is parapharisg the wikipedia page
+https://en.wikipedia.org/wiki/Symmetric_multiprocessing#Advantages/Disadvantages
+-->
+
+SMP stands for Symmetric multiprocessing, which is a computer that has numerous
+identical processors connected to a single shared main memory.  All processors
+are controlled by one single operating system, and each processor can access all
+devices.  Operating systems with SMP can provide more performance, but it is not
+trivial to do so.  It is a little like having a packed board meeting.  More
+people in the room potentially means more can get done, but only one person can
+speak at a time.  Scheduling everyone to speak can be quite an involved task.
+
+
+
+     NOTE: Many of the veteran Hurd developers consider this task too large for a Google summer of code project.
+
+<!--
+This svg is cc attribute
+https://en.wikipedia.org/wiki/File:SMP_-_Symmetric_Multiprocessor_System.svg -->
+
+[[!img images/smp.svg size="700x"]]
+
+<!-- most of this page is taken from https://gitlab.com/snippets/1756024#solution -->
+
+# Current Status
+
+As of September 2024, the SMP support is implemented for i386 with
+working internet, because it boots with only one cpu in the default
+processor set.  The slave processors are temporarily disabled until
+they can be safely used per task.  We are unable to turn on the full
+set at boot time due to race bugs.  Debian Hurd provides SMP enabled
+GNU Mach kernels.
+
+# How to test the current SMP support
+
+The easiest way to test the SMP support, is via the [[qemu
+guide|https://www.gnu.org/software/hurd/hurd/running/qemu.html]].
+Once you have the Hurd running you can build an SMP enabled GNU Mach.
+
+	$ git clone git://git.savannah.gnu.org/hurd/gnumach.git
+	$ cd gnumach
+	$ autoreconf -i
+	$ mkdir build
+	$ cd build
+	$ ../configure --enable-ncpus=4 --enable-apic --enable-kdb --disable-linux-groups
+	$ make gnumach.gz
+	$ su
+    # mv /boot/gnumach-1.8-486.gz /boot/gnumach-1.8-486.gz.bak
+    # cp gnumach.gz /boot/gnumach-1.8-486.gz
+
+You may optionally update `/boot/grub/grub.cfg` change `hd0` to `wd0`
+and add `console=com0`
+
+	/boot/gnumach-1.8-486.gz root=part:2:device:wd0 console=com0
+
+update `/etc/fstab` and update `wd0` instead of `hd0`.
+
+    /dev/wd0s2      /               ext2    defaults        0       1
+    /dev/wd0s1      none            swap    sw              0       0
+
+You can shutdown via `/sbin/poweroff`.
+
+start qemu with `-smp 4` and add `-nographic` if you want to use `com0`.
+
+	$ qemu-system-i386 -M q35,accel=kvm -smp 4 -m 2G -net  \
+	user,hostfwd=tcp::2223-:22 -net nic -hda debian-hurd-VERSION.img \
+	-nographic
+
+To test smp:
+
+	$ sudo /path/to/smp /bin/bash
+	$ stress -c 7
+
+smp.c source can be found
+[[here|https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00088.html]].
+
+# What was done to get the 32-bit SMP support
+
+The GNU Mach source code includes many special cases for multiprocessor,
+controlled  by #if NCPUS > 1 macro.
+
+But this support is very limited:
+
+- GNU Mach don't detect CPUs in runtime: The number of CPUs must be hardcoded in
+compilation time.  The number of cpus is set in `mach_ncpus` configuration
+variable, set to 1 by default, in configfrag.ac file. This variable will
+generate `NCPUS` macro, which is used by gnumach to control the special cases
+for multiprocessor.  If `NCPUS` > 1, then gnumach will enable multiprocessor
+support, with the number of cpus set by the user in mach_ncpus
+variable. Otherwise, SMP will be disabled.
+
+- The special cases to multicore in gnumach source code have never been tested,
+  so these can contain many errors. Furthermore, these special case are
+  incomplete: many functions, such as `cpu_number()` or `intel_startCPU()` aren't
+  written.
+  
+- GNU Mach doesn't initialize the processor with the proper options for
+  multiprocessing. For this reason, the current support is only multithread and
+  not real multiprocessor support.
+
+-  Many drivers included in Hurd aren't thread-safe, and these could crash in a
+   SMP environment. So, it's necessary to isolate this drivers, to avoid
+   concurrency problems.
+
+
+### Solution
+
+To solve this, we need to implement some routines to detect the number of
+processors, assign an identifier to each processor, and configure the lapic and
+IPI support. These routines must be executed during Mach boot.
+
+> "Really, all the support you want to get from the hardware is just getting the
+> number of processors, initializing them, and   support for interprocessor
+> interrupts (IPI) for signaling." - Samuel Thibault
+> [link](https://lists.gnu.org/archive/html/bug-hurd/2018-08/msg00071.html)
+
+> "The process scheduler probably already has the support. What is missing is
+the hardware driver for SMP: enumeration and initialization." - Samuel Thibault
+[link](https://lists.gnu.org/archive/html/bug-hurd/2018-08/msg00083.html)
+
+The current necessary functions are `cpu_number()` (in kern/cpu_number.h) and
+`intel_startCPU()`.  Another non-critical function, is `cpu_control()`
+[*Reference*](https://www.gnu.org/software/hurd/gnumach-doc/Processor-Control.html#Processor-Control)
+
+Other interesting files are `pmap.c` and `sched_prim.c` We also
+have to build an isolated environment to execute the non-thread-safe drivers.
+
+> "Yes, this is a real concern. For the Linux drivers, the long-term goal is to
+> move them to userland anyway. For Mach drivers, quite often they are not
+> performance-sensitive, so big locks would be enough." - Samuel Thibault
+> [link](https://lists.gnu.org/archive/html/bug-hurd/2018-08/msg00073.html)
+
+### Task list
+
+1. DONE Implement a routine to detect and identify the processors
+
+   This routine must check the number of processors, initialize the lapic of BSP
+   (the master processor), and assign a kernel ID for each processor. This kernel
+   ID does not have to be equal to the APIC ID. The relation kernel/APIC can be
+   settled with an array, where the kernel ID is the index, and the APIC contains
+   the data.  GNU Mach can derive the list of processors from memory, reading from
+   ACPI table, or from MP table. However, MP table is deprecated in most modern
+   CPUs, so it is preferable to use ACPI table for this.
+
+   The tasks to do for this are:
+   
+   - Detect the number of processors
+   
+      - Create a array indexed by kernel ID, which sets a relation with APIC ID.
+   
+   - Initialize the lapic of BSP
+   
+   - Initialize IOAPIC
+
+      This routine could be called from `i386at_init()`
+      (i386/i386at/model_dep.c). This function will call the functions which
+      initialize the lapic and the ioapic.
+   
+        **NOTE**: This routine must be executed before `intel_startCPU()` or other routines.
+   
+   - **How to find APIC table**
+   
+       To find APIC table, we can read
+          RSDT table [RSDT reference](http://www.uefi.org/sites/default/files/resources/ACPI%206_2_A_Sept29.pdf#G10.1358180).
+          To get the address of RSDT, we need to read RDSP table. We can get the
+          RSDP table by this [RDSP
+          reference](http://www.uefi.org/sites/default/files/resources/ACPI%206_2_A_Sept29.pdf#G10.1357698)
+          Once we have the RSDT table, we need to read *Entry* field, and search the pointer to
+          the APIC table in the array referenced in this field.
+        
+       We can find an example about reading ACPI table in X15 OS:
+          [Reference](https://github.com/richardbraun/x15/blob/0c0e2a02a42a8161e1b8dc1e1943fe5057ecb3a3/arch/x86/machine/acpi.c#L576)
+        
+   - We need to initialize the `machine_slot` of each processor (currently only initializes cpu0).
+      The `machine_slot` has this structure. [Reference](https://github.com/AlmuHS/GNUMach_SMP/blob/0d490ef21c156907f3f26a6cdc00842f462a877a/include/mach/machine.h#L68):
+   
+   >  `struct machine_slot { /*boolean_t*/` <br/>
+   > `integer_t	is_cpu;` <br/> 
+   >  `/* is there a cpu in this slot? */ ` <br/>
+   >  `cpu_type_t cpu_type;	/* type of cpu */`  <br/>
+   > `cpu_subtype_t cpu_subtype;	/* subtype of cpu */`                                       <br/> 
+   > `/*boolean_t*/  integer_t	running;	/* is cpu running */` <br/>
+   > `integer_t	cpu_ticks[CPU_STATE_MAX];                         	integer_t` <br/>
+   >  `clock_freq;	/* clock interrupt frequency */                       };`      <br/>
+   
+   
+     We can find an example of initialization in this [link:](https://github.com/AlmuHS/GNUMach_SMP/blob/0d490ef21c156907f3f26a6cdc00842f462a877a/i386/i386at/model_dep.c#L612)
+   
+     This modification also involve the redefinition of `NCPUS`, which must be set
+     to the maximum **possible** number of processors.  We can do this by modifying
+     `configfrag.ac`, with this:
+   
+   > `# Multiprocessor support is still broken.` <br/>
+   > `AH_TEMPLATE([MULTIPROCESSOR], [set things up for a uniprocessor])` <br/>
+   > `mach_ncpus=2` <br/>
+   > `AC_DEFINE_UNQUOTED([NCPUS], [$mach_ncpus], [number of CPUs])` </br>
+   > `[if [$mach_ncpus` > `-gt 1 ]; then]` <br/>
+   > `AC_DEFINE([MULTIPROCESSOR], [1], [set things up for a` > `multiprocessor])`
+   > `AC_DEFINE_UNQUOTED([NCPUS], [256], [number of CPUs]) ` <br/>
+   > `[fi]` <br/>
+   
+   - Interesting files and functions - `machine.c`
+     [Link](https://github.com/AlmuHS/GNUMach_SMP/blob/master/kern/machine.c)
+   - `c_boot_entry()`
+      [Link](https://github.com/AlmuHS/GNUMach_SMP/blob/0d490ef21c156907f3f26a6cdc00842f462a877a/i386/i386at/model_dep.c#L529)
+
+  - Example, in X15 OS:
+     [Link](https://github.com/richardbraun/x15/blob/d6d90a3276a09da65690b019e985392bf77b53b0/arch/x86/machine/cpu.c#L1114)
+
+   1.1. Implement a `cpu_number()` function.
+
+
+     This function must return the kernel ID of the processor which is executing the function.  To
+     get this, we have to read the local apic memory space, which will show the
+     lapic of the current CPU. Reading the lapic, we can get its APIC ID.  Once
+     we have the APIC ID of the current CPU, the function will search in the
+     Kernel/APIC array until it finds the same APIC ID. Then it will return the
+     index (Kernel ID) of this position.
+
+2. DONE Implement a routine to initialize the processors
+
+
+   This routine will initialize the lapic of each processor and other structures
+   needed to run the kernel.  We can find an example of lapic initialization
+   here
+   [reference](https://github.com/mit-pdos/xv6-public/blob/b818915f793cd20c5d1e24f668534a9d690f3cc8/lapic.c#L55)
+   Also, we can get more information in Chapter 8.4 and 8.11 of Intel
+   Developer Guide,
+   Volume 3. [link](https://software.intel.com/sites/default/files/managed/a4/60/325384-sdm-vol-3abcd.pdf)
+
+3. DONE Implement `intel_startCPU()`
+
+
+   This function will initialize the descriptor tables of the processor specified by the
+   parameter, and launch the startup IPI to this processor.  This function will be
+   executed during the boot of the kernel (process 0).  The task to do in this function
+   are:
+
+  - Initialize the processor descriptor tables
+  - Launch Startup IPI to this processor
+     We have a current implementation of `intel_startCPU()` in this
+   [link](https://github.com/AlmuHS/GNUMach_SMP/blob/smp/i386/i386/mp_desc.c).
+   This implementation is based in XNU's `intel_startCPU()`
+     [function](https://github.com/nneonneo/osx-10.9-opensource/blob/f5a0b24e4d98574462c8f5e5dfcf0d37ef7e0764/xnu-2422.1.72/osfmk/i386/mp.c#L423)
+
+   We can find explainations about how to raise an IPI in this pages:
+   [*Reference 1*](https://www.cs.usfca.edu/~cruse/cs630f08/lesson22.ppt),
+   [*Reference 2*](https://www.cheesecake.org/sac/smp.html), [*Reference
+   3*](http://www.dis.uniroma1.it/pub/quaglia/AOSV-traps-interrupts.pdf) We can
+   get information about how to raise an IPI in Intel Developer Guide, Volume 3,
+   Chapter 10.6
+
+4. Implement another routine to start the processors
+
+
+   This routine calls to `processor_start()` for each processor, which will start the
+   processor using this sequence of calls: [`processor_start(processor_t
+   processor)`](https://github.com/AlmuHS/GNUMach_SMP/blob/5d527f532dfba9f2da54555d5fbe585dd458579b/kern/processor.c#L447)
+   ->
+   [`cpu_start(processor->slot_num)`](https://github.com/AlmuHS/GNUMach_SMP/blob/5d527f532dfba9f2da54555d5fbe585dd458579b/i386/i386/mp_desc.c#L335)
+   ->
+   [`intel_startCPU(cpu)`](https://github.com/AlmuHS/GNUMach_SMP/blob/5d527f532dfba9f2da54555d5fbe585dd458579b/i386/i386/mp_desc.c#L180)
+
+   These articles shows some annotations about how to do the AP Startup:
+
+   - [Reference1](https://wiki.osdev.org/Symmetric_Multiprocessing#AP_startup),
+   - [Reference2](https://stackoverflow.com/a/16368043/7077301) (...)
+
+      After implement IPI support, It's recommended reimplement `machine_idle()`,
+   `machine_relax ()`, `halt_cpu()` and `halt_all_cpus()` using IPI.
+   - [reference](https://github.com/AlmuHS/GNUMach_SMP/blob/0d490ef21c156907f3f26a6cdc00842f462a877a/i386/i386at/model_dep.c#L201)
+   - Also in `ast_check.c`, we have to implement both functions, using
+   IPI
+   [Reference](https://github.com/AlmuHS/GNUMach_SMP/blob/master/i386/i386/ast_check.c)
+
+
+   This functions must force the processors to check if there are any AST
+   signal, and we ought to keep in the mind the following irc chat:
+
+
+>      <AlmuHS> what is the use of AST in gnumach? <br/>
+>      <AlmuHS> this file what do? <br/>
+>       https://github.com/AlmuHS/GNUMach_SMP/blob/master/i386/i386/ast_check.c <br/>
+>       <youpi> I don't know <br/>
+>       <youpi> but look at what calls that <br/>
+>       <youpi> see e.g. the call in thread.c <br/>
+>       <AlmuHS> This <br/>
+>       function is called during the sequence of cpu_up(), in machine.c <br/>
+>       <AlmuHS> but only if NCPUS > 1 <br/>
+>       <youpi> it seems like it's to trigger an AST check on another <br/>
+>       processor <br/>
+>       <youpi> i.e. a processor tells another to run ast_check <br/>
+>       <youpi> (see the comment in thread.c) <br/>
+>       <AlmuHS> <br/>
+>       https://github.com/AlmuHS/GNUMach_SMP/blob/master/kern/machine.c <br/>
+>       <youpi> well, the initialization part is not necessarily what's
+>      important to <br/>
+>       think about at first <br/>
+>       <youpi> i.e. until you know what you'll have <br/>
+>       to do during execution, you don't know what you'll need to intialize at <br/>
+>       initialization <br/>
+>       <youpi> you might even not need to initialize anything <br/>
+>       <AlmuHS> then, this is the reason because all functions <br/>
+>       in ast_check.c are empty <br/>
+>       <youpi> cause_ast_check being empty is really probably a TODO <br/>
+>       <AlmuHS> but I'm not clear what I need to write in this functions <br/>
+>       <youpi> what the comment said: make another processor run ast_check() <br/>
+>       <youpi> which probably means raising an inter-processor interrupt <br/>
+>       <youpi> (aka IPI) <br/>
+>       <youpi> to get ast_check() called by the other processor <br/>
+>       <AlmuHS> then, this funcions must raise an IPI in the processor? <br/>
+>       <youpi> that's the idea <br/>
+>       <youpi> the IPI probably needs some setup <br/>
+
+We can use [XV6 source
+   code](https://pdos.csail.mit.edu/6.828/2018/xv6.html). as model to implements
+   the function and routines. Some interesting files are
+   [`lapic.c`](https://github.com/mit-pdos/xv6-public/blob/master/lapic.c),
+   [`proc.c`](https://github.com/mit-pdos/xv6-public/blob/master/proc.c) and
+   [`main.c`](https://github.com/mit-pdos/xv6-public/blob/master/main.c)
+
+
+## References
+- [Comments about the project bug-hurd
+maillist](https://lists.gnu.org/archive/html/bug-hurd/2018-08/msg00048.html)
+- [Initial thread in bug-hurd
+maillist](https://lists.gnu.org/archive/html/bug-hurd/2018-06/msg00048.html)
+- [SMP in GNU/Hurd FAQ](https://www.gnu.org/software/hurd/faq/smp.html)
+- [GNU Mach git repository](https://git.savannah.gnu.org/cgit/hurd/gnumach.git)
+- [GNU Mach reference manual](https://www.gnu.org/software/hurd/gnumach-doc/)
+- [**MultiProcessor Specification**](https://pdos.csail.mit.edu/6.828/2011/readings/ia32/MPspec.pdf)
+- [**ACPI Specification**](http://www.uefi.org/sites/default/files/resources/ACPI%206_2_A_Sept29.pdf)
+- [Mach boot trace](https://www.gnu.org/software/hurd/microkernel/mach/gnumach/boot_trace.html)
+- [SPL man page](https://man.openbsd.org/spl)
+- [Book: The Mach System](http://codex.cs.yale.edu/avi/os-book/OS9/appendices-dir/b.pdf)
+- [Book: Mach3 Mysteries](http://www.nv50.0fees.net/Doc/Mach3Mysteries.pdf)
+- [X15 operating system](https://www.sceen.net/x15)
+- [Symmetric Multiprocessing - OSDev Wiki](https://wiki.osdev.org/Symmetric_Multiprocessing)
+- [**Intel® 64 and IA-32 Architectures Software Developer’s Manuals**](https://software.intel.com/sites/default/files/managed/39/c5/325462-sdm-vol-1-2abcd-3abcd.pdf)
+- [**Intel Developer Guide, Volume 3: System Programming Guide**](https://software.intel.com/sites/default/files/managed/a4/60/325384-sdm-vol-3abcd.pdf)
+
+
+See also the [[FAQ entry|faq/smp]].
+

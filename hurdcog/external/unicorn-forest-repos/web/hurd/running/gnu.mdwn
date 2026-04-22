@@ -1,0 +1,36 @@
+[[!meta title="The GNU System"]]
+
+# <a name="The_GNU_Operating_System"> </a> The GNU Operating System
+
+The GNU Operating System, commonly referred to as simply "The GNU System", is a
+complete [[Unix]]-like operating system composed entirely of [free
+software](http://www.gnu.org/philosophy/free-sw.html).  The creation of the GNU
+System is one of the goals of the [GNU Project](http://www.gnu.org/), which was
+[launched in 1983](http://www.gnu.org/gnu/initial-announcement.html) by
+[Richard Stallman](http://www.stallman.org/).  The GNU/Hurd intends to 
+increase security through the [[principle of least
+privilege|https://en.wikipedia.org/wiki/Principle%5Fof%5Fleast%5Fprivilege]], provide an
+[[extensible system|extensibility]], conform to open operating standards
+including [[POSIX|https://en.wikipedia.org/wiki/POSIX]], contain a modular code-base, and
+[[respect user freedom|https://www.gnu.org/philosophy/free-sw.html]].  
+Many of these goals are things that the GNU/Hurd can
+resolve, however the GNU/Hurd is not yet the most stable operating system.
+
+If you are looking for a production ready GNU system, then [[hurd/running/Debian]] GNU/Hurd may
+not be the best choice for you.  Debian GNU/Hurd currently lacks many device drivers, sound 
+support, and a few other essential bits that provide a flexible operating system.
+It also has some tricky [[problems|challenges]] to solve.
+
+However, [[gnu.org|https://www.gnu.org/distros/free-distros.html]] maintains a
+list of freedom respecting and production ready GNU/Linux systems.  One of the
+most promising of these is [[Guix System|https://www.gnu.org/software/guix/]], which
+is the GNU Guix System Distribution, which eventually plans to support the GNU
+Hurd as the kernel! You can even use a 
+[[childhurd|https://guix.gnu.org/manual/devel/en/html_node/Virtualization-Services.html#The-Hurd-in-a-Virtual-Machine]]
+on Guix System!
+
+## Resources
+
+* [[mailing_lists/gnu-system-discuss]] mailing list
+* [Free as in Freedom 2.0 (PDF)](https://static.fsf.org/nosvn/faif-2.0.pdf)
+* [Free Software, Free Society (PDF)](https://www.gnu.org/philosophy/fsfs/rms-essays.pdf)

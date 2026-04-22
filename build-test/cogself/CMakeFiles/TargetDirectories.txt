@@ -1,0 +1,7 @@
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/cogself.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/edit_cache.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/rebuild_cache.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/list_install_components.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/install.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/install/local.dir
+/home/runner/work/occ/occ/build-test/cogself/CMakeFiles/install/strip.dir

@@ -1,0 +1,10 @@
+cogself (1.0.0-1) unstable; urgency=medium
+
+  * Initial release.
+  * Implements 9-Layer Unified Self/Identity Model.
+  * Layers: Molecular Substrate, Interoceptive Self, Autonomic Regulation,
+    Affective Core, Cognitive Architecture, Developmental Trajectory,
+    Narrative Identity, Social Self, Meta-Self.
+  * Includes CogPrime Identity, AGI Goal Tracker, Synergy Manager.
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 08 Mar 2026 00:00:00 +0000

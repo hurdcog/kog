@@ -1,0 +1,146 @@
+[[!meta copyright="Copyright © 2012, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+The *proc server* (or, *process server*) implements some aspects of [[Unix]]
+processes.
+
+It is stated by `/hurd/init`.
+
+
+# "Unusual" PIDs
+
+[[!tag open_issue_hurd]]
+
+
+## IRC, freenode, #hurd, 2012-08-10
+
+    <braunr> too bad the proc server has pid 0
+    <braunr> top & co won't show it
+
+
+## IRC, OFTC, #debian-hurd, 2012-09-18
+
+    <pinotree> youpi: did you see
+      https://enc.com.au/2012/09/careful-with-pids/'
+    <pinotree> ?
+    <youpi> nope
+
+
+## IRC, OFTC, #debian-hurd, 2013-06-23
+
+    <teythoon> I've got this idea about the pid 1 issue you mentioned
+    <teythoon> can't we just make init pid 1?
+    <teythoon> I mean the mapping is rather arbitrary, we could make our init
+      pid 2 or something and start sysvs init as pid 1
+    <pinotree> not totally sure it is that arbitrary up to the first 4-5 pids
+    <teythoon> y is that?
+    <pinotree> at least i see in hurd's code that /hurd/init is assumed as
+      pid=1
+    <teythoon> hurds init that has to stick around for the fs translator sync?
+    <pinotree> hurd's init does the basic server startup
+    <pinotree> iirc it also takes care of shutdown/reboot
+    <teythoon> that's what I meant
+    <teythoon> and if it wouldn't have to stick around for the translator sync
+      it could just exec sysvinit
+    <teythoon> I just think it's easier to patch hurd than to remove the
+      assumption that init is pid 1 from sysvinit
+
+
+## IRC, freenode, #hurd, 2013-09-13
+
+    <braunr> teythoon: also, as a feature request, i'd like the proc server not
+      to have pid 0, if you have any time to do that
+    <braunr> so it appears in top and friends
+    <teythoon> braunr: noted, that should be easy
+    <teythoon> not using 0 is probably a good thing, many things use pid 0 as
+      something special
+
+
+## IRC, freenode, #hurd, 2013-09-25
+
+    <braunr> so nice to finally see proc in top :)
+
+
+# Process Discovery
+
+## IRC, freenode, #hurd, 2013-08-26
+
+    < teythoon> somewhat related, I do not like the way the proc server just
+      creates processes for new mach tasks it discovers
+    < teythoon> that does not play well with subhurds for example
+    < braunr> teythoon: i agree with you on proc process-to-task mapping
+    < braunr> that's something i intend to completely rework on propel
+    < braunr> in a way similar to how pid namespaces work on linux
+
+
+# PID "Races"
+
+## IRC, freenode, #hurd, 2014-01-26
+
+    <quotemstr> Does Hurd have anything that generally solves PID races?
+    <youpi> what kind of race are you thinking about?
+    <youpi> I'm not sure, but I guess keeping a reference to a task port will
+      prevent the proc server from recycling the corresponding pid
+    <quotemstr> Yep.
+    <quotemstr> How does the Hurd avoid the obvious denial-of-service attack
+      that results?
+    <youpi> well quotas would probably be enough
+    <youpi> that's not a new issue :)
+    <quotemstr> Fair enough.
+    <quotemstr> Returning to the POSIX-y world after a few year stint over in
+      NT-land, it's infuriating that it's still not possible to write a
+      reliable killall(1) under Linux or the BSDs.
+    <quotemstr> I'm glad Hurd solves the problem. :-)
+    <braunr> but it doesn't
+    <braunr> how can you write a reliable killall ?
+    <youpi> so keeping a reference to the task port is not enough?
+    <braunr> i'm not sure
+    <braunr> first i'd like quotemstr to clearly define the reliability problem
+      of killall
+    <quotemstr> braunr: The possibility that a PID might be used between the
+      time you decide to kill it and the time you actually kill it.
+    <braunr> well, it would have to wrap around for that
+    <quotemstr> braunr: So? It's possible.
+    <braunr> i guess that's what you refer to
+    <braunr> ok
+    <braunr> well yes, it's possible to easily create a routine that atomically
+      increases the number of references on a task/process when looking it up
+    <braunr> preventing its removal from the list of processes reported by the
+      proc server
+    <quotemstr> Like OpenProcess? :-) Would this reference count be
+      automatically decremented if the task owning the reference is killed?
+    <braunr> it would clearly not be a "posixy killall" then, but i suppose we
+      don't care about that at all
+    <braunr> no
+    <quotemstr> Oh.
+    <braunr> destroying an object doesn't remove its references 
+    <quotemstr> So it's possible to leak the reference and prevent reuse of
+      that PID forever.
+    <braunr> hardly
+    <braunr> for that, killall would have to run a long time
+    <quotemstr> braunr: No, I'm talking about our hypothetical killall itself
+      being killed after taking out a reference on another process, but before
+      releasing it
+    <braunr> but a malicious killall could
+    <braunr> when a task is destroyed, its capability space is destroyed too
+    <braunr> removing all the references it previously had
+    <quotemstr> Ah, I see.
+    <braunr> the leaks we have occur in servers
+    <braunr> which sometimes act as clients to other servers
+    <braunr> and run forever
+
+
+# Crashes due to rpctrace
+
+## IRC, freenode, #hurd, 2014-02-18
+
+    <braunr> something is wrong in the proc server
+    <braunr> rpctrace is often causing it to crash ..

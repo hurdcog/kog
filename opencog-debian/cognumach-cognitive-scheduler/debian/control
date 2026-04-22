@@ -1,0 +1,54 @@
+Source: cognumach-cognitive-scheduler
+Section: kernel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11),
+               build-essential,
+               gcc-multilib,
+               cognumach-dev,
+               hurdcog-machspace,
+               libcogutil-dev,
+               autoconf,
+               automake,
+               texinfo
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: cognumach-cognitive-scheduler
+Architecture: i386
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         cognumach,
+         hurdcog-machspace
+Description: Cognitive-aware process scheduler for Cognumach microkernel
+ This package implements a cognitive-aware process scheduler that extends
+ the standard Mach scheduler with attention-based CPU allocation and
+ learning-based scheduling policies.
+ .
+ The cognitive scheduler enables the Cognumach microkernel to allocate
+ CPU time based not only on traditional priority metrics but also on
+ cognitive attention values and reasoning importance. This allows the
+ AGI-OS to prioritize cognitive workloads dynamically based on their
+ current relevance to system goals.
+ .
+ Key features include:
+  - Attention-based CPU allocation
+  - Learning-based scheduling policies that adapt over time
+  - Cognitive workload detection and classification
+  - Priority adaptation based on reasoning importance
+  - Integration with MachSpace for attention value access
+  - Support for Tensor Thread Fiber scheduling
+ .
+ This package is a critical component of the AGI-OS architecture,
+ enabling cognitive-aware resource management at the microkernel level.
+
+Package: cognumach-cognitive-scheduler-dev
+Architecture: i386
+Depends: ${misc:Depends},
+         cognumach-cognitive-scheduler (= ${binary:Version}),
+         cognumach-dev
+Description: Development files for Cognumach Cognitive Scheduler
+ This package contains header files and documentation for developing
+ kernel modules that interact with the cognitive scheduler.

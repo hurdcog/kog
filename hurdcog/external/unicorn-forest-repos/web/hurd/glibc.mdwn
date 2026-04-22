@@ -1,0 +1,62 @@
+[[!meta copyright="Copyright © 2007, 2008, 2009, 2010, 2018 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[General_information|/glibc]] about the glibc.
+
+For information about how the glibc integrates into the system, see sections
+2.1 and 2.5 of the [[critique]].
+
+[[Hurd-specific_API]].
+
+[[Debugging_glibc|debugging/glibc]].
+
+
+# Cross-building
+
+The long-term goal is to get `build-many-glibcs.py` to be able to cross-compile
+glibc. This should be working as per the following:
+
+    $ mkdir -p /tmp/build/src
+    $ cp -a /usr/src/glibc /tmp/build/src/
+    $ unset CFLAGS
+    $ /tmp/build/src/glibc/scripts/build-many-glibcs.py --shallow /tmp/build checkout
+    $ /tmp/build/src/glibc/scripts/build-many-glibcs.py --strip /tmp/build host-libraries
+    $ /tmp/build/src/glibc/scripts/build-many-glibcs.py --strip /tmp/build compilers i686-gnu
+    $ /tmp/build/src/glibc/scripts/build-many-glibcs.py /tmp/build glibcs i686-gnu
+
+Currently the master branch builds that way without any testsuite issue.
+
+To save some disk space, after the compilers stage you can remove src/mpc, src/mpfr, src/binutils, src/linux.
+
+Build logs are available in `/tmp/build/logs`
+
+# Building
+
+One can build libc this way:
+
+    $ mkdir build
+    $ cd build
+    $ unset CFLAGS
+    $ ../configure --prefix=/usr
+    $ make
+    $ make check -k
+
+One can run tests individually with:
+
+    $ make test t=wcsmbs/test-wcsnlen
+
+One can run tests with the new libc by hand:
+
+    $ ./testrun.sh ~/test
+
+One can build by hand some target with e.g.:
+
+    $ make $PWD/htl/libpthread.so -C ../htl subdir=htl objdir=$PWD ..=../

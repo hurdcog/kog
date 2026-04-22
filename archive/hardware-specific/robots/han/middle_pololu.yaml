@@ -1,0 +1,102 @@
+Jaw_open:
+  motor_id: 2
+  init: 1570
+  min: 1520
+  max: 2085
+  labelleft: Jaw_open
+  sort_no: 240
+  group: Lips
+  speed: 0.1
+  acceleration: 0.05
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: jaw
+      function:
+        - name: linear
+          min: 0
+          max: 1
+
+Smile_R:
+  motor_id: 3
+  init: 1430
+  min: 1000
+  max: 2175
+  labelleft: Smile_R
+  sort_no: 150
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: lips-smile.R;lips-frown.R
+      function:
+        - name: weightedsum
+          imin: 0.366
+          terms:
+          - {min: 0, max: 0.8, imax: 0}
+          - {min: 0, max: 0.6, imax: 1}
+
+Inner_Brow_R_UD:
+  motor_id: 4
+  init: 1600
+  min: 1023
+  max: 2175
+  labelleft: Inner_Brow_R_UD
+  sort_no: 20
+  group: Brow
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: brow_inner_DN.R;brow_inner_UP.R
+      function:
+        - name: weightedsum
+          imin: 0.501
+          terms:
+          - {min: 0, max: 1, imax: 0}
+          - {min: 0, max: 1, imax: 1}
+
+Brow_Inner_L:
+  motor_id: 1
+  init: 1380
+  min: 820
+  max: 2100
+  labelleft: Brow_Inner_L
+  sort_no: 30
+  group: Brow
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: brow_inner_UP.L;brow_inner_DN.L
+      function:
+        - name: weightedsum
+          imin: 0.438
+          terms:
+          - {min: 0, max: 1, imax: 0}
+          - {min: 0, max: 1, imax: 1}
+
+Smile_L:
+  motor_id: 0
+  init: 1888
+  min: 1188
+  max: 2175
+  labelleft: Smile_L
+  sort_no: 170
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: lips-frown.L;lips-smile.L
+      function:
+        - name: weightedsum
+          imin: 0.709
+          terms:
+          - {min: 0, max: 0.8, imax: 0}
+          - {min: 0, max: 0.6, imax: 1}

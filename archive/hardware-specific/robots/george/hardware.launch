@@ -1,0 +1,13 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+    <node name="pololu" pkg="ros_pololu" type="ros_pololu_node.py" output="screen">
+        <param name="pololu_motors_yaml" value="$(find robots_config)/george/face.yaml" />
+        <param name="port_name" value="/dev/rfcomm0" />
+        <param name="topic_prefix" value="head/" />
+        <param name="controller" value="MicroSSC" />
+        <param name="sync" value="on" />
+    </node>
+    <node name="body" pkg="george_body" type="body_control.py" output="screen">
+        <param name="port" value="/dev/rfcomm1" />
+    </node>
+</launch>

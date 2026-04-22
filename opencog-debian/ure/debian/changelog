@@ -1,0 +1,53 @@
+opencog-ure (1.0.0~git20240329.fa67055-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Fri, 29 Mar 2024 21:29:36 +0900
+
+opencog-ure (1.0.0~git20240306.fa67055-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 06 Mar 2024 17:32:17 +0900
+
+opencog-ure (1.0.0~git20240306.86c4cca-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 06 Mar 2024 17:31:55 +0900
+
+opencog-ure (1.0.0~git20201222.86c4cca-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 22 Dec 2020 13:25:36 +0900
+
+opencog-ure (1.0.0~git20201203.fa72876-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 03 Dec 2020 03:15:16 +0900
+
+opencog-ure (1.0.0~git20200823.efb030b-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 05:29:41 +0900
+
+opencog-ure (1.0.0~git20200404.89d55ab-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 09:00:45 +0900
+
+opencog-ure (1.0.0~git20200402.89d55ab-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 06:54:24 +0900
+
+opencog-ure (1.0.0~git20190820.a62b1b1-1) mhatta-unstable; urgency=medium
+
+  * Initial release.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 20 Aug 2019 19:56:03 -0700

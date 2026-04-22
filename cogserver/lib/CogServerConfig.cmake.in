@@ -1,0 +1,23 @@
+@PACKAGE_INIT@
+
+# For in-tree monorepo builds, targets are already defined by add_subdirectory.
+IF(NOT ATOMSPACE_IN_TREE_BUILD)
+    IF(EXISTS "@CMAKE_INSTALL_PREFIX@/lib/cmake/CogServer/CogServerTargets.cmake")
+        include("@CMAKE_INSTALL_PREFIX@/lib/cmake/CogServer/CogServerTargets.cmake")
+    ENDIF()
+ENDIF()
+
+# libscheme-shell.so is in the modules directory
+link_directories(
+	"@CMAKE_INSTALL_PREFIX@/lib@LIB_DIR_SUFFIX@/opencog/"
+	"@CMAKE_INSTALL_PREFIX@/lib@LIB_DIR_SUFFIX@/opencog/modules"
+)
+set(COGSERVER_LIBRARIES
+	network
+	server
+)
+
+set(COGSERVER_DATA_DIR "@CMAKE_INSTALL_PREFIX@/share/opencog")
+set(COGSERVER_INCLUDE_DIR "@CMAKE_INSTALL_PREFIX@/include/")
+set(COGSERVER_VERSION "@SEMANTIC_VERSION@")
+set(COGSERVER_FOUND 1)

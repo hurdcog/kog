@@ -1,0 +1,247 @@
+# ============================================================================
+# CMake-Based Build Sequences
+# ============================================================================
+# This section defines the proper build sequences for all components
+# according to their dependency relationships defined in docs/BUILD_SEQUENCES.md
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Layer 1: Cognumach Build Sequence (via CMake wrapper)
+# ----------------------------------------------------------------------------
+
+.PHONY: cmake-cognumach
+cmake-cognumach:
+	@echo "$(COLOR_BLUE)Building Cognumach via CMake wrapper...$(COLOR_RESET)"
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGNUMACH=ON \
+			-DBUILD_HURDCOG=OFF \
+			-DBUILD_COGUTIL=OFF \
+			-DBUILD_ATOMSPACE=OFF && \
+		make cognumach-build -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Cognumach built via CMake$(COLOR_RESET)"
+
+# ----------------------------------------------------------------------------
+# Layer 2: HurdCog Build Sequence (via CMake wrapper)
+# ----------------------------------------------------------------------------
+
+.PHONY: cmake-hurdcog
+cmake-hurdcog: cmake-cognumach
+	@echo "$(COLOR_BLUE)Building HurdCog via CMake wrapper...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGNUMACH=ON \
+			-DBUILD_HURDCOG=ON \
+			-DBUILD_COGUTIL=OFF \
+			-DBUILD_ATOMSPACE=OFF && \
+		make hurdcog-build -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ HurdCog built via CMake$(COLOR_RESET)"
+
+# ----------------------------------------------------------------------------
+# Layer 3: OCC Build Sequence (CMake native)
+# ============================================================================
+# Build order follows dependency graph:
+# 1. Foundation: cogutil, atomspace
+# 2. Storage: atomspace-storage, atomspace-rocks, atomspace-cog, atomspace-pgres
+# 3. Network: cogserver
+# 4. Math: matrix
+# 5. Reasoning: unify, ure, pln, miner
+# 6. Learning: learn
+# 7. Attention: attention
+# 8. Agents: agents, sensory
+# 9. Evolution: asmoses
+# 10. Cognitive Arch: coggml, cogself, atomspace-accelerator, agentic-chatbots
+# ----------------------------------------------------------------------------
+
+# Build foundation components
+.PHONY: cmake-foundation
+cmake-foundation:
+	@echo "$(COLOR_BLUE)Building OCC Foundation (cogutil, atomspace)...$(COLOR_RESET)"
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGNUMACH=OFF \
+			-DBUILD_HURDCOG=OFF \
+			-DBUILD_COGUTIL=ON \
+			-DBUILD_ATOMSPACE=ON \
+			-DBUILD_COGSERVER=OFF \
+			-DBUILD_MATRIX=OFF && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Foundation built (cogutil, atomspace)$(COLOR_RESET)"
+
+# Build storage backends
+.PHONY: cmake-storage
+cmake-storage: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Storage Backends...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_ATOMSPACE_STORAGE=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Storage backends built$(COLOR_RESET)"
+
+# Build network layer
+.PHONY: cmake-network
+cmake-network: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Network Layer (cogserver)...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGSERVER=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Network layer built$(COLOR_RESET)"
+
+# Build math layer
+.PHONY: cmake-math
+cmake-math: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Math Layer (matrix)...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_MATRIX=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Math layer built$(COLOR_RESET)"
+
+# Build reasoning components
+.PHONY: cmake-reasoning
+cmake-reasoning: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Reasoning Components (unify, ure, pln, miner)...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_ATOMSPACE=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Reasoning components built$(COLOR_RESET)"
+
+# Build learning components
+.PHONY: cmake-learning
+cmake-learning: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Learning Components (learn)...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_LEARN=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Learning components built$(COLOR_RESET)"
+
+# Build attention components
+.PHONY: cmake-attention
+cmake-attention: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Attention Components...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_ATOMSPACE=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Attention components built$(COLOR_RESET)"
+
+# Build agent framework
+.PHONY: cmake-agents
+cmake-agents: cmake-foundation
+	@echo "$(COLOR_BLUE)Building Agent Framework (agents, sensory)...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_AGENTS=ON \
+			-DBUILD_SENSORY=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Agent framework built$(COLOR_RESET)"
+
+# Build cognitive architecture
+.PHONY: cmake-cognitive-arch
+cmake-cognitive-arch:
+	@echo "$(COLOR_BLUE)Building Cognitive Architecture Components...$(COLOR_RESET)"
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGGML=ON \
+			-DBUILD_COGSELF=ON \
+			-DBUILD_ATOMSPACE_ACCELERATOR=ON \
+			-DBUILD_AGENTIC_CHATBOTS=ON && \
+		make -j$(NPROC)
+	@echo "$(COLOR_GREEN)  ✓ Cognitive architecture built$(COLOR_RESET)"
+
+# Build complete OCC stack
+.PHONY: cmake-occ-full
+cmake-occ-full: cmake-foundation cmake-storage cmake-network cmake-math \
+                cmake-reasoning cmake-learning cmake-attention cmake-agents \
+                cmake-cognitive-arch
+	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ Complete OCC stack built!$(COLOR_RESET)"
+
+# ----------------------------------------------------------------------------
+# Complete AGI-OS Stack Build Sequence
+# ----------------------------------------------------------------------------
+
+.PHONY: cmake-agi-os-stack
+cmake-agi-os-stack:
+	@echo "$(COLOR_CYAN)$(COLOR_BOLD)"
+	@echo "╔════════════════════════════════════════════════════════════════╗"
+	@echo "║     Building Complete AGI-OS Stack via CMake                   ║"
+	@echo "║     Layer 1: Cognumach → Layer 2: HurdCog → Layer 3: OCC      ║"
+	@echo "╚════════════════════════════════════════════════════════════════╝"
+	@echo "$(COLOR_RESET)"
+	@echo ""
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && \
+		cmake $(ROOT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+			-DBUILD_COGNUMACH=ON \
+			-DBUILD_HURDCOG=ON \
+			-DBUILD_COGUTIL=ON \
+			-DBUILD_ATOMSPACE=ON \
+			-DBUILD_COGSERVER=ON \
+			-DBUILD_MATRIX=ON \
+			-DBUILD_LEARN=ON \
+			-DBUILD_AGENTS=ON \
+			-DBUILD_SENSORY=ON \
+			-DBUILD_COGGML=ON \
+			-DBUILD_COGSELF=ON \
+			-DBUILD_ATOMSPACE_ACCELERATOR=ON \
+			-DBUILD_AGENTIC_CHATBOTS=ON \
+			-DBUILD_ATOMSPACE_STORAGE=ON && \
+		make -j$(NPROC)
+	@echo ""
+	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ Complete AGI-OS stack built successfully!$(COLOR_RESET)"
+	@echo ""
+	@echo "Build sequence completed:"
+	@echo "  1. Layer 1: Cognumach (microkernel)"
+	@echo "  2. Layer 2: HurdCog (OS + cognitive extensions)"
+	@echo "  3. Layer 3: OCC (AGI framework)"
+	@echo ""
+
+# Build sequences help
+.PHONY: build-sequences-help
+build-sequences-help:
+	@echo "$(COLOR_CYAN)$(COLOR_BOLD)CMake Build Sequences$(COLOR_RESET)"
+	@echo "$(COLOR_CYAN)═════════════════════════════════════$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_BOLD)Layer 1 (Cognumach):$(COLOR_RESET)"
+	@echo "  make cmake-cognumach           Build Cognumach microkernel"
+	@echo ""
+	@echo "$(COLOR_BOLD)Layer 2 (HurdCog):$(COLOR_RESET)"
+	@echo "  make cmake-hurdcog             Build HurdCog (requires cognumach)"
+	@echo ""
+	@echo "$(COLOR_BOLD)Layer 3 (OCC Components):$(COLOR_RESET)"
+	@echo "  make cmake-foundation          Build cogutil + atomspace"
+	@echo "  make cmake-storage             Build storage backends"
+	@echo "  make cmake-network             Build cogserver"
+	@echo "  make cmake-math                Build matrix"
+	@echo "  make cmake-reasoning           Build unify, ure, pln, miner"
+	@echo "  make cmake-learning            Build learn"
+	@echo "  make cmake-attention           Build attention/ECAN"
+	@echo "  make cmake-agents              Build agents + sensory"
+	@echo "  make cmake-cognitive-arch      Build coggml, cogself, etc."
+	@echo "  make cmake-occ-full            Build complete OCC stack"
+	@echo ""
+	@echo "$(COLOR_BOLD)Complete Stack:$(COLOR_RESET)"
+	@echo "  make cmake-agi-os-stack        Build all layers (recommended)"
+	@echo ""
+	@echo "For detailed build sequences, see: docs/BUILD_SEQUENCES.md"
+	@echo ""
+
+# Set default CMake build type
+CMAKE_BUILD_TYPE ?= Release

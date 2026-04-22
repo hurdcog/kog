@@ -1,0 +1,14 @@
+hurdcog (0.9.0-1) unstable; urgency=medium
+
+  * Initial Debian package release
+  * OpenCog-powered GNU Hurd cognitive operating system
+  * Cognitive Fusion Reactor for multi-paradigm AI
+  * Master Control Dashboard for system monitoring
+  * AtomSpace integration at OS level (MachSpace)
+  * Cognitive-grip abstraction layer
+  * Learning and adaptation in system services
+  * Distributed cognitive processing
+  * Integration with Cognumach microkernel
+  * Layer 2 of AGI-OS architecture
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2024 15:00:00 +0000

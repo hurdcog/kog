@@ -1,0 +1,48 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+There are locking issues in the Hurd's libraries.
+
+[[!toc]]
+
+
+# Original [[community/GSoC]] Task Description
+
+[[!inline pages=community/gsoc/project_ideas/libdiskfs_locking feeds=no]]
+
+
+# ext2fs Deadlock
+
+[[ext2fs_deadlock]].
+
+
+# Formal Verification
+
+Methods of [[formal_verification]] should be applied to get an understanding of
+the behavior of the locking logic.  There are tools for formal
+verification/[[code_analysis]] that can likely help here.
+
+There is a [[!FF_project 278]][[!tag bounty]] on this task.
+
+
+# IRC, OFTC, #debian-hurd, 2012-12-15
+
+    <Steap> youpi: can you think of a locking error recently fixed in the
+      translators ? I'd like to try a Coccinelle script on a real-world example
+    <youpi> 0b6286a3c5eb86e3cca72d0840fc009855e4fba5 for instance
+    <youpi> or a60414ee7fdabb2bdfb17fe82b9a09f811bd2de0
+    <youpi> or b8082aab5049f753abd720a5ef6a113e2acef911
+    <Steap> thx, I think I might have caught a few double unlocks, I'll send
+      patches/bug reports this week-end
+
+[[!message-id "1355701890-29227-1-git-send-email-tipecaml@gmail.com"]].

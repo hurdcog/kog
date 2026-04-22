@@ -1,0 +1,188 @@
+/*
+ * Mach Operating System
+ * Copyright (c) 1991,1990,1989 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ */
+
+/*
+ * Advanced Development Tools Interface for GNU Mach
+ * 
+ * This subsystem provides kernel-level support for advanced development
+ * and debugging tools including Valgrind memory checking, whole system
+ * debugging, and security analysis integration.
+ */
+
+subsystem
+#if	KERNEL_USER
+	  KernelUser
+#endif	/* KERNEL_USER */
+#if	KERNEL_SERVER
+	  KernelServer  
+#endif	/* KERNEL_SERVER */
+		       development_tools 3600;
+
+#ifdef	KERNEL_USER
+userprefix r_;
+#endif	/* KERNEL_USER */
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+type vm_address_t = natural_t;
+type vm_size_t = natural_t;
+
+/*
+ * Valgrind Memory Checking Interface
+ */
+
+/* Enable/disable Valgrind support */
+routine valgrind_enable(
+		host		: host_t;
+		enable		: boolean_t);
+
+/* Track memory allocation */
+routine valgrind_track_alloc(
+		host		: host_t;
+		address		: vm_address_t;
+		size		: vm_size_t;
+		caller_pc	: vm_address_t);
+
+/* Track memory deallocation */
+routine valgrind_track_free(
+		host		: host_t;
+		address		: vm_address_t);
+
+/* Mark memory as defined/initialized */  
+routine valgrind_make_defined(
+		host		: host_t;
+		address		: vm_address_t;
+		size		: vm_size_t);
+
+/* Mark memory as undefined/uninitialized */
+routine valgrind_make_undefined(
+		host		: host_t;
+		address		: vm_address_t;
+		size		: vm_size_t);
+
+/* Mark memory as inaccessible */
+routine valgrind_make_noaccess(
+		host		: host_t;
+		address		: vm_address_t;
+		size		: vm_size_t);
+
+/* Check memory state */
+routine valgrind_check_memory(
+		host		: host_t;
+		address		: vm_address_t;
+		size		: vm_size_t;
+	out	is_defined	: boolean_t;
+	out	is_addressable	: boolean_t);
+
+/* Handle Valgrind client requests */
+routine valgrind_client_request(
+		host		: host_t;
+		request		: uint32_t;
+		arg1		: vm_address_t;
+		arg2		: vm_address_t;
+		arg3		: vm_address_t;
+		arg4		: vm_address_t;
+		arg5		: vm_address_t;
+	out	result		: kern_return_t);
+
+/*
+ * Whole System Debugging Interface
+ */
+
+/* Enable system-wide debugging */
+routine system_debug_enable(
+		host		: host_t;
+		subsystem	: uint32_t;
+		level		: uint32_t);
+
+/* Report system debug event */
+simpleroutine system_debug_event(
+		host		: host_t;
+		subsystem	: uint32_t;
+		event_type	: uint32_t;
+		address		: vm_address_t;
+		context		: c_string);
+
+/* Get debugging statistics */
+routine system_debug_get_stats(
+		host		: host_t;
+		subsystem	: uint32_t;
+	out	stats_count	: natural_t;
+	out	stats		: pointer_t);
+
+/* Set cross-component tracking */
+routine system_debug_set_tracking(
+		host		: host_t;
+		enable		: boolean_t);
+
+/* Dump unified debugging state */
+simpleroutine system_debug_dump_state(
+		host		: host_t);
+
+/*
+ * Security Analysis Interface
+ */
+
+/* Enable security monitoring */
+routine security_monitor_enable(
+		host		: host_t;
+		enable		: boolean_t);
+
+/* Report security event */
+simpleroutine security_event_report(
+		host		: host_t;
+		event_type	: uint32_t;
+		address		: vm_address_t;
+		context		: c_string);
+
+/* Get security statistics */  
+routine security_get_statistics(
+		host		: host_t;
+	out	stats_count	: natural_t;
+	out	stats		: pointer_t);
+
+/* Initialize buffer guard */
+routine security_buffer_guard_init(
+		host		: host_t;
+		buffer_addr	: vm_address_t;
+		buffer_size	: vm_size_t;
+	out	guard_id	: uint32_t);
+
+/* Check buffer integrity */
+routine security_buffer_guard_check(
+		host		: host_t;
+		guard_id	: uint32_t;
+	out	is_valid	: boolean_t);
+
+/* Validate control flow integrity */
+routine security_cfi_validate(
+		host		: host_t;
+		return_addr	: vm_address_t;
+		expected_addr	: vm_address_t;
+	out	is_valid	: boolean_t);
+
+/* Reset security statistics */
+simpleroutine security_reset_statistics(
+		host		: host_t);
+
+/*
+ * Skip entries to maintain syscall number compatibility
+ * These would be used for future extensions
+ */
+skip; /* 3624 reserved */
+skip; /* 3625 reserved */
+skip; /* 3626 reserved */
+skip; /* 3627 reserved */
+skip; /* 3628 reserved */
+skip; /* 3629 reserved */
+skip; /* 3630 reserved */

@@ -1,0 +1,19 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+`devnode` is the Hurd devnode translator. It exposes a Mach device as
+a filesystem node (hence "devnode"), so you can do `open("/dev/foobar")`
+then `device_open("foobar")`. In particular this means that the
+Unix permission model can be used to manage access to the fs node,
+rather than you having to have the device master port (= be root).
+

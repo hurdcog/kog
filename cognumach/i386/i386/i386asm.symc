@@ -1,0 +1,233 @@
+#include <sys/reboot.h>
+#include <kern/thread.h>
+#include <kern/task.h>
+#include <kern/syscall_emulation.h>
+#include <i386/thread.h>
+#include <i386/pmap.h>
+#include <i386/vm_param.h>
+#include <i386/seg.h>
+#include <i386/tss.h>
+#include <i386at/idt.h>
+#include <i386/gdt.h>
+#include <i386/ldt.h>
+#include <i386/mp_desc.h>
+#include <i386/apic.h>
+#include <i386/xen.h>
+void bogus(void);
+void bogus(void) {
+__asm ("\n\
+* CALL_AST_CHECK mAgIc%0" : : "i" (CALL_AST_CHECK));
+__asm ("\n\
+* CALL_PMAP_UPDATE mAgIc%0" : : "i" (CALL_PMAP_UPDATE));
+__asm ("\n\
+* APIC_ID mAgIc%0" : : "i" (&((struct ApicLocalUnit*)0)->apic_id));
+__asm ("\n\
+* PERCPU_CPU_ID mAgIc%0" : : "i" (&((struct percpu*)0)->cpu_id));
+__asm ("\n\
+* PERCPU_ACTIVE_THREAD mAgIc%0" : : "i" (&((struct percpu*)0)->active_thread));
+__asm ("\n\
+* PERCPU_ACTIVE_STACK mAgIc%0" : : "i" (&((struct percpu*)0)->active_stack));
+__asm ("\n\
+* PCB_ISS mAgIc%0" : : "i" (&((struct pcb*)0)->iss));
+__asm ("\n\
+* PC_SIZE mAgIc%0" : : "i" (sizeof(struct percpu)));
+__asm ("\n\
+* TH_PCB mAgIc%0" : : "i" (&((struct thread*)0)->pcb));
+__asm ("\n\
+* TH_TASK mAgIc%0" : : "i" (&((struct thread*)0)->task));
+__asm ("\n\
+* TH_RECOVER mAgIc%0" : : "i" (&((struct thread*)0)->recover));
+__asm ("\n\
+* TH_KERNEL_STACK mAgIc%0" : : "i" (&((struct thread*)0)->kernel_stack));
+__asm ("\n\
+* TH_SWAP_FUNC mAgIc%0" : : "i" (&((struct thread*)0)->swap_func));
+__asm ("\n\
+* TASK_EMUL mAgIc%0" : : "i" (&((struct task*)0)->eml_dispatch));
+__asm ("\n\
+* DISP_MIN mAgIc%0" : : "i" (&((struct eml_dispatch*)0)->disp_min));
+__asm ("\n\
+* DISP_COUNT mAgIc%0" : : "i" (&((struct eml_dispatch*)0)->disp_count));
+__asm ("\n\
+* DISP_VECTOR mAgIc%0" : : "i" (&((struct eml_dispatch*)0)->disp_vector));
+__asm ("\n\
+* KSS_EBX mAgIc%0" : : "i" (&STACK_IKS(0)->k_ebx));
+__asm ("\n\
+* KSS_ESP mAgIc%0" : : "i" (&STACK_IKS(0)->k_esp));
+__asm ("\n\
+* KSS_EBP mAgIc%0" : : "i" (&STACK_IKS(0)->k_ebp));
+#ifdef __i386__
+__asm ("\n\
+* KSS_ESI mAgIc%0" : : "i" (&STACK_IKS(0)->k_esi));
+__asm ("\n\
+* KSS_EDI mAgIc%0" : : "i" (&STACK_IKS(0)->k_edi));
+#endif
+__asm ("\n\
+* KSS_EIP mAgIc%0" : : "i" (&STACK_IKS(0)->k_eip));
+#ifdef __x86_64__
+__asm ("\n\
+* KSS_R12 mAgIc%0" : : "i" (&STACK_IKS(0)->k_r12));
+__asm ("\n\
+* KSS_R13 mAgIc%0" : : "i" (&STACK_IKS(0)->k_r13));
+__asm ("\n\
+* KSS_R14 mAgIc%0" : : "i" (&STACK_IKS(0)->k_r14));
+__asm ("\n\
+* KSS_R15 mAgIc%0" : : "i" (&STACK_IKS(0)->k_r15));
+#endif
+__asm ("\n\
+* IKS_SIZE mAgIc%0" : : "i" (sizeof(struct i386_kernel_state)));
+__asm ("\n\
+* IEL_SIZE mAgIc%0" : : "i" (sizeof(struct i386_exception_link)));
+#if !defined(__x86_64__) || defined(USER32)
+__asm ("\n\
+* R_GS mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->gs));
+__asm ("\n\
+* R_FS mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->fs));
+#endif
+__asm ("\n\
+* R_CS mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->cs));
+__asm ("\n\
+* R_UESP mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->uesp));
+__asm ("\n\
+* R_EAX mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->eax));
+__asm ("\n\
+* R_EBX mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->ebx));
+__asm ("\n\
+* R_ECX mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->ecx));
+__asm ("\n\
+* R_EDX mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->edx));
+__asm ("\n\
+* R_EBP mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->ebp));
+__asm ("\n\
+* R_TRAPNO mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->trapno));
+__asm ("\n\
+* R_ERR mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->err));
+__asm ("\n\
+* R_EFLAGS mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->efl));
+__asm ("\n\
+* R_EIP mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->eip));
+__asm ("\n\
+* R_CR2 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->cr2));
+__asm ("\n\
+* R_EDI mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->edi));
+__asm ("\n\
+* R_ESI mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->esi));
+#ifdef __x86_64__
+__asm ("\n\
+* R_R8 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r8));
+__asm ("\n\
+* R_R9 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r9));
+__asm ("\n\
+* R_R10 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r10));
+__asm ("\n\
+* R_R12 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r12));
+__asm ("\n\
+* R_R13 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r13));
+__asm ("\n\
+* R_R14 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r14));
+__asm ("\n\
+* R_R15 mAgIc%0" : : "i" (&((struct i386_saved_state*)0)->r15));
+#endif
+__asm ("\n\
+* I_EIP mAgIc%0" : : "i" (&((struct i386_interrupt_state*)0)->eip));
+__asm ("\n\
+* I_CS mAgIc%0" : : "i" (&((struct i386_interrupt_state*)0)->cs));
+__asm ("\n\
+* I_EFL mAgIc%0" : : "i" (&((struct i386_interrupt_state*)0)->efl));
+#ifdef __x86_64__
+__asm ("\n\
+* TSS_RSP0 mAgIc%0" : : "i" (&((struct i386_tss*)0)->rsp0));
+#else
+__asm ("\n\
+* TSS_ESP0 mAgIc%0" : : "i" (&((struct i386_tss*)0)->esp0));
+__asm ("\n\
+* TSS_SS0 mAgIc%0" : : "i" (&((struct i386_tss*)0)->ss0));
+#endif
+__asm ("\n\
+* SUB_TYPE_CPU_TYPE mAgIc%0" : : "i" (&((struct machine_slot*)0)->cpu_type));
+__asm ("\n\
+* NBPG mAgIc%0" : : "i" (I386_PGBYTES));
+__asm ("\n\
+* VM_MIN_ADDRESS mAgIc%0" : : "i" (VM_MIN_ADDRESS));
+__asm ("\n\
+* VM_MAX_ADDRESS mAgIc%0" : : "i" (VM_MAX_ADDRESS));
+__asm ("\n\
+* KERNELBASE mAgIc%0" : : "i" (VM_MIN_KERNEL_ADDRESS));
+__asm ("\n\
+* KERNEL_STACK_SIZE mAgIc%0" : : "i" (KERNEL_STACK_SIZE));
+#if defined MACH_PSEUDO_PHYS && (VM_MIN_KERNEL_ADDRESS == LINEAR_MIN_KERNEL_ADDRESS)
+__asm ("\n\
+* pfn_list mAgIc%0" : : "i" (PFN_LIST));
+#endif
+#if PAE
+__asm ("\n\
+* PDPSHIFT mAgIc%0" : : "i" (PDPSHIFT));
+#endif	/* PAE */
+__asm ("\n\
+* PDESHIFT mAgIc%0" : : "i" (PDESHIFT));
+__asm ("\n\
+* PDEMASK mAgIc%0" : : "i" (PDEMASK));
+__asm ("\n\
+* PTESHIFT mAgIc%0" : : "i" (PTESHIFT));
+__asm ("\n\
+* PTEMASK mAgIc%0" : : "i" (PTEMASK));
+__asm ("\n\
+* PTE_SIZE mAgIc%0" : : "i" (sizeof(pt_entry_t)));
+__asm ("\n\
+* PTE_PFN mAgIc%0" : : "i" (INTEL_PTE_PFN));
+__asm ("\n\
+* PTE_V mAgIc%0" : : "i" (INTEL_PTE_VALID));
+__asm ("\n\
+* PTE_W mAgIc%0" : : "i" (INTEL_PTE_WRITE));
+__asm ("\n\
+* PTE_S mAgIc%0" : : "i" (INTEL_PTE_PS));
+__asm ("\n\
+* PTE_INVALID mAgIc%0" : : "i" (~INTEL_PTE_VALID));
+__asm ("\n\
+* PTES_PER_PAGE mAgIc%0" : : "i" (NPTES));
+__asm ("\n\
+* INTEL_PTE_KERNEL mAgIc%0" : : "i" (INTEL_PTE_VALID|INTEL_PTE_WRITE));
+__asm ("\n\
+* IDTSZ mAgIc%0" : : "i" (IDTSZ));
+__asm ("\n\
+* KERNEL_RING mAgIc%0" : : "i" (KERNEL_RING));
+__asm ("\n\
+* KERNELBASEPDE mAgIc%0" : : "i" ((VM_MIN_KERNEL_ADDRESS>>PDESHIFT)*sizeof(pt_entry_t)));
+#if	MACH_KDB
+__asm ("\n\
+* RB_KDB mAgIc%0" : : "i" (RB_KDB));
+#endif	/* MACH_KDB */
+__asm ("\n\
+* INTSTACK_SIZE mAgIc%0" : : "i" (INTSTACK_SIZE));
+#if	!STAT_TIME
+__asm ("\n\
+* LOW_BITS mAgIc%0" : : "i" (&((struct timer*)0)->low_bits));
+__asm ("\n\
+* HIGH_BITS mAgIc%0" : : "i" (&((struct timer*)0)->high_bits));
+__asm ("\n\
+* HIGH_BITS_CHECK mAgIc%0" : : "i" (&((struct timer*)0)->high_bits_check));
+__asm ("\n\
+* TIMER_HIGH_UNIT mAgIc%0" : : "i" (TIMER_HIGH_UNIT));
+__asm ("\n\
+* TH_SYSTEM_TIMER mAgIc%0" : : "i" (&((struct thread*)0)->system_timer));
+__asm ("\n\
+* TH_USER_TIMER mAgIc%0" : : "i" (&((struct thread*)0)->user_timer));
+#endif
+#ifdef	MACH_XEN
+__asm ("\n\
+* CPU_CLI mAgIc%0" : : "i" (&((struct shared_info*)0)->vcpu_info[0].evtchn_upcall_mask));
+__asm ("\n\
+* CPU_PENDING mAgIc%0" : : "i" (&((struct shared_info*)0)->vcpu_info[0].evtchn_upcall_pending));
+__asm ("\n\
+* CPU_PENDING_SEL mAgIc%0" : : "i" (&((struct shared_info*)0)->vcpu_info[0].evtchn_pending_sel));
+__asm ("\n\
+* PENDING mAgIc%0" : : "i" (&((struct shared_info*)0)->evtchn_pending));
+__asm ("\n\
+* EVTMASK mAgIc%0" : : "i" (&((struct shared_info*)0)->evtchn_mask));
+#ifdef	MACH_PV_PAGETABLES
+__asm ("\n\
+* CR2 mAgIc%0" : : "i" (&((struct shared_info*)0)->vcpu_info[0].arch.cr2));
+#endif	/* MACH_PV_PAGETABLES */
+#endif	/* MACH_XEN */
+__asm ("\n\
+* MSGH_MSGH_SIZE mAgIc%0" : : "i" (&((struct mach_msg_header*)0)->msgh_size));
+}

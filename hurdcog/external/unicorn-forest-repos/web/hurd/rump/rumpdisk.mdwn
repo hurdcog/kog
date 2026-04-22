@@ -1,0 +1,62 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+# RumpDisk
+
+The Hurd supports modern SATA devices like SSDs with RumpDisk.  If you
+successfully installed the Hurd in real hardware, via toggling the
+"compatibility" mode in your BIOS, then the Hurd is probably using old
+Linux drivers to access your hard drive/SSD.  Even more problematic,
+those drivers are baked into the GNU Mach kernel!  With rumpdisk, you
+can use SSDs on the Hurd and enjoy a max partition size of [[2
+TiB|faq/2_gib_partition_limit]]!
+
+If you want to test if the Hurd can boot with your SSD, change any
+occurence of `hdN` in `/boot/grub/grub.cfg` to `wdN`, where `N` is a
+number, and add the `noide` option on the `multiboot` line,
+(which disables the old Linux disk drivers).  Also change any occurence
+of `hdN` in your `/etc/fstab` to `wdN`.
+
+	/boot/grub/grub.cfg
+
+	# multiboot	/boot/gnumach-1.8-486.gz root=part:2:device:hd0 console=com0
+	multiboot	/boot/gnumach-1.8-486.gz root=part:2:device:wd0	console=com0 noide
+
+	/etc/fstab
+
+	#/dev/hd0s2      /               ext2    defaults        0       1
+	/dev/wd0s2      /               ext2    defaults        0       1
+	#/dev/hd0s1      none            swap    sw              0       0
+	/dev/wd0s1      none            swap    sw              0       0
+	#/dev/hd2        /media/cdrom0   iso9660 noauto          0       0
+	/dev/wd2        /media/cdrom0   iso9660 noauto          0       0
+
+Then reboot your machine.  Before Grub appears change "compatibility"
+in your BIOS to "AHCI" (not "RAID").  If you successfully boot,
+congrats!  You are now using rumpdisk! You can permanently add in the
+"noide" option to grub:
+
+	/etc/default/grub
+
+	# make sure you add this next line somewhere in the file
+	GRUB_CMDLINE_GNUMACH="noide"
+
+Now you can run `update-grub`.  That way when you update the kernel,
+you can be sure to use rumpdisk.
+
+rumpdisk is normally already set up on `/dev/rumpdisk`.
+
+	$ showtrans /dev/rumpdisk
+	/hurd/rumpdisk
+
+[[!inline pages=open_issues/running_rump_for_slash raw=yes feeds=no]]

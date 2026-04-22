@@ -1,0 +1,305 @@
+[[!meta copyright="Copyright © 2008, 2009, 2010, 2011, 2013, 2016 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Hiccups of Git"]]
+
+[[!tag open_issue_porting]]
+
+[[!toc]]
+
+
+# 2008-12
+
+On the otherwise-idle flubber:
+
+    $ git clone git://sources.redhat.com/git/glibc.git
+    Initialized empty Git repository in /media/data/home/tschwinge/tmp/glibc/glibc/.git/
+    remote: Generating pack...
+    remote: Done counting 380933 objects.
+    remote: Deltifying 380933 objects...
+    remote:  100% (380933/380933) done
+    remote: Total 380933 (delta 294166), reused 380686 (delta 294002)
+    Receiving objects: 100% (380933/380933), 70.31 MiB | 27 KiB/s, done.
+    Resolving deltas: 100% (294166/294166), done.
+    error: git-checkout-index: unable to create file iconvdata/ibm1122.c (Interrupted system call)
+    error: git-checkout-index: unable to create file localedata/charmaps/IBM862 (Interrupted system call)
+    Checking out files: 100% (10676/10676), done.
+    $ git status
+    # On branch master
+    # Changed but not updated:
+    #   (use "git add <file>..." to update what will be committed)
+    #
+    #       modified:   iconvdata/ibm1122.c
+    #       modified:   localedata/charmaps/IBM862
+    #
+    no changes added to commit (use "git add" and/or "git commit -a")
+    $ ls -l iconvdata/ibm1122.c localedata/charmaps/IBM862
+    -rw-r--r-- 1 tschwinge tschwinge 0 2008-12-15 15:49 iconvdata/ibm1122.c
+    -rw-r--r-- 1 tschwinge tschwinge 0 2008-12-15 15:49 localedata/charmaps/IBM862
+
+So these files are indeed of zero-length in the checked-out tree.  Is this
+Git's fault or something else's?
+
+Fixing this situation is easy enough:
+
+    $ git checkout -- iconvdata/ibm1122.c localedata/charmaps/IBM862
+    $ git status
+    # On branch master
+    nothing to commit (working directory clean)
+
+
+## 2010-03-16
+
+Still seen.
+
+
+## IRC, freenode, #hurd, 2013-10-10
+
+    <sea`> Huh? I've cloned the 'hurd' repository and I'm attempting to compile
+      it, but the 'rtnetlink.h' header in
+      'hurd/pfinet/linux-src/include/linux/' is just blank. (Which leads to an
+      error later down when a macro that's supposed to be defined in there is
+      first used)
+    <sea`> So I'm just wondering, is that file really blank? Or is this some
+      unexpected error of decompression? 
+    <braunr> clone again and see
+    <braunr> the file is definitely not empty
+    <sea`> I cloned it twice, both have that file blank. BUT, I want to point
+      out that both clones do have some decompression errors. (Some files are
+      missing chunks in /both/ cloned repositories).
+    <braunr> where did you clone it from ?
+    <sea`> git.savannah.gnu.org/hurd/hurd.git
+    <braunr> hum decompression errors ?
+    <braunr> can you paste them please ?
+    <sea`> Hmm, I can clone again and show you an example if I find one
+    <sea`> This was on the hurd. When I run: git clone $repo;, it seems to fail
+      almost randomly with "incorrect header check", but when it does succeed,
+      occasionally some files are missing chunks
+    <sea`> and apparently entire files can be blank
+    <braunr> http or git ?
+    <sea`> git.
+    <braunr> that's really weird
+    <braunr> actually i don't even have problems with http any more nowadays ..
+    <sea`> This is using the hurd image from sthibault
+    <sea`> So once I get it recompiled and shuffle in the new binaries, the
+      problem should probably go away
+    <braunr> no
+    <braunr> well maybe but
+    <braunr> don't recompile
+    <braunr> upgrade packages instead
+    <sea`> Alright, I'll do an upgrade instead. Why that path specifically?
+    <braunr> rebuilding is long
+    <braunr> i wonder if the image you got is corrupted
+    <braunr> compute the checksum
+    <braunr> we've had weird reports in the past about the images he provides
+    <braunr> well not the images themselves, but differences after dowloading
+      ..
+    <braunr> downloading*
+    <sea`> The MD5SUMS file on his site isn't including the values for the most
+      recent images.
+    <sea`> It stops at 2012-12-28
+    <braunr> hummm
+    <sea`> Anyway, let's see. git clone failed again:
+    <sea`> Receiving objects: 100% (50955/50955), 15.48 MiB | 42 KiB/s, done.
+    <sea`> error: inflate: date stream error (incorrect header check) <- This
+      is the interesting part
+    <sea`> fatal: serious inflate inconsistency
+    <sea`> fatal: index-pack failed
+    <braunr> not intereseting enough unfortunately
+    <braunr> but it might come from savannah too
+
+    <sea`> Ehm. The whole thing locked up badly. I'll reboot it and try again.
+    <braunr> are you sure it locked oO ?
+    <braunr> the hurd can easily become unresponsive when performing io
+      operations
+    <braunr> but you need more than such a git repository to reach that state
+    <sea`> Yeah, that happens occasionally. It's not related to git, but rather
+      it happens when I cancel some command.
+    <braunr> your image must be corrupted
+    <braunr> have you enabled host io caching btw ?
+    <sea`> By now it's corrupted for sure..everytime it crashes the filesystem
+      gets into a weird state. 
+    <sea`> I'll unpack a fresh image, then update the packages, and then try
+      cloning this git repository.
+    <braunr> i'll get the image too so we can compare sums
+    <sea`> 957bb0768c9558564f0c3e0adb9b317e  ./debian-hurd.img.tar.gz
+    <sea`> Which unpacks to: debian-hurd-20130504.img
+    <azeem_> the NSA might backdoor the Hurd, in anticipation of our scheduled
+      world-dominance
+    <braunr> for now they're doing it passively :
+    <braunr> :p
+    <braunr> sea`: same thing here
+    <braunr> sea`: if you still have problems, the image itself might be wrong
+    <braunr> in which case you should try with the debian network installer
+    <sea`> Ah, so if problems persist, try with the network installer. Okay
+    <sea`> Is there some recipe for constructing a hurd/mach minimal
+      environment? 
+    <sea`> A system with only just enough tools and libraries to compile and
+      poke at things.
+    <braunr> not currently
+    <braunr> we all work in debian environments
+    <braunr> the reason being that a lot of patches are queued for integration
+      upstream
+
+
+# 2010-11-17
+
+A very similar issue.  The working tree had a lot of
+differences to HEAD.
+
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    error: unable to unlink old 'gcc/config/darwin.h' (Interrupted system call)
+    Checking out files: 100% (1149/1149), done.
+    fatal: Could not reset index file to revision 'HEAD'.
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    error: unable to unlink old 'gcc/config/iq2000/iq2000.md' (Interrupted system call)
+    error: git checkout-index: unable to create file gcc/config/lm32/lm32.c (File exists)
+    Checking out files: 100% (1149/1149), done.
+    fatal: Could not reset index file to revision 'HEAD'.
+    tschwinge@grubber:~/tmp/gcc/hurd $ ls -l gcc/config/iq2000/iq2000.md gcc/config/lm32/lm32.c
+    ls: cannot access gcc/config/iq2000/iq2000.md: No such file or directory
+    -rw-r--r-- 1 tschwinge tschwinge 32159 Nov 17 19:09 gcc/config/lm32/lm32.c
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    error: git checkout-index: unable to create file gcc/fortran/expr.c (Interrupted system call)
+    Checking out files: 100% (1149/1149), done.
+    fatal: Could not reset index file to revision 'HEAD'.
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    error: git checkout-index: unable to create file gcc/config/sol2.h (Interrupted system call)
+    Checking out files: 100% (1149/1149), done.
+    fatal: Could not reset index file to revision 'HEAD'.
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    error: unable to unlink old 'gcc/config/i386/i386.c' (Interrupted system call)
+    Checking out files: 100% (1149/1149), done.
+    fatal: Could not reset index file to revision 'HEAD'.
+    tschwinge@grubber:~/tmp/gcc/hurd $ git reset --hard HEAD
+    Checking out files: 100% (1149/1149), done.
+    HEAD is now at fe3e43c Merge commit 'refs/top-bases/hurd/master' into hurd/master
+
+
+## 2010-12-22
+
+grubber:
+
+    $ git remote update
+    Fetching savannah
+    remote: Counting objects: 582331, done.
+    remote: Compressing objects: 100% (124133/124133), done.
+    remote: Total 582331 (delta 460856), reused 578352 (delta 457598)
+    Receiving objects: 100% (582331/582331), 525.15 MiB | 204 KiB/s, done.
+    fatal: cannot pread pack file: Interrupted system call
+    fatal: index-pack failed
+    error: Could not fetch savannah
+
+
+## 2011-06-10
+
+coulomb.SCHWINGE, checking out [[binutils]]' master branch,
+starting from an empty working directory (after an external `git push`):
+
+    $ git checkout -f
+    fatal: cannot create directory at 'gas/testsuite/gas/bfin': Interrupted system call
+    $ git checkout -f
+    error: unable to create file gas/testsuite/gas/i386/ilp32/x86-64-sse4_1-intel.d (File exists)
+    warning: unable to unlink gas/testsuite/gas/m68k-coff: Operation not permitted
+    fatal: cannot create directory at 'gas/testsuite/gas/m68k-coff': Operation not permitted
+    $ git checkout -f
+    error: unable to create file gas/testsuite/gas/h8300/h8300.exp (File exists)
+    error: unable to create file gas/testsuite/gas/i386/x86-64-addr32-intel.d (File exists)
+    error: unable to create file gas/testsuite/gas/ia64/secname.d (File exists)
+    error: unable to create file gas/testsuite/gas/m68k/pr11676.s (File exists)
+    Checking out files: 100% (12315/12315), done.
+    $ git status
+    # On branch master
+    # Changes not staged for commit:
+    #   (use "git add <file>..." to update what will be committed)
+    #   (use "git checkout -- <file>..." to discard changes in working directory)
+    #
+    #       modified:   gas/testsuite/gas/h8300/h8300.exp
+    #       modified:   gas/testsuite/gas/i386/x86-64-addr32-intel.d
+    #       modified:   gas/testsuite/gas/ia64/secname.d
+    #       modified:   gas/testsuite/gas/m68k/pr11676.s
+    #
+    no changes added to commit (use "git add" and/or "git commit -a")
+    $ rm gas/testsuite/gas/h8300/h8300.exp gas/testsuite/gas/i386/x86-64-addr32-intel.d gas/testsuite/gas/ia64/secname.d gas/testsuite/gas/m68k/pr11676.s
+    $ git checkout -f
+    $ git status
+    # On branch master
+    nothing to commit (working directory clean)
+
+
+# Analysis
+
+## 2011-06-13
+
+Running `git checkout -f` under GDB:
+
+    error: git checkout-index: unable to create file gas/testsuite/gas/cris/string-1.s (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/i386/x86-64-sse-check.d (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/i386/x86-64-sse4_1.d (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/ppc/astest.d (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/tic6x/reloc-bad-4.s (File exists)
+    warning: unable to unlink include/cgen: Operation not permitted
+    fatal: cannot create directory at 'include/cgen': Operation not permitted
+
+Again:
+
+    error: git checkout-index: unable to create file gas/config/te-vxworks.h (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/cris/string-1.s (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/d10v/warning-019.s (File exists)
+    error: git checkout-index: unable to create file gas/testsuite/gas/i860/dual03.s (File exists)
+    error: git checkout-index: unable to create file ld/testsuite/ld-mmix/sec-7a.s (File exists)
+    warning: unable to unlink ld/testsuite/ld-powerpc: Operation not permitted
+    fatal: cannot create directory at 'ld/testsuite/ld-powerpc': Operation not permitted
+
+And: [[git_duplicated_content]].
+
+All these (very likely) have the same root cause: `SA_RESTART` restarting too
+much.
+
+With `git checkout`, Git uses in progress.c a SIGALRM handler (`SA_RESTART`;
+invoked every second via `setitimer(ITIMER_REAL)`) to display status messages:
+*x % already checked out*.
+
+To avoid the status update signals every second, in
+`[git]/progress.c:start_progress_delay` we can just return `NULL` (manually in
+GDB, for example), then both the *error: git checkout-index* and the
+[[duplicated content|git_duplicated_content]] issues go away.
+
+I'm guessing that when returning from a `SA_RESTART` signal handler, too much
+of the \`\`syscall''s is being restarted.  For example, if a file has already
+been created, the restarted creation attempt would fail: *File exists*.  If
+data has been written, it might get written again (duplication issue). Then,
+there are cases where `unlink` apparently returns EINTR, which is not kosher
+either.  Etc.
+
+Do we have problems with `SA_RESTART` vs. the atomicity of our syscall-alikes?
+
+
+## IRC, freenode, #hurd, 2013-01-30
+
+    <braunr> hm, let's try to clone a huge repository
+    <braunr> hm, cloning a whole linux repo, and still no problem :)
+    <pinotree> weren't most/all the issues at unpack time?
+    <braunr> i don't remember
+    <braunr> we'll see when it gets there
+    <braunr> the longest part is "resolving deltas", for which ext2fs is
+      clearly the big bottleneck (no I/O, page-cache only, but still)
+    <braunr> pinotree: well, slow, but no error
+
+
+### IRC, freenode, #hurd, 2013-01-31
+
+    <braunr> fyi, i've tried several checkouts of big repositories, and never
+      got a single error
+    <braunr> youpi: looks like the recent fixes also solved some git issues we
+      had
+    <braunr> i could clone big repositories without any problem
+    <youpi> cool :)

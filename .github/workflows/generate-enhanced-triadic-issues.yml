@@ -1,0 +1,164 @@
+name: Generate Enhanced Development Issues for Triadic Architecture
+description: Creates comprehensive GitHub issues for all phases of the Triadic Architecture implementation with OpenCoq integration
+
+"on":
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Which phase to generate issues for (1-6 or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+
+jobs:
+  generate-enhanced-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      repository-projects: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Generate OpenCoq Integration Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '2' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = [
+              {
+                title: "Implement OpenCoq neural-symbolic bridge with Rocq Prover",
+                body: `## Description
+                Create comprehensive OpenCoq integration with formal verification capabilities:
+                
+                ## Tasks
+                - [ ] Design FFI interface for Scheme/OCaml with OpenCoq bindings
+                - [ ] Implement tensor data marshalling for Rocq Prover interop
+                - [ ] Add automated theorem generation from hypergraph inference
+                - [ ] Create type-safe symbolic-to-numeric conversion
+                - [ ] Implement OpenCoq tactic integration for automated proving
+                - [ ] Add formal verification of attention allocation algorithms
+                
+                ## OpenCoq Integration Features
+                - Automatic generation of Coq proofs from AtomSpace inference
+                - Type-safe tensor operation verification
+                - Formal verification of neural-symbolic bridge correctness
+                - Integration with OpenCoq's Category Theory libraries
+                
+                **Phase**: 2 - Neural Integration (OpenCoq Enhanced)
+                **Priority**: High
+                **Estimated Effort**: 20 days`,
+                labels: ['enhancement', 'phase-2', 'opencoq', 'formal-verification', 'neural-symbolic']
+              },
+              {
+                title: "Implement recursive self-enhancement with OpenCoq safety verification",
+                body: `## Description
+                Create self-modifying cognitive architecture with formal safety guarantees:
+                
+                ## Tasks
+                - [ ] Design meta-cognitive tensors for self-representation
+                - [ ] Implement cognitive grammar evolution tracking
+                - [ ] Add formal verification of recursive enhancement safety
+                - [ ] Create automated proof generation for convergence theorems
+                - [ ] Implement self-modification boundary detection
+                - [ ] Add OpenCoq theorem verification for cognitive properties
+                
+                ## Safety Framework with OpenCoq
+                - Formal verification of self-modification safety properties
+                - Automated proof checking for recursive enhancement correctness
+                - Mathematical guarantees for cognitive improvement convergence
+                - Type-safe cognitive architecture mutations
+                
+                **Phase**: 6 - Meta-Cognitive Enhancement
+                **Priority**: Critical
+                **Estimated Effort**: 25 days`,
+                labels: ['enhancement', 'phase-6', 'opencoq', 'safety', 'recursive-enhancement']
+              }
+            ];
+            
+            for (const issue of issues) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issue.title,
+                body: issue.body,
+                labels: issue.labels
+              });
+            }
+
+      - name: Generate Formal Verification Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '5' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = [
+              {
+                title: "Comprehensive OpenCoq formal verification framework",
+                body: `## Description
+                Create complete formal verification system for triadic architecture:
+                
+                ## Tasks
+                - [ ] Implement Rocq Prover verification for triadic patterns
+                - [ ] Add formal verification of tensor shape consistency
+                - [ ] Create proof automation for relevance realization theorems
+                - [ ] Implement automated Coq proof generation from cognitive operations
+                - [ ] Add formal verification of emergent properties
+                - [ ] Create continuous proof checking during execution
+                
+                ## Verification Coverage
+                - Mathematical verification of triadic composition laws
+                - Formal proofs of attention allocation correctness
+                - Automated theorem discovery from cognitive patterns
+                - Property-based testing derived from formal specifications
+                
+                **Phase**: 5 - Testing & Validation (OpenCoq Enhanced)
+                **Priority**: High
+                **Estimated Effort**: 18 days`,
+                labels: ['testing', 'phase-5', 'opencoq', 'formal-verification', 'automation']
+              }
+            ];
+            
+            for (const issue of issues) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issue.title,
+                body: issue.body,
+                labels: issue.labels
+              });
+            }
+
+      - name: Create Enhanced Project Board (Projects v2)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Create a new Projects v2 board using GraphQL
+            const repoId = (await github.graphql(`
+              query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) { id }
+              }
+            `, { owner: context.repo.owner, repo: context.repo.repo })).repository.id;
+            
+            const project = await github.graphql(`
+              mutation($repoId: ID!) {
+                createProjectV2(input: {
+                  ownerId: $repoId
+                  title: "Enhanced Triadic Architecture with OpenCoq Integration"
+                }) {
+                  projectV2 { id, title, url }
+                }
+              }
+            `, { repoId });
+
+            console.log('Created Projects v2 board:', project.createProjectV2.projectV2.url);
+            console.log('Project ID:', project.createProjectV2.projectV2.id);
+            console.log('Note: Projects v2 uses custom fields and views instead of columns. Configure these in the web interface if needed.');

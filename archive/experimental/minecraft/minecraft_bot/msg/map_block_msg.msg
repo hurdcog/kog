@@ -1,0 +1,10 @@
+uint16 blockid
+uint16 metadata
+uint8 blocklight
+uint8 skylight
+int32 x
+int32 y
+int32 z
+uint64 ROStimestamp
+int64 MCtimestamp
+string scene=MCWorld

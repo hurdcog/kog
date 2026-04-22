@@ -1,0 +1,43 @@
+{
+  "name": "opencog-collection",
+  "version-string": "2.0.0",
+  "description": "OpenCog Collection (OCC) - A comprehensive AGI framework ecosystem with cognitive operating system integration",
+  "homepage": "https://github.com/cogpy/occ",
+  "license": "AGPL-3.0",
+  "supports": "windows & linux & osx",
+  "dependencies": [
+    "boost-system",
+    "boost-filesystem",
+    "boost-program-options",
+    "boost-regex",
+    "boost-thread",
+    "boost-date-time",
+    "boost-serialization",
+    "boost-random",
+    {
+      "name": "guile",
+      "platform": "!windows"
+    },
+    "cxxopts",
+    "asio",
+    "libpq",
+    "catch2",
+    "spdlog",
+    "fmt",
+    "nlohmann-json",
+    "yaml-cpp",
+    "tbb",
+    "eigen3",
+    "cppzmq",
+    "zeromq",
+    {
+      "name": "curl",
+      "features": ["ssl"]
+    },
+    "openssl",
+    "zlib",
+    "lz4",
+    "rocksdb",
+    "hwloc"
+  ]
+}

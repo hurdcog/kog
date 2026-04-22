@@ -1,0 +1,139 @@
+version: 2.0
+
+jobs:
+  asmoses:
+    docker:
+      - image: $CIRCLE_PROJECT_USERNAME/opencog-deps
+        user: root
+        environment:
+          CCACHE_DIR: /ws/ccache
+    working_directory: /ws/asmoses
+    steps:
+      - attach_workspace:
+          at: /ws
+      - run:
+          name: Start restoring ccache
+          command: date +%d-%m-%Y > /tmp/date
+      - restore_cache:
+          keys:
+            - ccache-{{ checksum "/tmp/date" }}
+            - ccache-
+      - run:
+          name: Install cogutil
+          command: |
+            git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/cogutil /ws/cogutil
+            mkdir -p /ws/cogutil/build
+            cd /ws/cogutil/build && cmake .. && make -j2 && make -j2 install
+            ldconfig
+      - run:
+          name: Checkout AtomSpace
+          command: git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/atomspace /ws/atomspace
+      - restore_cache:
+          name: Restore GHC Cache
+          keys:
+            - ghc-{{checksum "/ws/atomspace/opencog/haskell/stack.yaml"}}-{{ arch }}
+      - restore_cache:
+          name: Restore Haskell Deps Cache
+          keys:
+            - haskelldeps-{{checksum "/ws/atomspace/opencog/haskell/stack.yaml"}}-{{checksum "/ws/atomspace/opencog/haskell/opencog-atomspace.cabal"}}-{{ arch }}
+      - run:
+          name: Install AtomSpace
+          command: |
+            mkdir -p /ws/atomspace/build
+            cd /ws/atomspace/build && cmake .. && make -j2 && make -j2 install
+            ldconfig
+      - save_cache:
+          name: Save GHC Cache
+          key: ghc-{{checksum "/ws/atomspace/opencog/haskell/stack.yaml"}}-{{ arch }}
+          paths:
+            - /root/.stack
+      - save_cache:
+          name: Save Haskell Deps Cache
+          key: haskelldeps-{{checksum "/ws/atomspace/opencog/haskell/stack.yaml"}}-{{checksum "/ws/atomspace/opencog/haskell/opencog-atomspace.cabal"}}-{{ arch }}
+          paths:
+            - /ws/atomspace/opencog/haskell/.stack-work
+      - run:
+          name: Install uinfy
+          command: |
+            git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/unify /ws/unify
+            mkdir -p /ws/unify/build
+            cd /ws/unify/build && cmake .. && make -j2 && make -j2 install
+            ldconfig
+      - run:
+          name: Install ure
+          command: |
+            git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/ure /ws/ure
+            mkdir -p /ws/ure/build
+            cd /ws/ure/build && cmake .. && make -j2 && make -j2 install
+            ldconfig
+
+      # The checkout directive only works if there is a deploy key
+      # configured in github. Most repos have this, but some do not.
+      # Work around this by doing the clone manually. This is all
+      # read-only anyway, so I have no clue why the special key was
+      # needed.
+      #
+      # Without the deploy key, one gets the cryptic error message
+      # Either git or ssh (required by git to clone through SSH) is Not Installed in the Image
+      # apt-get installing openssh-client says 'access denied', which
+      # tells us that the deploy key is missing.
+      #
+      # - checkout
+      - run:
+          command: |
+            git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/asmoses /ws/asmoses
+      - run:
+          name: CMake Configure
+          command: mkdir build && cd build && cmake ..
+      - run:
+          name: Build
+          command: cd build && make -j2
+      - run:
+          name: Build examples
+          command: cd build && make -j2 examples
+      - run:
+          name: Install ASMOSES
+          command: cd build && make install
+      - run:
+          name: Build tests
+          command: cd build && make -j2 tests
+      - run:
+          name: Run tests
+          command: cd build && make -j2 check ARGS=-j2
+      - run:
+          name: Print test log
+          command: cat build/tests/Testing/Temporary/LastTest.log
+          when: always
+      - persist_to_workspace:
+          root: /ws/
+          paths:
+            - asmoses
+            - ccache
+
+  package: #Place holder
+    docker:
+      - image: $CIRCLE_PROJECT_USERNAME/opencog-deps
+        user: root
+    working_directory: /ws/asmoses
+    steps:
+      - attach_workspace:
+          at: /ws/
+      - run:
+          name: Start storing ccache
+          command: date +%d-%m-%Y > /tmp/date
+      - save_cache:
+          key: ccache-{{ checksum "/tmp/date" }}
+          paths:
+            - /ws/ccache
+
+workflows:
+  version: 2
+  build-test-package:
+    jobs:
+      - asmoses
+      - package:
+          requires:
+            - asmoses
+          filters:
+            branches:
+              only: master

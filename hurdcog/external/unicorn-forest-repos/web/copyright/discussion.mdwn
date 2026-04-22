@@ -1,0 +1,9 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+`MutoShack, March 23, 2019` - Shouldn't this say "Free Software Foundation" instead of "Contributing Authors"? I feel like the latter is like, an Ikiwiki default that was never changed (that and the "edit" page always says "You agree to assign copyright to the FSF", so I kind of feel legally obliged to change it.

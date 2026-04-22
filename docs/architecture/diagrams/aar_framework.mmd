@@ -1,0 +1,115 @@
+graph TB
+    subgraph AAR["Agent-Arena-Relation (AAR) Framework"]
+        direction TB
+        
+        subgraph AGENT["🎯 AGENT (Urge-to-Act)"]
+            direction TB
+            A1["Dynamic Tensor<br/>Transformations"]
+            A2["Operators &<br/>Actions"]
+            A3["Goal-Directed<br/>Behavior"]
+            A4["Component<br/>Autonomy"]
+            
+            A1 --> A2
+            A2 --> A3
+            A3 --> A4
+        end
+        
+        subgraph ARENA["🌐 ARENA (Need-to-Be)"]
+            direction TB
+            AR1["Base Manifold /<br/>State Space"]
+            AR2["Shared Memory<br/>(Hypergraph)"]
+            AR3["Communication<br/>Infrastructure"]
+            AR4["Resource<br/>Environment"]
+            
+            AR1 --> AR2
+            AR2 --> AR3
+            AR3 --> AR4
+        end
+        
+        subgraph RELATION["🔄 RELATION (Self / Consciousness)"]
+            direction TB
+            R1["Dynamic Interplay<br/>& Feedback"]
+            R2["Recurrent<br/>Connections"]
+            R3["Attentional<br/>Mechanisms"]
+            R4["Geometric<br/>Algebra"]
+            R5["Emergent<br/>Self-Awareness"]
+            
+            R1 --> R2
+            R2 --> R3
+            R3 --> R4
+            R4 --> R5
+        end
+    end
+    
+    subgraph OCC_IMPL["OpenCog Collection Implementation"]
+        direction TB
+        
+        subgraph AGENT_IMPL["Agent Components"]
+            direction LR
+            ATOMSPACE["AtomSpace<br/>(Knowledge Base)"]
+            HYPERON["Hyperon<br/>(Reasoning Engine)"]
+            COGSERVER["CogServer<br/>(Communication)"]
+            LEARN["Learn<br/>(Symbolic Learning)"]
+            MATRIX["Matrix<br/>(Graph Processing)"]
+        end
+        
+        subgraph ARENA_IMPL["Arena Infrastructure"]
+            direction LR
+            HYPERGRAPH_MEM["Hypergraph<br/>Memory Space"]
+            EVENT_BUS["Event Bus<br/>(Pub-Sub)"]
+            INTERACTION["Interaction<br/>Graph"]
+            RESOURCES["Resource<br/>Pool"]
+        end
+        
+        subgraph RELATION_IMPL["Relation Coordination"]
+            direction LR
+            ORCHESTRATOR["Synergy<br/>Orchestrator"]
+            MONITOR["Cognitive<br/>Monitor"]
+            BRIDGE["Hypergraph<br/>Bridge"]
+            SYNERGY_SCORE["Synergy<br/>Score"]
+        end
+    end
+    
+    %% AAR Internal Connections
+    AGENT -->|"Acts Upon"| ARENA
+    ARENA -->|"Constrains & Enables"| AGENT
+    AGENT -->|"Self-Observation"| RELATION
+    ARENA -->|"Provides Context"| RELATION
+    RELATION -->|"Coordinates"| AGENT
+    RELATION -->|"Optimizes"| ARENA
+    
+    %% Implementation Mapping
+    AGENT -.->|"Realizes"| AGENT_IMPL
+    ARENA -.->|"Realizes"| ARENA_IMPL
+    RELATION -.->|"Realizes"| RELATION_IMPL
+    
+    %% Implementation Internal Connections
+    AGENT_IMPL --> ARENA_IMPL
+    ARENA_IMPL --> RELATION_IMPL
+    RELATION_IMPL --> AGENT_IMPL
+    
+    ATOMSPACE --> HYPERGRAPH_MEM
+    HYPERON --> HYPERGRAPH_MEM
+    COGSERVER --> EVENT_BUS
+    LEARN --> INTERACTION
+    MATRIX --> INTERACTION
+    
+    ORCHESTRATOR --> EVENT_BUS
+    MONITOR --> RESOURCES
+    BRIDGE --> HYPERGRAPH_MEM
+    SYNERGY_SCORE --> INTERACTION
+    
+    %% Feedback Loops
+    RELATION_IMPL -->|"Feedback"| AGENT_IMPL
+    ARENA_IMPL -->|"State"| RELATION_IMPL
+    
+    %% Styling
+    classDef agentStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#b71c1c
+    classDef arenaStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#0d47a1
+    classDef relationStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:3px,color:#4a148c
+    classDef implStyle fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#f57f17
+    
+    class AGENT,AGENT_IMPL agentStyle
+    class ARENA,ARENA_IMPL arenaStyle
+    class RELATION,RELATION_IMPL relationStyle
+    class OCC_IMPL implStyle

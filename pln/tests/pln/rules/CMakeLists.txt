@@ -1,0 +1,18 @@
+
+# PLNRulesUTest hangs in infinite loop
+# ADD_CXXTEST(PLNRulesUTest)
+# ADD_CXXTEST(TemporalReasoningRulesUTest)
+
+#TARGET_LINK_LIBRARIES(PLNRulesUTest
+#  ${URE_LIBRARIES}
+#  ${UNIFY_LIBRARIES}
+#  ${ATOMSPACE_LIBRARIES}
+#  ${COGUTIL_LIBRARY}
+#)
+
+#TARGET_LINK_LIBRARIES(TemporalReasoningRulesUTest
+#  ${URE_LIBRARIES}
+#  ${UNIFY_LIBRARIES}
+#  ${ATOMSPACE_LIBRARIES}
+#  ${COGUTIL_LIBRARY}
+#)

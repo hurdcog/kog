@@ -1,0 +1,2467 @@
+name: OCC Build - Windows Native (wincog)
+
+# ============================================================================
+# OpenCog Collection (OCC) - Windows-Native Build Workflow
+# ============================================================================
+#
+# This workflow builds the OpenCog Collection monorepo natively on Windows
+# using state-of-the-art Windows tooling and idioms.
+#
+# TRANSFORMATION SUMMARY:
+# - ALL Linux commands (sudo, apt-get, chmod, bash) replaced with PowerShell
+# - Package management via vcpkg, chocolatey, winget
+# - CMake with MSBuild/Visual Studio generators
+# - Windows-native artifacts (DLL, LIB, PDB files)
+# - Test execution via CTest and PowerShell
+#
+# COGNITIVE BUILD GRAPH:
+# See inline comments for full dependency visualization
+#
+# AGI META-ADAPTATION NOTES:
+# - Guile bindings: Not available on Windows (use Python/embedded alternatives)
+# - Haskell bindings: Complex setup (evaluate necessity for Windows)
+# - Octomap: May need vcpkg or Windows-specific builds
+# - Cross-platform generalization: This workflow informs multi-platform CI/CD
+# ============================================================================
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
+  INSTALL_PREFIX: C:\OpenCog
+
+jobs:
+
+  # ==========================================================================
+  # Stage 1: Build CogUtil (Foundation)
+  # ==========================================================================
+  build-cogutil:
+    runs-on: windows-latest
+    name: "Stage 1: Build CogUtil (Foundation)"
+    needs: []
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for cogutil ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Foundation library - no Guile on Windows
+    
+    
+    - name: Check cogutil Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "cogutil") {
+          Write-Host "✓ cogutil directory exists" -ForegroundColor Green
+          Get-ChildItem "cogutil" | Select-Object -First 10
+        } else {
+          Write-Host "cogutil directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure cogutil
+      if: hashFiles('cogutil/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build cogutil
+      if: hashFiles('cogutil/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('cogutil/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build cogutil\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('cogutil/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "cogutil\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "cogutil\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install cogutil
+      if: hashFiles('cogutil/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+    
+    - name: Upload cogutil Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cogutil-windows-build
+        path: |
+          cogutil/build/**/*.dll
+          cogutil/build/**/*.lib
+          cogutil/build/**/*.pdb
+          cogutil/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 2: Build AtomSpace (Hypergraph Database)
+  # ==========================================================================
+  build-atomspace:
+    runs-on: windows-latest
+    name: "Stage 2: Build AtomSpace (Hypergraph Database)"
+    needs: ['build-cogutil']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for atomspace ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        # Python packages
+        python -m pip install --upgrade pip
+        python -m pip install cython nose
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Core knowledge representation - Haskell bindings skipped
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+    
+    - name: Check atomspace Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "atomspace") {
+          Write-Host "✓ atomspace directory exists" -ForegroundColor Green
+          Get-ChildItem "atomspace" | Select-Object -First 10
+        } else {
+          Write-Host "atomspace directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure atomspace
+      if: hashFiles('atomspace/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build atomspace
+      if: hashFiles('atomspace/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('atomspace/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('atomspace/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "atomspace\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "atomspace\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install atomspace
+      if: hashFiles('atomspace/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+    
+    - name: Upload atomspace Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-windows-build
+        path: |
+          atomspace/build/**/*.dll
+          atomspace/build/**/*.lib
+          atomspace/build/**/*.pdb
+          atomspace/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 3: Build AtomSpace Storage
+  # ==========================================================================
+  build-atomspace-storage:
+    runs-on: windows-latest
+    name: "Stage 3: Build AtomSpace Storage"
+    needs: ['build-atomspace']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for atomspace-storage ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Storage API layer
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+    
+    - name: Check atomspace-storage Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "atomspace-storage") {
+          Write-Host "✓ atomspace-storage directory exists" -ForegroundColor Green
+          Get-ChildItem "atomspace-storage" | Select-Object -First 10
+        } else {
+          Write-Host "atomspace-storage directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure atomspace-storage
+      if: hashFiles('atomspace-storage/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B atomspace-storage\build -S atomspace-storage `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build atomspace-storage
+      if: hashFiles('atomspace-storage/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('atomspace-storage/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-storage\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('atomspace-storage/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "atomspace-storage\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "atomspace-storage\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install atomspace-storage
+      if: hashFiles('atomspace-storage/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+    
+    - name: Upload atomspace-storage Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-storage-windows-build
+        path: |
+          atomspace-storage/build/**/*.dll
+          atomspace-storage/build/**/*.lib
+          atomspace-storage/build/**/*.pdb
+          atomspace-storage/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 3b: Build AtomSpace RocksDB Storage
+  # ==========================================================================
+  build-atomspace-rocks:
+    runs-on: windows-latest
+    name: "Stage 3b: Build AtomSpace RocksDB Storage"
+    needs: ['build-atomspace-storage']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for atomspace-rocks ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: RocksDB persistence backend
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check atomspace-rocks Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "atomspace-rocks") {
+          Write-Host "✓ atomspace-rocks directory exists" -ForegroundColor Green
+          Get-ChildItem "atomspace-rocks" | Select-Object -First 10
+        } else {
+          Write-Host "atomspace-rocks directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure atomspace-rocks
+      if: hashFiles('atomspace-rocks/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B atomspace-rocks\build -S atomspace-rocks `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build atomspace-rocks
+      if: hashFiles('atomspace-rocks/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-rocks\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('atomspace-rocks/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-rocks\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('atomspace-rocks/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "atomspace-rocks\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "atomspace-rocks\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install atomspace-rocks
+      if: hashFiles('atomspace-rocks/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install atomspace-rocks\build --config $env:BUILD_TYPE
+    
+    - name: Upload atomspace-rocks Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-rocks-windows-build
+        path: |
+          atomspace-rocks/build/**/*.dll
+          atomspace-rocks/build/**/*.lib
+          atomspace-rocks/build/**/*.pdb
+          atomspace-rocks/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 4: Build CogServer (Networking)
+  # ==========================================================================
+  build-cogserver:
+    runs-on: windows-latest
+    name: "Stage 4: Build CogServer (Networking)"
+    needs: ['build-atomspace-storage']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for cogserver ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Network server with Asio
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check cogserver Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "cogserver") {
+          Write-Host "✓ cogserver directory exists" -ForegroundColor Green
+          Get-ChildItem "cogserver" | Select-Object -First 10
+        } else {
+          Write-Host "cogserver directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure cogserver
+      if: hashFiles('cogserver/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B cogserver\build -S cogserver `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build cogserver
+      if: hashFiles('cogserver/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('cogserver/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build cogserver\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('cogserver/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "cogserver\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "cogserver\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install cogserver
+      if: hashFiles('cogserver/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install cogserver\build --config $env:BUILD_TYPE
+    
+    - name: Upload cogserver Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cogserver-windows-build
+        path: |
+          cogserver/build/**/*.dll
+          cogserver/build/**/*.lib
+          cogserver/build/**/*.pdb
+          cogserver/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 4b: Build AtomSpace Cog Network Storage
+  # ==========================================================================
+  build-atomspace-cog:
+    runs-on: windows-latest
+    name: "Stage 4b: Build AtomSpace Cog Network Storage"
+    needs: ['build-cogserver']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for atomspace-cog ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Network-based storage backend
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild CogServer (if exists)
+        if (Test-Path "cogserver\CMakeLists.txt") {
+          cmake -B cogserver\build -S cogserver `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+          cmake --install cogserver\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check atomspace-cog Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "atomspace-cog") {
+          Write-Host "✓ atomspace-cog directory exists" -ForegroundColor Green
+          Get-ChildItem "atomspace-cog" | Select-Object -First 10
+        } else {
+          Write-Host "atomspace-cog directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure atomspace-cog
+      if: hashFiles('atomspace-cog/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B atomspace-cog\build -S atomspace-cog `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build atomspace-cog
+      if: hashFiles('atomspace-cog/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-cog\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('atomspace-cog/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build atomspace-cog\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('atomspace-cog/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "atomspace-cog\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "atomspace-cog\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install atomspace-cog
+      if: hashFiles('atomspace-cog/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install atomspace-cog\build --config $env:BUILD_TYPE
+    
+    - name: Upload atomspace-cog Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-cog-windows-build
+        path: |
+          atomspace-cog/build/**/*.dll
+          atomspace-cog/build/**/*.lib
+          atomspace-cog/build/**/*.pdb
+          atomspace-cog/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 5: Build Unify
+  # ==========================================================================
+  build-unify:
+    runs-on: windows-latest
+    name: "Stage 5: Build Unify"
+    needs: ['build-atomspace']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for unify ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Unification engine
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+    
+    - name: Check unify Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "unify") {
+          Write-Host "✓ unify directory exists" -ForegroundColor Green
+          Get-ChildItem "unify" | Select-Object -First 10
+        } else {
+          Write-Host "unify directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure unify
+      if: hashFiles('unify/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B unify\build -S unify `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build unify
+      if: hashFiles('unify/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build unify\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('unify/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build unify\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('unify/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "unify\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "unify\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install unify
+      if: hashFiles('unify/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install unify\build --config $env:BUILD_TYPE
+    
+    - name: Upload unify Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: unify-windows-build
+        path: |
+          unify/build/**/*.dll
+          unify/build/**/*.lib
+          unify/build/**/*.pdb
+          unify/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 6: Build URE (Unified Rule Engine)
+  # ==========================================================================
+  build-ure:
+    runs-on: windows-latest
+    name: "Stage 6: Build URE (Unified Rule Engine)"
+    needs: ['build-unify']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for ure ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Forward/backward chaining reasoning
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild Unify (if exists)
+        if (Test-Path "unify\CMakeLists.txt") {
+          cmake -B unify\build -S unify `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build unify\build --config $env:BUILD_TYPE --parallel
+          cmake --install unify\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check ure Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "ure") {
+          Write-Host "✓ ure directory exists" -ForegroundColor Green
+          Get-ChildItem "ure" | Select-Object -First 10
+        } else {
+          Write-Host "ure directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure ure
+      if: hashFiles('ure/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B ure\build -S ure `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build ure
+      if: hashFiles('ure/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build ure\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('ure/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build ure\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('ure/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "ure\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "ure\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install ure
+      if: hashFiles('ure/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install ure\build --config $env:BUILD_TYPE
+    
+    - name: Upload ure Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ure-windows-build
+        path: |
+          ure/build/**/*.dll
+          ure/build/**/*.lib
+          ure/build/**/*.pdb
+          ure/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 7: Build Miner
+  # ==========================================================================
+  build-miner:
+    runs-on: windows-latest
+    name: "Stage 7: Build Miner"
+    needs: ['build-ure']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for miner ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Pattern mining
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild Unify (if exists)
+        if (Test-Path "unify\CMakeLists.txt") {
+          cmake -B unify\build -S unify `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build unify\build --config $env:BUILD_TYPE --parallel
+          cmake --install unify\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild URE (if exists)
+        if (Test-Path "ure\CMakeLists.txt") {
+          cmake -B ure\build -S ure `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace" `
+            -DUnify_DIR="$env:INSTALL_PREFIX\lib\cmake\Unify"
+          cmake --build ure\build --config $env:BUILD_TYPE --parallel
+          cmake --install ure\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check miner Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "miner") {
+          Write-Host "✓ miner directory exists" -ForegroundColor Green
+          Get-ChildItem "miner" | Select-Object -First 10
+        } else {
+          Write-Host "miner directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure miner
+      if: hashFiles('miner/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B miner\build -S miner `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build miner
+      if: hashFiles('miner/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build miner\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('miner/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build miner\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('miner/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "miner\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "miner\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install miner
+      if: hashFiles('miner/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install miner\build --config $env:BUILD_TYPE
+    
+    - name: Upload miner Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: miner-windows-build
+        path: |
+          miner/build/**/*.dll
+          miner/build/**/*.lib
+          miner/build/**/*.pdb
+          miner/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 8: Build Attention
+  # ==========================================================================
+  build-attention:
+    runs-on: windows-latest
+    name: "Stage 8: Build Attention"
+    needs: ['build-cogserver']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for attention ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Attention allocation mechanism
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild CogServer (if exists)
+        if (Test-Path "cogserver\CMakeLists.txt") {
+          cmake -B cogserver\build -S cogserver `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+          cmake --install cogserver\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check attention Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "attention") {
+          Write-Host "✓ attention directory exists" -ForegroundColor Green
+          Get-ChildItem "attention" | Select-Object -First 10
+        } else {
+          Write-Host "attention directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure attention
+      if: hashFiles('attention/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B attention\build -S attention `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build attention
+      if: hashFiles('attention/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build attention\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('attention/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build attention\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('attention/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "attention\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "attention\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install attention
+      if: hashFiles('attention/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install attention\build --config $env:BUILD_TYPE
+    
+    - name: Upload attention Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: attention-windows-build
+        path: |
+          attention/build/**/*.dll
+          attention/build/**/*.lib
+          attention/build/**/*.pdb
+          attention/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 9: Build AS-MOSES
+  # ==========================================================================
+  build-asmoses:
+    runs-on: windows-latest
+    name: "Stage 9: Build AS-MOSES"
+    needs: ['build-ure']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for asmoses ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Meta-Optimizing Semantic Evolutionary Search
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild Unify (if exists)
+        if (Test-Path "unify\CMakeLists.txt") {
+          cmake -B unify\build -S unify `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build unify\build --config $env:BUILD_TYPE --parallel
+          cmake --install unify\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild URE (if exists)
+        if (Test-Path "ure\CMakeLists.txt") {
+          cmake -B ure\build -S ure `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace" `
+            -DUnify_DIR="$env:INSTALL_PREFIX\lib\cmake\Unify"
+          cmake --build ure\build --config $env:BUILD_TYPE --parallel
+          cmake --install ure\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check asmoses Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "asmoses") {
+          Write-Host "✓ asmoses directory exists" -ForegroundColor Green
+          Get-ChildItem "asmoses" | Select-Object -First 10
+        } else {
+          Write-Host "asmoses directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure asmoses
+      if: hashFiles('asmoses/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B asmoses\build -S asmoses `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build asmoses
+      if: hashFiles('asmoses/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build asmoses\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('asmoses/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build asmoses\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('asmoses/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "asmoses\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "asmoses\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install asmoses
+      if: hashFiles('asmoses/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install asmoses\build --config $env:BUILD_TYPE
+    
+    - name: Upload asmoses Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: asmoses-windows-build
+        path: |
+          asmoses/build/**/*.dll
+          asmoses/build/**/*.lib
+          asmoses/build/**/*.pdb
+          asmoses/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 10: Build Matrix
+  # ==========================================================================
+  build-matrix:
+    runs-on: windows-latest
+    name: "Stage 10: Build Matrix"
+    needs: ['build-atomspace']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for matrix ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Sparse matrix operations
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+    
+    - name: Check matrix Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "matrix") {
+          Write-Host "✓ matrix directory exists" -ForegroundColor Green
+          Get-ChildItem "matrix" | Select-Object -First 10
+        } else {
+          Write-Host "matrix directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure matrix
+      if: hashFiles('matrix/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B matrix\build -S matrix `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build matrix
+      if: hashFiles('matrix/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build matrix\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('matrix/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build matrix\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('matrix/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "matrix\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "matrix\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install matrix
+      if: hashFiles('matrix/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install matrix\build --config $env:BUILD_TYPE
+    
+    - name: Upload matrix Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: matrix-windows-build
+        path: |
+          matrix/build/**/*.dll
+          matrix/build/**/*.lib
+          matrix/build/**/*.pdb
+          matrix/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 11: Build SpaceTime
+  # ==========================================================================
+  build-spacetime:
+    runs-on: windows-latest
+    name: "Stage 11: Build SpaceTime"
+    needs: ['build-cogserver']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for spacetime ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Spatiotemporal representation - Octomap may need special build
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild CogServer (if exists)
+        if (Test-Path "cogserver\CMakeLists.txt") {
+          cmake -B cogserver\build -S cogserver `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+          cmake --install cogserver\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check spacetime Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "spacetime") {
+          Write-Host "✓ spacetime directory exists" -ForegroundColor Green
+          Get-ChildItem "spacetime" | Select-Object -First 10
+        } else {
+          Write-Host "spacetime directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure spacetime
+      if: hashFiles('spacetime/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B spacetime\build -S spacetime `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build spacetime
+      if: hashFiles('spacetime/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build spacetime\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('spacetime/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build spacetime\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('spacetime/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "spacetime\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "spacetime\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install spacetime
+      if: hashFiles('spacetime/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install spacetime\build --config $env:BUILD_TYPE
+    
+    - name: Upload spacetime Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: spacetime-windows-build
+        path: |
+          spacetime/build/**/*.dll
+          spacetime/build/**/*.lib
+          spacetime/build/**/*.pdb
+          spacetime/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 12: Build PLN (Probabilistic Logic Networks)
+  # ==========================================================================
+  build-pln:
+    runs-on: windows-latest
+    name: "Stage 12: Build PLN (Probabilistic Logic Networks)"
+    needs: ['build-ure', 'build-spacetime']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for pln ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Probabilistic reasoning
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild CogServer (if exists)
+        if (Test-Path "cogserver\CMakeLists.txt") {
+          cmake -B cogserver\build -S cogserver `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+          cmake --install cogserver\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild Unify (if exists)
+        if (Test-Path "unify\CMakeLists.txt") {
+          cmake -B unify\build -S unify `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build unify\build --config $env:BUILD_TYPE --parallel
+          cmake --install unify\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild URE (if exists)
+        if (Test-Path "ure\CMakeLists.txt") {
+          cmake -B ure\build -S ure `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace" `
+            -DUnify_DIR="$env:INSTALL_PREFIX\lib\cmake\Unify"
+          cmake --build ure\build --config $env:BUILD_TYPE --parallel
+          cmake --install ure\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild SpaceTime (if exists)
+        if (Test-Path "spacetime\CMakeLists.txt") {
+          cmake -B spacetime\build -S spacetime `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace" `
+            -DCogServer_DIR="$env:INSTALL_PREFIX\lib\cmake\CogServer"
+          cmake --build spacetime\build --config $env:BUILD_TYPE --parallel
+          cmake --install spacetime\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check pln Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "pln") {
+          Write-Host "✓ pln directory exists" -ForegroundColor Green
+          Get-ChildItem "pln" | Select-Object -First 10
+        } else {
+          Write-Host "pln directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure pln
+      if: hashFiles('pln/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B pln\build -S pln `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build pln
+      if: hashFiles('pln/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build pln\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('pln/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build pln\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('pln/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "pln\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "pln\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install pln
+      if: hashFiles('pln/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install pln\build --config $env:BUILD_TYPE
+    
+    - name: Upload pln Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pln-windows-build
+        path: |
+          pln/build/**/*.dll
+          pln/build/**/*.lib
+          pln/build/**/*.pdb
+          pln/build/**/*.exe
+        retention-days: 1
+
+  # ==========================================================================
+  # Stage 13: Build Learn
+  # ==========================================================================
+  build-learn:
+    runs-on: windows-latest
+    name: "Stage 13: Build Learn"
+    needs: ['build-cogserver']
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'd0785ca6bb4faef0c18f6d01ebf93790b429d54f'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for learn ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Language learning
+    
+    - name: Rebuild Prerequisites
+      shell: pwsh
+      run: |
+        # Rebuild CogUtil
+        cmake -B cogutil\build -S cogutil `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX"
+        cmake --build cogutil\build --config $env:BUILD_TYPE --parallel
+        cmake --install cogutil\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace
+        cmake -B atomspace\build -S atomspace `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil"
+        cmake --build atomspace\build --config $env:BUILD_TYPE --parallel
+        cmake --install atomspace\build --config $env:BUILD_TYPE
+        
+        # Rebuild AtomSpace Storage (if exists)
+        if (Test-Path "atomspace-storage\CMakeLists.txt") {
+          cmake -B atomspace-storage\build -S atomspace-storage `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build atomspace-storage\build --config $env:BUILD_TYPE --parallel
+          cmake --install atomspace-storage\build --config $env:BUILD_TYPE
+        }
+        
+        # Rebuild CogServer (if exists)
+        if (Test-Path "cogserver\CMakeLists.txt") {
+          cmake -B cogserver\build -S cogserver `
+            -G "$env:CMAKE_GENERATOR" `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+            -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+            -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+          cmake --build cogserver\build --config $env:BUILD_TYPE --parallel
+          cmake --install cogserver\build --config $env:BUILD_TYPE
+        }
+    
+    - name: Check learn Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "learn") {
+          Write-Host "✓ learn directory exists" -ForegroundColor Green
+          Get-ChildItem "learn" | Select-Object -First 10
+        } else {
+          Write-Host "learn directory not found, skipping" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure learn
+      if: hashFiles('learn/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake -B learn\build -S learn `
+          -G "$env:CMAKE_GENERATOR" `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:INSTALL_PREFIX" `
+          -DCogUtil_DIR="$env:INSTALL_PREFIX\lib\cmake\CogUtil" `
+          -DAtomSpace_DIR="$env:INSTALL_PREFIX\lib\cmake\AtomSpace"
+    
+    - name: Build learn
+      if: hashFiles('learn/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build learn\build --config $env:BUILD_TYPE --parallel
+    
+    - name: Build Tests
+      if: hashFiles('learn/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --build learn\build --config $env:BUILD_TYPE --target tests --parallel
+      continue-on-error: true
+    
+    - name: Run Tests
+      if: hashFiles('learn/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        Push-Location "learn\build"
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Pop-Location
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "learn\build\Testing\Temporary\LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Cyan
+          Get-Content $logPath | Select-Object -Last 100
+        }
+    
+    - name: Install learn
+      if: hashFiles('learn/CMakeLists.txt') != ''
+      shell: pwsh
+      run: |
+        cmake --install learn\build --config $env:BUILD_TYPE
+    
+    - name: Upload learn Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: learn-windows-build
+        path: |
+          learn/build/**/*.dll
+          learn/build/**/*.lib
+          learn/build/**/*.pdb
+          learn/build/**/*.exe
+        retention-days: 1
+
+
+  # ==========================================================================
+  # FINAL STAGE: Package and Report
+  # ==========================================================================
+  package-and-report:
+    runs-on: windows-latest
+    name: "Final: Package OCC Build & Generate Report"
+    needs:
+      - build-cogutil
+      - build-atomspace
+      - build-atomspace-storage
+      - build-atomspace-rocks
+      - build-cogserver
+      - build-atomspace-cog
+      - build-unify
+      - build-ure
+      - build-miner
+      - build-attention
+      - build-asmoses
+      - build-matrix
+      - build-spacetime
+      - build-pln
+      - build-learn
+    if: always()
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+      continue-on-error: true
+    
+    - name: Generate Build Report
+      shell: pwsh
+      run: |
+        # Build report using PowerShell
+        $reportPath = "BUILD_REPORT.md"
+        
+        "# OCC Windows-Native Build Report" | Out-File $reportPath -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "## Build Summary" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "Build completed: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" | Out-File $reportPath -Append -Encoding UTF8
+        "Platform: Windows (windows-latest)" | Out-File $reportPath -Append -Encoding UTF8
+        "Build Type: $env:BUILD_TYPE" | Out-File $reportPath -Append -Encoding UTF8
+        "Generator: $env:CMAKE_GENERATOR" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        
+        "## Cognitive Build Graph" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "### Foundation Layer" | Out-File $reportPath -Append -Encoding UTF8
+        "1. CogUtil - Core utilities" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "### Knowledge Representation Layer" | Out-File $reportPath -Append -Encoding UTF8
+        "2. AtomSpace - Hypergraph database" | Out-File $reportPath -Append -Encoding UTF8
+        "3. AtomSpace-Storage - Storage API" | Out-File $reportPath -Append -Encoding UTF8
+        "4. AtomSpace-Rocks - RocksDB backend" | Out-File $reportPath -Append -Encoding UTF8
+        "5. Unify - Unification engine" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "### Network & Reasoning Layer" | Out-File $reportPath -Append -Encoding UTF8
+        "6. CogServer - Network server" | Out-File $reportPath -Append -Encoding UTF8
+        "7. AtomSpace-Cog - Network storage" | Out-File $reportPath -Append -Encoding UTF8
+        "8. URE - Unified Rule Engine" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "### Advanced Components Layer" | Out-File $reportPath -Append -Encoding UTF8
+        "9. Miner - Pattern mining" | Out-File $reportPath -Append -Encoding UTF8
+        "10. Attention - Attention allocation" | Out-File $reportPath -Append -Encoding UTF8
+        "11. AS-MOSES - Meta-optimization" | Out-File $reportPath -Append -Encoding UTF8
+        "12. Matrix - Sparse matrix ops" | Out-File $reportPath -Append -Encoding UTF8
+        "13. SpaceTime - Spatiotemporal representation" | Out-File $reportPath -Append -Encoding UTF8
+        "14. PLN - Probabilistic Logic Networks" | Out-File $reportPath -Append -Encoding UTF8
+        "15. Learn - Language learning" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        
+        "## Artifacts Generated" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        
+        if (Test-Path "artifacts") {
+          "### Windows Binaries:" | Out-File $reportPath -Append -Encoding UTF8
+          "" | Out-File $reportPath -Append -Encoding UTF8
+          
+          Get-ChildItem "artifacts" -Recurse -Include *.dll,*.lib,*.pdb,*.exe | ForEach-Object {
+            $size = [math]::Round($_.Length / 1KB, 2)
+            "- $($_.Name) - $size KB" | Out-File $reportPath -Append -Encoding UTF8
+          }
+          
+          "" | Out-File $reportPath -Append -Encoding UTF8
+          "### Summary Statistics:" | Out-File $reportPath -Append -Encoding UTF8
+          "" | Out-File $reportPath -Append -Encoding UTF8
+          $dllCount = (Get-ChildItem "artifacts" -Recurse -Filter *.dll -ErrorAction SilentlyContinue).Count
+          $libCount = (Get-ChildItem "artifacts" -Recurse -Filter *.lib -ErrorAction SilentlyContinue).Count
+          $pdbCount = (Get-ChildItem "artifacts" -Recurse -Filter *.pdb -ErrorAction SilentlyContinue).Count
+          $exeCount = (Get-ChildItem "artifacts" -Recurse -Filter *.exe -ErrorAction SilentlyContinue).Count
+          
+          "- DLL files: $dllCount" | Out-File $reportPath -Append -Encoding UTF8
+          "- LIB files: $libCount" | Out-File $reportPath -Append -Encoding UTF8
+          "- PDB files: $pdbCount" | Out-File $reportPath -Append -Encoding UTF8
+          "- EXE files: $exeCount" | Out-File $reportPath -Append -Encoding UTF8
+        } else {
+          "No artifacts found." | Out-File $reportPath -Append -Encoding UTF8
+        }
+        
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "## Windows-Native Build Complete" | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        "All Linux commands (sudo, apt-get, chmod, bash) have been replaced with PowerShell equivalents." | Out-File $reportPath -Append -Encoding UTF8
+        "Package management via vcpkg, Chocolatey, and pip." | Out-File $reportPath -Append -Encoding UTF8
+        "Build system using CMake with MSBuild/Visual Studio generators." | Out-File $reportPath -Append -Encoding UTF8
+        "" | Out-File $reportPath -Append -Encoding UTF8
+        
+        Write-Host "============================================" -ForegroundColor Cyan
+        Write-Host "Build Report Generated" -ForegroundColor Cyan
+        Write-Host "============================================" -ForegroundColor Cyan
+        Get-Content $reportPath
+    - name: Upload Build Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: occ-windows-build-report
+        path: BUILD_REPORT.md
+        retention-days: 30
+

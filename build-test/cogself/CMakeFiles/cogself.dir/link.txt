@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/cogself.dir/link.d -shared -Wl,-soname,libcogself.so -o libcogself.so CMakeFiles/cogself.dir/src/cogself.cpp.o CMakeFiles/cogself.dir/src/synergy_manager.cpp.o CMakeFiles/cogself.dir/src/agi_goal_tracker.cpp.o

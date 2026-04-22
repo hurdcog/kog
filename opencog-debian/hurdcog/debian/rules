@@ -1,0 +1,53 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# HurdCog is built for i686 (32-bit x86) to match Cognumach
+export DEB_HOST_ARCH=i386
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# Configure Hurd components
+	cd hurd && autoreconf -fi && \
+		./configure \
+			--host=i686-gnu \
+			--prefix=/usr \
+			--with-parted \
+			--disable-profile
+	# Configure cognitive kernel components
+	cd cogkernel && mkdir -p build && cd build && \
+		cmake .. \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DCMAKE_INSTALL_PREFIX=/usr
+
+override_dh_auto_build:
+	# Build Hurd servers and translators
+	cd hurd && $(MAKE) -j$(shell nproc)
+	# Build cognitive kernel
+	cd cogkernel/build && $(MAKE) -j$(shell nproc)
+	# Build dashboard
+	cd dashboard && python3 setup.py build
+
+override_dh_auto_install:
+	# Install Hurd components
+	cd hurd && $(MAKE) install DESTDIR=$(CURDIR)/debian/hurdcog
+	# Install cognitive kernel
+	cd cogkernel/build && $(MAKE) install DESTDIR=$(CURDIR)/debian/hurdcog
+	# Install development files
+	mkdir -p $(CURDIR)/debian/hurdcog-dev/usr/include/hurdcog
+	cp -r cogkernel/include/* $(CURDIR)/debian/hurdcog-dev/usr/include/hurdcog/
+	# Install dashboard
+	cd dashboard && python3 setup.py install \
+		--root=$(CURDIR)/debian/hurdcog-dashboard \
+		--install-layout=deb
+
+override_dh_auto_test:
+	# Skip tests during package build
+	@echo "Skipping tests (require running HurdCog system)"
+
+override_dh_strip:
+	dh_strip --dbgsym-migration='hurdcog-dbg (<< 0.9.0-1~)'

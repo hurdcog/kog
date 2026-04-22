@@ -1,0 +1,658 @@
+[[!meta copyright="Copyright © 2010, 2012, 2013, 2014, 2015, 2016 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+Here's what's to be done for maintaining Boehm GC.
+
+This one does need Hurd-specific configuration.
+
+It is, for example, used by [[/GCC]] (which has its own fork), so any changes
+committed upstream should very like also be made there.
+
+[[!toc levels=2]]
+
+
+# [[General information|/boehm_gc]]
+
+
+# Configuration
+
+<!--
+
+git checkout reviewed
+git diff --patience --stat=$COLUMNS,$COLUMNS --patch --src-prefix=./ --dst-prefix=./ --word-diff --color --find-renames --ignore-space-change ..upstream/master | awk '/^(\x1b\[[0-9]+m)?diff/ { c = " " $0; } /^(\x1b\[[0-9]+m)?@@/ { print c; } { print; }' | less
+-i
+/hurd|linux|glibc
+
+-->
+
+Last reviewed up to Git commit d6c34577eeaba37ff08998d18676531082c040b6
+(2016-03-18), and for `libatomic_ops` to Git commit
+01d2509c13f3aa7e03cb4cbf50fda08f98725ce4 (2016-03-24).
+
+  * `configure.ac`
+
+      * `PARALLEL_MARK` is not enabled; doesn't make sense so far.
+
+      * `*-*-kfreebsd*-gnu` defines `USE_COMPILER_TLS`.  What's this, and
+        why does not other config?
+
+      * TODO
+
+            [ if test "$enable_gc_debug" = "yes"; then
+                AC_MSG_WARN("Should define GC_DEBUG and use debug alloc. in clients.")
+                AC_DEFINE([KEEP_BACK_PTRS], 1,
+                          [Define to save back-pointers in debugging headers.])
+                keep_back_ptrs=true
+                AC_DEFINE([DBG_HDRS_ALL], 1,
+                          [Define to force debug headers on all objects.])
+                case $host in
+                  x86-*-linux* | i586-*-linux* | i686-*-linux* | x86_64-*-linux* )
+                    AC_DEFINE(MAKE_BACK_GRAPH)
+                    AC_MSG_WARN("Client must not use -fomit-frame-pointer.")
+                    AC_DEFINE(SAVE_CALL_COUNT, 8)
+                  ;;
+            AM_CONDITIONAL([KEEP_BACK_PTRS], [test x"$keep_back_ptrs" = xtrue])
+
+  * `configure.host`
+
+    Nothing.
+
+  * `Makefile.am`, `include/include.am`, `cord/cord.am`, `doc/doc.am`,
+    `tests/tests.am`
+
+    Nothing.
+
+  * `include/gc_config_macros.h`
+
+    Should be OK.
+
+  * `include/private/gcconfig.h`
+
+    Hairy.  But should be OK.  Search for *HURD*, compare to *LINUX*,
+    *I386* case.
+
+    See `doc/porting.html` and `doc/README.macros` (and others) for
+    documentation.
+
+    *LINUX* has:
+
+      * `#define LINUX_STACKBOTTOM`
+
+        Defined instead of `STACKBOTTOM` to have the value read from `/proc/`.
+
+      * `#define HEAP_START (ptr_t)0x1000`
+
+        May want to define it for us, too?
+
+      * `#ifdef USE_I686_PREFETCH`, `USE_3DNOW_PREFETCH` --- [...]
+
+        Apparently these are optimization that we also could use.  Have a
+        look at *LINUX* for *X86_64*, which uses `__builtin_prefetch`
+        (which Linux x86 could use, too?).
+
+      * TODO
+
+            #if defined(LINUX) && defined(USE_MMAP)
+                /* The kernel may do a somewhat better job merging mappings etc.    */
+                /* with anonymous mappings.                                         */
+            #   define USE_MMAP_ANON
+            #endif
+
+          * `[Hurd] Use mmap instead of sbrk`,
+            <https://github.com/ivmai/bdwgc/pull/95>.
+
+      * TODO
+
+            #if defined(GC_LINUX_THREADS) && defined(REDIRECT_MALLOC)
+                /* Nptl allocates thread stacks with mmap, which is fine.  But it   */
+                /* keeps a cache of thread stacks.  Thread stacks contain the       */
+                /* thread control blocks.  These in turn contain a pointer to       */
+                /* (sizeof (void *) from the beginning of) the dtv for thread-local */
+                /* storage, which is calloc allocated.  If we don't scan the cached */
+                /* thread stacks, we appear to lose the dtv.  This tends to         */
+                /* result in something that looks like a bogus dtv count, which     */
+                /* tends to result in a memset call on a block that is way too      */
+                /* large.  Sometimes we're lucky and the process just dies ...      */
+                /* There seems to be a similar issue with some other memory         */
+                /* allocated by the dynamic loader.                                 */
+                /* This should be avoidable by either:                              */
+                /* - Defining USE_PROC_FOR_LIBRARIES here.                          */
+                /*   That performs very poorly, precisely because we end up         */
+                /*   scanning cached stacks.                                        */
+                /* - Have calloc look at its callers.                               */
+                /*   In spite of the fact that it is gross and disgusting.          */
+                /* In fact neither seems to suffice, probably in part because       */
+                /* even with USE_PROC_FOR_LIBRARIES, we don't scan parts of stack   */
+                /* segments that appear to be out of bounds.  Thus we actually      */
+                /* do both, which seems to yield the best results.                  */
+            
+            #   define USE_PROC_FOR_LIBRARIES
+            #endif
+
+      * TODO
+
+            # if defined(GC_LINUX_THREADS) && defined(REDIRECT_MALLOC) \
+                 && !defined(INCLUDE_LINUX_THREAD_DESCR)
+                /* Will not work, since libc and the dynamic loader use thread      */
+                /* locals, sometimes as the only reference.                         */
+            #   define INCLUDE_LINUX_THREAD_DESCR
+            # endif
+
+      * TODO
+
+            # if defined(UNIX_LIKE) && defined(THREADS) && !defined(NO_CANCEL_SAFE) \
+                 && !defined(PLATFORM_ANDROID)
+                /* Make the code cancellation-safe.  This basically means that we   */
+                /* ensure that cancellation requests are ignored while we are in    */
+                /* the collector.  This applies only to Posix deferred cancellation;*/
+                /* we don't handle Posix asynchronous cancellation.                 */
+                /* Note that this only works if pthread_setcancelstate is           */
+                /* async-signal-safe, at least in the absence of asynchronous       */
+                /* cancellation.  This appears to be true for the glibc version,    */
+                /* though it is not documented.  Without that assumption, there     */
+                /* seems to be no way to safely wait in a signal handler, which     */
+                /* we need to do for thread suspension.                             */
+                /* Also note that little other code appears to be cancellation-safe.*/
+                /* Hence it may make sense to turn this off for performance.        */
+            #   define CANCEL_SAFE
+            # endif
+
+      * `CAN_SAVE_CALL_ARGS` vs. -fomit-frame-pointer now being on by
+        default for Linux x86 IIRC?  (Which is an [[!taglink
+        open_issue_gcc]] for not including us.)
+
+      * TODO
+
+            # if defined(REDIRECT_MALLOC) && defined(THREADS) && !defined(LINUX)
+            #   error "REDIRECT_MALLOC with THREADS works at most on Linux."
+            # endif
+
+      * TODO
+
+            #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HURD) \
+                                         || defined(OPENBSD) || defined(ARM32) \
+                                         || defined(MIPS) || defined(AVR32) \
+                                         || defined(OR1K) || defined(NIOS2))) \
+                 || (defined(LINUX) && !defined(__gnu_linux__)) \
+                 || (defined(RTEMS) && defined(I386)) || defined(PLATFORM_ANDROID)) \
+                && !defined(NO_GETCONTEXT)
+            # define NO_GETCONTEXT
+            #endif
+
+        Also see comment below, regarding `mach_dep.c`.
+
+    *HURD* has:
+
+      * `#define STACK_GROWS_DOWN`
+
+      * `#define HEURISTIC2`
+
+        Defined instead of `STACKBOTTOM` to have the value probed.
+
+        Linux also has this:
+
+            #if defined(LINUX_STACKBOTTOM) && defined(NO_PROC_STAT) \
+                && !defined(USE_LIBC_PRIVATES)
+                /* This combination will fail, since we have no way to get  */
+                /* the stack base.  Use HEURISTIC2 instead.                 */
+            #   undef LINUX_STACKBOTTOM
+            #   define HEURISTIC2
+                /* This may still fail on some architectures like IA64.     */
+                /* We tried ...                                             */
+            #endif
+
+        Being on [[glibc]], we could perhaps do similar as `USE_LIBC_PRIVATES`
+        instead of `HEURISTIC2`.  Pro: avoid `SIGSEGV` (and general fragility)
+        during probing at startup (if I'm understanding this correctly).  Con:
+        rely on glibc internals.  Or we instead add support to parse
+        [[`/proc/`|hurd/translator/procfs]] (can even use the same as Linux?),
+        or use some other interface.  [[!tag open_issue_glibc]]
+        This is also likely the issue causing the GDB [[!tag open_issue_gdb]]
+        `GC_find_limit_with_bound` SIGSEGV startup confusion described in
+        [[binutils]].
+
+      * `#define SIG_SUSPEND SIGUSR1`, `#define SIG_THR_RESTART SIGUSR2`
+
+      * We don't `#define MPROTECT_VDB` (WIP comment); but Linux neither.
+
+      * Where does our `GETPAGESIZE` come from?  Should we `#include
+        <unistd.h>` like it is done for *LINUX*?
+
+      * `[Hurd] Use mmap instead of sbrk`,
+        <https://github.com/ivmai/bdwgc/pull/95>.
+
+  * `include/gc_pthread_redirects.h`
+
+      * TODO
+
+        Cancellation stuff is Linux-only.  In other places, too.
+
+  * `mach_dep.c`
+
+      * `#define NO_GETCONTEXT`
+
+        [[!taglink open_issue_glibc]], but this is not a real problem here,
+        because we can use the following GCC internal function without much
+        overhead:
+        [TODO] (?)
+
+        Also see comment above, regarding `include/private/gcconfig.h`.
+
+      * `GC_with_callee_saves_pushed`
+
+        The `HAVE_BUILTIN_UNWIND_INIT` case is ours.
+
+  * `os_dep.c`
+
+      * TODO.
+
+  * `dyn_load.c`
+
+    For `DYNAMIC_LOADING`.  TODO.
+
+  * `pthread_support.c`, `pthread_stop_world.c`
+
+    TODO.
+
+  * TODO.
+
+    Other files also contain *LINUX* and other conditionals.
+
+  * `libatomic_ops/`
+
+      * `configure.ac`
+
+        Nothing.
+
+      * `Makefile`, `src/Makefile`, `src/atomic_ops/Makefile`,
+        `src/atomic_ops/sysdeps/Makefile`, `doc/Makefile`, `tests/Makefile`
+
+        Nothing.
+
+      * `src/atomic_ops/sysdeps/gcc/x86.h`
+
+        Nothing.
+
+  * b8b65e8a5c2c4896728cd00d008168a6293f55b1 configure.ac probably not all
+    correct.
+
+  * `mmap`, b64dd3bc1e5a23e677c96b478d55648a0730ab75
+
+    This is (still) stale/redundant/unused, as far as I can tell.
+
+  * `parallel mark`, 07c2b8e455c9e70d1f173475bbf1196320812154, pass
+    `--disable-parallel-mark` or enable for us, too?
+
+  * `HANDLE_FORK`, e9b11b6655c45ad3ab3326707aa31567a767134b,
+    806d656802a1e3c2b55cd9e4530c6420340886c9,
+    1e882b98c2cf9479a9cd08a67439dab7f9622924
+
+  * Check `include/private/thread_local_alloc.h` re
+    `USE_COMPILER_TLS`/`USE_PTHREAD_SPECIFIC`.
+
+  * TODO:
+
+      * `diff --git ./include/private/gcconfig.h ./include/private/gcconfig.h`
+
+            {+#if defined(LINUX) || defined(FREEBSD) || defined(SOLARIS) || defined(IRIX5) \+}
+            {+    || ((defined(USE_MMAP) || defined(USE_MUNMAP)) && !defined(USE_WINALLOC))+}
+            {+# define MMAP_SUPPORTED+}
+            {+#endif+}
+
+      * `diff --git ./include/private/gcconfig.h ./include/private/gcconfig.h`
+
+            #if !defined(CAN_HANDLE_FORK) && !defined(NO_HANDLE_FORK) \
+                && [-((defined(GC_PTHREADS)-]{+!defined(HAVE_NO_FORK) \+}
+                && [-!defined(HURD)-]{+((defined(GC_PTHREADS)+} && !defined(NACL) \
+                     &&[-!defined(PLATFORM_ANDROID) &&-] !defined(GC_WIN32_PTHREADS)[-\-] && !defined(USE_WINALLOC)) \
+                    || (defined(DARWIN) && defined(MPROTECT_VDB)) || defined(HANDLE_FORK))
+              /* Attempts (where supported and requested) to make GC_malloc work in */
+              /* a child process fork'ed from a multi-threaded parent.              */
+            # define CAN_HANDLE_FORK
+            #endif
+            
+            {+#if defined(CAN_HANDLE_FORK) && !defined(CAN_CALL_ATFORK) \+}
+            {+    && !defined(HURD) && !defined(PLATFORM_ANDROID)+}
+            {+  /* Have working pthread_atfork().     */+}
+            {+# define CAN_CALL_ATFORK+}
+            {+#endif+}
+
+      * `diff --git ./include/private/gcconfig.h ./include/private/gcconfig.h`
+
+            {+#if (defined(FREEBSD) || (defined(DARWIN) && !defined(_POSIX_C_SOURCE)) \+}
+            {+        || (defined(SOLARIS) && (!defined(_XOPEN_SOURCE) \+}
+            {+                                 || defined(__EXTENSIONS__))) \+}
+            {+        || defined(LINUX)) && !defined(HAVE_DLADDR)+}
+            {+# define HAVE_DLADDR+}
+            {+#endif+}
+
+      * `diff --git ./os_dep.c ./os_dep.c`
+
+            @@ -3038,9 +3005,11 @@ GC_API GC_push_other_roots_proc GC_CALL GC_get_push_other_roots(void)
+                                    /* Also old MSWIN32 ACCESS_VIOLATION filter */
+            # if !defined(MSWIN32) && !defined(MSWINCE)
+                STATIC SIG_HNDLR_PTR GC_old_bus_handler = 0;
+            {+#   if defined(FREEBSD) || defined(HURD) || defined(HPUX)+}
+                  STATIC GC_bool GC_old_bus_handler_used_si = FALSE;
+            {+#   endif+}
+                STATIC GC_bool GC_old_segv_handler_used_si = FALSE;
+
+      * `diff --git ./os_dep.c ./os_dep.c`
+
+            @@ -3192,20 +3169,22 @@ GC_API GC_push_other_roots_proc GC_CALL GC_get_push_other_roots(void)
+            #           else
+                            GC_bool used_si;
+            
+            {+#             if defined(FREEBSD) || defined(HURD) || defined(HPUX)+}
+                            if (sig == [-SIGSEGV) {-]
+            [-                   old_handler = GC_old_segv_handler;-]
+            [-                   used_si = GC_old_segv_handler_used_si;-]
+            [-                } else-]{+SIGBUS)+} {
+                               old_handler = GC_old_bus_handler;
+                               used_si = GC_old_bus_handler_used_si;
+                            {+} else+}
+            {+#             endif+}
+            {+                /* else */ {+}
+            {+                   old_handler = GC_old_segv_handler;+}
+            {+                   used_si = GC_old_segv_handler_used_si;+}
+                            }
+            #           endif
+
+      * `diff --git ./os_dep.c ./os_dep.c`
+
+            #   if defined(HPUX) || defined(LINUX) || defined(HURD) \
+                   || (defined(FREEBSD) && defined(SUNOS5SIGS))
+                  sigaction(SIGBUS, &act, &oldact);
+                  if [-(oldact.sa_flags-]{+((oldact.sa_flags+} & SA_SIGINFO) {+!= 0)+} {
+                    GC_old_bus_handler = oldact.sa_sigaction;
+            {+#       if !defined(LINUX)+}
+                      GC_old_bus_handler_used_si = TRUE;
+            {+#       endif+}
+                  } else {
+                    GC_old_bus_handler = (SIG_HNDLR_PTR)oldact.sa_handler;
+            {+#       if !defined(LINUX)+}
+                      GC_old_bus_handler_used_si = FALSE;
+            {+#       endif+}
+                  }
+                  if (GC_old_bus_handler == (SIG_HNDLR_PTR)SIG_IGN) {
+                    [-if (GC_print_stats)-]
+            [-          GC_err_printf("Previously-]{+WARN("Previously+} ignored bus [-error!?\n");-]{+error!?\n", 0);+}
+            {+#       if !defined(LINUX)+}
+                      GC_old_bus_handler = (SIG_HNDLR_PTR)SIG_DFL;
+            {+#       else+}
+            {+          /* GC_old_bus_handler is not used by GC_write_fault_handler.  */+}
+            {+#       endif+}
+                  } {+else+} if (GC_old_bus_handler != (SIG_HNDLR_PTR)SIG_DFL) {
+                      [-if (GC_print_stats == VERBOSE)-]
+            [-          GC_log_printf("Replaced-]{+GC_VERBOSE_LOG_PRINTF("Replaced+} other SIGBUS handler\n");
+                  }
+            #   endif /* HPUX || LINUX || HURD || (FREEBSD && SUNOS5SIGS) */
+
+
+# Build
+
+Here's a log of a boehm-gc build run; this is from Git commit
+d6c34577eeaba37ff08998d18676531082c040b6 (2016-03-18), and for `libatomic_ops`
+Git commit 01d2509c13f3aa7e03cb4cbf50fda08f98725ce4 (2016-03-24), run on
+kepler.SCHWINGE and laplace.SCHWINGE.
+
+    $ export LC_ALL=C
+    $ (cd ../master/ && ln -sfn ../libatomic_ops/master libatomic_ops)
+    $ (cd ../master/ && autoreconf -vfi)
+    $ ../master/configure --prefix="$PWD".install SHELL=/bin/bash CC=gcc-4.9 CXX=g++-4.9 --enable-cplusplus --enable-gc-debug --enable-gc-assertions --enable-assertions 2>&1 | tee log_build
+    [...]
+    $ make 2>&1 | tee log_build_
+    [...]
+
+Different hosts may default to different shells and compiler versions; thus
+harmonized.  Using bash instead of dash as otherwise libtool explodes.
+
+<!--
+
+    $ (make && touch .go-install) 2>&1 | tee log_build_ && test -f .go-install && (make install && touch .go-test) 2>&1 | tee log_install && test -f .go-test && { make -k check 2>&1 | tee log_test; (cd libatomic_ops/ && make -k check) 2>&1 | tee log_test_; }
+
+-->
+
+
+## Analysis
+
+    $ toolchain/logs/process boehm-gc build
+
+  * only GNU/Linux: `configure: WARNING: "Explicit GC_INIT() calls may be
+    required."`
+
+  * only GNU/Linux: `configure: WARNING: "Client must not use
+    -fomit-frame-pointer."`
+
+
+# Install
+
+    $ make install 2>&1 | tee log_install
+    [...]
+
+
+## Analysis
+
+    $ toolchain/logs/process boehm-gc install
+
+
+# Testsuite
+
+    $ make -k check 2>&1 | tee log_test
+    [...]
+    $ (cd libatomic_ops/ && make -k check) 2>&1 | tee log_test_
+    [...]
+
+
+## Analysis
+
+    $ toolchain/logs/process boehm-gc test
+
+There are different configurations possible, but in general, the testsuite
+restults of GNU/Linux and GNU/Hurd look very similar.
+
+  * GNU/Hurd is missing `Call chain at allocation: [...]` output.
+
+    `os_dep.c`:`GC_print_callers`
+
+
+# TODO
+
+  * What are other applications to test Boehm GC?  Also especially in
+    combination with [[/libpthread]] and dynamic loading of shared libraries?
+
+      * There are patches (apparently not committed) that GCC itself can use
+        it, too: <http://gcc.gnu.org/wiki/Garbage_collection_tuning>.
+
+      * There's been some talking about it on GNU guile mailing lists, and two
+        Git branches (2010-12-15: last change 2009-09).
+
+      * <http://www.hpl.hp.com/personal/Hans_Boehm/gc/#users>
+
+      * [[!wikipedia Boehm_garbage_collector]]
+
+
+## IRC, OFTC, #debian-hurd, 2012-02-05
+
+[[!tag open_issue_porting]]
+
+    <pinotree> youpi: i think i found out the possible cause of the ecl and
+      mono issuess
+    <pinotree> -s
+    <youpi> oh
+    <pinotree> basically, we don't have the realtime signals (so no
+      SIGRTMIN/SIGRTMAX defined), hence things use either SIGUSR1 or
+      SIGUSR2... which are used in libgc to resp. stop/resume threads when
+      "collecting"
+    <pinotree> i just patched ecl to use SIGINFO instead of SIGUSR1 (used when
+      no SIGRTMIN+2 is available), and it seems going on for a while
+    <youpi> uh, why would SIGINFO work better than SIGUSR1?
+    <pinotree> it was a test, i tried the first "not common" signal i saw
+    <pinotree> my test was, use any signal different than USR1/2
+    <youpi> ah, sorry, I hadn't understood
+    <youpi> you mean there's a conflict between ecl and mono using SIGUSR1, as
+      well as libgc?
+    <pinotree> yes
+    <pinotree> for example, in ecl sources see src/c/unixint.d,
+      install_process_interrupt_handler()
+    <youpi> SIGINFO seems a sane choice
+    <youpi> SIGPWR could have been a better choice if it was available :)
+    <pinotree> i would have chose an "unassigned" number, say SIGLOST (the
+      bigger one) + 10, but it would be greater than _NSIG (and thus discarded)
+    <youpi> not a good idea indeed
+    <pinotree> it seems that linux, beside the range for rt signals, has some
+      "free space"
+    <pinotree> i'll start now another ecl build, from scratch this time, with
+      s/SIGUSR1/SIGINFO/ (making sure ctags won't bother), and if it works i'll
+      update svante's bug
+
+    <pinotree> mmap(...PROT_NONE...) failed
+    <pinotree> hmm...
+    <pinotree> apparently enabling MMAP_ANON in mono's libgc copy was a good
+      step, let's see
+
+
+### IRC, OFTC, #debian-hurd, 2012-03-18
+
+    <pinotree> youpi: mono is afflicted by the SIGUSR1/2 conflict with libgc
+    <youpi> pinotree: didn't we have a solution for that?
+    <pinotree> well, it works just for one signal
+    <pinotree> the ideal solution would be having a range for RT signals, and
+      make libgc use RTMIN+5/6, like done on most of other OSes
+    <youpi> but we don't have RT signals, do we?
+    <pinotree> right :(
+
+
+### IRC, freenode, #hurd, 2012-03-21
+
+    <pinotree> civodul: given we have to realtime signals (so no range of
+      signals for them), libgc uses SIGUSR1/2 instead of using SIGRTMIN+5/6 for
+      its thread synchronization stuff
+    <pinotree> civodul: which means that if an application using libgc then
+      sets its own handlers for either of SIGUSR1/2, hell breaks
+    <civodul> pinotree: ok
+    <civodul> pinotree: is it a Debian-specific change, or included upstream?
+    <pinotree> libgc using SIGUSR1/2? upstream
+    <civodul> ok
+
+
+### IRC, freenode, #hurd, 2013-09-03
+
+    <congzhang> braunr: when will libc malloc say memory corruption?
+    <braunr> congzhang: usually on free
+    <braunr> sometimes on alloc
+    <congzhang> and after one thread be created
+    <congzhang> I want to know why and how to find the source
+    <congzhang> does libgc work well on hurd?
+    <braunr> i don't think it does
+    <congzhang> so , why it can't?
+    <braunr> congzhang: what ?
+    <congzhang> libgc was not work on hurd
+    <pinotree> why?
+    <congzhang> I try porting dotgnu
+    <braunr> ah
+    <braunr> nested signal handling
+    <congzhang> one program always receive Abort signal
+    <pinotree> and why it should be a problem in libgc?
+    <congzhang> for malloc memory corruption
+    <braunr> libgc relies on this
+    <congzhang> yes
+    <congzhang> so, is there a workaround to make it work? 
+    <braunr> show the error please
+    <congzhang> http://paste.debian.net/34416/
+    <pinotree> where's libgc?
+    <congzhang> i compile dotgnu with enable-gc
+    <pinotree> so?
+    <congzhang> I am not sure about it
+    <pinotree> so why did you say earlier that libgc doesn't work?
+    <congzhang> because after I see one thread was created notice by gdb, it
+      memory corruption
+    <pinotree> so what?
+    <congzhang> maybe gabage collection happen, and gc thread start
+    <pinotree> that's speculation
+    <pinotree> you cannot debug things speculating on code you don't know
+    <pinotree> less speculation and more in-deep debugging, please
+    * congzhang I try again, to check weather thread list changing
+    <congzhang> sorry for this
+    <braunr> it simply looks like a real memory corruption (an overflow)
+    <congzhang> maybe PATH related problem
+    <pinotree> PATH?
+    <congzhang> yes
+    <braunr> PATH_MAX
+    <braunr> but unlikely
+    <congzhang> csant do path traverse
+    <congzhang> I fond the macro
+    <congzhang> found
+    <congzhang> #if defined(__sun__) || defined(__BEOS__)
+    <congzhang> #define     BROKEN_DIRENT   1
+    <congzhang> #endif
+    <congzhang> and so for hurd?
+    <pinotree> BROKEN_DIRENT doesn't say much about what it does
+    <WhiteKIBA> nope
+    <WhiteKIBA> whoops
+    <congzhang> it seems other port meet the trouble too
+    <pinotree> which trouble?
+    <congzhang> http://comments.gmane.org/gmane.comp.gnu.dotgnu.developer/3642
+    <congzhang> (gdb) ptype struct dirent
+    <congzhang> type = struct dirent {
+    <congzhang>     __ino_t d_ino;
+    <congzhang>     unsigned short d_reclen;
+    <congzhang>     unsigned char d_type;
+    <congzhang>     unsigned char d_namlen;
+    <congzhang>     char d_name[1];
+    <congzhang> }
+    <congzhang>  
+    <congzhang> d_name should be char[PATH_MAX]?
+    <congzhang> and
+      http://libjit-linear-scan-register-allocator.googlecode.com/svn/trunk/pnet/support/dir.c
+    <pinotree> no
+    <braunr> stop pasting that much
+    <_d3f> uhm PATH_MAX on the hurd?
+    <braunr> and stop saying nonsense
+    <congzhang> sorry, i think four line was not worth to pastbin 
+    <pinotree> they are 8
+    <congzhang> never again
+    <braunr> just try by defining BROKEN_DIRENT to 1 in all cases and see how
+      it goes
+    * congzhang read dir.c again
+    <congzhang> braunr: it does not crash this time, I do more test
+
+
+#### IRC, freenode, #hurd, 2013-09-04
+
+    <congzhang> hi, I am dotgnu work on hurd, and even winforms app 
+    <congzhang> s/am/make
+    <congzhang> and maybe c# hello world translate another day :)
+
+
+### IRC, freenode, #hurd, 2013-12-16
+
+    <braunr> gnu_srs: ah, libgc
+    <braunr> there are signal-related problems with libgc
+
+
+## Leak Detection
+
+### IRC, freenode, #hurd, 2013-10-17
+
+    <teythoon> I spent the last two days integrating libgc - the boehm
+      conservative garbage collector - into hurd
+    <teythoon> it can be used in leak detection mode
+    <azeem> whoa, cool
+    <teythoon> and it actually kind of works, finds malloc leaks in translators
+    <braunr> i think there were problems with signal handling in libgc
+    <braunr> i'm not sure we support nested signal handling well
+    <teythoon> yes, I read about them
+    <teythoon> libgc uses SIGUSR1/2, so any program installing handlers on them
+      will break
+    <azeem> (which is not a problem on Linux, cause there some RT-signals or so
+      are used)
+    <teythoon> yes

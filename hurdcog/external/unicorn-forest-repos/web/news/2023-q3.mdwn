@@ -1,0 +1,193 @@
+[[!meta copyright="Copyright © 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta date="2024-01-01 22:22 UTC"]]
+
+Hello!  Welcome to a new qoth.  This qoth covers new and interesting GNU/Hurd
+developments in Q3 of 2023!
+[[!if test="included()" then="""[[!toggle id=full_news
+text="Details."]][[!toggleable id=full_news text="[[!paste id=full_news]]"]]"""
+else="
+[[!paste id=full_news]]"]]
+
+[[!cut id="full_news" text="""
+
+Joan Lledo modified the PCI arbiter to prevent mapping I/O region
+files.  He previously sent some patches to implement mapping region
+and ROM files using `mmap()`. However, a `BAR` region can represent
+either memory or I/O space, and only memory should be allowed to be
+mapped.  Since I/O `BARs` only contain I/O addresses, he went ahead
+and [[prevented the mapping of I/O region
+files|https://lists.gnu.org/archive/html/bug-hurd/2023-07/msg00041.html]]. The
+next step is to make IO spaces available for users through the
+pci-arbiter. He plans to add a new RPC that checks for permission and
+calls `i386_io_perm_create()`. Then it returns the resulting port.
+
+Our Google summer of code student Vedant Tewari decided to port rust,
+and the rust porting effort is making good progress.  [[The build
+process is a bit
+wonky|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00091.html]],
+and Debian is using an older rust version.  Check out [[the rust pull
+request|https://github.com/rust-lang/rust/pull/115230]] that adds Hurd
+support!
+
+[[Samuel|samuelthibault]] worked on setting up
+[[PAE|https://en.wikipedia.org/wiki/Physical_Address_Extension]],
+which will eventually let us use more than 4GB of RAM on a 32-bit
+Hurd!  It is also useful for the X86_64 architecture. He also fixed the
+[[jemalloc|https://lists.debian.org/debian-hurd/2023/08/msg00000.html]]
+build.
+
+Samuel was incredibly productive this quarter making the `X86_64` bit
+port more stable.  He fixed the 64-bit Hurd [[
+PIE|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00040.html]]
+build, and he got [[git
+working|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00059.html]]
+on the 64-bit port!  Though a few of the [[git
+tests|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00069.html]]
+are failing on both `X86_64` and the 32 bit port. He fixed the [[glibc
+build|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00064.html]],
+which involved fixing `pmap_remove` and `pmap_protect`. He discovered
+that [[core dumping is currently causing
+problems|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00068.html]]
+on the 64-bit port, and he temporarily encourages people to disable
+core dumping. Samuel fixed some [[networking
+issues|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00027.html]]
+and a [[dpkg
+issue|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00058.html]]
+for the 64-bit port.  It was hard to discover what the problem was,
+because the debugging tools have not been ported to the 64-bit port.
+He add some helpers to locking to fix some bugs, and he encourages other
+developers to help him fix the debugging tools for X86-64. It seems
+that most developers are currently running the 64-bit Hurd in a
+virtual machine and not in real hardware.
+
+Luca Dariz got a patch series merged
+[[for|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00000.html]]
+[[the|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00001.html]]
+[[64|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00002.html]]
+[[bit|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00003.html]]
+[[port|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00004.html]].
+
+Sergey implemented
+[[MAP_EXCL|https://lists.gnu.org/archive/html/bug-hurd/2023-07/msg00010.html]]
+and provided `MAP_FIXED_NOREPLACE` and `MAP_TRYFIXED` as aliases of
+`(MAP_FIXED|MAP_EXCL)` as well other `mmap` work.  He explains:
+
+> `MAP_FIXED` is defined to silently replace any existing mappings at
+> the address range being mapped over. However, this is dangerous and
+> only rarely desired behavior.
+> 
+> Various Unix systems provide replacements or additions to `MAP_FIXED`.
+>
+> * SerenityOS and Linux provide `MAP_FIXED_NOREPLACE`. If the address space
+>   already contains a mapping in the requested range, Linux returns
+>   `EEXIST`. SerenityOS returns `ENOMEM`, however that is a bug, as the
+>   `MAP_FIXED_NOREPLACE` implementation is intended to be compatible with
+>   Linux.
+> 
+> * DragonFly BSD, NetBSD, and OpenBSD provide `MAP_TRYFIXED`, but with
+>   different semantics. DragonFly BSD returns `ENOMEM` if the requested
+>   range already contains existing mappings. NetBSD does not return an
+>   error, but instead creates the mapping at a different address if the
+>   requested range contains mappings. OpenBSD behaves the same, but also
+>   notes that this is the default behavior even without `MAP_TRYFIXED`
+>   (which is the case on the Hurd too).
+> 
+> Since the Hurd leans closer to the BSD side, add `MAP_EXCL` as the
+> primary API to request the behavior of not replacing existing
+> mappings. Declare `MAP_FIXED_NOREPLACE` and `MAP_TRYFIXED` as
+> aliases of `(MAP_FIXED|MAP_EXCL)`, so any existing software that
+> checks for either of those macros will pick them up
+> automatically. For compatibility with Linux, return `EEXIST` if a
+> mapping already exists.
+
+Damien Zammit added a USB mass storage translator via
+[[rumpusbdisk|https://lists.gnu.org/archive/html/bug-hurd/2023-07/msg00025.html]].
+Though it has some issues as he explains:
+
+> Netdde sneems to exhibit a bug when running `ifdown /dev/eth0`
+> simultanously to running the rumpusbdisk translator, because to the
+> two devices share the same IRQ.
+
+Damien also worked on the Hurd's SMP support (much of his SMP
+contributions is based on the earlier work done by Almudena Garcia):
+
+* He tweaked [[GNU Mach's
+scheduler|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00084.html]],
+and he merged [[three|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00080.html]] [[GNU Mach|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00010.html]] [[commits|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00018.html]].
+
+* He added a [[show all
+runqs|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00072.html]]
+command to GNU Mach's kernel debugger.
+
+* He also [[improved SMP in GNU
+Mach|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00048.html]]
+by storing the struct processor in a percpu area and avoiding an
+expensive `cpu_number` every call of `current_processor()`, as well as
+getting the cpu_number from an offset in the percpu area.  Further
+improvements can be made by using other percpu areas. It was untested
+on 64 bit.
+
+* Damien also taught GNU Mach to use the x86 CPUID instruction to get
+the [[CPU
+ID|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00056.html]]
+for speed.  He reduced the time it takes to get the CPUID. He made it
+100 times faster!
+
+* He mentioned
+[[some|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00075.html]] [[issues|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00046.html]]:
+60% of the time, booting a 32 bit Hurd, with SMP enabled, fails to
+boot (sometimes apparently getting stuck in the rumpdisk). When it
+does boot, it is not particularly stable and likely to crash. 
+
+Essentially, the SMP work is progressing, but it is not ready for
+production use. His recent work made the non-SMP faster, and a 32 bit
+Hurd, with SMP enabled and only one core, [[appears relatively stable
+(but slow to
+boot)|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00046.html]].
+The [[32-bit SMP enabled Hurd may soon be as fast as the non-SMP
+Hurd|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00074.html]].
+Eventually the SMP enabled Hurd will be faster than a non-SMP Hurd.
+
+Flavio Cruz halved the size of `mach_msg_type_long_t`, from 16 to 8
+bytes.  He also [[simplified the overall 64bit RPC
+ABI|https://lists.gnu.org/archive/html/bug-hurd/2023-08/msg00049.html]],
+removing "holes" in `mach_msg_type_t` or `mach_msg_type_long_t`, which
+prevents possible leakages to userspace.
+
+Some Hurd people talked to Kent Overstreet, the author of
+[[bcachefs|https://bcachefs.org/]] to discuss the possibility of
+porting Linux's newest filesystem to the Hurd; the conversation [[was
+recorded|https://lists.gnu.org/archive/html/bug-hurd/2023-09/msg00073.html]].
+While most Hurd developers believe that it would possible to port
+bcachefs to the Hurd, all agree that it would be difficult to port and
+hard to maintain.  No Hurd developers are currently planning or
+working on porting bcachefs to the Hurd.  But perhaps you want to?
+
+So if you want to test if your favorite packages work on the Hurd and
+contribute towards making the full GNU system usable for a wider range
+of people, please [[check the contributing page|contributing]].
+
+---
+
+The **GNU Hurd** is the GNU project's replacement for the Unix kernel.  It is a
+collection of servers that run on the Mach microkernel to implement file
+systems, network protocols, file access control, and other features that are
+implemented by the Unix kernel or similar kernels (such as Linux).  [[More
+detailed|hurd/documentation]].
+
+**GNU Mach** is the microkernel upon which a GNU Hurd system is based.  It
+provides an Inter Process Communication (IPC) mechanism that the Hurd uses to
+define interfaces for implementing in a distributed multi-server fashion the
+services a traditional operating system kernel provides.  [[More
+detailed|microkernel/mach/gnumach]].
+
+"""]]

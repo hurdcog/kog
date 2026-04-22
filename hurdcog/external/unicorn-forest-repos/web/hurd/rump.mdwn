@@ -1,0 +1,82 @@
+[[!meta copyright="Copyright © 2009, 2010, 2011, 2024 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+  * [[community/gsoc/project ideas/driver glue code]]
+
+  * [[open issues/user-space device drivers]]
+
+  * [[open issues/device drivers and io systems]]
+
+---
+
+The rump kernels provide existing real world drivers from netbsd.
+Since [[DDE]] no longer seems like a promising approach to get drivers
+for the Hurd, it appears that rump kernels are the best alternative.
+It already does the hard work of providing an environment where the
+foreign drivers can run, and offers the additional benefit of being
+externally maintained. Rump also offers the necessary facilities for
+running all drivers in separate userspace processes, which is more
+desirable than drivers running in the microkernel.
+
+A rump kernel is a minimal and portable NetBSD kernel running in
+userspace. Rump kernels provide drivers for modern hard drives, sound
+cards, usb support, and a TCP/IP stack.  Instead of re-inventing and
+maintaining drivers ourselves, we can re-use the existing NetBSD
+drivers.
+
+Hurd developers have enabled experimental support for modern hard
+drives with a rump kernel.  We call it
+[[rumpdisk|hurd/rump/rumpdisk]], and you can try it in the [[Debian
+GNU/Hurd image|hurd/running/qemu]].
+
+As of May 2023, Hurd users are having good success with it in qemu
+environments and some are using it on real hardware!
+
+We do hope to use rump kernels for usb support, sound support (this
+was working at some point), and possibly a new TCP/IP stack, but work
+has not completed on those projects.
+
+# Rump kernels
+
+  * [[rumpdisk|rump/rumpdisk]] HHD/SSD/NVMe device drivers
+
+  * [[rumpfs|rump/rumpfs]] using NetBSDs filesystems (FFS)
+
+  * [[rumpnet|rump/rumpnet]] wifi/ethernet device drivers
+
+  * [[rumpsound|rump/rumpsound]] audio device drivers
+
+  * [[rumpusbdisk|rump/rumpusbdisk]] accessing external SATA devices
+
+# Documentation
+
+  * <http://www.fixup.fi/misc/usenix-login-2015/login_oct15_02_kantee.pdf>
+
+    This is an an opinion paper that explains why operating systems need compartmentalized kernel drivers.
+
+  * <https://github.com/rumpkernel/wiki/wiki/Tutorial:-Getting-started>
+
+    A tutorial introduction for those interested in using and deploying rump kernels.
+
+  * <https://netbsd.org/docs/rump/sptut.html>
+
+    Another tutorial on rump kernel servers and clients.
+
+  * <https://core.ac.uk/display/41816390>
+
+    "User space approach to audio device driving on UNIX-like systems" by Robert Millan Hernandez.
+
+
+# Source Code
+
+  * <https://github.com/rumpkernel>

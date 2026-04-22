@@ -1,0 +1,221 @@
+# <a name="Early_beginnings"> Early beginnings </a>
+
+Mach has quite a history. Everything actually started at the University of Rochester in 1975. It was invented to demonstrate how operating systems could be built using a modular design where processes communicated using message passing, even across networks. The system was called the Rochester Intelligent Gateway and ran on a 16 bit mini computer called Eclipse from Data General.
+
+One of the engineers behind the project was Richard Rashid. In 1979 he moved his socks to Carnegie Mellon University to continue his research on message passing operating systems. The result emerged in 1981 and was called Accent.
+
+Accent kept running at CMU until 1984 but was by then being run over by
+[[UNIX]].  Rashid then decided to use an early embrace strategy and started
+designing the third generation OS project called Mach.  By making Mach
+compatible with UNIX, Mach was supposed to gain a lot of available UNIX
+software.
+
+Mach was a vast improvement over Accent. It incorporated parts commonly used today, such as: threads, better IPC, multiprocessor support and an advanced VM system.
+
+At the time of Mach's conception, DARPA was seeking a multiprocessor (MP) capable OS and found Mach. With money from the Dept. of Defense, 4.2BSD support was added, to bloat the kernel; but most of all, to add complete UNIX compatibility.
+
+Now enters the UNIX war.
+
+UNIX was owned by AT&amp;T which controlled the market almost completely. Industry giants such as IBM, DEC and H got together and formed the Open Software Foundation, OSF. In an effort to conquer market share, OSF took the Mach 2.5 release and made it the OSF/1 system. By that time Mach contained a lot of BSD and AT&amp;T code but the OSF hoped that it would be able to take control of the rudder with OSF/1. What happens after that is a story better told by someone else ...
+
+In 1989 CMU decided to revamp Mach. They removed the bloat and put the UNIX emulation in user space making the Mach 3.0 release -- the pure Mach release.
+
+Later on support for Mach 3.0 at CMU vaned and the project was taken over by the University of Utah. The FLUX group started the Mach4 project. An ambitious project which included complete rewrite of the x86 support code and integration of Linux 2.0 drivers. That's right, Linux awoke around 1991 so this makes it apx. 1994.
+
+# <a name="GNU_Mach_and_OSKit_Mach"> </a> GNU Mach and OSKit-Mach
+
+GNU Mach is based on Mach4 from University of Utah, which in turn is based on Mach3 from Carnegie-Mellon University. The last release of Mach4 was the [UK22 release](http://www.cs.utah.edu/flux/mach4-i386/html/mach4-UK22.html).
+
+The OSKit was what evolved when the Mach4 project at University of Utah was dropped. The people involved wanted to reuse the work they had put into Mach in the form of hardware support and drivers.
+
+The oskit-mach version of GNU Mach was presented in November 1999 by Roland McGrath. <http://mail.gnu.org/pipermail/bug-hurd/1999-November/003554.html> The purpose of the port was to get better hardware support through new drivers and platform code available in the OSKit.
+
+On May 27 2002, after the Gnumach 1.3 release, Roland McGrath merged OSKit-Mach onto the HEAD of CVS making it the Gnumach 2.x mainline.
+
+Meanwhile, OSKit became unmaintained, thus posing more of a burden on than being helpful in GNU Mach development. Consequently, as of March 2006, nobody is working on OSKit Mach, or trying to use it.
+
+In 2005 Gianluca Guida started a different attempt to use the osenv interface with minimal changes to GNU Mach 1.x, thus allowing use of the generic driver interface while importing as little of the umaintained OSKit code as possible. However, there turned out to be serious problems with OSKit, so this attempt was abandoned as well.
+
+Today, GNU Mach development focuses on the 1.x branch again -- see also this
+list of [[gnumach/projects]].
+
+# <a name="Status_of_the_project"> Status of the project </a>
+
+GNU Mach 1.3 was released in May 2002, and features advanced boot script support, support for large disks (&gt;= 10GB) and an improved console.
+
+GNU Mach is used as the default microkernel in the GNU/Hurd system. It is compatible with other popular Mach distributions. The device drivers for block devices and network cards are taken from Linux 2.0.x kernel versions (plus some backports of more recent drivers), so most newer hardware is not supported.
+
+As of March 2006 a GNU Mach 1.4 release is planned, focusing on code cleanup. It is meant to serve as a starting point for more radical future changes while maintaining 1.4.x as a stable branch.
+
+----
+
+Copyright (C) 2001 Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA
+
+Verbatim copying and distribution of this entire article is permitted in any medium, provided this notice is preserved.
+
+-- [[Main/JoachimNilsson]] - 24 Oct 2002
+
+Apple's Macintosh OSX (OS 10.x) is based on [Darwin](http://www.apple.com/macosx/technologies/darwin.html). _"Darwin uses a monolithic kernel based on [[TWiki/FreeBSD]] 4.4 and the OSF/mk Mach 3."_ Darwin also has a [Kernel Programming](http://developer.apple.com/techpubs/macosx/Darwin/General/KernelProgramming/About/index.html) Book.
+
+-- [[Main/GrantBow]] - 22 Oct 2002
+
+IRC, freenode, #hurd, 2012-08-29:
+
+    <pavlx> was moved the page from apple.com about darwin kernel programming
+      as described on the
+      https://www.gnu.org/software/hurd/microkernel/mach/history.html
+    <pavlx> i found the page and it's
+      https://developer.apple.com/library/mac/#documentation/Darwin/Conceptual/KernelProgramming/About/About.html
+    <pavlx> it's not anymore the old page
+      http://developer.apple.com/techpubs/macosx/Darwin/General/KernelProgramming/About/index.html
+    <pavlx> and the link about darwin does noit exists anymore ! the new one
+      could be https://ssl.apple.com/science/profiles/cornell
+    <pavlx> the old one was
+      http://www.apple.com/macosx/technologies/darwin.html
+    <pavlx> the link to Darwin is changed i suppose that the new one it's
+      https://ssl.apple.com/science/profiles/cornell
+    <pavlx> and the link to Kern Programming it's
+      https://developer.apple.com/library/mac/#documentation/Darwin/Conceptual/KernelProgramming/About/About.html
+    <pavlx> can't be anymore
+      http://developer.apple.com/techpubs/macosx/Darwin/General/KernelProgramming/About/index.html
+
+IRC, freenode, #hurd, 2013-07-03:
+
+    *** natsukao (~natsukao@dynamic-adsl-94-37-184-109.clienti.tiscali.it) has
+          joined channel #hurd
+    <natsukao> hi
+    <natsukao> on 2012-08-29: i wrote a part of messages that then were posted
+      on http://www.gnu.org/software/hurd/microkernel/mach/history.html
+    <natsukao> i am sorry to inform you that apple computer cuèertino.inc, has
+      moved the URL: https://ssl.apple.com/science/profiles/cornell
+    <natsukao> and i have not found nothing on the source code of that page,
+    <natsukao> i used lftp without any success
+    <natsukao> and then wget, nothing to do
+    <natsukao> i have not found a copy cache of
+      https://ssl.apple.com/science/profiles/cornell
+    <natsukao> next time we save the documents and we provide to do our
+      archive/s
+    <natsukao> so that will be always available the infos 
+    *** natsukao (~natsukao@dynamic-adsl-94-37-184-109.clienti.tiscali.it) is
+          now known as pavlx
+    <pavlx> happy hacking !!!!
+    <pavlx> "paolo del bene" <W3C_Freedom@riseup.net>
+    <pavlx> p.s: i'll turn back as soon as possible 
+
+    <pavlx> i found the page of Darwin History, removed from apple compter
+      cupertino.inc
+    <pavlx> "Cached_ http___developer.apple.com_darwin_history.html"
+    <pavlx> the page http://developer.apple.com/darwin/history.html was moved
+      and now is available on: 
+    <pavlx>
+      http://www.google.it/url?q=http://www.macmark.de/files/darwin_evolution.pdf%3FPHPSESSID%3D8b8683a81445f69d510734baa13aabfc&sa=U&ei=wMzTUb-NBIeFOOL4gNgE&ved=0CCQQFjAD&usg=AFQjCNFlLwC24nB5t14VUmedK4EmeE7Ohw
+    <pavlx> or simply: http://www.macmark.de/files/darwin_evolution.pdf
+    <pavlx> slides on: "Travel - Computer Science and Software Engineering"
+    <pavlx> www.csse.uwa.edu.au/~peterj/personal/PDFs/WWDC2004-6UP.pdf 
+    <pavlx> about apple computer cupertino.inc, but there are many interesting
+      news
+    <teythoon> pavlx: uh, lot's of marketing noise from apple >,<
+    <pavlx> i found better material just now:
+      http://www.pcs.cnu.edu/~mzhang/CPSC450_550/2003CaseStudy/Mach_Presentation_DavidRamsey.ppt
+    <pavlx> teythoon, sorry, i turn back to sleep, see you later, paolo
+      W3C_Freedom@riseup.net
+    <pavlx> i'll charge of that page only things dedicated to GNU/HURD, but
+      slides are not mine, i found on internet
+    <teythoon> pavlx: sure, I didn't ment to offend you in any way
+
+IRC, freenode, #hurd, 2013-07-04:
+
+    <pavlx> there are few problems:
+    <pavlx> http://www.gnu.org/software/hurd/microkernel/mach/history.html
+    <pavlx> on the page GrantBow wrote: Apple's Macintosh OSX (OS 10.x) is
+      based on Darwin. "Darwin uses a monolithic kernel based on ?FreeBSD 4.4
+      and the OSF/mk Mach 3." Darwin also has a Kernel Programming Book.
+    <pavlx> the link to Darwin was moved, is not anymore
+      http://www.apple.com/macosx/technologies/darwin.html
+    <pavlx> then it's not FreeBSD 4.4 but BSD 
+    <pavlx> and the link to Kernel Programming was moved is not
+      http://developer.apple.com/techpubs/macosx/Darwin/General/KernelProgramming/About/index.html
+      but
+      https://developer.apple.com/library/mac/#documentation/Darwin/Conceptual/KernelProgramming/About/About.html
+    <pavlx> apple has moved the URL:
+      https://ssl.apple.com/science/profiles/cornell
+    <pavlx> apple has moved the URL:
+      http://www.apple.com/macosx/technologies/darwin.html
+    <pavlx> so on the website you can left few things about my old post:
+    <pavlx> from IRC, freenode, #hurd, 2012-08-29: needs to remove
+    <pavlx> http://dpaste.com/1286266/
+    <pavlx> the new one will be: http://pastebin.com/yMm8tcTN
+        IRC, freenode, #hurd, 2013-07-04:
+         
+        <pavlx> was moved the page from apple.com about darwin kernel programming
+          as described on the https://www.gnu.org/software/hurd/microkernel/mach/history.html
+         
+        <pavlx> the link to Kernel Programming:
+          https://developer.apple.com/library/mac/#documentation/Darwin/Conceptual/KernelProgramming/About/About.html
+    <pavlx> (anyway i searching with any key the things moved from apple)
+    <pavlx> about Darwin type http://apple.com/darwin 
+    <pavlx> on the right side, towards the end of the website it says:  Darwin
+      Technologies
+    <pavlx> click on it, or copy the URL in an other tab of your own browser,
+      and read:
+      https://developer.apple.com/library/mac/#documentation/MacOSX/Conceptual/OSX_Technology_Overview/SystemTechnology/SystemTechnology.html
+    <pavlx> and something is related to Darwin
+    <pavlx> and again : http://pastebin.com/DHkJDxy8
+        # Mac OS X Server
+         
+        ... This kernel, known as Darwin, provides a stable, high-performance platform
+        for developing groundbreaking applications and system technologies. ...
+        http://www.apple.com/server/docs/MacOSX_Server_TO_300195.pdf
+         
+        # Mac OS X Server Command-Line Administration
+         
+        Page 1. Mac OS X Server Command-Line Administration For Version 10.3
+        http://www.apple.com/server/docs/Command_Line.pdf
+         
+        # Press Info - Apple “Open Sources” Rendezvous
+         
+        ... Rendezvous is part of a broader open source release today from Apple at
+        http://developer.apple.com/darwin which includes the Darwin 6.0.1 ...
+        http://www.apple.com/pr/library/2002/09/25Apple-Open-Sources-Rendezvous.html
+         
+        # Press Info - Apple Releases Darwin 1.0 Open Source
+         
+        ... Apple Releases Darwin 1.0 Open Source. New ... modules. Darwin 1.0 gives
+        developers access to essential Mac OS X source code. ...
+        http://www.apple.com/pr/library/2000/04/05Apple-Releases-Darwin-1-0-Open-Source.html
+         
+        # Press Info - Apple's Mac OS X to Ship on March 24
+         
+        ... Mac OS X is built upon an incredibly stable, open source, UNIX based
+        foundation called Darwin and features true memory protection, preemptive ...
+        http://www.apple.com/pr/library/2001/01/09Apples-Mac-OS-X-to-Ship-on-March-24.html
+         
+        # Press Info - Mac OS X “Gold Master” Released To ...
+         
+        ... Mac OS X is built upon an incredibly stable, open source, UNIX
+        basedfoundation called Darwin and features true memory protection ...
+        http://www.apple.com/pr/library/2001/03/07Mac-OS-X-Gold-Master-Released-To-Manufacturing.html
+         
+            * Press Info - Apple Announces Mac OS X “Jaguar” ...
+         
+              ... As an active member of the Open Source community, Apple has distributed
+              Open Directory technology through the Darwin Open Source Project. ...
+              http://www.apple.com/pr/library/2002/07/17Apple-Announces-Mac-OS-X-Jaguar-Server-Worlds-Easiest-to-Manage-UNIX-Based-Server-Software.html
+    <pavlx> and:
+      http://lists.apple.com/archives/darwinos-users/2005/Apr/msg00021.html
+    <youpi> pavlx: it's hard to follow the changes you are talking
+      about. Perhaps you could simply edit these wiki pages?
+    <pavlx> anyway i am saying to you that i found a mailing list where are
+      availables the sources codes of darwin ppc-801 and x86
+    <pavlx> and as last thing mac os x 10.4
+    <braunr> pavlx: what's all this about ?
+    <pavlx> i am sorry, i did changes on the wiki
+    <pavlx> but after the preview and after to have saved, it show again the
+      old chat of 2012
+
+---
+
+[[!tag open_issue_documentation]]Update for [[GNU Mach 1.4
+release|news/2013-09-27]], [[GNU Mach 1.5|news/2015-04-10-releases]], [[GNU
+Mach 1.6|news/2015-10-31-releases]], [[GNU Mach 1.7|news/2016-05-18-releases]],
+[[GNU Mach 1.8|news/2016-12-18-releases]].

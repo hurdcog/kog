@@ -1,0 +1,1217 @@
+version: 2.1
+
+# OCC Monorepo Master Orchestration Config
+# Build dependency order enforced via 'requires' in workflow section.
+
+executors:
+  opencog-deps:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+        environment:
+          CCACHE_DIR: /ws/ccache
+
+commands:
+  restore-ccache:
+    steps:
+      - run:
+          name: Prepare ccache key
+          command: mkdir -p /ws && date +%d-%m-%Y > /ws/date
+      - restore_cache:
+          keys:
+            - ccache-{{ checksum "/ws/date" }}
+            - ccache-
+
+  save-ccache:
+    steps:
+      - run:
+          name: Prepare ccache key
+          command: mkdir -p /ws && date +%d-%m-%Y > /ws/date
+      - save_cache:
+          key: ccache-{{ checksum "/ws/date" }}
+          paths:
+            - /ws/ccache
+
+  build-cmake-pkg:
+    parameters:
+      pkg:
+        type: string
+    steps:
+      - run:
+          name: CMake Configure
+          command: mkdir -p /ws/<< parameters.pkg >>/build && cd /ws/<< parameters.pkg >>/build && cmake ..
+      - run:
+          name: Build
+          command: cd /ws/<< parameters.pkg >>/build && make -j2
+      - run:
+          name: Build tests
+          command: cd /ws/<< parameters.pkg >>/build && make -j2 tests
+          when: always
+      - run:
+          name: Run tests
+          command: cd /ws/<< parameters.pkg >>/build && make check ARGS=-j2
+          when: always
+      - run:
+          name: Print test log
+          command: cat /ws/<< parameters.pkg >>/build/tests/Testing/Temporary/LastTest.log
+          when: always
+      - run:
+          name: Install << parameters.pkg >>
+          command: cd /ws/<< parameters.pkg >>/build && make install && ldconfig
+
+jobs:
+  # =========================================================================
+  # Layer 1: Foundation - cogutil (no dependencies)
+  # =========================================================================
+  cogutil:
+    executor: opencog-deps
+    working_directory: /ws
+    steps:
+      - run:
+          name: Ensure /ws directory exists
+          command: mkdir -p /ws
+      - restore-ccache
+      - run:
+          name: Checkout cogutil code
+          command: |
+            mkdir -p /ws/cogutil
+            cd /ws
+            git clone --depth 1 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - build-cmake-pkg:
+          pkg: cogutil
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - cogutil
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 2: Core (require cogutil)
+  # =========================================================================
+  atomspace:
+    executor: opencog-deps
+    working_directory: /ws/atomspace
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace
+            - ccache
+      - save-ccache
+
+  coggml:
+    executor: opencog-deps
+    working_directory: /ws/coggml
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: coggml
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - coggml
+            - ccache
+      - save-ccache
+
+  moses:
+    executor: opencog-deps
+    working_directory: /ws/moses
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: moses
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - moses
+            - ccache
+      - save-ccache
+
+  hurdcog:
+    executor: opencog-deps
+    working_directory: /ws/hurdcog
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: hurdcog
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - hurdcog
+            - ccache
+      - save-ccache
+
+  cognumach:
+    executor: opencog-deps
+    working_directory: /ws/cognumach
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: cognumach
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - cognumach
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 3: AtomSpace-dependent (require atomspace)
+  # =========================================================================
+  atomspace-storage:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-storage
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-storage
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-storage
+            - ccache
+      - save-ccache
+
+  matrix:
+    executor: opencog-deps
+    working_directory: /ws/matrix
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: matrix
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - matrix
+            - ccache
+      - save-ccache
+
+  unify:
+    executor: opencog-deps
+    working_directory: /ws/unify
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: unify
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - unify
+            - ccache
+      - save-ccache
+
+  sensory:
+    executor: opencog-deps
+    working_directory: /ws/sensory
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: sensory
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - sensory
+            - ccache
+      - save-ccache
+
+  tensor-logic:
+    executor: opencog-deps
+    working_directory: /ws/tensor-logic
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: tensor-logic
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - tensor-logic
+            - ccache
+      - save-ccache
+
+  atenspace:
+    executor: opencog-deps
+    working_directory: /ws/atenspace
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atenspace
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atenspace
+            - ccache
+      - save-ccache
+
+  atomspace-accelerator:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-accelerator
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-accelerator
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-accelerator
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 4: AtomSpace-storage backends (require atomspace-storage)
+  # =========================================================================
+  atomspace-rocks:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-rocks
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-rocks
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-rocks
+            - ccache
+      - save-ccache
+
+  atomspace-cog:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-cog
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-cog
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-cog
+            - ccache
+      - save-ccache
+
+  atomspace-pgres:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-pgres
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-pgres
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-pgres
+            - ccache
+      - save-ccache
+
+  atomspace-restful:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-restful
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-restful
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-restful
+            - ccache
+      - save-ccache
+
+  atomspace-dht:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-dht
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-dht
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-dht
+            - ccache
+      - save-ccache
+
+  atomspace-ipfs:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-ipfs
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-ipfs
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-ipfs
+            - ccache
+      - save-ccache
+
+  atomspace-metta:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-metta
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-metta
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-metta
+            - ccache
+      - save-ccache
+
+  atomspace-websockets:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-websockets
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-websockets
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-websockets
+            - ccache
+      - save-ccache
+
+  atomspace-rpc:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-rpc
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-rpc
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-rpc
+            - ccache
+      - save-ccache
+
+  atomspace-agents:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-agents
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-agents
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-agents
+            - ccache
+      - save-ccache
+
+  atomspace-bridge:
+    executor: opencog-deps
+    working_directory: /ws/atomspace-bridge
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: atomspace-bridge
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - atomspace-bridge
+            - ccache
+      - save-ccache
+
+  lg-atomese:
+    executor: opencog-deps
+    working_directory: /ws/lg-atomese
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: lg-atomese
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - lg-atomese
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 5: CogServer (requires atomspace + atomspace-storage)
+  # =========================================================================
+  cogserver:
+    executor: opencog-deps
+    working_directory: /ws/cogserver
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: cogserver
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - cogserver
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 6: URE (requires atomspace + unify)
+  # =========================================================================
+  ure:
+    executor: opencog-deps
+    working_directory: /ws/ure
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install unify
+          command: cd /ws/unify/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: ure
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - ure
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 7: CogServer dependents (require cogserver)
+  # =========================================================================
+  learn:
+    executor: opencog-deps
+    working_directory: /ws/learn
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: learn
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - learn
+            - ccache
+      - save-ccache
+
+  agents:
+    executor: opencog-deps
+    working_directory: /ws/agents
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: agents
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - agents
+            - ccache
+      - save-ccache
+
+  agentic-chatbots:
+    executor: opencog-deps
+    working_directory: /ws/agentic-chatbots
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: agentic-chatbots
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - agentic-chatbots
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 8: Attention (requires cogserver + atomspace-storage)
+  # =========================================================================
+  attention:
+    executor: opencog-deps
+    working_directory: /ws/attention
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: attention
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - attention
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 9: URE dependents (require ure)
+  # =========================================================================
+  miner:
+    executor: opencog-deps
+    working_directory: /ws/miner
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install unify
+          command: cd /ws/unify/build && make install && ldconfig
+      - run:
+          name: Install ure
+          command: cd /ws/ure/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: miner
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - miner
+            - ccache
+      - save-ccache
+
+  pln:
+    executor: opencog-deps
+    working_directory: /ws/pln
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install unify
+          command: cd /ws/unify/build && make install && ldconfig
+      - run:
+          name: Install ure
+          command: cd /ws/ure/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: pln
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - pln
+            - ccache
+      - save-ccache
+
+  asmoses:
+    executor: opencog-deps
+    working_directory: /ws/asmoses
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install unify
+          command: cd /ws/unify/build && make install && ldconfig
+      - run:
+          name: Install ure
+          command: cd /ws/ure/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: asmoses
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - asmoses
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 10: SpaceTime (requires atomspace + attention)
+  # =========================================================================
+  spacetime:
+    executor: opencog-deps
+    working_directory: /ws/spacetime
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - run:
+          name: Install attention
+          command: cd /ws/attention/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: spacetime
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - spacetime
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 11: CogSelf (requires coggml)
+  # =========================================================================
+  cogself:
+    executor: opencog-deps
+    working_directory: /ws/cogself
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install coggml
+          command: cd /ws/coggml/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: cogself
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - cogself
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Layer 12: Final - opencog (requires all above)
+  # =========================================================================
+  opencog:
+    executor: opencog-deps
+    working_directory: /ws/opencog
+    steps:
+      - attach_workspace:
+          at: /ws
+      - restore-ccache
+      - run:
+          name: Install cogutil
+          command: cd /ws/cogutil/build && make install && ldconfig
+      - run:
+          name: Install atomspace
+          command: cd /ws/atomspace/build && make install && ldconfig
+      - run:
+          name: Install atomspace-storage
+          command: cd /ws/atomspace-storage/build && make install && ldconfig
+      - run:
+          name: Install cogserver
+          command: cd /ws/cogserver/build && make install && ldconfig
+      - run:
+          name: Install unify
+          command: cd /ws/unify/build && make install && ldconfig
+      - run:
+          name: Install ure
+          command: cd /ws/ure/build && make install && ldconfig
+      - run:
+          name: Install attention
+          command: cd /ws/attention/build && make install && ldconfig
+      - run:
+          name: Install spacetime
+          command: cd /ws/spacetime/build && make install && ldconfig
+      - run:
+          name: Install pln
+          command: cd /ws/pln/build && make install && ldconfig
+      - run:
+          name: Install lg-atomese
+          command: cd /ws/lg-atomese/build && make install && ldconfig
+      - checkout
+      - build-cmake-pkg:
+          pkg: opencog
+      - persist_to_workspace:
+          root: /ws
+          paths:
+            - opencog
+            - ccache
+      - save-ccache
+
+  # =========================================================================
+  # Package artifact job (placeholder)
+  # =========================================================================
+  package:
+    executor: opencog-deps
+    working_directory: /ws/opencog
+    steps:
+      - attach_workspace:
+          at: /ws
+      - save-ccache
+
+workflows:
+  version: 2
+  build-test-monorepo:
+    jobs:
+      # Layer 1: Foundation
+      - cogutil
+
+      # Layer 2: Core (parallel, all require cogutil)
+      - atomspace:
+          requires:
+            - cogutil
+      - coggml:
+          requires:
+            - cogutil
+      - moses:
+          requires:
+            - cogutil
+      - hurdcog:
+          requires:
+            - cogutil
+      - cognumach:
+          requires:
+            - cogutil
+
+      # Layer 3: AtomSpace dependents (parallel, require atomspace)
+      - atomspace-storage:
+          requires:
+            - atomspace
+      - matrix:
+          requires:
+            - atomspace
+      - unify:
+          requires:
+            - atomspace
+      - sensory:
+          requires:
+            - atomspace
+      - tensor-logic:
+          requires:
+            - atomspace
+      - atenspace:
+          requires:
+            - atomspace
+      - atomspace-accelerator:
+          requires:
+            - atomspace
+
+      # Layer 4: Storage backends (parallel, require atomspace-storage)
+      - atomspace-rocks:
+          requires:
+            - atomspace-storage
+      - atomspace-cog:
+          requires:
+            - atomspace-storage
+      - atomspace-pgres:
+          requires:
+            - atomspace-storage
+      - atomspace-restful:
+          requires:
+            - atomspace-storage
+      - atomspace-dht:
+          requires:
+            - atomspace-storage
+      - atomspace-ipfs:
+          requires:
+            - atomspace-storage
+      - atomspace-metta:
+          requires:
+            - atomspace-storage
+      - atomspace-websockets:
+          requires:
+            - atomspace-storage
+      - atomspace-rpc:
+          requires:
+            - atomspace-storage
+      - atomspace-agents:
+          requires:
+            - atomspace-storage
+      - atomspace-bridge:
+          requires:
+            - atomspace-storage
+      - lg-atomese:
+          requires:
+            - atomspace-storage
+
+      # Layer 5: CogServer (requires atomspace + atomspace-storage)
+      - cogserver:
+          requires:
+            - atomspace
+            - atomspace-storage
+
+      # Layer 6: URE (requires atomspace + unify)
+      - ure:
+          requires:
+            - atomspace
+            - unify
+
+      # Layer 7: CogServer dependents (parallel, require cogserver)
+      - learn:
+          requires:
+            - cogserver
+      - agents:
+          requires:
+            - cogserver
+      - agentic-chatbots:
+          requires:
+            - cogserver
+
+      # Layer 8: Attention (requires cogserver + atomspace-storage)
+      - attention:
+          requires:
+            - cogserver
+            - atomspace-storage
+
+      # Layer 9: URE dependents (parallel, require ure)
+      - miner:
+          requires:
+            - ure
+      - pln:
+          requires:
+            - ure
+      - asmoses:
+          requires:
+            - cogutil
+            - atomspace
+            - ure
+
+      # Layer 10: SpaceTime (requires atomspace + attention)
+      - spacetime:
+          requires:
+            - atomspace
+            - attention
+
+      # Layer 11: CogSelf (requires coggml)
+      - cogself:
+          requires:
+            - coggml
+
+      # Layer 12: Final opencog build
+      - opencog:
+          requires:
+            - cogserver
+            - attention
+            - spacetime
+            - pln
+            - lg-atomese
+            - ure
+
+      # Package release (master branch only)
+      - package:
+          requires:
+            - opencog
+          filters:
+            branches:
+              only: master

@@ -1,0 +1,9 @@
+
+
+topic: ~xquibble_will system NOSAMPLES()
+
+#!  Will you go with me?
+u: (< will you) [It would certainly depend on that moment in time, I think.]
+
+#! Would you say jogging is a game?
+u: ( < would you ) [Perhaps. Why do you ask?][Why do you ask?] 

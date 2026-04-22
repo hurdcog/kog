@@ -1,0 +1,76 @@
+[[!meta copyright="Copyright © 2025 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag faq/general]]
+
+[[!meta title="Why not just defining `PATH_MAX`, `MAXPATHLEN`, ... `FOO_MAX` and be done?"]]
+
+More technical details are described in [`PATH_MAX` Is Tricky](https://eklitzke.org/path-max-is-tricky)
+
+For porting guidelines, see [[hurd/porting/guidelines#PATH_MAX_tt_MAX_PATH_tt_MAXPATHL]]
+
+# Is it really standard not to define them?
+
+These macros are indeed optional in Posix, so not defining them remains
+standard-compliant. Quoting the standard:
+
+    A definition of one of the symbolic constants in the following list shall be
+    omitted from <limits.h> on specific implementations where the corresponding
+    value is equal to or greater than the stated minimum, but is unspecified.
+
+Their definition was actually not completely clear, Posix 1990 was ambiguous
+about it including `\0` or not, it was made clear later on that it does include
+it, but some software still add `+1`. Sometimes `PATH_MAX` is even understood as
+the filename sections of paths, which is actually `NAME_MAX`, which *is* indeed
+limited by filesystems constraints, but then it is filesystem-dependent, and
+even depend on its revision, so to be rather queried at runtime with `pathconf`.
+
+# But it's really convenient! Isn't allocating dynamically much more complex?
+
+`FOO_MAX` constants are most often used as “reasonable size to allocate a
+path”. On Linux `PATH_MAX` is typically 4096, which is not that reasonable (a whole
+memory page, thus a TLB lookup) when manipulating a lot of paths. Allocating
+dynamically would use much less memory.
+
+Most often interfaces can be made to properly allocate dynamically. Notably,
+since Posix 2008 `realpath(path, NULL)` allocates the path dynamically.
+Posix 2008 does not say that `getcwd(NULL, 0)` allocates the path dynamically,
+but BSD, Linux, and even windows do.
+
+In general, using `FOO_MAX` in source code (with a large value) leads to code
+that is not actually checking against overflows. `PATH_MAX` being 4096 is
+actually "wrong" on Linux:
+
+    $ printf '#include <limits.h>\nPATH_MAX' | cpp -P
+    $ d=0123456789; for i in `seq 1 1000`; do mkdir $d; cd $d 2>/dev/null; done
+    $ pwd | wc -c
+
+Using such paths lead to various broken software, we could for instance notice:
+
+* nautilus crashes because of unhandled signal 8, arithmetic exception
+* tar can create an archive containing such paths, but cannot untar it
+* filelight just ignores the path
+* gdb refuses to work
+
+Using a large `PATH_MAX` value just *hides* these bugs under the
+carpet. Attackers will happily try to exploit them.
+
+# Can't it just be defined to `PTRDIFF_MAX`?
+
+A lot of programs which blindly use `FOO_MAX` as allocation size would then just
+at best either not compile or at worse compile but fail or segfault at execution.
+
+# These also imply ABI problems
+
+Exposing a hardcoded limitation like `FOO_MAX` also means hard-defining them
+into binaries, making them part of the ABI, and then a hell to change. See for
+instance Windows which has been stuck with `MAX_PATH` being 260. Some libraries
+(e.g. libusb1) even expose them in their own ABI, thus making the increase a
+very nasty flag-day.

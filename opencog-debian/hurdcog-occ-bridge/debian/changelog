@@ -1,0 +1,12 @@
+hurdcog-occ-bridge (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of HurdCog-OCC integration bridge
+  * Implements AtomSpace-HurdCog bidirectional communication
+  * Provides MachSpace synchronization with OpenCog AtomSpace
+  * Integrates Cognumach microkernel with cognitive primitives
+  * Enables three-layer cognitive synergy architecture
+  * Supports attention-driven resource allocation across layers
+  * Facilitates cross-layer reasoning and learning loops
+  * Provides unified integration framework for AGI-OS
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2025 00:00:00 +0000

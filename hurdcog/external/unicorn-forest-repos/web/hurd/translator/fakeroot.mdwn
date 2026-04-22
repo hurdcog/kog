@@ -1,0 +1,86 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+A translator for faking privileged access to an underlying filesystem.
+
+This translator appears to give transparent access to the underlying
+directory node.  However, all accesses are made using the credentials
+of the translator regardless of the client and the translator fakes
+success for chown and chmod operations that only root could actually
+do, reporting the faked IDs and modes in later stat calls, and allows
+any user to open nodes regardless of permissions as is done for root.
+
+## A trivial example
+
+Let's demonstrate that chown and chgrp requires root permission.
+
+    $ mkdir ~/etc
+    $ touch ~/etc/this
+    $ settrans ~/etc/this /hurd/hello
+    $ ls -lha ~/etc/
+      total 12K
+	  drwxr-xr-x  2 joshua joshua 4.0K Oct 15 20:12 .
+	  drwxr-xr-x 33 joshua joshua 4.0K Oct 15 20:11 ..
+	  -r--r--r--  1 joshua joshua   14 Oct 15 20:12 this
+	$
+    $ chown root ~/etc/this
+	  chown: changing ownership of '/home/joshua/etc/this': Operation not permitted
+
+Now, let's run through `fakeroot-hurd`:
+
+    $ fakeroot
+    # ls -lha ~/etc/
+      total 12K
+	  drwxr-xr-x  2 root root 4.0K Oct 15 20:12 .
+	  drwxr-xr-x 33 root root 4.0K Oct 15 20:11 ..
+	  -r--r--r--  1 root root   14 Oct 15 20:12 this
+
+The shell now believes we are root, and all the owner and group are turned into
+root. Now we can chmod, chown, chgrp, ...
+
+    # chown daemon ~/etc/this
+    # ls -lha ~/etc/
+      total 12K
+	  drwxr-xr-x  2 root   root 4.0K Oct 15 20:12 .
+	  drwxr-xr-x 33 root   root 4.0K Oct 15 20:11 ..
+	  -r--r--r--  1 daemon root   14 Oct 15 20:12 this
+
+## A manual example
+
+We can also attach `/hurd/fakeroot` manually to `~/etc`, and we'll be able to
+use `chown`, `chgrp`, `chmod`, etc. as a normal user.
+
+    $ settrans ~/etc /hurd/fakeroot
+    $ cd ~/etc
+    $ cd
+    $ showtrans ~/etc
+	  /hurd/fakeroot
+    $ ls -lha ~/etc/
+
+	  total 16K
+      drwxr-xr-x  2 joshua joshua 4.0K Oct 15 20:12 .
+      drwxr-xr-x 33 root   root   4.0K Oct 15 20:11 ..
+	  -r--r--r--  1 root   root     14 Oct 15 20:12 this
+
+`fakeroot` turns all the owner and group to root when it starts.  Now
+we can chmod, chown, and chgrp as a normal user.
+
+    $ chown joshua ~/etc/this
+    $ chgrp joshua ~/etc/this
+    $ chmod +xr ~/etc/this
+    $ ls -lha ~/etc/
+	  total 16K
+      drwxr-xr-x  2 joshua joshua 4.0K Oct 15 20:12 .
+      drwxr-xr-x 33 root   root   4.0K Oct 15 20:11 ..
+      -rwxr-xr-x  1 joshua joshua   14 Oct 15 20:12 this
+

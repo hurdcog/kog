@@ -1,0 +1,10 @@
+*.swp
+.vagrant/
+bin/
+java-getopt-1.0.13.*
+jwnl14-rc2*
+/target/
+.settings
+.classpath
+.directory
+.~*

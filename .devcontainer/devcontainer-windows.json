@@ -1,0 +1,27 @@
+{
+  "name": "OCC Windows vcpkg Builder",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  
+  "postCreateCommand": "bash .devcontainer/setup-vcpkg.sh",
+  
+  "remoteUser": "vscode"
+}

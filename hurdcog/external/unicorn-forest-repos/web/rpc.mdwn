@@ -1,0 +1,33 @@
+[[!meta copyright="Copyright © 2007, 2008, 2010, 2012 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+RPC stands for remote procedure call.  It is generally one userspace processes
+communicating with another userspace process.  For example, a user may use
+emacs to open a text file for editing.  On the Hurd, glibc turns the C function
+call into appropriate RPC calls to ext2fs. It is important to remember that
+gnumach's IPC facilitates this communication between emacs and ext2fs (with
+the gnumach mach_msg () syscall).
+
+It is also important to distinguish an RPC from a [[system call|system_call]].
+A system call is always a userspace process requesting something from the kernel.
+An RPC is generally one userspace process requesting something from another
+userspace process, but it can also be from the kernel. Devices, for instance, can live both in the kernel or in userspace processes, RPCs are used to discuss with them in both cases.
+
+
+
+
+# See Also
+
+  * [[Mach RPC|microkernel/mach/rpc]]s
+
+  * [[RPC usage in the Hurd|hurd/rpc]]
+
+  * the [[Hurd's rpctrace|hurd/debugging/rpctrace]]

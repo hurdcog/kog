@@ -1,0 +1,885 @@
+(Note: Christopher Alexander’s book, The Timeless Way of Building, is one of my very favorites. It is primarily seen as a book about architecture, but is also a book about a way of life. Alexander wrote the book in a beautiful way, with one or two lines in italics that sum up the general principals of his thinking, followed by unitalicized prose that dives deeper in the specific applications to architecture and design.
+He suggests reading the italicized parts first, then going back and re-reading the entire book, which can be accessed in it’s original form, but digitized, here: https://archive.org/details/TheTimelessWayOfBuilding/page/n2
+At the risk of breaking up the pattern, I was interested in a version that was italics only, for ease of reading, and so converted the PDF to the following document, and edited out the unitalicized portions. I told a few people about it and they asked if I could share it and there seemed to be interest, so here it is!
+In the transition from PDF to text, some of the translation ran into trouble, so I reformatted any typos that popped up. In particular, commas were translated as “y” or “-“…and there were many cases where “p” was interpreted as “f.” I think I’ve caught all of these, but it is possible a few remain. If you discover any of these in your reading, please email me at tim@starfirecouncil.org or teevee999@gmail.com and I’ll make the edits. There are also a few italicized lines that I edited out as they referred specifically to pictures in the book, which were confusing as I read them. I think there might have been only 3 or 4 instances of this and I left any that referred to pictures but also contained narrative included. If you have better ways of thinking about this or suggestions - add the pictures? – that is welcome, especially if you are willing to work on it.
+Enjoy and please remember that this is no replacement for reading the whole book. This is simply a way to get started into it and I created this in deepest respect to Christopher Alexander and the content, which never is far from my mind as a constant inspiration.)
+
+
+CHAPTERS:
+THE TIMELESS WAY
+It is a process which brings order out of nothing but ourselves; it cannot be attained, but it will happen of its own accord, if we will only let it.
+
+
+THE QUALITY
+There is a central quality which is the root criterion of life and spirit in a man, a town, a building, or a wilderness. This quality is objective and precise, but it cannot be named.
+The search which we make for this quality, in our own lives, is the central search of any person, and the crux of any individual person's story. It is the search for those moments and situations when we are most alive.
+In order to define this quality in buildings and in towns, we must begin by understanding that every place is given its character by certain patterns of events that keep on happening there.
+These patterns of events are always interlocked with certain geometric patterns in the space. Indeed, as we shall see, each building and each town is ultimately made out of these
+
+patterns in the space, and out of nothing else: they are the atoms and the molecules from which a building or a town is made.
+The specific patterns out of which a building or a town is made may be alive or dead. To the extent they are alive, they let our inner forces loose, and set us free; but when they are dead, they keep us locked in inner conflict.
+The more living patterns there are in a place — a room, a building, or a town — the more it comes to life as an entirety, the more it glows, the more it has that self -maintaining fire which is the quality without a name.
+And when a building has this fire, then it becomes a part of nature, like ocean waves, or blades of grass, its parts are governed by the endless play of repetition and variety, created in the presence of the fact that all things pass. This is the quality itself.
+
+
+THE GATE
+This quality in buildings and in towns cannot be made, but only generated, indirectly, by the ordinary actions of the people, just as a flower cannot be made, but only generated from the seed.
+The people can shape buildings for themselves, and have done it for centuries, by using languages which I call pattern languages. A pattern language gives each person who uses it the power to create an infinite variety of new and unique buildings, just as his ordinary language gives him the power to create an infinite variety of sentences.
+These pattern languages are not confined to villages and farm society. All acts of building are governed by a pattern language of some sort, and the patterns in the world are there, entirely because they are created by the pattern languages which people use.
+And, beyond that, it is not just the shape of towns and buildings which comes from pattern languages — it is their quality as well. Even the life and beauty of the most awe-inspiring great religious buildings came from the languages their builders used.
+But in our time the languages have broken down. Since they are no longer shared, the processes which keep them deep have broken down; and it is therefore virtually impossible for anybody, in our time, to make a building live.
+To work our way towards a shared and living language once again, we must first learn how to discover patterns which are deep, and capable of generating life.
+We may then gradually improve these patterns which we share, by testing them against experience: we can determine, very simply, whether these patterns make our surroundings live, or not, by recognizing how they make us feel.
+Once we have understood how to discover individual patterns which are alive, we may then make a language for ourselves for any building task we face. The structure of the language is created by the network of connections among individual patterns: and the language lives, or not, as a totality, to the degree these patterns form a whole.
+Then finally, from separate languages for different building tasks, we can create a larger structure still, a structure of structures, evolving constantly, which is the common language for a town. This is the gate.
+
+THE WAY
+Now we shall begin to see in detail how the rich and complex order of a town can grow from thousands of creative acts. For once we have a common pattern language in our town, we shall all have the power to make our streets and buildings live, through our most ordinary acts. The language, like a seed, is the genetic system which gives our millions of small acts the power to form a whole.
+Within this process, every individual act of building is a process in which space gets differentiated. It is not a process of addition, in which preformed parts are combined to create a whole, but a process of unfolding, like the evolution of an embryo, in which the whole precedes the parts, and actually gives birth to them, by splitting.
+The process of unfolding goes step by step, one pattern at a time. Each step brings just one pattern to life; and the intensity of the result defends on the intensity of each one of these individual steps.
+From a sequence of these individual patterns, whole buildings with the character of nature will form themselves within your thoughts, as easily as sentences.
+In the same way, groups of people can conceive their larger public buildings, on the ground, by following a common pattern language, almost as if they had a single mind.
+Once the buildings are conceived like this, they can be built, directly, from a few simple marks made in the ground — again within a common language, but directly, and without the use of drawings.
+Next, several acts of building, each one done to repair and magnify the product of the previous acts, will slowly generate a larger and more complex whole than any single act can generate.
+Finally, within the framework of a common language, millions of individual acts of building will together generate a town which is alive, and whole, and unpredictable, without control. This is the slow emergence of the quality without a name, as if from nothing.
+And as the whole emerges, we shall see it take that ageless character which gives the timeless way its name. This character is a specific, morphological character, sharp and precise, which must come into being any time a building or a town becomes alive: it is the physical embodiment, in buildings, of the quality without a name.
+
+
+THE KERNEL OF THE WAY
+Indeed this ageless character has nothing, in the end, to do with languages. The language, and the processes which stem from it, merely release the fundamental order which is native to us. They do not teach us, they only remind us of what we know already, and of what we shall discover time and time again, when we give up our ideas and opinions, and do exactly what emerges from ourselves.
+
+THE TIMELESS WAY
+
+
+CHAPTER 1 THE TIMELESS WAY
+It is a process which brings order out of nothing but ourselves; it cannot be attained, but it will happen of its own accord, if we will only let it.
+There is one timeless way of building.
+It is thousands of years old, and the same today as it has always been.
+The great traditional buildings of the past, the villages and tents and temples in which man feels at home, have always been made by people who were very close to the center of this way. It is not possible to make great buildings, or great towns, beautiful places, places where you feel yourself, places where you feel alive, except by following this way. And, as you will see, this way will lead anyone who looks for it to buildings which are themselves as ancient in their form, as the trees and hills, and as our faces are.
+It is so powerful and fundamental that with its help you can make any building in the world as beautiful as any place that you have ever seen.
+It is so powerful, that with its help hundreds of people together can create a town, which is alive and vibrant, peaceful and relaxed, a town as beautiful as any town in history.
+And there is no other way in which a building or a town which lives can possibly be made. Each one of us wants to be able to bring a building or part of a town to life like this.
+Each one of us has, somewhere in his heart, the dream to make a living world, a universe. And there is a way that a building or a town can actually be brought to life like this.
+This one way of building has always existed.
+But it has become possible to identify it, only now, by going to a level of analysis which is deep enough to show what is invariant in all the different versions of this way.
+At this level of analysis, we can compare many different building processes.
+And it turns out that, invariant, behind all processes which allow us to make buildings live, there is a single common process.
+But though this method is precise, it cannot be used mechanically.
+Indeed it turns out, in the end, that what this method does is simply free us from all method. And that is why the timeless way is, in the end, a timeless one.
+
+The power to make buildings beautiful lies in each of us already.
+But as things are, we have so far beset ourselves with rules, and concepts, and ideas of what must be done to make a building or a town alive, that we have become afraid of what will happen naturally, and convinced that we must work within a "system" and with "methods" since without them our surroundings will come tumbling down in chaos.
+The thoughts and fears which feed these methods are illusions.
+To purge ourselves of these illusions, to become free of all the artificial images of order which distort the nature that is in us, we must first learn a discipline which teaches us the true relationship between ourselves and our surroundings.
+Then, once this discipline has done its work, and pricked the bubbles of illusion which we cling to now, we will be ready to give up the discipline, and act as nature does.
+This is the timeless way of building: learning the discipline — and shedding it.
+
+
+
+
+
+
+
+
+
+THE QUALITY
+To seek the timeless way we must first know the quality without a name.
+
+
+
+
+CHAPTER 2
+THE QUALITY WITHOUT A NAME
+There is a central quality which is the root criterion of life and spirit in a man, a town, a buildings or a wilderness. This quality is objective and precise, but it cannot be named.
+We have been taught that there is no objective difference between good buildings and bad, good towns and bad.
+The fact is that the difference between a good building and a bad building, between a good town and a bad town, is an objective matter. It is the difference between health and sickness, wholeness and dividedness, self-maintenance and self-destruction. In a world which is healthy, whole, alive, and self- maintaining, people themselves can be alive and self-creating. In a world which is unwhole and self- destroying, people cannot be alive: they will inevitably themselves be self-destroying, and miserable.
+
+But it is easy to understand why people believe so firmly that there is no single, solid basis for the difference between good building and bad.
+It happens because the single central quality which makes the difference cannot be named.
+It is never twice the same, because it always takes its shape from the particular place in which it occurs. It is a subtle kind of freedom from inner contradictions.
+In physics and chemistry there is no sense in which one system can be more at one with itself than another.
+But the view of the world which physics teaches, powerful and wonderful as it is, is limited by this very blindness.
+Indeed, this subtle and complex freedom from inner contradictions is just the very quality which makes things live.
+Yet still this quality cannot be named.
+The word which we most often use to talk about the quality without a name is the word "alive." But the very beauty of the word "alive" is just its weakness.
+Another word we often use to talk about the quality without a name is "whole" But the word "whole" is too enclosed.
+Another facet of the quality which has no name is caught by the word "comfortable" Yet the word "comfortable" is easy to misuse, and has too many other meanings.
+A word which overcomes the lack of openness in the words "whole" and "comfortable" is the word "free."
+And yet, of course, this freedom can be too theatrical: a pose, a form, a manner. A word which helps restore the balance is the word "exact."
+Andy yet, of course, the word "exact" does not describe it properly. A word which goes much deeper than the word "exact" is "egoless."
+And yet, although the old bench and its carving may be egoless, this word is also not quite right. A last word which can help to catch the quality without a name is the word "eternal."
+I once saw a simple fish fond in a Japanese village which was perhaps eternal. And yet, like all the other words, this word confuses more than it explains.
+And so you see, in spite of every effort to give this quality a name, there is no single name which captures it.
+
+It is not only simple beauty of form and color. Man can make that without making nature. It is not only fitness to purpose. Man can make that too, without making nature. And it is not only the spiritual quality of beautiful music or of a quiet mosque that comes from faith. Man can make that too, without making nature.
+The quality which has no name includes these simpler sweeter qualities. But it is so ordinary as well, that it somehow reminds us of the passing of our life.
+It is a slightly bitter quality.
+
+
+
+
+
+CHAPTER 3 BEING ALIVE
+The search which we make for this quality, in our own lives, is the central search of any person, and the crux of any individual person’s story. It is the search for those moments and situations when we are most alive.
+We know, now, what the quality without a name is like, in feeling and in character. But so far, concretely, we have not seen this quality in any system larger than a tree, a pond, a bench. Yet it can be in anything — in buildings, animals, plants, cities, streets, the wilderness — and in ourselves. We shall begin to understand it concretely, in all these larger pieces of the world, only when we first understand it in ourselves.
+It is, for instance, the wild smile of the gypsies dancing in the road. And I am free to the extent I have this quality in me.
+This wild freedom, this passion, comes into our lives in the instant we let go. The great film, Ikiru — to live — describes it in the life of an old man.
+Each of us lives most fully "on the wire" in the face of death, daring to do the very thing which fear prevents us from.
+Of course for most of us it is not quite so literal. It has above all to do with the elements.
+And it happens when our inner forces are resolved.
+Of course, in practice we often don't know just what our inner forces are.
+Yet still there are those special secret moments in our lives, when we smile unexpectedly — when all our forces are resolved.
+We cannot be aware of these most precious moments when they are actually happening.
+
+Yet each of us knows from experience the feeling which this quality creates in us.
+And for this reason, each one of us can also recognize this quality when it occurs in buildings.
+Places which have this quality, invite this quality to come to life in us. And when we have this quality in us, we tend to make it come to life in towns and buildings which we help to build. It is a self-supporting, self-maintaining, generating quality. It is the quality of life. And we must seek it, for our own sakes, in our surroundings, simply in order that we can ourselves become alive.
+That is the central scientific fact in all that follows.
+
+
+
+
+
+CHAPTER 4 PATTERNS OF EVENTS
+In order to define this quality in buildings and in towns, we must begin by understanding that every place is given its character by certain patterns of events that keep on happening there.
+We know what the quality without a name is like in our own lives.
+As we shall see in the next few chapters, this quality can only come to life in us when it exists within the world that we are part of. We can come alive only to the extent the buildings and towns we live in are alive. The quality without a name is circular: it exists in us, when it exists in our buildings; and it only exists in our buildings, when we have it in ourselves.
+To understand this clearly, we must first recognize that what a town or building is, is governed, above all, by what is happening there.
+Those of us who are concerned with buildings tend to forget too easily that all the life and soul of a place, all of our experiences there, defend not simply on the physical environment, but on the patterns of events which we experience there.
+These patterns of events which create the character of a place are not necessarily human events.
+Compare the power and importance of these events with the other purely geometrical aspects of the environment, which architects concern themselves with.
+We know, then, that what matters in a building or a town is not its outward shape, its physical geometry alone, but the events that happen there.
+A building or a town is given its character, essentially, by those events which keep on happening there most often.
+And just the same is true in any person's individual life.
+Of course, the standard patterns of events vary very much from person to person, and from culture to culture.
+
+But each town, each neighborhood, each building, has a particular set of these patterns of events according to its prevailing culture.
+We have a glimpse, then, of the fact that our world has a structure, in the simple fact that certain patterns of events — both human and nonhuman — keep repeating, and account, essentially, for much the greater part of the events which happen there.
+And indeed, the world does have a structure, just because these patterns of events which repeat themselves are always anchored in the space.
+Consider, for example, the pattern of events which we might call "watching the world go by." I cannot separate it from the porch where it occurs.
+Indeed, a culture always defines its pattern of events by referring to the names of the physical elements of space which are “standard” in that culture.
+And the mere list of elements which are typical in a given town tells us the way of life of people there. This does not mean that space creates events, or that it causes them.
+It simply means that a pattern of events cannot be separated from the space where it occurs. This close connection between patterns of events and space is commonplace in nature.
+And, in the same way, the patterns of events which govern life in buildings and in towns cannot be separated from the space where they occur.
+The life which happens in a building or a town is not merely anchored in the space but made up from the space itself.
+We shall now try to find some way of understanding space which yields its patterns of events in a completely natural way, so that we can succeed in seeing patterns of events, and space, as one.
+
+
+
+
+
+
+
+
+
+
+CHAPTER 5 PATTERNS OF SPACE
+These patterns of events are always interlocked with certain geometric patterns in the space. Indeed, as we shall see, each building and each town is ultimately made out of these patterns in the space, and out of nothing else: they are the atoms and the molecules from which a building or a town is made.
+
+We are now ready to come to grips with the most basic problem of a building or a town: What is it made of? What is its structure? What is its physical essence? What are the building blocks of which its space is made?
+We know, from chapter 4, that any town and any building gets its character from those events and patterns of events which keep on happening there the most, and that the patterns of events are linked, somehow, to space.
+So far, though, we do not know just what aspect of the space it is that correlates with the events. We do not have a picture of a building or a town which shows us how its obvious outward structure — the way it looks, its physical geometry — is interlocked with these events.
+In the crudest sense, we know from the last chapter roughly what the structure of a town or building is.
+On the geometric level, we see certain physical elements repeating endlessly, combined in an almost endless variety of combinations.
+And each of these elements has a specific pattern of events associated with it.
+But this picture of space does not explain how — or why — these elements associate themselves with definite and quite specific patterns of events.
+Further, it is very puzzling to realize that the "elements" which seem like elementary building blocks, keep varying, and are different every time that they occur.
+If the elements are different every time that they occur, evidently then, it cannot be the elements themselves which are repeating in a building or a town: these so-called elements cannot be the ultimate "atomic" constituents of space.
+Let us therefore look more carefully at the structure of the space from which a building or a town is made, to find out what it really is that is repeating there.
+Beyond its elements each building is defined by certain patterns of relationships among the elements. And each urban region, too, is defined by certain patterns of relationships among its elements.
+Evidently, then, a large part of the "structure" of a building or a town consists of patterns of relationships.
+At first sight, it seems as though these patterns of relationships are separate from the elements.
+When we look closer, we realize that these relationships are not extra, but necessary to the elements, indeed a part of them.
+When we look closer still, we realize that even this view is still not very accurate. For it is not merely true that the relationships are attached to the elements: the fact is that the elements themselves are patterns of relationships.
+And finally, the things which seem like elements dissolve, and leave a fabric of relationships behind, which is the stuff that actually repeats itself, and gives the structure to a building or a town.
+Each one of these patterns is a morphological law, which establishes a set of relationships in space.
+
+And each law or pattern is itself a pattern of relationships among still other laws, which are themselves just patterns of relationships again.
+Further, each pattern in the space has a pattern of events associated with it. Of course, the pattern of space, does not "cause" the pattern of events.
+But there is a fundamental inner connection between each pattern of events, and the pattern of space in which it happens.
+Go back, for example, to the porch of chapter 4, and the pattern of events we may call "sitting on the porch, watching the world go by.”
+It is this bundle of relationships which is essential, because these are the ones which are directly congruent with the pattern of events.
+And in this same sense, each pattern of relationships in space is congruent with some specific pattern of events.
+We realize then that it is just the patterns of events in space which are repeating in the building or the town: and nothing else.
+Each building gets its character from just the patterns which keep on repeating there.
+Each neighborhood is defined, too, in everything that matters, by the patterns which keep on repeating there.
+Andy what is most remarkable of all, the number of the patterns out of which a building or a town is made is rather small.
+They are the atoms of our man-made universe.
+But in a courtyard where the pattern of the “opening” and “veranda” and “crossing paths” is missing, there are forces which conflict in such a way that no one can resolve them for himself.
+And the same can happen even in a window: A window with a "window place" helps a person come to life.
+But a room which has no window place, in which the windows are just "holes,” sets up a hopeless inner conflict in me which I can’t resolve.
+And now we see just how the circle of the argument completes itself.
+The quality without a name in us, our liveliness, our thirst for life, depends directly on the patterns in the world, and the extent to which they have this quality themselves.
+Patterns which live, release this quality in us.
+But they release this quality in us, essentially because they have it in themselves.
+
+
+
+
+CHAPTER 7
+THE MULTIPLICITY OF LIVING PATTERNS
+The more living patterns there are in a thing — a room, a building, or a town — the more it comes to life as an entirety, the more it glows, the more it has this self-maintaining fire, which is the quality without a name.
+When one pattern is alive, it resolves its own forces, it is self-sustaining, self-creating, and its internal forces continuously support themselves.
+Now we shall see that this is just a special case of a more general effect by which the patterns in a town or building help to sustain each other, in which each pattern which is alive, itself spreads out its life.
+Assume, for instance, that a certain building is made up of fifty patterns. Each one of these fifty patterns can itself be alive, or dead.
+Consider what happens when several of these fifty patterns are more “dead.”
+Consider, for example, the pattern of a column and bean structure without a brace or capital where the column meets the beam.
+Or consider the pattern of a courtyard which is too enclosed.
+The “bad” patterns are unable to contain the forces which occur in them. In the end, the whole system must collapse.
+By contrast, assume now that each one of the fifty patterns out of which the building is made is alive and self-resolving.
+Each pattern helps to sustain other patterns.
+The Individual configuration of any one pattern requires other patterns to keep itself alive. In an entrance which is whole, many patterns must cooperate.
+The same in a neighborhood.
+Now we begin to see what happens when the patterns in the world collaborate. The more life-giving patterns there are in a building the more beautiful it seems. Just so in a town.
+And finally the quality without a name appears, not when an isolated pattern lives, but when an entire system of patterns, interdependent at many levels, is all stable and alive.
+
+Remember the warm peach tree, flattened against the wall, and facing south.
+At this stage, the whole town will have this quality, simmering and baking in the sun of its own processes.
+
+
+
+
+
+
+
+CHAPTER 8
+THE QUALITY ITSELF
+And when a building has this fire, then it becomes a part of nature. Like ocean
+Waves, or blades of grass, its parts are governed by the endless flay of repetition and variety, created in the presence of the fact that all things pass. This is the quality itself.
+Finally, in this last chapter of part 1, we shall see what happens geometrically, when a building or a town is made entirely of patterns which are living.
+For when a town or building lives, we can always recognize its life — not only in the obvious happiness which happens there, not only in its freedom and relaxedness — but in its purely physical appearance too.
+It always has a certain geometric character. This is the character of nature.
+The ocean waves all have this character. So do the drops within the waves.
+Even the atoms have this character. There is always repetition of the patterns.
+But there is always variation and uniqueness in the way the patterns manifest themselves.
+In short, there is a character in natural things which is created by the fact that they are reconciled, exactly, to their inner forces.
+This character will happen anywhere, where a part of the world is so well reconciled to its own inner forces that it is true to its own nature.
+It follows that a building which is whole must always have the character of nature, too. On the one hand, patterns will repeat themselves, just as they do in nature.
+On the other hand, of course, we shall find the physical parts in which the patterns manifest themselves unique and slightly different each time that they occur.
+
+The repetition of patterns is quite a different thing from the repetition of parts. Indeed, the different parts will be unique because the patterns are the same.
+And from the repetition of the patterns, and uniqueness of the parts, it follows, as it does in nature, that buildings which are alive are fluid and relaxed in their geometry.
+This is the character of nature. But its fluidity, its roughness, its irregularity, will not be true, unless it is made in the knowledge that it is going to die.
+The character of nature can’t arise without the presence and the consciousness of death.
+So finally the fact is, that to come to this, to make a thing which has the character of nature, and to be true to all the forces in it, to remove yourself, to let it be, without interference from your image-making self — all this requires that we become aware that all of it is transitory; that all of it is going to pass.
+Of course nature itself is also always transitory. The trees, the river, the humming insects — they are all short-lived; they will all pass. Yet we never feel sad in the presence of these things. No matter how transitory they are, they make us feel happy, joyful.
+But when we make our own attempt to create nature in the world around us, and succeed, we cannot escape the fact that we are going to die. This quality, when it is reached, in human things, is always sad; it makes us sad; and we can even say that any place where a man tries to make the quality, and be like nature, cannot be true, unless we can feel the slight presence of this haunting sadness there, because we know at the same time we enjoy it, that it is going to pass.
+
+
+THE GATE
+To reach the quality without a name we must then build a living pattern language as a gate.
+
+
+
+
+CHAPTER 9
+THE FLOWER AND THE SEED
+This quality in buildings and in towns cannot be made, but only generated, indirectly, by the ordinary actions of the people, just as a flower cannot be made, but only generated from the seed.
+We are now in a position to recognize, at least in hazy outline, the character of towns and buildings with the quality without a name in them.
+Next we shall see that there is a specific concrete process by which this quality comes into being. Consider the process by which the Samoans make a canoe, from a tree.
+The quality of life is just like that: it cannot be made, but only generated.
+
+In our time we have come to think of works of art as "creations" conceived in the minds of their creators.
+The quality without a name cannot be made like this. The same thing, exactly, is true of a living organism.
+If you want to make a living flower, you don’t build it physically, with tweezers, cell by cell. You grow it from the seed.
+This hinges on a simple scientific proposition: the great complexity of an organic system, which is essential to its life, cannot be created from above directly; it can only be generated indirectly.
+This cannot happen unless each part is at least partly autonomous, so that it can adapt to the local conditions in the whole.
+A building which is natural requires the same. And the same in the town.
+But of course, autonomous creation of the parts, if taken by itself, will produce chaos.
+What makes a flower whole, at the same time that all its cells are more or less autonomous, is the genetic code, which guides the 'process of the individual parts, and makes a whole of them.
+And, just as the flower needs a genetic code to keep the wholeness of its parts, so do the building and the town.
+So I began to wonder if there was a code, like the genetic code, for human acts of building?
+Is there a fluid code, which generates the quality without a name in buildings, and makes things live? Is there some process which takes 'place inside a person's mind, when he allows himself to generate a building or a place which is alive? And is there indeed a process which is so simple too, that all the people of society can use it, and so generate not only individual buildings, but whole neighborhoods and towns?
+It turns out that there is. It takes the form of language.
+
+
+
+
+
+
+
+CHAPTER 10
+OUR PATTERN LANGUAGES
+The people can shape buildings for themselves, and have done it for centuries, by using languages which I call pattern languages. A pattern language gives each person who uses it, the power to create an
+
+infinite variety of new and unique buildings, just as his ordinary language gives him the power to create an infinite variety of sentences.
+We know, from chapter 9, in very vague and general terms, that life cannot be made, but only generated by a process.
+In the case of buildings and of towns, this process must be one which lets the people of a town shape rooms, and houses, streets, and churches, for themselves.
+In traditional cultures these processes were commonplace. Each building was a member of a family, and yet unique.
+Each room is a little different according to the view.
+Each tile is set a little differently in the ground, according to the settling of the earth. How was this possible?
+At first sight, we might imagine that each farmer made his barn beautiful, simply by paying attention to its function.
+But this does not explain the similarity of different barns.
+We might, imagine then, that the farmer got his power to build a barn by copying the other barns around him.
+But this does not explain the great variety of barns.
+The proper answer to the question, "How is a farmer able to make a new barn?” lies in the fact that every barn is made of patterns.
+These patterns are expressed as rules of thumb, which any farmer can combine and re-combine to make an infinite variety of unique barns.
+To understand, in detail, how these patterns work we must extend our definition of "a pattern." Each pattern is a rule which describes what you have to do to generate the entity which it defines. It is in this sense that the system of patterns forms a language.
+From a mathematical point of view, the simplest kind of language is a system which contains two sets: A natural language like English is a more complex system.
+A pattern language is a still more complex system of this kind.
+An ordinary language like English is a system which allows us to create an in-finite variety of one- dimensional combinations of words, called sentences.
+A pattern language is a system which allows its users to create an infinite variety of those three dimensional combinations of patterns which we call buildings, gardens, towns.
+
+In summary: both ordinary languages and pattern languages are finite combinatory systems which allow us to create an infinite variety of unique combinations, appropriate to different circumstances, at will.
+In this case, the pattern language not only helps the people shape their houses, but also helps them shape their streets and town collectively.
+At this stage, we have defined the concept of a pattern language clearly. We know that it is a finite system of rules which a person can use to generate an infinite variety of different buildings — all members of a family — and that the use of language will allow the people of a village or a town to generate exactly that balance of uniformity and variety which brings a place to life.
+In this sense, then, we have found an example of the kind of code which does, at certain times play just the role in buildings and in towns that the genetic code plays in a living organism.
+What we do not know yet, is that these kinds of languages are ultimately responsible for every single act of building in the world.
+
+
+
+
+
+CHAPTER 11
+OUR PATTERN LANGUAGES: CONTINUED
+
+
+These 'pattern languages are not confined to villages and farm society. All acts of building are governed by a pattern language of some sort, and the patterns in the world are there, entirely because they are created by the languages which people use.
+
+
+We have seen, so far, that pattern languages were the secret of the farmer’s power to build in simple villages.
+But languages are more widespread, and more profound than that. The fact is that every work of building, large or small, humble or magnificent, modern or ancient, is made in this same way.
+For the use of pattern languages is not merely something that happens in traditional societies. It is a fundamental fact about our human nature, as fundamental as the fact of speech.
+The patterns of our time, like all other patterns in the built environment, come from the pattern languages which people use.
+Indeed, as we shall see now, these patterns always come from languages. They come into the man- made world, because we always put them there — and we put them there by using languages.
+Of course, these patterns do not come only from the work of architects or planners. They come from the work of thousands of different people.
+
+Each of them builds by following some rules of thumb. Everybody follows rules of thumb.
+And all these rules of thumb — or patterns — are part of larger systems which are languages. Every person has a pattern language in his mind.
+This is as true of any great creative artist, as of the humblest builder. And you yourself make your designs by using a pattern language.
+Indeed it is the system of these rules that is your present language.
+At the moment when a person is faced with an act of design, he does not have time to think about it from scratch.
+Even when a person seems to "go back to the basic problem" he is still always combining patterns that are already in his mind.
+It is only because a person has a pattern language in his mind, that he can be creative when he builds.
+The rules of English make you creative because they save you from having to bother with meaningless combinations of words.
+A pattern language does the same.
+So the use of language is not merely something that happens in traditional societies. It is a fundamental fact about our human nature, as fundamental as the fact of speech.
+And now at last it becomes clear just where the patterns in the world come from.
+The patterns, which repeat themselves, come simply from the fact that all the people have a common language, and that each one of them uses this common language when he makes a thing.
+Every single part of the environment is governed by some portion of a pattern language.
+And the enormous repetition of patterns, which makes up the world, comes about because the languages which people use to make the world are widely shared.
+At all times, in every human culture, the entities of which the world Is made are always governed by the pattern languages which people use.
+Every window, every door, each room, each house, each garden, every street, each neighborhood, and every town: It always gets its shape directly from these languages.
+They are the origin of all the structure in the man-made world.
+
+
+
+
+
+CHAPTER 12
+
+THE CREATIVE POWER OF LANGUAGE
+
+
+And, beyond that, it is not just the shape of towns and 'buildings which comes to them from pattern languages, it is their quality as well. Even the life and beauty of the most awe-inspiring great religious buildings came from the languages their builders used.
+From chapter 11, we see that pattern languages are responsible for all the ordinary structure of the world.
+But pattern languages are still more basic, even than that. It is not just the form of buildings, but their life as well, their beauty as created things, which comes from pattern languages. The patterns are responsible not only for the specific shape a building has, but also for the extent to which the building comes to life.
+Let us start by seeing how the great cathedrals, Chartres and Notre Dame, were made within a pattern language too.
+Of course, these buildings were not built by lay people.
+But still the power and beauty of the great cathedrals came mainly from the language which the master builder and his builders shared.
+All the great buildings in history have been built like this, by languages.
+The same process which the simple farmer used to make his house, the same process exactly, was the process which allowed people to generate these greater buildings.
+You may have a fundamental doubt about the possibility of capturing the deepest architectural knowledge in any “language.”
+We have a habit of thinking that the deepest insights, the most mystical, and spiritual insights, are somehow less ordinary than most things — that they are extraordinary.
+In fact, the opposite is true: the most mystical, most religious, most wonderful — these are not less ordinary than most things — they are more ordinary than most things.
+The old Turkish prayer rugs, made two hundred years ago, have the most wonderful colors. And the light in many glorious rooms is also governed by a simple rule.
+Or consider one of the most beautiful small buildings in the world: the shrine at Ise, in Japan.
+Again it is the particular patterns there, and the repetition of the patterns, which creates the magic of the building.
+You may wonder — if the rules are so simple to express — what is there that makes a builder great?
+But of course, the fact that these rules are simple does not mean that they are easy to observe, or easy to invent.
+It may be hard to believe that one might make a work of art by simply combining patterns.
+
+But once again, the difficulty of believing it may have to do with the fact that we tend to think of patterns as "things” and keep forgetting that they are complex, and potent fields.
+The source of life which you create lies in the power of the language which you have. And now we realize the truly immense power which pattern languages have.
+For it is not only true that every building gets its structure from the languages which people use.
+It is also true that the spirit which the buildings have, their power, their life, comes from the pattern languages their builders use as well. The beauty of the great cathedrals, the fire in the windows, the touching grace of ornaments, the carving of the columns and the column capitals, the great silence of the empty space which forms the heart of the cathedral . . . all these come from the pattern languages their builders use as well.
+
+
+
+
+
+CHAPTER 13
+THE BREAKDOWN OF LANGUAGE
+
+
+But in our time the languages have broken down. Since they are no longer shared, the processes which keep them deep have broken down: and it is therefore virtually impossible for anybody, in our time, to make a building live.
+We know now that language has the -power to bring things to life. The most beautiful houses and villages — the most touching paths and valleys — the most awe inspiring mosques and churches — attained the life they have in them because the languages their builders used were powerful and deep.
+But, so far, we have not dealt at all with the conditions under which a language is itself alive; or the conditions under which a language dies.
+For all the ugliest and most deadening places in the world are made from patterns as well.
+It is therefore obvious that the mere use of pattern languages alone does not ensure that people can make places live.
+And, indeed, there is a fundamental difference between those societies in which people are able to make their environment alive, and those in which the towns and buildings become dead.
+In a town with a living language, the pattern language is so widely shared that everyone can use it.
+In agricultural societies everyone knows how to build; everyone builds for himself, and helps his neighbor build.
+The language covers the whole of life.
+
+The connection between the users and the act of building is direct. The adaptation between people and buildings is profound.
+But, by contrast, in the early phases of industrial society which we have experienced recently, the pattern languages die.
+Most people believe themselves incompetent to design anything and believe that it can only be done properly by architects and planners.
+People lose touch with then most elementary intuitions.
+Even the buildings built by architects start to be full of obvious “mistakes.”
+Specific patterns. Like, for instance, the “light on two sides” pattern, vanish from people's knowledge about building.
+And those few -patterns which do remain within our languages becomes degenerate and stupid. Of course, even now a town still gets its shape from pattern languages of a sort.
+But these remnants of our former languages are dead and empty.
+As the pattern languages die, everyone can see the chaos which emerges in our towns and buildings.
+In panic, people try to replace the lost order of the organic process, by artificial forms of order based on control.
+But this makes things still worse.
+The variety, once created by organic and natural processes, disappears altogether. Adaptation of buildings to people becomes impossible.
+And, finally, people lose their ability to make life altogether.
+It must be obvious from all of this, that a town cannot become alive without a living language in it.
+The fact is, that the creation of a town, and the creation of the individual buildings in a town, is fundamentally a genetic process.
+And this conclusion, simple though it is, calls for a shattering revision of our attitude to architecture and planning.
+So long as the people of society are separated from the language which is being used to shape their buildings, the buildings cannot be alive.
+In the next four chapters, we shall see how it is possible to share our language, and to make it living once again.
+
+
+
+CHAPTER 14
+
+PATTERNS WHICH CAN BE SHARED
+To work our way toward a shared and living language once again, we must first learn how to discover patterns which are deep, and capable of generating life.
+If we hope to bring our towns and buildings back to life, we must begin to re-create our languages, in such a way that all of us can use them: with the patterns in them so intense, so full of life again, that what we make within these languages will, almost of its own accord, begin to sing.
+To start with this requires simply that we find a way of talking about patterns, in a way that can be shared.
+In order to make patterns explicit, so that they can be shared in this new way, we must first of all review the very complex structure of a pattern.
+Each pattern is a three-part rule, which expresses a relation between a certain context, a problem, and a solution.
+Patterns can exist at all scales.
+And a pattern may deal with almost any kind of forces.
+To make a pattern explicit, we merely have to make the inner structure of the pattern clear. We must first define some physical feature of the place, which seems worth abstracting.
+Next, we must define the problem, or the field of forces which this pattern brings into balance.
+Finally, we must define the range of contexts where this system of forces exists and where this pattern of physical relationships will indeed actually bring it into balance.
+We see, in summary, that every pattern we define must be formulated in the form of a rule which establishes a relationship between a context, a system of forces which arises in that context, and a configuration which allows these forces to resolve themselves in that context.
+Every living pattern is a rule of just this kind.
+In order to discover patterns which are alive we must always start with observation.
+Now try to discover some property which is common to all the ones which feel good, and missing from all the ones which don't feel good.
+This property will be a highly complex relationship.
+Knowledge of the 'problem then helps shed light on the invariant which solves the problem. Sometimes we find our way to this invariant by starting with a set of positive examples.
+At other times, we may discover the invariant by starting from the negative examples, and resolving them.
+And occasionally, we do not start from concrete observation at all, but build up the invariant by purely abstract argument.
+
+In all these cases, no matter what method is used, the pattern is an attempt to discover some invariant feature, which distinguishes good places from bad places with respect to some particular system of forces.
+The task of findings or discovering, such an invariant field is immensely hard. It is at least as hard as anything in theoretical physics.
+It is easy to say that a house entrance should have a sort of mysterious quality, which both hides the house from the public domain, and also exposes it to the public domain.
+But it is very hard to be precise.
+And it is especially hard to be precise, because there is never any one formulation of the pattern which is perfectly exact.
+Instead, to strike the balance between being too narrow and too loose, you must express and visualize a pattern as a kind of fluid image, a morphological feeling, a swirling intuition about form, which captures the invariant field which is the pattern.
+Then, once you discover a fluid field of relationships like this, you must redefine it, as an entity, to make it operational.
+For the same reason you must be able to draw it.
+And finally, for the same reason too, you must give it a name. At this stage, the pattern is clearly sharable.
+Of course, even now the pattern is still tentative. But it is clear enough, now, so that it can be shared.
+Now, once again, we have the beginnings of a pattern.
+A great variety of patterns with this format have been discovered.
+Each of these patterns is an attempt to capture that essence of some situation which makes it live.
+Gradually, by hard work, it is possible to discover many patterns which are deep, and which can help to bring a building or a town to life.
+They vary from culture to culture; sometimes they are very different, sometimes there are versions of the same pattern, slightly different, in different cultures.
+But it is possible to discover them, and to write them down so that they can be shared.
+
+
+
+
+
+CHAPTER 15
+
+THE REALITY OF PATTERNS
+We may then gradually improve these patterns which we share, by testing them against experience: we can determine, very simply, whether these patterns make our surroundings live, or not, by recognizing how they make us feel.
+We have seen in the last chapter that there is a process by which a person can formulate a pattern; and make it explicit, so that other people can use it.
+Many such patterns have been written down, in volume 2.
+But so far, there is no guarantee at all that any one of these patterns will actually work. Each one is intended to be a source of life, a generative, self-sustaining pattern. But is it actually? How can we distinguish patterns which work, which are deep and worth copying, from those which are simply pipe dreams, mad imaginings . . .
+One test says that a pattern is alive if its individual statements are empirically true. But a pattern is not alive just because its component statements are true, one by one.
+The fact is that even though its individual component statements are true, the pattern has no empirical reality as a whole.
+Even the fact that a pattern seems sensible, and has clear reasoning behind it, does not mean at all that the pattern is necessarily capable of generating life.
+A pattern only works, fully, when it deals with all the forces that are actually present in the situation. The difficulty is that we have no reliable way of knowing just exactly what the forces in a situation are.
+What we need is a way of understanding the forces which cuts through this intellectual difficulty and goes closer to the empirical core.
+To do this, we must rely on feelings more than intellect.
+The pattern alcove feels good to us, because we feel the wholeness of the system there.
+The pattern t-junctions makes us feel good, because we feel the wholeness of the system there.
+And mosaic of subcultures makes us feel good, because, again, we feel the wholeness of the system there.
+By contrast, patterns made from thought, without feeling, lack empirical reality entirely.
+We see then, that there is a fundamental inner connection between the balance of a system of forces , and our feelings about the pattern which resolves these forces.
+This makes it easier to test any given pattern.
+We can always ask ourselves just how a pattern makes us feel. And we can always ask the same of someone else.
+It is not the same, at all, as asking someone his opinion.
+
+It is also not the same as asking for a person’s taste.
+And it is also not the same as asking what a person thinks of an idea. It simply asks for feelings, and for nothing else.
+The success of this test hinges on a fact which I have not said enough about so far — the extraordinary degree of agreement in people's feelings about patterns.
+There are few experiments, in science, where a phenomenon is capable of generating this extraordinary level of agreement.
+But for fear of repeating myself, I must say once again that the agreement lies only in peoples' actual feelings, not in their opinions.
+These feelings which are in touch with reality are sometimes very hard to reach.
+Yet it is only this true feeling, this feeling that requires attention, this feeling that requires effort, which is reliable enough to generate agreement.
+We see then that the concept of a balanced pattern is deeply rooted in the concept of feeling. But even so, feelings themselves are not the essence of the matter.
+In short, what is at stake at last, is nothing but the quality without a name itself.
+It is, in the end, the presence of this quality in a pattern which makes the difference between one which lives and one which doesn’t. . .
+It is reality itself which makes the difference.
+And it is in the end only when our feelings are perfectly in touch with the reality of forces, that we begin to see the patterns which are capable of generating life.
+Yet it is hard to give up preconceptions of what things "ought to be" and recognize things as they really are.
+In this respect attention to reality goes far beyond the realm of values.
+By seeming to be unethical, by making no judgments about individual opinions, or goals, or values, the pattern rises to another level of morality.
+Then it becomes a piece of nature.
+When we see the pattern of the ripples in a pond, we know that this pattern is simply in equilibrium with the forces which exist: without any mental interference which is clouding them.
+And, when we succeed, finally, in seeing so deep into a man-made pattern, that it is no longer clouded by opinions or by images, then we have discovered a piece of nature as valid, as eternal, as the ripples in the surface of a pond.
+
+CHAPTER 16
+THE STRUCTURE OF A LANGUAGE
+Once we have understood how to discover individual patterns which are alive, we may then make a language for ourselves, for any building task we face.
+The structure of the language is created by the network of connections among individual patterns: and the language lives, or not, as a totality, to the degree these patterns form a whole.
+It is clear, then, that we can discover living patterns, and share them, and reach some reasonable degree of confidence in their reality.
+The patterns cover every range of scale in our surroundings : the largest patterns cover aspects of regional structure , middle range patterns cover the shape and activity of buildings, and the smallest patterns deal with the actual physical materials and structures out of which the buildings must be made.
+So far, though, we have said little about language. In this chapter we shall see how it is possible to put these patterns together to form coherent languages.
+Imagine that I am going to build a garden.
+One way to start a language for a garden is to get some patterns from the pattern language we have published in volume 2.
+But what is it, now, which makes these patterns form a language?
+The structure of a pattern language is created by the fact that individual patterns are not isolated.
+Each pattern then, depends both on the smaller patterns it contains, and on the larger patterns within which it is contained.
+Each pattern sits at the center of a network of connections which connect it to certain other patterns that help to complete it.
+And it is the network of these connections between patterns which creates the language.
+In this network, the links between the patterns are almost as much a part of the language as the patterns themselves.
+It is, indeed, the structure of the network which makes sense of individual patterns, because it anchors them, and helps make them complete.
+But even when I have the patterns connected to one another, in a network, so that they form a language, how do I know if the language is a good one?
+The language is a good one, capable of making something whole, when it is morphologically and functionally complete.
+The language is morphologically complete when I can visualize the kind of buildings which it generates very concretely.
+
+And the language is functionally complete , when the system of patterns it defines is fully capable of allowing all its inner forces to resolve themselves.
+In both cases, the language is complete only when every individual pattern in the language is complete.
+We must therefore invent new patterns, whenever necessary, to fill out each pattern which is not complete.
+But I must also make sure that the patterns below a given pattern are its principal components.
+It is essential to distinguish those patterns which are the principal components of any given pattern, from those which lie still further down.
+And this process of defining the principal components of a given pattern is what finally completes it.
+When every pattern has its principal components given by the smaller patterns which lie immediately below it in the language, then the language is complete.
+Now we can see the full extent to which the design of the garden lies within the language for the garden.
+Essentially, this means that the language which you have prepared must be judged as if it were itself a finished garden {or a finished building).
+So, the real work of any process of design lies in this task of making up the language, from which you can later generate the one particular design.
+You must make the language first, because it is the structure and the content of the language which determine the design. The individual buildings which you make, will live, or not, according to the depth and wholeness of the language which you use to make them with.
+But of course, once you have it, this language is general. If it has the power to make a single building live, it can be used a thousand times, to make a thousand buildings live.
+
+
+
+CHAPTER 17
+THE EVOLUTION OF A COMMON LANGUAGE FOR A TOWN
+
+
+Then finally, from separate languages for different building tasks, we can create a larger structure still, a structure of structures, evolving constantly , which is the common language for a town. This is the gate.
+From chapter 16, we know how to construct an individual language, for a specific individual building type.
+We shall see now, in this last chapter of part two, how many of these languages can fit together, to become the common language of a town.
+
+As we make the different individual languages, we find the patterns overlap.
+And, more subtly, we find also that different patterns in different languages, have underlying similarities, which suggest that they can be reformulated to make them more general, and usable in a greater variety of cases.
+Gradually it becomes clear that it is possible to construct one much larger language, which contains all the patterns from the individual languages, and unifies them by tying them together in one larger structure.
+Our version of such a language begins with patterns for the region; It has patterns for a town;
+It has patterns for communities and neighborhoods ;
+It has patterns for the public land inside a neighborhood;
+It has patterns for the private land and institutions in the neighborhood; Patterns for the broad layout of the buildings in a building complex; Patterns for the building and its rooms;
+Patterns for the gardens and the -paths between the buildings; Patterns for the smallest rooms and closets within the rooms;
+
+Patterns for the overall configuration of construction and materials; Patterns for the details of construction;
+And the language finishes with patterns for details and color and ornament
+Such a language is, in principle, complex enough and rich enough to be the language for a town. But it is not yet fully living as a language.
+A language is a living language only when each person in society, or in the town, has his own version of this language.
+To reach this deeper state, in which each person has a pattern language in his mind as an expression of his attitude to life, we cannot expect people just to copy patterns from a book.
+A living language must constantly be re-created in each person's mind. Just so with pattern languages.
+Then, as each person makes up his own language for himself, the language begins to be a living one. Two neighborhoods with different cultures will have different collections of patterns in their languages.
+
+Different neighborhoods, just like different people, will quite often have different versions of the patterns.
+And, in different neighborhoods, the people may have systematically different connections in their languages.
+We see then, that a language which is shared within a town is a vast structure, far more complex than an individual language.
+And once this kind of structure exists, we have a living language in a town, in just the same sense that our common speech is living.
+The same thing happens in genetics.
+The genetic character of a species is defined by its gene pool.
+Just so, a common pattern language is defined by a pool of patterns.
+And, once people share a language in this way, the language will begin evolving of its own accord. The language will evolve y because it can evolve piecemeal, one pattern at a time.
+As people exchange ideas about the environment, and exchange patterns, the overall Inventory of patterns in the pattern pool keeps changing.
+Gradually, as people modify these published languages, add to them, erase from them, a pool of common languages, unique to different places, unique to individuals, and yet broadly shared, will evolve of its own accord.
+Of course, this evolution will never end.
+Yet, changing as it is, each language is a living picture of a culture, and a way of life.
+It is a tapestry of life, which shows, in the relationships among the patterns, how the various parts of life can fit together, and how they can make sense, concretely in space.
+In early times the city itself was intended as an image of the universe — its form a guarantee of the connection between the heavens and the earth, a picture of a whole and coherent way of life.
+A living pattern language is even more. It shows each person his connection to the world in terms so powerful that he can re-affirm it daily by using it to create new life in all the places round about him.
+And in this sense, finally, as we shall see, the living language is a gate.
+
+
+THE WAY
+Once we have built the gate, we can pass through it to the practice of the timeless way.
+
+CHAPTER 18
+THE GENETIC POWER OF LANGUAGE
+
+
+Now we shall begin to see in detail how the rich and complex order of a town can grow from thousands of creative acts. For once we have a common pattern language in our town, we shall all have the 'power to make our streets and buildings live, through our most ordinary acts. The language, like a seed, is the genetic system which gives our millions of small acts the power to form a whole.
+Assume, to start with, that some version of the pattern language has been adopted in a town, or in a neighborhood, or by a group of people or a family who adopt it as the basis for the reconstruction of their world.
+What is the relation between this common pattern language and the constant process of construction and destruction which gives the town its shape?
+A person with a pattern language can design any part of the environment.
+And it is essential that the -people do shape their surroundings for themselves.
+This means, then, that the growth and rebirth of a living town is built up from a myriad of smaller acts.
+It is a flux of millions upon millions of these tiny acts, each one in the hands of the person who knows it best, best able to adapt it to the local circumstances.
+
+
+But what guarantee is there that this flux, with all its individual acts, will not create a chaos? It hinges on the close relationship between the process of creation and the process of repair.
+An organism, which seems at first sight like a static thing, is in fact a constant flux of processes. A town or building also is a constant flux of processes.
+And it is the pattern language which , like the genes distributed throughout the cells, makes certain that there is this structure, this invariant permanency , in the flux of things, so that the building or the town stays whole.
+Imagine the constant process of creation which is happening in a town.
+All this is guided by the fact that every act which helps to shape the buildings and the town, and their activities, is governed by the pattern language people share — and governed, above all, by just that portion of the language which is especially relevant to that especial act.
+Each concrete building problem has a language. The town as an entirety has a language. And each small building task within the town has its own language.
+Every act of buildings brings a handful of patterns into existence.
+
+And we see, then, how each act of building, because its pattern language is part of the larger language for the town, contributes to the larger process which creates the town.
+But the process which integrates the millions of small acts, and makes them one, is not merely given by the fact that all these acts are guided by parts of one great language.
+Each pattern language in the larger language, can, because it is connected to the entire language, help all the other patterns to emerge.
+Each language tugs at the fabric of the larger language, pulls with it other larger patterns, and in this fashion then helps to repair the larger whole.
+And the pattern language is the Instrument by means of which the flux which is the town perpetuates itself, maintains its structure, and keeps itself continuously alive.
+We see then the enormous power which a common pattern language has.
+The process of life is marked by the continuous creation of wholes from parts. In an organism, cells cooperate to form organs and the body as a whole. In a society the individual actions of the people cooperate to form institutions and larger wholes. . . .
+And in a town a pattern language is a source of life, above all, because it helps to generate the wholes, from the cooperation of the individual acts.
+
+
+CHAPTER 19 DIFFERENTIATING SPACE
+
+Within this process , every individual act of building is a process in which space gets differentiated. It is not a process of addition, in which preformed parts are combined to create a whole: but a process of unfolding, like the evolution of an embryo, in which the whole precedes its parts, and actually gives birth to them, by splitting.
+Consider now a single act of building.
+As we have seen, there is some language, part of the larger language, which is specific to this act of building, and governs it to give it order.
+But how, exactly, does this language work.
+Start by remembering the fundamental truth about the parts of any system which is alive.
+Ask yourself, then, what kind of process can create a building or a place that has this character.
+Design is often thought of as a process of synthesis, a process of putting together things, a process of combination.
+But it is impossible to form anything which has the character of nature by adding preformed parts.
+
+It is only possible to make a place which is alive by a process in which each part is modified by its position in the whole.
+This is a differentiating process.
+The image of the differentiating process is the growth of an embryo.
+The unfolding of a design in the mind of its creator, under the influence of language, is just the same.
+Each pattern is an operator which differentiates space: that is, it creates distinctions where no distinction was before.
+The language is a sequence of these operators, in which each one further differentiates the image which is the product of the previous differentiations.
+But of course, this process only works because the patterns in the language have a certain order.
+The patterns will only allow me to form a single coherent image in my mind, if the order that I take them in allows me to build an image of a design gradually, one pattern at a time.
+And this is why a pattern language has the natural power to help us form coherent images.
+The sequence of the patterns for a design — as generated by the language — is therefore the key to that design.
+Conventional wisdom says that a building cannot be designed, in sequence, step by step.
+But the sequence which a language gives you works because it treats the building as a whole, at every step.
+In nature, a thing is always born, and developed, as a whole.
+A building, too, can only come to life when it grows as a whole.
+And it follows, therefore, that when a pattern language is properly used, it allows the -person who uses it to make places which are a part of nature.
+The character of nature is not something added to a good design. It comes directly from the order of the language. When the order of the patterns in the language is correct, the differentiating process allows the design to unfold as smoothly as an opening flower.
+We are ready now to find out the details of this process of unfolding.
+
+
+
+
+CHAPTER 20
+ONE PATTERN AT A TIME
+
+The process of unfolding goes step by step, one pattern at a time. Each step brings just one pattern to life: and the intensity of the result depends on the intensity of each one of these individual steps.
+Suppose now, that for a given act of building, you have a pattern language, and that the patterns in this language are arranged in proper sequence.
+To make the design, you take the patterns one by one, and use each one to differentiate the product of the previous patterns.
+But how exactly, does each pattern work.
+Suppose, for instance, that you want to create a window place which is alive.
+Ask yourself how this pattern would look if it were already in the place where you are wanting it. The most important thing is that you take the pattern seriously.
+If you really want to make an entrance transition there, at the top of the stair, you must close your eyes, and ask yourself: What would it be like, if this was the most wonderful entrance transition in the world?
+Now you have really done something.
+Indeed, each pattern, when you really do it, creates an almost startling character.
+For instance, in the second picture of this chapter, the roof overhang of the sheltering roof is immense. In the third picture, the filtered light is once again intense.
+And in the first picture, we see light on two sides of every room as intense as possible. You may not believe that you can make a place as beautiful as that.
+To do it you need only let it happen in your mind.
+And there it is. Suddenly, without your making any conscious effort, your mind will show you how this light on two sides is, in that particular place, as beautiful as you have ever known it anywhere.
+Your mind is a medium within which the creative spark that jumps between the pattern and the world can happen. You yourself are only the medium for this creative spark , not its originator.
+You may find this way of letting patterns form themselves, unusual.
+You may be afraid that the design won’t work if you take just one pattern at a time.
+But you cannot create a pattern at full intensity, so long as you are worrying and thinking about other patterns, which you will have to deal with later in the sequence.
+This frame of mind destroys the patterns. Suppose that I want to create a main entrance. There is no reason to be timid.
+The order of the language will make sure that it is possible.
+
+Within the sequence which the language defines, you can focus on each pattern by itself, one at a time, certain that those patterns which come later in the sequence will fit into the design which has evolved so far.
+You can pay full attention to each pattern; you can let it have its full intensity.
+Then you can give each pattern just that strange intensity which makes the pattern live.
+
+
+
+
+CHAPTER 21 SHAPING ONE BUILDING
+
+From a sequence of these individual patterns, whole buildings with the character of nature will form themselves within your thoughts, as easily as sentences.
+We are ready, now, to see just how a sequence of patterns can create a building in our minds.
+It happens with surprising ease. The building almost “makes itself," just as a sentence seems to when we speak.
+And it can happen as easily within an ordinary person’s mind, or in a builder's mind. Everyone, builder or not, can do this for himself, to make a building live ....
+Imagine trying to build sentences by shuffling words around on a piece of tracing paper.
+It is only in the mind's eye, eyes shut, not on paper, that a building can be born out of the vividness of actual experience.
+Of course, this little experimental building is still immensely far from the great beauty and simplicity of the houses which are shown at the beginning of the chapter.
+Anyone can use a language to design a building in this way. And it is just like English.
+I still remember the first time I used a pattern language in this way. I found myself so completely caught up in the process that I was trembling. A handful of simple statements made it possible for my mind to flow out and open, through them — and yet, although the house which came was made by me, born of my feelings, it was at the same time as though the house became real, almost by itself, of its own volition, through my thoughts.
+It is a fearsome thing, like diving into water. And yet it is exhilarating — because you aren't controlling it. You are only the medium in which the patterns come to life, and of their own accord give birth to something new.
+
+CHAPTER 22
+SHAPING A GROUP OF BUILDINGS
+
+
+In the same way, groups of people can conceive their larger 'public buildings, on the ground, by following a common pattern language, almost as if they had a single mind.
+We know from chapter 21, that an individual person, can create a building in his mind simply by letting a sequence of patterns generate it, on the site.
+Now we go one step further, and see how a group of people, also on a site, and with a common language, can use the same process to design a larger building.
+The life, pulse, substance, subtlety of the building can only be retained, if it is built, in the same way that it has been designed — by a sequential and linguistic process, which gives birth to the building slowly, in which the building gets its final form during the actual process of construction: where the details, known in advance as patterns, get their substance from the process of creating them, right there, exactly where the building stands.
+Yet even this clinic, crude as it is in its construction, already touched the hearts of the people who laid it out.
+Dr. Ryan told us, after his clinic was built, that this one week he spent with us, shaping the building, was the most important week he had spent in five years — the week in which he had felt most alive.
+The simple process by which people generate a living building, simply by walking it out, waving their arms, thinking together, placing stakes in the ground, will always touch them deeply.
+It is a moment when, within the medium of a shared language, they create a common image of their lives together, and experience the union which this common process of creation generates in them.
+
+
+
+CHAPTER 23
+THE PROCESS OF CONSTRUCTION
+
+
+Once the buildings are conceived like this, they can be built, directly, from a few simple marks made in the ground — again within a common language, but directly and without the use of drawings.
+Suppose now, that you have the layout of a building done, according to the processes described in the last two chapters. It happens, as we have seen, with very great ease.
+Now we come to the actual building of the building.
+
+Suppose, to start with, that we have used a pattern language to lay out a rough scheme of spaces for a building.
+In order for the building to be alive, its construction details must be unique and fitted to their individual circumstances as carefully as the larger parts.
+The details of a building cannot be made alive when they are made from modular parts. The modular panels tyrannize the geometry of the room.
+And, for the same reason, the details of a building cannot be made alive when they are drawn at a drawing board.
+To make the building live, its patterns must be generated, on the site, so that each one takes its own shape according to its context.
+It is essential, therefore, that the builder build only from rough drawings: and that he carry out the detailed patterns from the drawings according to the processes given by the pattern language in his mind.
+The process for making vaults is standard — but the individual vaults which it produces are unique.
+And the process for making columns is standard — but again the individual columns which it produces are unique.
+For concreteness’ sake, I shall now give a sequence of construction processes which will produce a building in this manner.
+First, stake out the corners of the ground- floor rooms and spaces.
+Erect the corner columns, and place stiffening columns as nearly as possible at equal spacings, within the framework given by the corner columns.
+Tie the columns together, with perimeter beams.
+Make the beams lowest around alcoves; higher around ordinary rooms, and highest of all round the big and public rooms,
+Put in the window frames and door frames.
+Now weave the baskets which will form the basis for the vaults above each room. Put in the walls between the columns and, the window frames.
+Make half vaults for the stairs, so that each stair goes up at just the proper angle in the bays reserved them.
+Trowel the concrete for the vaults onto the basket forms, and fill the walls to make them solid. Now start the second story, by the same procedure as the first.
+Fill the floor, to make it horizontal.
+Make the terraces and seats and balconies around the building.
+
+Build individual doors and windows, as cheaply as you can, but each one shaped, and subdivided right according to the frame.
+Carve decorations in the panels round the doors, and in the other places where you want some emphasis or gaiety.
+Paint the walls white; leave the columns visible.
+Then, finally, the finished building will have a rhythm of the same patterns repeated hundreds and thousands of times, but different every time that they occur.
+A building built like this will always be a little looser and a little more fluid than a machine-made building.
+But the beauty of the building lies in the fact that it is whole.
+The building, like the countless buildings of traditional society, has the simplicity of a rough -pencil drawing. Done in a few minutes, the drawing captures the whole — the essence and the feeling of a horse in motion, a woman bending — because its parts are free within the rhythm of the whole.
+And just so with the building now. It has a certain roughness. But it is full of feeling, and it forms a whole.
+
+
+
+CHAPTER 24
+THE PROCESS OF REPAIR
+
+
+Next, several acts of building, each one done to repair and magnify the product of the previous acts, mill slowly generate a larger and more complex whole than any single act can generate.
+We know now, how a single act of building works. We know that any person can lay out a building for himself; that any group of people can do the same; and we know how the builders can then carry out a process of construction, which will make a unified organic whole, out of the stakes marked on the ground.
+Now we shall see how several acts of building, in a row, will generate an even m<ore coherent and more complex whole, piecemeal — by making sure that every act contributes to the order of the previous acts.
+No building is ever perfect.
+It is therefore necessary to keep changing the buildings, according to the real events which actually happen there.
+Suppose, for instance, that some corner of your house is not as alive as you would like. Or suppose that you have built a small laboratory building.
+
+Can you see how rich and various the parts of the building will be y when they are built like this?
+Each act of building, which differentiates a part of space, needs to be followed soon by further acts of building, which further differentiate the space to make it still more whole.
+When things are first built, the gaps between the parts are often left unwhole.
+But these gaps must be healed and made as whole as the parts on either side of them. This goes vastly beyond the normal conception of repair.
+When we repair something in this new sense, we assume that we are going to transform it, that new wholes will be born, that, indeed, the entire whole which is being repaired will become a different whole as the result of the repair.
+In this framework, we gain an entirely new view of the process through which a sequence of acts of building generates a whole.
+In order to see this clearly, let us imagine that there is somewhere a building complex, growing, over time.
+Each house starts with a small beginning — no more than a family kitchen, with a bed alcove off one end, and a kitchen counter.
+Then, for the first few years, people add 100-200 square feet more each year. As the buildings reach maturity, the increments get smaller.
+Yet, at the same time, collectively, the houses begin to generate the larger patterns which define the cluster.
+Slowly, at every level, the arrangement of wholes becomes so dense that there are no gaps between the wholes: every part, and every part between two parts, is whole.
+So, the houses get their form, both as a group, and separately, as individuals, from the gradual accretion of a number of small separate acts.
+In chapter 19 I argued that an organic whole could only be created by a differentiating process.
+We see now that there is a second, complementary process which produces the same results, but works piecemeal, instead.
+This process, like the simple differentiating process, is able to make wholes in which the parts are shaped according to their place.
+But this process is still more powerful: because it can make groups of buildings which are larger and more complex.
+And it is more powerful, above all, because it leaves no mistakes: because the gaps get filled, the small things that are wrong are gradually corrected, and finally, the whole is so smooth and relaxed, that it will seem as though it had been there forever. It has no roughness about it, it simply lies there stretched out in time.
+
+
+CHAPTER 25
+THE SLOW EMERGENCE OF A TOWN
+
+
+Finally, within the framework of a common language, millions of individual acts of building will together generate a town which is alive, and whole, and unpredictable, without control — this is the slow emergence of the quality without a name, as if from nothing.
+Finally, then, we come to the town itself.
+We have seen how a few dozen acts of building, done within a common pattern language can gradually generate a whole, and that the larger patterns which are needed to define that whole, can be created piece meal, by the slow concrescence of the individual acts.
+Now we shall see how this same process can be extended to a town.
+The first thing to recognize is that for any system as vast as a town there is a fundamental problem. The question is: can the structure emerge, simply from the spontaneous interaction of the parts? Or must it be planned, by a hidden hand, according to a blueprint or a master flan?
+To put this question in perspective I should like to compare it to a question that arose in the early years of biology: "How does an organism get formed?"
+At first biologists thought that there must be a hidden designer.
+Yet now it has become clear that the organism is formed purely by the interaction of its cells, guided by the genetic code.
+And this is true for a town too.
+Let us see in detail, how a process of interacting rules can work to generate a town.
+This is commonplace, in the growth of an organism, where all the larger patterns are generated, merely as the end products of tiny, daily transformations.
+And just this too, must also happen in a town.
+Here, for example, is the way a process of this kind can generate a very large-scale pattern like city country fingers.
+On a slightly smaller scale, the same can happen in a community to generate a promenade. And the same kind of process can also generate the patterns in a local neighborhood.
+Each of these processes requires a large group, and a group of smaller groups.
+
+In order for these processes to cover the whole structure of a town, it is therefore necessary that the town be made up from a hierarchy of groups and land, each one responsible for its own patterns.
+And, in order for the larger patterns to come into being, piecemeal, from the aggregation of the smaller acts, it is then necessary that each group is made responsible for helping the next larger group, create the larger patterns which the larger group requires.
+Under these circumstances, it is certain that every pattern will appear at the level where it is needed. But it is never certain just exactly where a given pattern will appear.
+The final shape of any one particular oak tree is unpredictable.
+And a town which is whole, like an oak tree, must be unpredictable also.
+This process, exactly like the emergence of any other form of life, alone produces a living order.
+It is vastly more complex than any other kind of order. It cannot be created by decision. It cannot be designed. It cannot be predicted in a plan. It is the living testament of hundreds and thousands of people, making their own lives and all their inner forces manifest.
+And, finally, the whole emerges.
+
+
+
+
+CHAPTER 26
+ITS AGELESS CHARACTER
+And as the whole emerges, we shall see it take that ageless character which gives the timeless way its name. This character is a specific, morphological character, sharp and precise, which must come into being any time a building or a town becomes alive: it is the physical embodiment, in buildings, of the quality without a name.
+If you follow the way of building which I have described in the last twenty-five chapters, you will find that the buildings which emerge will, gradually, and of their own accord, take on a certain character.
+It is a timeless character.
+In short, the use of languages does not just help to root our buildings in reality; does not just guarantee that they meet human needs; that they are congruent with forces lying in them — it makes a concrete difference to the way they look.
+This character is marked, to start with, by the patterns underlying it. If is marked by greater differentiation.
+But it is marked, above all, by a special balance between "order" and "disorder "
+And it is marked, in feeling, by a sharpness and a freedom and a sleepiness which happens everywhere when men and women are free in their hearts.
+
+It is not necessarily complicated. It is not necessarily simple.
+It comes simply from the fact that every part is whole in its own right. This character emerges whenever any part of the world is healed.
+It is therefore the most fundamental mark of health and life in our surroundings. Outwardly this character reminds us of the buildings of the past.
+Yet this character cannot be generated by a person yearning for the ancient fast. It is simply the character of buildings which reflect the forces in them properly.
+When I myself first started to make buildings with this character, the character amazed me.
+And it is because this same morphology, underlying all things, will always arise in the end — that the timeless way of building is a truly timeless one.
+The timeless character of buildings is as much a part of nature as the character of rivers, trees, hills , flames, and stars.
+Each class of phenomena in nature has its own characteristic morphology. Stars have their character; oceans have their character; rivers have their character; mountains have their character; forests have theirs; trees, flowers, insects, all have theirs. And when buildings are made properly, and true to all the forces in them, then they too will always have their own specific character. This is the character created by the timeless way.
+It is the physical embodiment, in towns and buildings, of the quality without a name.
+
+
+
+
+THE KERNEL OF THE WAY
+
+
+And yet the timeless way is not complete, and will not fully generate the quality without a name, until we leave the gate behind.
+
+
+
+CHAPTER 27
+THE KERNEL OF THE WAY
+
+
+Indeed this ageless character has nothing, in the end, to do with languages. The language, and the processes which stem from it, merely release the fundamental order which is native to us. They do not
+
+teach us, they only remind us of what we know already, and of what we shall discover time and time again, when we give up our ideas and opinions, and do exactly what emerges from ourselves.
+From what you have read so far, it may seem as though the life of buildings, and the timeless character they have when they are living, can be created simply by the use of pattern languages. If the people have a living language, it seems that what emerges from their acts of building will be alive; it seems as though the life of towns can be created simply by the use of languages.
+And yet, we wonder, can it be so simple? Can any process really generate the nameless quality which stirs the heart of nature? Can any theory be so powerful?
+These doubts are right. There is a kernel at the center of the timeless way, a central teaching, which I have not described till now.
+This innocence will only come about when people honestly forget themselves.
+In case you think that I am simply rejecting my own time, and searching for the fast, I should like to tell you about two places I know which are entirely of the twentieth century, and have this innocence.
+And of course, there are larger examples too.
+To make a building egoless, like this, the builder must let go of all his willful images, and start with a void.
+You are able to do this only when you no longer fear that nothing will happen, and you can therefore afford to let go of your images.
+At this stage, the building's life will come directly from your language.
+Yet, at the very moment when you first relax, and let the language generate the buildings in your mind, you will begin to see how limited your language is.
+One place can have "good" patterns in it, and yet be dead.
+Another place can be without the patterns which apply to it, and yet still be alive.
+So paradoxically you learn that you can only make a building live when you are free enough to reject even the very patterns which are helping you.
+It may seem to you that pattern languages are useless then.
+But it is just your pattern language which helps you become egoless.
+The language frees you to be yourself, because it gives you permission to do what is natural, and shows you your innermost feelings about building while the world is trying to suppress them.
+A language gives you back your confidence in what seemed once like trivial things.
+At this final stage, the patterns are no longer important: the patterns have taught you to be receptive to what is real.
+
+The pattern alcove — which first functioned as an intellectual crutch — is no longer necessary to you. You see reality directly, like an animal. You make the alcove as an animal might make an alcove — not because of the concept — but directly , simply because it is appropriate.
+And in this sense, the language is the instrument which brings about the state of mind, which I call egoless.
+It is the gate which leads you to the state of mind, in which you live so close to your own heart that you no longer need a language.
+This is the final lesson of the timeless way.
+To act as nature does is the most ordinary thing in the world. It is as ordinary as a simple act of slicing strawberries.
+When we are as ordinary as that, with nothing left in any of our actions, except what is required — then we can make towns and buildings which are as infinitely various, and as peaceful, and as wild and living, as the fields of windblown grass.
+Almost everybody feels at peace with nature: listening to the ocean waves against the shore, by a still lake, in a field of grass, on a windblown heath. One day, when we have learned the timeless way again, we shall feel the same about our towns, and we shall feel as much at peace in them, as we do today walking by the ocean, or stretched out in the long grass of a meadow.

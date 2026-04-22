@@ -1,0 +1,90 @@
+[[!meta copyright="Copyright © 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta date="2019-01-01 22:22 UTC"]]
+
+Hello!  Welcome to a new qoth.  This qoth covers new and interesting GNU/Hurd
+developments in Q4 of 2018!
+[[!if test="included()" then="""[[!toggle id=full_news
+text="Details."]][[!toggleable id=full_news text="[[!paste id=full_news]]"]]"""
+else="
+[[!paste id=full_news]]"]]
+
+[[!cut id="full_news" text="""
+
+
+Joan Lledó completed a PCI Arbiter for the GNU/Hurd, and Damien Zammit helped
+[[polish |http://lists.gnu.org/archive/html/bug-hurd/2018-11/msg00033.html]]
+[[it|https://lists.x.org/archives/xorg-devel/2018-November/057677.html]].
+This is a significant development and accomplishment!  PCI stands for Peripheral
+Component Interconnect, and it is a standard that allows many computer
+peripherals to communicate together with the rest of the system smoothly.  Of
+course, the GNU/Hurd intends to take this further by allowing ordinary users to
+safely access PCI cards!  You can learn more about it in Samuel [[fosdem
+talk|https://www.youtube.com/watch?v=SpqTnLD8ZJ8]].
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-10/msg00029.html]]
+
+
+Joan Lledo` updated the GNU/Hurd lwip translator to work with the latest lwip.
+As a reminder lwip is a lightweight TCP/IP networking stack.  The GNU/Hurd lwip
+translator provides a complete replacement to GNU/Hurd's pfinit.
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-11/msg00062.html]]
+
+Damien Zammit created an ACPI translator.  This translator provides a translator
+for mounting x86 ACPI tables under a path as read-only files.  It is needed so
+that other things that depend on ACPI to find the base address such as Intel's
+IOMMU (DMAR table), memory mapped PCI space (MCFG table) etc, can be discovered
+in userspace.  Otherwise, this functionality would need to be built into gnumach
+which would be a burden to maintain.
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-11/msg00049.html]]
+
+Damien Zammit worked on allowing libstore to open non-mach devices, which is in
+preparation for rump kernel disk access.
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-12/msg00050.html]]
+
+Samuel Thibault allowed non-privileged users to mount their own tmpfs.  It turned
+out to be a permission issue and a trivial fix.
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-11/msg00012.html]]
+
+Samuel fixed a bfs issue with /proc not properly mounting.
+[[https://lists.debian.org/debian-hurd/2018/10/msg00007.html]]
+
+Samuel Thibault enabled LLVM to support the Hurd.  This can hopefully pave the
+way to use LLVM sanitizers on the existing GNU/Hurd codebase.
+[[https://www.phoronix.com/scan.php?page=news_item&px=GNU-Hurd-LLVM-Clang]]
+
+Work toward porting Rust and Go to the GNU/Hurd is ongoing:
+[[https://lists.debian.org/debian-hurd/2018/11/msg00020.html]]
+
+Svante Signell worked on adding POSIX file record locking support.
+[[http://lists.gnu.org/archive/html/bug-hurd/2018-11/msg00058.html]]
+[[http://lists.gnu.org/archive/html/bug-hurd/2016-12/msg00047.html]]
+
+
+So if you want to test if your favorite packages work on the Hurd and
+contribute towards making the full GNU system usable for a wider range
+of people, please [[get in contact|contact_us]] -- and maybe already
+grab the [[source code|source_repositories]].
+
+---
+
+The **GNU Hurd** is the GNU project's replacement for the Unix kernel.  It is a
+collection of servers that run on the Mach microkernel to implement file
+systems, network protocols, file access control, and other features that are
+implemented by the Unix kernel or similar kernels (such as Linux).  [[More
+detailed|hurd/documentation]].
+
+**GNU Mach** is the microkernel upon which a GNU Hurd system is based.  It
+provides an Inter Process Communication (IPC) mechanism that the Hurd uses to
+define interfaces for implementing in a distributed multi-server fashion the
+services a traditional operating system kernel provides.  [[More
+detailed|microkernel/mach/gnumach]].
+
+"""]]

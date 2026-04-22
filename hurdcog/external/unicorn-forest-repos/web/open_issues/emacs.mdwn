@@ -1,0 +1,45 @@
+[[!meta copyright="Copyright © 2009, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="GNU Emacs"]]
+
+[[!tag open_issue_porting]]
+
+GNU Emacs works pretty well.  It works beautifully in X.
+
+---
+
+# 2024-01-14
+
+Emacs version 29.1 runs on Debian GNU/Hurd. Joshua Branson uses it in
+X without issue. He use org-mode, gnus, erc, calc, markdown-mode, etc.
+In fact he, edits this wiki via Debian GNU/Hurd (running on a T43)
+using Emacs.  He is able to make changes to the wiki, render the wiki,
+look at the resulting webpage with the
+[[netsurf|https://www.netsurf-browser.org/]] web browser, commit the
+changes, and send a patch to `bug-hurd@gnu.org`, all while using the
+Hurd.  :)
+
+Also since the Hurd ported rust, you can now use
+[[treesitter|https://www.masteringemacs.org/article/how-to-get-started-tree-sitter]]
+with Emacs!  Joshua got
+[[html-ts-mode|https://github.com/mickeynp/html-ts-mode]] working.
+
+Emacs also has a packaged eglot, which is a client for language server
+protocol, into core.  Joshua was able to get eglot working for C mode
+with clandg, but it was a bit slow.  Joshua is running Emacs on a T43,
+with 1.5 GB of RAM, so perhaps his hardware is just super slow.
+
+You can easily install many Emacs packages with apt:
+
+     # apt install elpa-zenburn-theme
+
+Or you can use `use-package`.
+

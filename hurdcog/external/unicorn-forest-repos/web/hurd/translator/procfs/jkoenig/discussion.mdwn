@@ -1,0 +1,638 @@
+[[!meta copyright="Copyright © 2010, 2011, 2012, 2013, 2014, 2016 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+[[!toc]]
+
+
+# `/proc/version`
+
+[[!taglink open_issue_documentation]]: edit and move to [[FAQ]].
+
+
+## IRC, freenode, #hurd, around 2010-09
+
+    <pinotree> (also, shouldn't /proc/version say something else than "Linux"?)
+    <youpi> to make linux tools work, no :/
+    <youpi> kfreebsd does that too
+    <pinotree> really?
+    <youpi> yes
+    <youpi> (kfreebsd, not freebsd)
+    <pinotree> does kbsd's one print just "Linux version x.y.z" too, or
+      something more eg in a second line?
+    <pinotree> (as curiosity)
+    <youpi> % cat /proc/version
+    <youpi> Linux version 2.6.16 (des@freebsd.org) (gcc version 4.3.5) #4 Sun
+      Dec 18 04:30:00 CET 1977
+    <pinotree> k
+
+
+## IRC, freenode, #hurd, 2013-06-04
+
+    <safinaskar> ?@?#@?$?@#???!?!?!?!??!?!?!?! why /proc/version on gnu system
+      reports "Linux version 2.6.1 (GNU 0.3...)"?
+    <braunr> safinaskar: because /proc/version is a linux thing
+    <braunr> applications using it don't expect to see anything else than linux
+      when parsing
+    <braunr> think of it as your web brower allowing you to set the user-agent
+    <safinaskar> braunr: yes, i just thought about user-agent, too
+    <safinaskar> braunr: but freebsd doesn't report it is linux (as well as i
+      know)
+    <braunr> their choice
+    <braunr> we could change it, but frankly, we don't care
+    <safinaskar> so why "uname" says "GNU" and not "Linux"?
+    <braunr> uname is posix
+    <braunr> note that /proc/version also includes GNU and GNU Mach/Hurd
+      versions
+    <safinaskar> if some program read the word "Linux" from /proc/version, it
+      will assume it is linux. so, i think it is bad idea
+    <braunr> why ?
+    <safinaskar> there is no standard /proc across unixen
+    <braunr> if a program reads /proc/version, it expects to be run on linux
+    <safinaskar> every unix implement his own /proc
+    <safinaskar> so, we don't need to create /proc which is fully compatible
+      with linux
+    <braunr> procfs doesn't by default
+    <safinaskar> instead, we can make /proc, which is partially compatible with
+      linux
+    <braunr> debiansets the -c compatibility flag
+    <braunr> that's what we did
+    <safinaskar> but /proc/version should really report kernel name and its
+      version
+    <braunr> why ?
+    <braunr> (and again, it does)
+    <safinaskar> because this is why /proc/version created
+    <pinotree> no?
+    <braunr> on linux, yes
+    <braunr> pinotree: hm ?
+    <safinaskar> and /proc/version should not contain the "Linux" word, because
+      this is not Linux
+    <braunr> pinotree: no to what ? :)
+    <braunr> safinaskar: *sigh*
+    <braunr> i explained the choice to you
+    <pinotree> safinaskar: if you are using /proc/version to get the kernel
+      name and version, you're doing bad already
+    <braunr> disagree if you want
+    <braunr> but there is a point to using the word Linux there
+    <pinotree> safinaskar: there's the proper aposix api for that, which is
+      uname
+    <safinaskar> pinotree: okey. so why we ever implement /proc/version?
+    <braunr> it's a linux thing
+    <braunr> they probably wanted more than what the posix api was intended to
+      do
+    <safinaskar> okey, so why we need this linux thing?   there is a lot of
+      linux thing which is useful in hurd.  but not this thing.   because this
+      is not linux.    if we support /proc/version, we should not write "Linux"
+      to it
+    <pinotree> and even on freebsd their linprocfs (mounted on /proc) is not
+      mounted by default
+    <braunr> 10:37 < braunr> applications using it don't expect to see anything
+      else than linux when parsing
+    <braunr> 10:37 < braunr> think of it as your web brower allowing you to set
+      the user-agent
+    <braunr> safinaskar: the answer hasn't changed
+    <safinaskar> pinotree: but they don't export /proc/version with "Linux"
+      word in it anyway
+    <pinotree> safinaskar: they do
+    <safinaskar> pinotree: ??? their /proc/version contain Linux?
+    <pinotree> Linux version 2.6.16 (des@freebsd.org) (gcc version 4.6.3) #4
+      Sun Dec 18 04:30:00 CET 1977
+    <kilobug> safinaskar: it's like all web browsers reporting "mozilla" in
+      their UA, it may be silly, but it's how it is for
+      compatibility/historical reasons, and it's just not worth the trouble of
+      changing it
+    <pinotree> that's on a debian gnu/kfreebsd machine
+    <pinotree> and on a freebsd machine it is the same
+    <braunr> safinaskar: you should understand that parsing this string allows
+      correctly walking the rest of the /proc tree
+    <pinotree> and given such filesystem on freebsd is called "linprocfs", you
+      can already have a guess what it is for
+    <kilobug> safinaskar: saying "Linux version 2.6.1" just means "I'm
+      compatible with Linux 2.6.1 interfaces", like saying "Mozilla/5.0 (like
+      Gecko)" in the UA means "I'm a modern browser"
+    <safinaskar> so, is there really a lot of programs which expect "Linux"
+      word in /proc/version even on non-linux platforms?
+    <braunr> no
+    <braunr> but when they do, they do
+
+
+# <a name="self">`/proc/self`</a>
+
+## IRC, freenode, #hurd, around 2010-09
+
+    <youpi> jkoenig: is it not possible to provide a /proc/self which points at
+      the client's pid?
+    <pinotree> looks like he did 'self' too, see rootdir_entries[] in rootdir.c
+    <youpi> but it doesn't point at self
+    <antrik> youpi: there is no way to provide /proc/self, because the server
+      doesn't know the identity of the client
+    <youpi> :/
+    <antrik> youpi: using the existing mechanisms, we would need another magic
+      lookup type
+    <antrik> an alternative idea I discussed with cfhammer once would be for
+      the client to voluntarily provide it's identity to the server... but that
+      would be a rather fundamental change that requires careful consideration
+    <antrik> also, object migration could be used, so the implementation would
+      be provided by the server, but the execution would happen in the
+      client... but that's even more involved :-)
+    <youpi> but we've seen how much that'd help with a lot of other stuff
+    <antrik> I'm not sure whether we discussed this on the ML at some point, or
+      only on IRC
+    <youpi> it "just" needs to be commited :)
+    <antrik> in either case, it can't hurt to bring this up again :-)
+
+[[mtab/discussion]], *IRC, freenode, #hurd, 2013-09-07*.
+Look at `[glibc]/hurd/lookup-retry.c` for how [[`FS_RETRY_MAGICAL`
+lookups|interface/dir_lookup]] work.
+
+
+# root group
+
+## IRC, freenode, #hurd, around October 2010
+
+    <pinotree> the only glitch is that files/dirs have the right user as
+      owner, but always with root group
+
+
+# `/proc/[PID]/stat` being 400 and not 444, and some more
+
+## IRC, freenode, #hurd, 2011-03-27
+
+    <pochu> is there a reason for /proc/$pid/stat to be 400 and not 444 like on
+      Linux?
+    <pochu> there is an option to procfs to make it 444 like Linux
+    <pochu> jkoenig: ^
+    <jkoenig> pochu, hi
+    <jkoenig> /proc/$pid/stat reveals information which is not usually
+      available on Hurd
+    <jkoenig> so I made it 400 by default to avoid leaking anything
+    <pochu> is there a security risk in providing that info?
+    <jkoenig> probably not so much, but it seemed like it's not really a
+      descision procfs should make
+    <jkoenig> I'm not sure which information we're speaking about, though, I
+      just remember the abstract reason.
+    <pochu> things like the pid, the memory, the priority, the state...
+    <pochu> sounds safe to expose
+    <jkoenig> also it's 0444 by default in "compatible" mode
+    <jkoenig> (which is necessary for the linux tools to work well)
+    <pochu> yeah I saw that :)
+    <pochu> my question is, should we change it to 0444 by default? if there
+      are no security risks and this improves compatibility, sounds like a good
+      thing to me
+    <pochu> we're already 'leaking' part of that info through e.g. ps
+    <jkoenig> I think /proc should be translated by /hurd/procfs --compatible
+      by default (I'm not sure whether it's already the case)
+    <jkoenig> also I'm not sure why hurd-ps is setuid root, rather than the
+      proc server being less paranoid, but maybe I'm missing something.
+    <pochu> jkoenig: it's not, at least not on Debian
+    <pochu> youpi: hi, what do you think about starting procfs with
+      --compatible by default?
+    <pochu> youpi: or changing /proc/$pid/stat to 0444 like on Linux
+      (--compatible does that among a few other things)
+    <youpi> I guess you need it for something?
+    <pochu> I'm porting libgtop :)
+    <youpi> k
+    <pochu> though I still think we should do this in procfs itself
+    <youpi> ymmv
+    <jkoenig> pochu, youpi, --compatible is also needed because mach's high
+      reported sysconf(_SC_CLK_TCK) makes some integers overflow (IIRC)
+    <youpi> agreed
+    <jkoenig> luckily, tools which use procfs usually try to detect the value
+      /proc uses rather than rely on CLK_TCK
+    <jkoenig> (so we can choose whatever reasonable value we want)
+
+
+## IRC, freenode, #hurd, 2011-03-28
+
+    <antrik> jkoenig: does procfs expose any information that is not available
+      to everyone through the proc server?...
+    <antrik> also, why is --compatible not the default; or rather, why is there
+      even another mode? the whole point of procfs is compatibility...
+    <jkoenig> antrik, yes, through the <pid>/environ and (as mentionned above)
+      <pid>/stat files, but I've been careful to make these files readable only
+      to the process owner
+    <jkoenig> --compatible is not the default because it relaxes this paranoia
+      wrt. the stat file, and does not conform to the specification with regard
+      to clock tick counters
+    <antrik> what specification?
+    <jkoenig> the linux proc(5) manpage
+    <jkoenig> which says clock tick counters are in units of
+      1/sysconf(_SC_CLK_TCK)
+    <antrik> so you are saying that there is some information that the Hurd
+      proc server doesn't expose to unprivileged processes, but linux /proc
+      does?
+    <jkoenig> yes
+    <antrik> that's odd. I wonder what the reasoning behind that could be
+    <antrik> but this information is available through Hurd ps?
+    <antrik> BTW, what exactly is _SC_CLK_TCK supposed to be?
+    <pinotree> jkoenig: hm, just tried with two random processes on linux
+      (2.6.32), and enrivon is 400
+    <pinotree> (which makes sense, as you could have sensible informations eg
+      in http_proxy or other envvars)
+    <jkoenig> antrik, CLK_TCK is similar to HZ (maybe clock resolution instead
+      of time slices ?)
+    <jkoenig> sysconf(3) says "The number of clock ticks per second."
+    <jkoenig> antrik, I don't remember precisely what information this was, but
+      ps-hurd is setuid root.
+    <jkoenig> anyway, if you run procfs --compatible as a user and try to read
+      foo/1/stat, the result is an I/O error, which is the result of the proc
+      server denying access.
+    <antrik> but Linux /proc acutally uses HZ as the unit IIRC? or is
+      _SC_CLK_TCK=HZ on Linux?...
+    <jkoenig> I expect they're equal.
+    <jkoenig> in practice procps uses heuristics to guess what value /proc uses
+      (for compatibility purposes with older kernels)
+    <jkoenig> I don't think HZ is POSIX, while _SC_CLK_TCK is specifies as the
+      unit for (at least) the values returned by times()
+    <jkoenig> s/specifies/specified/
+    <jkoenig> antrik, some the information is fetched directly from mach by
+      libps, and understandably, the proc server does not give the task port to
+      anyone who asks.
+    <antrik> well, as long as the information is exposed through ps, there is
+      no point in hiding it in procfs...
+    <antrik> and I'm aware of the crazy guessing in libproc... I was actually
+      mentoring the previous procfs implementation
+    <antrik> (though I never got around to look at his buggy code...)
+    <jkoenig> ok
+
+
+## IRC, freenode, #hurd, 2011-07-22
+
+    <pinotree> hm, why /proc/$pid/stat is 600 instead of 644 of linux?
+    <jkoenig> pinotree, it reveals information which, while not that sensitive,
+      would not be available to users through the normal proc interface.
+    <jkoenig> (it's available through the ps command which is setuid root)
+    <jkoenig> we discussed at some point making it 644, IIRC.
+    <pinotree> hm, then why is it not a problem on eg linux?
+    <jkoenig> (btw you can change it with the -s option.)
+    <jkoenig> pinotree, it's not a problem because the information is not that
+      sensitive, but when rewriting procfs I preferred to play it self and
+      consider it's not procfs' job to decide what is sensitive or not.
+    <jkoenig> IIRC it's not sensitive but you need the task port to query it.
+    <jkoenig> like, thread times or something.
+    <pinotree> status is 644 though
+    <jkoenig> but status contains information which anyone can ask to the proc
+      server anyway, I think.
+
+
+# `/proc/mounts`, `/proc/[PID]/mounts`
+
+## IRC, freenode, #hurd, 2011-07-25
+
+    < pinotree> jkoenig: btw, what do you think about providing empty
+      /proc/mounts and /proc/$pid/mounts files?
+    < jkoenig> pinotree, I guess one would have to evaluate the consequences
+      wrt. existing use cases (in other words, "I have absolutely no clue
+      whatsoever about whether that would be desirable" :-)
+    < jkoenig> pinotree, the thing is, an error message like "/proc/mounts: No
+      such file or directory" is rather explicit, whereas errors which would be
+      caused by missing data in /proc/mounts would maybe be harder to track
+    < braunr> this seems reasonable though
+    < braunr> there already are many servers with e.g. grsecurity or chrooted
+      environments where mounts is empty
+    < pinotree> well, currently we also have an empty mtab
+    < braunr> pinotree: but what do you need that for ?
+    < braunr> pinotree: the init system ?
+    < pinotree> and the mnt C api already returns no entries (or it bails out,
+      i don't remember)
+    < pinotree> not a strict need
+
+A [[mtab]] translator now exists.
+
+
+## IRC, freenode, #hurd, 2013-09-20
+
+    <pinotree> teythoon: should procfs now have $pid/mounts files pointing to
+      ../mounts?
+    <teythoon> pinotree: probably yes
+
+
+# `/proc/[PID]/auxv`
+
+Needed by glibc's `pldd` tool (commit
+11988f8f9656042c3dfd9002ac85dff33173b9bd).
+
+
+# `/proc/[PID]/exe`
+
+Needed by glibc's `pldd` tool (commit
+11988f8f9656042c3dfd9002ac85dff33173b9bd).
+
+
+## `/proc/self/exe`
+
+[[!message-id "alpine.LFD.2.02.1110111111260.2016@akari"]].  Needed by glibc's
+`stdlib/tst-secure-getenv.c`.
+Also used in `[GCC]/libgfortran/runtime/main.c`:`store_exe_path`.
+
+Is it generally possible to use something like the following instead?
+Disadvantage is that every program using this needs to be patched.
+
+    #include <dlfcn.h>
+    [...]
+    Dl_info DLInfo;
+    int err = dladdr(&main, &DLInfo);
+    if (err == 0)
+      [...]
+    /* Pathname of shared object that contains address: DLInfo.dli_fname.  */
+    /* Filter it through realpath.  */
+
+This is used in `[LLVM]/lib/Support/Unix/Path.inc`.
+
+
+### IRC, OFTC, #debian-hurd, 2013-11-10
+
+    <mjt> Hello.  Does hurd have /proc/self/exe equivalent, to "re-exec myself"
+      ?
+    <youpi> no, only argv[0]
+    <mjt> busybox uses /proc/self/exe by default to re-exec itself when running
+      one of its applets, or failing that, tries to find it in $PATH.  I guess
+      it doesn't work on hurd... :)
+    <mjt> and argv0 is unreliable
+    <youpi> some discussion on the hurd wiki talks about using Dl_info DLInfo
+    <youpi> which contains DLInfo.dli_fname
+    <youpi> err, I mean, callling dladdr(&main, &DLInfo);
+    <youpi> this is kernel-agnostic, provided one uses glibc
+    <mjt> um. -ldl. nice for static linking
+    <mjt> gcc t.c -ldl -static
+    <mjt> ./a.out 
+    <mjt> fname=AVA� �j
+    <mjt> bah :)
+    <mjt> (it just prints dli_fname)
+    <teythoon> :/
+    <youpi> ah, yes, that won't work with static linking
+    <teythoon> fixing /proc/self is on my todo list, it shouldn't be too hard
+    <youpi> since in that case it's the exec server which sets the process up,
+      not dl.so
+    <teythoon> but we do not have the exe link either
+    <mjt> (the above test run was on linux not on hurd, fwiw_
+    <mjt> )
+
+
+# `/proc/[PID]/fd/`
+
+## IRC, freenode, #hurd, 2012-04-24
+
+    <antrik> braunr: /proc/*/fd can be implemented in several ways. none of
+      them would require undue centralisation
+    <antrik> braunr: the easiest would be adding one more type of magic lookup
+      to the existing magic lookup mechanism
+    <antrik> wait, I mean /proc/self... for /proc/*/fd it's even more
+      straighforward -- we might even have a magic lookup for that already
+    <pinotree> i guess the ideal thing would be implement that fd logic in
+      libps
+    <antrik> pinotree: nope. it doesn't need to ask proc (or any other server)
+      at all. it's local information. that's what we have the magic lookups for
+    <antrik> one option we were considering at some point would be using the
+      object migration mechanism, so the actual handling would still happen
+      client-side, but the server could supply the code doing it. this would
+      allow servers to add arbitrary magic lookup methods without any global
+      modifications... but has other downsides :-)
+    <gnu_srs> youpi: How much info for /proc/*/fd is possible to get from
+      libps? Re: d-h@
+    <youpi> see my mail
+    <youpi> I don't think there is an interface for that
+    <youpi> processes handle fds themselves
+    <youpi> so libps would have to peek in there
+    <youpi> and I don't remember having seen any code like that
+    <gnu_srs> 10:17:17< antrik> wait, I mean /proc/self... for /proc/*/fd it's
+      even more straighforward -- we might even have a magic lookup for that
+      already
+    <gnu_srs> pinotree: For me that does not ring a bell on RPCs. Don't know
+      what magic means,,
+    <youpi> for /proc/self/fd we have a magic lookup
+    <youpi> for /proc/pid/fd, I don't think we have
+    <gnu_srs> magic lookup*
+    <gnu_srs> magic lookup == RPC?
+    <youpi> magic lookup is a kind of answer to the lookup RPC
+    <youpi> that basically says "it's somewhere else, see there"
+    <youpi> the magic FD lookup tells the process "it's your FD number x"
+    <youpi> which works for /proc/self/fd, but not /proc/pid/fd
+    <civodul> youpi, gnu_srs: regarding FDs, there the msg_get_fd RPC that
+      could be used
+    <civodul> `msgport' should have --get-fd, actually
+    <youpi> civodul: I assumed that the reason why msgport doesn't have it is
+      that it didn't exist
+    <youpi> so we can get a port on the fd
+    <youpi> but then how to know what it is?
+    <civodul> youpi: ah, you mean for the /proc/X/fd symlinks?
+    <civodul> good question
+    <civodul> it's not designed to be mapped back to names, indeed :-)
+    <antrik> youpi: yeah, I realized myself that only /proc/self/fd is trivial
+    <antrik> BTW, in Linux it's nor real symlinks. it's magic, with some very
+      strange (but useful in certain situations) semantics
+    <antrik> not real symlinks
+    <antrik> it's very weird for example for fd connected to files that have
+      been unlinked. it looks like a broken symlink, but when dereferencing
+      (e.g. with cp), you get the actual file contents...
+
+
+# `/proc/[PID]/maps`
+
+[[!GNU_Savannah_bug 32770]]
+
+
+## IRC, OFTC, #debian-hurd, 2012-06-20
+
+    <pinotree> bdefreese: the two elfutils tests fail because there are no
+      /proc/$pid/maps files
+    <pinotree> that code is quite relying on linux features, like locating the
+      linux kernel executables and their modules, etc
+    <pinotree> (see eg libdwfl/linux-kernel-modules.c)
+    <pinotree> refactor elfutils to have the linux parts executed only on linux
+      :D
+    <bdefreese> Oh yeah, the maintainer already seems really thrilled about
+      Hurd..  Did you see
+      http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=662041 ?
+    <pinotree> kurt is generally helpful with us (= hurd)
+    <pinotree> most probably there he is complaining that we let elfutils build
+      with nocheck (ie skipping the test suite run) instead of investigate and
+      report why the test suite failed
+
+
+## `/proc/self/maps`
+
+Also used in `[GCC]/intl/relocatable.c`:`find_shared_library_fullname` for
+`#ifdef __linux__`.
+
+
+### IRC, freenode, #hurd, 2013-10-03
+
+    <camm`> what's the equivalent of cat /proc/self/maps on hurd?
+    <braunr> camm`: for now, /proc/self doesn't work as expected
+    <camm`> thanks, I just want to get a list of maps and protection status for
+      a running process -- how?
+    <braunr> vminfo
+    <camm`> thanks so much!  I'm trying to debug an unexec failure on hurd when
+      a linker script is present.  All works with the default script, but when
+      the text address is changed, unexec fails, running into a page with no
+      access in the middle of the executable:    0xc4b000[0x1000] (prot=0,
+      max_prot=RWX, offs=0xb55000)
+    <camm`> I get a segfault when trying to read from this page.
+    <braunr> unexec ?
+    <camm`> emacs/gcl/maxima/acl2/hol88/axiom use unexec to dump a running
+      image into a saved executable elf file.
+    <braunr> what is unexec ?
+    <braunr> ok looks like a dirty tool
+    <braunr> camm`: what is segfaulting, unexec or the resulting executable ?
+    <camm`> unexec opens the file from which the running program was originally
+      executed, finds its section start addresses, then writes a new file
+      replacing any data in the old file with possibly modified versions in
+      running memory.  The reverse of 'exec'.
+    <camm`> the read from running memory delimited by the addresses in the
+      executable file is hitting a page which has been protected with *no*
+      access, and is segfaulting.  Somehow, when the binary file is loaded,
+      hurd turning off all rights to this page.
+    <camm`> let me check the stack location ...
+    <camm`> ok I think I've got it -- hurd moves the sbrk(0) address away from
+      the end of .data (as reported by readelf) if the addresses are low,
+      presumably to avoid running into the stack.
+    <camm`> starting sbrk(0)!=.data+data_size on hurd
+    <braunr> i'm not sure there is anything like the heap on the hurd
+    <braunr> sbrk is probably implemented on top of mmap
+    <braunr> camm`: hm no, i'm wrong, glibc implements brk and sbrk mostly as
+      expected, but remapping the area isn't atomic
+    <braunr> "Now reallocate it with no access allowed"
+    <braunr> then, there is a call to vm_protect
+    <braunr> and no error checking
+    <braunr> ...
+    <camm`> ok, that's fine, but need to know -- in general there is no
+      relationship between the address returned by sbrk(0) and the .data
+      addresses reported by readelf on the file, (hurd only) yes?
+    <braunr> i don't know about that
+    <braunr> there should be ..
+    <camm`> Specific example: readelf -a ->   [24] .data             PROGBITS
+      000f5580 0c4580 000328 00  WA  0   0 32
+    <camm`>  
+    <camm`> sbrk(0)->(void *) 0x8021000
+    <braunr> camm`: is that on an executable or a shared object ?
+    <camm`> executable
+    <braunr> 000f5580 looks very low
+    <camm`> This is using a linker script.  The default setup works just fine.
+    <camm`> I think it (might) make sense for hurd to silently do this give the
+      placement of the C stack, but the assumptions behind my algorithm need
+      changing (perhaps). 
+    <camm`> (I probe in configure the allowable range of __executable_start,
+      and then choose a value to either ensure a large free signed range around
+      NULL, or a low data start to maximize heap)
+    <camm`> braunr: are there any guarantees of sbrk(0)==.data+size without a
+      linker script?
+    <braunr> camm`: i'm not sure at all
+    <braunr> sbrk isn't even posix
+    <camm`> thanks
+
+
+## IRC, freenode, #hurd, 2014-02-22
+
+    <ignaker> i'm trying to implement proc/maps 
+    <ignaker> actually I can't well evaluate complexity of tasks. However, I
+      appreciate your comments
+    <braunr> the complexity can be roughly estimated from the number of
+      components involved
+    <braunr> proc/maps involves procfs, ports, virtual memory, and file systems
+    <braunr> the naive implementation would merely be associating names to
+      memory objects, and why not, but a more complete one would go ask file
+      system servers about them
+    <braunr> perhaps more
+    <braunr> although personally i'd go for the naive one because less
+      dependencies usually means better reliability
+    <braunr> something similar to task_set_name could do the job
+
+
+# `/proc/[PID]/mem`
+
+Needed by glibc's `pldd` tool (commit
+11988f8f9656042c3dfd9002ac85dff33173b9bd).
+
+
+# `/proc/[PID]/cwd`
+
+## IRC, freenode, #hurd, 2012-06-30
+
+    * pinotree has a local work to add the /proc/$pid/cwd symlink, but relying
+        on "internal" (but exported) glibc functions
+
+
+# CPU Usage
+
+## IRC, freenode, #hurd, 2013-01-30
+
+    <gnu_srs> Hi, htop seems to report CPU usage correct, but not top, is that
+      a known issue? 
+    <youpi> does your /proc have the -c flag?
+    <gnu_srs> /hurd/procfs -c
+    <youpi> I don't remember which way it works, but iirc depending on whether
+      -c is there or not, it will work or not
+    <youpi> problem being that nothing says linux' clock is 100Hz, but a lot of
+      programs assume it
+    <gnu_srs> seems like htop gets it right though
+    <youpi> possibly just by luc
+    <youpi> k
+
+
+### IRC, freenode, #hurd, 2013-01-31
+
+    <braunr> both htop and top seem to have problems report the cpu time
+    <braunr> so i expect the problem to be in procfs
+
+
+# IRC, freenode, #hurd, 2013-10-03
+
+    <braunr> teythoon: any reason the static variable translator_exists isn't
+      protected by a lock in procfs/rootdir.c ?
+
+
+## IRC, freenode, #hurd, 2013-10-04
+
+    <braunr> teythoon: can you tell me why translator_exists isn't protected
+      from shared access in rootdir_mounts_exists ?
+    <teythoon> braunr: hm, dunno tbh, I probably thought the race was harmless
+      enough
+    <braunr> it probably is
+    <braunr> settrans -Rg doesn't work on procfs :(
+
+
+# Kernel PID
+
+## IRC, freenode, #hurd, 2013-09-25
+
+    <braunr> hm cute, htop layout has become buggy, top just won't start
+    <teythoon> braunr: make sure your procfs knows the correct kernel pid
+    <teythoon> # showtrans /proc
+    <teythoon> /hurd/procfs -c -k 3
+    <teythoon> we could have handled this nicer if procfs were integrated
+      upstream
+    <teythoon> we should probably just update the default
+    <braunr> teythoon: mhm
+    <braunr> $ fsysopts /proc
+    <braunr> /hurd/procfs --stat-mode=444 --fake-self=1
+    <braunr> $ showtrans /proc
+    <braunr> /hurd/procfs -c
+    <pinotree> -c == --stat-mode=444 --fake-self=1
+    <braunr> better indeed
+    <braunr> teythoon: thanks
+
+
+## IRC, freenode, #hurd, 2013-10-04
+
+    <braunr> youpi: i fixed procfs on ironforge and exodar to be started as
+      procfs -c -k 3
+    <braunr> without -k 3, many things as simple as top and uptime won't work
+
+
+## IRC, freenode, #hurd, 2013-10-24
+
+    <gg0> braunr: i'm using your repo and i can't see cpu percentage in htop
+      anymore, all zeroes, confirmed?
+    <braunr> gg0: no
+    <braunr> gg0: you probably need to reset procfs
+    <braunr> gg0: settrans /proc /hurd/procfs -c -k 3

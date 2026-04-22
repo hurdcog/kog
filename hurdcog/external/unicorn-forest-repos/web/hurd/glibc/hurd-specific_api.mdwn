@@ -1,0 +1,211 @@
+[[!meta copyright="Copyright © 2002, 2007, 2008, 2010, 2024 Free
+Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Hurd-specific glibc API"]]
+
+These functions have meaning only under Hurd.  They are needed to get port
+names that are used in native Hurd API (the [[RPC]]s to servers).  The `.defs`
+and `.h` files can be found in `/include/hurd` when all development files are
+installed (Debian package `hurd-dev`.)  Note that `.defs` are not included in C
+programs -- they are used to produce `.h` files.
+
+<!-- TODO.  Need to convert this to a proper table.  --tschwinge -->
+
+
+	file_t
+	getcwdir (void);
+
+Get `file_t` port name of the current working directory.  See
+`hurd.defs` and `hurd.h`.
+
+	int
+	setcwdir (file_t);
+
+Set the current working directory.
+
+	file_t
+	getcrdir (void);
+
+Get file_t port name of current root directory.
+
+	int
+	setcrdir (file_t);
+
+Set current root directory.
+
+	file_t
+	file_name_lookup (const char *file, int flags, mode_t mode);
+
+Open a port to `FILE` with the given `FLAGS` and `MODE` (see
+`fcntl.h`). The file lookup uses the current root and working
+directory. Returns a port to the file if successful; otherwise sets
+`errno` and returns `MACH_PORT_NULL`.
+
+	file_t
+	file_name_lookup_under (file_t startdir, const char *file,
+	                        int flags, mode_t mode);
+
+Open a port to `FILE` with the given `FLAGS` and `MODE` (see
+`fcntl.h`). The file lookup uses the current root directory, but uses
+`STARTDIR` as the "working directory" for file relative names. Returns
+a port to the file if successful; otherwise sets errno and returns
+`MACH_PORT_NULL`.
+
+	file_t
+	file_name_path_lookup (const char *file_name, const char *path,
+	                       int flags, mode_t mode,
+						   char **prefixed_name);
+
+Lookup `FILE_NAME` and return the node opened with `FLAGS` & `MODE`
+(see `hurd_file_name_lookup` for details), but a simple file name
+(without any directory prefixes) will be consecutively prefixed with
+the pathnames in the : separated list `PATH` until one succeeds in a
+successful lookup. If none succeed, then the first error that wasn't
+`ENOENT` is returned, or `ENOENT` if no other errors were returned. If
+`PREFIXED_NAME` is non-NULL, then if the result is looked up directly,
+`*PREFIXED_NAME` is set to NULL, and if it is looked up using a prefix
+from `PATH`, `*PREFIXED_NAME` is set to malloc'd storage containing
+the prefixed name.
+
+	file_t
+	file_name_split (const char  file, char **name);
+
+Split `FILE` into a directory and a name within the directory. The
+directory lookup uses the current root and working directory. If
+successful, stores in `*NAME` a pointer into `FILE` where the name
+within directory begins and returns a port to the directory; otherwise
+sets errno and returns `MACH_PORT_NULL`.
+
+	file_t
+	directory_name_split (const char *file, char **name);
+
+Split `DIRECTORY` into a parent directory and a name within the
+directory. This is the same as `file_name_split`, but ignores trailing
+slashes.
+
+	FILE *
+	fopenport (io_t port, const char *mode);
+
+Open a stream on a port. `MODE` is as for `fopen`. If successful, this
+consumes a user reference for `PORT` (which will be deallocated on
+`fclose`).
+
+	int
+	openport (io_t port, int flags);
+
+Open a [[file descriptor|unix/file_descriptor]] on a
+[[port|microkernel/mach/port]]. `FLAGS` are as for open; flags
+affected by `io_set_openmodes` are not changed by this. If successful,
+this consumes a user reference for `PORT` (which will be deallocated
+on close.) See `hurd/io.defs` and `hurd/io.h`.
+
+	task_t
+	pid2task (pid_t pid);
+
+Return the task control port of process `PID`. On error, sets errno and
+returns `MACH_PORT_NULL`.
+
+	pid_t
+	task2pid (task_t task);
+
+Return the `PID` of the task whose control port is `TASK`. On error, sets
+errno and returns -1.
+
+	int
+	geteuids (int n, uid_t *uidset);
+
+Get the effective UID set.
+
+	int
+	seteuids (int n, const uid_t *uidset);
+
+Set the effective UID set.
+
+	auth_t
+	getauth (void);
+
+Get port name of current authentication server. See
+`hurd/auth.defs` and `hurd/auth.h`.
+
+	int
+	setauth (auth_t);
+
+Set current authentication server.
+
+	process_t
+	getproc (void);
+
+Get port name of current process server. See `hurd/process.defs`
+and `hurd/process.h`.  `process_t` is a port to the proc server, by
+which RPCs are made to the proc server.  It is also a way to represent
+a task when communicating with the proc server.  Each task has its own
+port by which it communicates with the process server under the
+identity of the task.  You can pass a `process_t` to another process,
+and then that process can call RPCs with the process server with the
+identity of the original task that pasted the port.
+<!-- I got the information  about process_t from this irc chat log
+https://logs.guix.gnu.org/hurd/2021-03-18.log#105247 -->
+
+	int
+	setproc (process_t);
+
+Set current process server.
+
+	mach_port_t
+	getcttyid (void);
+
+Get the CTTY port.
+
+	int
+	setcttyid (mach_port_t);
+
+Set the CTTY port.
+
+	kern_return_t
+	get_privileged_ports (host_priv_t *host_priv_ptr,
+	                      device_t *device_master_ptr);
+
+Fetch the host privileged port and device master port from the process
+server.
+
+	mode_t
+	getumask (void);
+
+Get the current `umask` value without changing it (this glibc
+functions is available only under GNU Hurd.)
+
+	int
+	vpprintf (io_t port, const char *format, va_list arg);
+
+Write formatted output to `PORT`, a Mach port supporting the i/o
+protocol, according to the format string `FORMAT`, using the argument
+list in `ARG`.
+
+	thread_t
+	hurd_thread_self (void);
+
+Return the current thread's thread port. This is a cheap operation (no
+[[system call|system_call]]), but it relies on Hurd signal state being
+set up.
+
+	error_t
+	hurd_thread_cancel (thread_t thread);
+
+Cancel pending operations on `THREAD`. If it is doing an interruptible
+RPC, that RPC will now return `EINTR`; otherwise, the "cancelled" flag
+will be set, causing the next `hurd_check_cancel` call to return
+nonzero or the next interruptible RPC to return `EINTR` (whichever is
+called first).
+
+	int
+	hurd_check_cancel (void);
+
+Test and clear the calling thread's "cancelled" flag.

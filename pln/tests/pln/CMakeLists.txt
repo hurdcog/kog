@@ -1,0 +1,27 @@
+ADD_SUBDIRECTORY (rules)
+
+ADD_CXXTEST(MOSESPLNSynergyUTest)
+# ADD_CXXTEST(PLNUTest)
+
+# Disable until it passes. It's causing issues in circle-ci
+# ADD_CXXTEST(TemporalReasoningUTest)
+
+TARGET_LINK_LIBRARIES(MOSESPLNSynergyUTest
+  ure-types
+  ${ATOMSPACE_LIBRARIES}
+  ${COGUTIL_LIBRARY}
+)
+
+#TARGET_LINK_LIBRARIES(PLNUTest
+#  ${URE_LIBRARIES}
+#  ${UNIFY_LIBRARIES}
+#  ${ATOMSPACE_LIBRARIES}
+#  ${COGUTIL_LIBRARY}
+#)
+
+#TARGET_LINK_LIBRARIES(TemporalReasoningUTest
+#  ${URE_LIBRARIES}
+#  ${UNIFY_LIBRARIES}
+#  ${ATOMSPACE_LIBRARIES}
+#  ${COGUTIL_LIBRARY}
+#)

@@ -1,0 +1,129 @@
+{
+  "timestamp": "2025-12-16T13:55:30.634132+00:00",
+  "total_features": 6,
+  "features": [
+    {
+      "rank": 1,
+      "name": "Cross-Modal Cognitive Fusion",
+      "type": "synergy",
+      "description": "Integrate reasoning, learning, and memory into unified cognitive loops",
+      "impact": "HIGH",
+      "complexity": "MEDIUM",
+      "emergent_capability": "unified_cognitive_processing",
+      "prerequisites": [
+        "atomspace",
+        "pln",
+        "moses"
+      ],
+      "implementation_steps": [
+        "Create shared representation layer in AtomSpace",
+        "Implement feedback loop from PLN to MOSES",
+        "Add meta-learning from reasoning outcomes",
+        "Enable MOSES to evolve reasoning strategies"
+      ],
+      "estimated_effort": "3-6 weeks"
+    },
+    {
+      "rank": 2,
+      "name": "Attention-Guided Evolutionary Learning",
+      "type": "integration",
+      "description": "Use attention allocation to guide what MOSES should learn",
+      "impact": "MEDIUM",
+      "complexity": "LOW",
+      "emergent_capability": "focused_learning",
+      "prerequisites": [
+        "attention",
+        "moses"
+      ],
+      "implementation_steps": [
+        "Extract high-STI atoms from attention system",
+        "Convert attention signals to MOSES fitness bonuses",
+        "Prioritize learning tasks based on importance",
+        "Create feedback loop from learning outcomes to attention"
+      ],
+      "estimated_effort": "1-2 weeks"
+    },
+    {
+      "rank": 3,
+      "name": "Architectural Autogenesis",
+      "type": "meta-learning",
+      "description": "System can evolve its own architecture based on performance",
+      "impact": "HIGH",
+      "complexity": "HIGH",
+      "emergent_capability": "self_modification",
+      "prerequisites": [
+        "cogself",
+        "moses"
+      ],
+      "implementation_steps": [
+        "Define architecture genome representation",
+        "Implement fitness function for architectural variants",
+        "Create safe sandbox for testing new architectures",
+        "Add rollback mechanism for failed modifications"
+      ],
+      "estimated_effort": "2-3 months"
+    },
+    {
+      "rank": 4,
+      "name": "GPU-Accelerated Hypergraph Inference",
+      "type": "performance",
+      "description": "Accelerate PLN inference using parallel hypergraph traversal",
+      "impact": "HIGH",
+      "complexity": "HIGH",
+      "emergent_capability": "real_time_reasoning",
+      "prerequisites": [
+        "atomspace",
+        "pln",
+        "atomspace-accelerator"
+      ],
+      "implementation_steps": [
+        "Port critical PLN algorithms to GPU kernels",
+        "Implement batch inference for multiple queries",
+        "Add caching layer for frequent inference patterns",
+        "Benchmark and optimize memory access patterns"
+      ],
+      "estimated_effort": "2-3 months"
+    },
+    {
+      "rank": 5,
+      "name": "Distributed Cognitive Shard Network",
+      "type": "architecture",
+      "description": "Network of specialized cognitive shards with shared memory",
+      "impact": "MEDIUM",
+      "complexity": "MEDIUM",
+      "emergent_capability": "distributed_cognition",
+      "prerequisites": [
+        "coggml",
+        "atomspace"
+      ],
+      "implementation_steps": [
+        "Define shard specialization taxonomy",
+        "Implement shard-to-shard communication protocol",
+        "Add shared AtomSpace view for shards",
+        "Create shard orchestration policies"
+      ],
+      "estimated_effort": "3-6 weeks"
+    },
+    {
+      "rank": 6,
+      "name": "Inference-Driven Pattern Discovery",
+      "type": "synergy",
+      "description": "Use PLN to guide pattern mining with semantic constraints",
+      "impact": "MEDIUM",
+      "complexity": "MEDIUM",
+      "emergent_capability": "semantic_pattern_mining",
+      "prerequisites": [
+        "pattern-index",
+        "pln",
+        "atomspace"
+      ],
+      "implementation_steps": [
+        "Define semantic pattern constraints in PLN",
+        "Integrate miner with inference engine",
+        "Add pattern validation via reasoning",
+        "Enable iterative refinement of patterns"
+      ],
+      "estimated_effort": "3-6 weeks"
+    }
+  ]
+}

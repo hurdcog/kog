@@ -1,0 +1,1673 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.h: Don't include <l4/thread.h>.  Include
+	<viengoos/thread.h>.
+	(struct anonymous_pager): Change fill_thread's type to
+	vg_thread_id_t.
+	* anonymous.c (fault): Use hurd_myself and vg_niltid, not
+	l4_myself and l4_nilthread.
+	* as-build.c: Don't include <l4.h>.
+	* as.h: Include <hurd/thread.h>.  Don't include <l4/types.h>.
+	(as_lock): Change as_rwlock_owner's type to vg_thread_id_t.  Use
+	hurd_myself, not l4_myself.
+	(as_lock_readonly): Likewise.
+	(as_unlock): Likewise.
+	* as.c [! USE_L4]: Don't include <l4/types.h> or <l4/kip.h>.
+	Include <bits/wordsize.h>.
+	(DATA_ADDR_MAX): Define for 64-bit virtual address spaces.
+	(as_rwlock_owner): Change type to vg_thread_id_t.
+	(as_alloc_slow) [USE_L4]: Only check for conflicts with the kip
+	and utcb in this case.
+	(as_init) [USE_L4]: Only reserve the kip and utcb in this case.
+	* exceptions.c [USE_L4]: Only include <l4/thread.h> in this case.
+	(l4_utcb_state_save) [! USE_L4]: Make a no-op.
+	(l4_utcb_state_restore) [! USE_L4]: Likewise.
+	(hurd_activation_handler_normal): Use hurd_myself, not l4_myself.
+	* map.c: Don't include <l4.h>.
+	(map_fault): Use VG_WRITE, not L4_FPAGE_WRITABLE.
+	* storage.c (storage_check_reserve_internal): Change
+	as_rwlock_owner's type to vg_thread_id_t.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (hurd_activation_stack_dump): Use AF_REGS_FMT and
+	AF_REGS_PRINTF rather than naming the registers explicitly.
+	(hurd_activation_handler_normal): Likewise.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* mm-init.c (mm_init) [!NDEBUG && i386]: Clear STORAGE and assert
+	that it is not VG_ADDR_VOID before freeing the associated storage.
+	Assert that the fault callback was called.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* bits.h (extract_bits): Make W a uintptr_t, not an unsigned int.
+	(extract_bits_inv): Likewise.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): Batch object discard requests.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (hurd_activation_state_alloc): Cast UTCB to a void *.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (struct storage_desc): Add field owner.
+	(shadow_setup): Set DESC->OWNER appropriately.
+	(storage_alloc): Likewise.
+	(storage_free_): Likewise.
+	(storage_init): Likewise.
+	
+	(storage_alloc): Move code that updates DESC to before we call
+	rm_folio_object_alloc.  Unlock DESC->LOCK before calling it.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (hurd_activation_state_alloc): Set UTCB->TID.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* message-buffer.c (num_threads): New function.
+	(BUFFERS_LOW_WATER): Define in terms of the number of threads.
+	(BUFFERS_HIGH_WATER): Likewise.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* message-buffer.c (hurd_message_buffer_alloc): Fix compare and
+	swap logic.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* message-buffer.c: Include <hurd/mm.h>.
+	(hurd_message_buffer_free_internal): Remove function.  Move body
+	to...
+	(hurd_message_buffer_free): ... this function.  Update users.
+	(BUFFERS_HIGH_WATER): New define.
+	(hurd_message_buffer_alloc): If the number of buffers in the
+	reserve dips below BUFFERS_LOW_WATER, allocate enough to
+	BUFFERS_HIGH_WATER.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build-custom.c (as_insert_custom): Don't use vg_cap_copy but
+	vg_cap_copy_simple.
+	* as.h (as_insert_full): Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (hurd_activation_fetch): Use
+	vg_thread_activation_collect_send, not
+	rm_thread_activation_collect_send.
+	(hurd_activation_handler_init_early): Use
+	vg_thread_exregs_send_marshal, not rm_thread_exregs_send_marshal.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.h: Don't include <hurd/exceptions.h>.
+	* as.h: Likewise.
+	* exceptions.c: Likewise.
+	* map.h: Likewise.
+	* message-buffer.c: Likewise.
+	* mm-init.c: Likewise.
+	* as-build.c: Don't include <hurd/exceptions.h>.  Include
+	<viengoos/thread.h> and <viengoos/messenger.h>.
+	* as-dump.c: Include <viengoos/thread.h> and
+	<viengoos/messenger.h>.
+	* as-lookup.c: Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-exception-entry.S: Don't include <hurd/exceptions.h>.
+	Include <hurd/stddef.h>.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-exception-entry.S (UTCB_SAVED_THREAD_STATE): Don't define.
+	(UTCB_ACTIVATION_FRAME_STACK): Adjust to new structure layout.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (num_threads): New function.
+	(FREE_PAGES_LOW_WATER): Make it a function of the number of
+	threads.
+	(FREE_PAGES_SERIALIZE): Likewise.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (anonymous_pager_alloc): Replace use of l4_msb with
+	vg_msb.
+	* as-build.c (as_build): Replace use of l4_msb64 with vg_msb64.
+	* as-dump.c (print_nr): Replace use of l4_int64_t with int64_t.
+	* as-lookup.c (as_lookup_rel_internal): Replace use of l4_word_t
+	with uintptr_t and l4_uint64_t with uint64_t.
+	* as.h (as_alloc): Replace use of l4_uint64_t with uint64_t.
+	(as_alloc_at): Likewise.
+	(as_free): Likewise.
+	(AS_CHECK_SHADOW): Replace use of l4_word_t with uintptr_t.
+	(as_walk): Likewise.
+	* as.c (struct region): Replace use of l4_uint64_t with uint64_t.
+	(free_space_split): Likewise.
+	(as_alloc): Likewise.
+	(as_alloc_at): Likewise.
+	(as_free): Likewise.
+	(as_init): Likewise.
+	(as_alloc_slow): Replace use of l4_word_t with uintptr_t.
+	(as_init): Likewise.
+	(as_walk): Likewise.
+	(as_alloc): Replace use of l4_lsb64 with vg_lsb64.
+	(as_init): Likewise.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	Update to new RPC interface and IPC semantics.  Support messengers.
+
+	* message-buffer.h: New file.
+	* message-buffer.c: Likewise.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add message-buffer.h and
+	message-buffer.c.
+	* headers.m4: Link sysroot/include/hurd/message-buffer.h to
+	libhurd-mm/message-buffer.h.
+	* exceptions.c: Include <hurd/mm.h>, <hurd/rm.h> and
+	<backtrace.h>.
+	(hurd_fault_catcher_register): New function.
+	(hurd_fault_catcher_unregister): Likewise.
+	(hurd_activation_frame_longjmp): Likewise.
+	(utcb_state_save): Rename from this...
+	(l4_utcb_state_save): ... to this.  Take a `struct
+	activation_frame *', not a `struct exception_frame *'.
+	(utcb_state_restore): Rename from this...
+	(l4_utcb_state_restore): ... to this.  Take a `struct
+	activation_frame *', not a `struct exception_frame *'.
+	(exception_fetch_exception): Rename from this...
+	(hurd_activation_fetch): ... to this.
+	(hurd_activation_message_register): New function.
+	(hurd_activation_frame_longjmp): Likewise.
+	(exception_frame_slab): Rename from this...
+	(activation_frame_slab): ... to this.  Use a static initializer.
+	(exception_frame_slab_alloc): Rename from this...
+	(activation_frame_slab_alloc): ... to this.  Don't preserve the L4
+	utcb.
+	(exception_frame_slab_dealloc): Rename from this...
+	(activation_frame_slab_dealloc): ... to this.
+	(exception_frame_alloc): Rename from this...
+	(activation_frame_alloc): ... to this.  If there are no
+	preallocated frames, panic.  Move the hard allocation code to...
+	(check_activation_frame_reserve): ... this new function.
+	(hurd_activation_stack_dump): New function.
+	(hurd_activation_handler_normal): Take an additional parameter,
+	the utcb.  Add consistency checks.  Handle IPC and closures.
+	Update fault handling code to use the new fault interface.  If
+	unable to resolve the fault via the pager mechanism, see if a
+	fault catcher in installed.  Check the UTCB's canary.  If running
+	on the alternate stack, clear UTCB->ALTERNATE_STACK_INUSE on exit.
+	(hurd_activation_handler_activated): Take a `struct vg_utcb *',
+	not a `struct exception_page *'.  Handle IPC and closures.
+	Improve test to determine if the fault was a stack fault.  If so,
+	return to normal mode to handle the fault and use an alternate
+	stack.
+	(activation_handler_area0): New local variable.
+	(activation_handler_msg): Likewise.
+	(initial_utcb): Likewise.
+	(simple_utcb_fetcher): New function.
+	(hurd_utcb): New variable.
+	(hurd_activation_handler_init_early): New function.
+	(hurd_activation_handler_init): Likewise.
+	(exception_handler_init): Remove function.
+	(ACTIVATION_AREA_SIZE_LOG2): Define.
+	(ACTIVATION_AREA_SIZE): Likewise.
+	(hurd_activation_state_alloc): New function.
+	(exception_page_cleanup): Rename from this...
+	(hurd_activation_state_free): ... to this.  Rewrite.
+	* ia32-exception-entry.S (_hurd_activation_handler_entry): Save
+	the eflags before executing a sub instruction.  Don't try to
+	smartly calculate the location of the UTCB.  Instead, just reload
+	it.
+	(activation_frame_run): Use an alternate stack, if requested.
+	Save ebx and ebi.  Pass the utcb to the callback.
+	* mm-init.c [i386]: Include <hurd/pager.h>.
+	Include <backtrace.h>.
+	(mm_init): Call hurd_activation_handler_init_early and
+	hurd_activation_handler_init.  Don't call exception_handler_init.
+	(mm_init) [! NDEBUG && i386]: Test the activation code.
+	
+	* as-build.c (do_index): Handle indexing a cap_thread or a
+	cap_messenger.
+	(as_build): Likewise.
+	* as-dump.c (do_walk): Handle indexing a cap_thread or a
+	cap_messenger.
+	* as-lookup.c (as_lookup_rel_internal): Likewise.
+	* as.c (as_walk): Likewise.
+
+	* storage.c: Include <backtrace.h>.
+	(shadow_setup): Update use of rm_folio_object_alloc according to
+	its new interface.
+	(storage_check_reserve_internal): Likewise.
+	(storage_free_): Likewise.
+	(FREE_PAGES_SERIALIZE): Bump to 32.
+	(storage_alloc): If we try to get storage more than 5 lives, print
+	a warning that we may be experiencing live lock.
+
+	* pager.h (pager_fault_t): Change info's type from `struct
+	exception_info' to `struct activation_fault_info'.
+	(PAGER_VOID): Define.
+	* map.h: Don't include <hurd/exceptions.h>.  Include <hurd/as.h>.
+	(maps_lock_lock): Don't use EXCEPTION_STACK_SIZE but
+	AS_STACK_SPACE.
+	(map_fault): Change info's type from `struct exception_info' to
+	`struct activation_fault_info'.
+	* map.c (map_fault): Change info's type from `struct
+	exception_info' to `struct activation_fault_info'.
+
+	* as.h (AS_STACK_SPACE): Define.
+	(as_lock): Use AS_STACK_SPACE instead of EXCEPTION_STACK_SIZE.
+	(as_lock_readonly): Likewise.
+
+	* as.h (AS_CHECK_SHADOW): Only check the address translator for
+	capabilities that designate cappages.
+
+	* anonymous.h (ANONYMOUS_MAGIC): Define.
+	(struct anonymous_pager): Add field magic.
+	* anonymous.c (fault): Assert that ANON->MAGIC has the expected
+	value.  Correctly size PAGES.
+	(mdestroy): Assert that ANON->MAGIC has the expected value.
+	(destroy): Likewise.
+	(advise): Likewise.
+	(anonymous_pager_alloc): Initialize ANON->MAGIC.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c (mmap): Use correct format conversions.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* madvise.c (madvise): Use the correct format modifiers.  Print
+	the correct values.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* as-dump.c (do_walk): Don't print the prefix if it is the empty
+	string.
+	(as_dump_from): Print a backtrace.  Don't actually dump the
+	address space by default.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): Add code to prefault the pages.  Leave
+	disabled.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (advise): When ADVICE is pager_advice_normal, set
+	INFO.DISCARDED to ANON->POLICY.DISCARDABLE.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): Preallocate the pages surrounding a fault.
+	Only copy the capability in place if we just allocated the
+	storage.
+2008-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c (DUMP_OR_RET) [NDEBUG]: Just return.
+	(as_lookup_rel_internal) [NDEBUG]: Define dump_path to be false.
+
+2008-11-12  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.h (struct anonymous_pager): Improve documentation for
+	the fill_lock field.
+	* anonymous.c (fault): Drop ANON->LOCK before calling the user's
+	fill function.
+	(destroy): Before destroying ANON, take ANON->FILL_LOCK.
+
+	* madvise.c (madvise): Refactor to not hold map lock when calling
+	MAP->PAGER->ADVISE.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* madvise.c (madvise): Add debugging output for bad arguments.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c: Include <profile.h>.
+	(fault): Profile.
+
+2008-11-06  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): Handle the case where COUNT > 0.  Don't
+	assume that storage has been allocated if INFO.DISCARDED is true.
+	(advise): Interpret pager_advice_normal to mean to cleared
+	discarded pages and to allocate unallocated pages.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty libhurd-mm/libhurd-mm.a.
+
+2008-08-15  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_free_): Deallocate the folio before updating
+	the shadow capability.
+
+2008-08-12  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_low_mutex): Use
+	PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP, not
+	PTHREAD_MUTEX_RECURSIVE_INITIALIZER_NP.
+
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c: Include <profile.h>, not "../viengoos/profile.h".
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c: Don't include <pthread.h>.
+	(as_rwlock): Don't define here.
+	* as.c: Include <pthread.h>.
+	(as_rwlock): Define.
+	(as_rwlock_owner): Likewise.
+	* as.h: Include <l4/types.h>.
+	(as_lock): Check and set as_rwlock_owner appropriately.
+	(as_lock_readonly): Likewise.
+	(as_unlock): Likewise.
+	* storage.c (do_serialize): New local variable.
+	(storage_check_reserve_internal): If AS_RWLOCK_OWNER is non-zero,
+	check if the caller has the AS_RWLOCK.  If so, return.  If
+	DO_SERIALIZE is set or FREE_COUNT is less than
+	FREE_PAGES_SERIALIZE, take the STORAGE_LOW_MUTEX.  If DO_SERIALIZE
+	was not set, set it and remember that we set it and clear it after
+	allocating a folio.
+
+2008-07-01  Neal H. Walfield  <neal@gnu.org>
+
+	* as-dump.c [RM_INTERN]: Include <md5.h>, "../viengoos/cap.h" and
+	"../viengoos/activity.h".
+	(do_walk) [RM_INTERN]: Print data pages' md5 sums as well.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* madvise.c: New file.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add madvise.c.
+	* pager.h (pager_advice_normal, pager_advice_random,
+	pager_advice_sequential, pager_advice_willneed,
+	pager_advice_dontneed): Define.
+	(pager_advise_t): New typedef.
+	(struct pager): Add field advise.
+	* anonymous.c (advise): New function.
+	(anonymous_pager_alloc): Set ANON->PAGER.ADVISE to it.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): Use %p, not %x, for printing a pointer.
+	When printing addresses, be sure to wrap them in ADDR_PRINTF.
+	Remove a gratuitous ADDR_FMT.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_deinit): Drop PAGER->LOCK before calling
+	MAP_DESTROY.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* mprotect.c (mprotect): Tweak debugging output.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (mdestroy) [! NDEBUG]: Don't void capability slots,
+	we destroy the associated objects, which does that.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c (as_dump_path_rel): Don't return anything.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c [RM_INTERN]: Include "../viengoos/profile.h".
+	(as_lookup_rel): Instrument.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc): Don't set SLOT's shadow object to
+	ADDR if it is a page, leave it as NULL.
+	(shadow_setup): Don't set the shadow page's shadow capability to
+	SHADOW.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc): When calling rm_folio_object_alloc to
+	allocate storage on behalf of the caller, use ACTIVITY, not
+	META_DATA_ACTIVITY, as the principal.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* mprotect.c (mprotect): Only update the capabilities in the
+	region if access is being downgraded.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_dump_path_rel): New declaration.
+	(as_dump_path) [! RM_INTERN]: New function.
+	* as-lookup.c (as_dump_path_rel): Return void, don't take the
+	type, writable, mode or rt parameters, infer them.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): When copying the storage in place, pass
+	ANON->ACTIVITY, not META_DATA_ACTIVITY, to cap_copy_x.
+	
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (mdestroy): Optimize storage destruction when MAP is
+	the last reference.
+	(destroy): Assert that PAGER has no allocated storage.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* map.c (map_split): Update SECOND->OFFSET.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (offset_compare): When calculating A_END, subtract
+	one from A[1].  When calculating B_END, subtract one from B[1].
+	(mdestroy): Correctly calculate the bounds.  Detach the node from
+	the tree.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_handler_normal): If the fault is
+	unhandled, print the register state.
+	(exception_handler_activated): Likewise.
+	* ia32-exception-entry.S (EF_STACK_START): Don't define.
+	(EF_SAVED_EAX): Define with an absolute value.
+	(EF_SAVED_ECX): Likewise.
+	(EF_SAVED_EDX): Likewise.
+	(EF_SAVED_FLAGS): Likewise.
+	(EF_SAVED_IP): Likewise.
+	(EF_NEXT): Likewise.
+	(EF_SAVED_EBX): New define.
+	(EF_SAVED_EDI): New define.
+	(EF_SAVED_ESI): New define.
+	(exception_frame_run): Address the saved register values relative
+	to ESP.  Also save EBX, EDI and ESI.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (AS_CHECK_SHADOW): Don't fail if the kernel says the
+	capability's type is void but everything else matches.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c (mmap): If MAP_FIXED is specified, first unmap the
+	region.
+	(mmap): Don't panic if we fail to create a pager, just return
+	MAP_FAILED.
+
+	* map.h (map_destroy_t): New define.
+	(struct map): Add field destroy.
+	(map_create): Take additional argument destroy.
+	* map.c (map_create): Take additional argument destroy.  Set
+	MAP->DESTROY to it.
+	(map_destroy): Call MAP->DESTROY.  If MAP->PAGER->NO_REFS is NULL,
+	unlock MAP->PAGER->LOCK.
+	* anonymous.c (offset_compare): Support comparing ranges.
+	(mdestroy): New function.
+	(destroy): Don't free ANON->MAP_AREA.
+	(anonymous_pager_alloc): Pass mdestroy to map_create.
+	* mprotect.c: New file.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add mprotect.c.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_init): Clear PAGER->LOCK.
+
+	(pager_deinit): Don't use a while loop but an infinite loop.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): Improve debugging output.
+	* map.c (map_install): Improve debugging output.
+	(map_split): Likewise.
+	(map_fault): Likewise.
+	* map.h (REGION_FMT): Also print the end address.
+	(REGION_PRINTF): Update accordingly.
+	(MAP_FMT): Make output cleaner.
+
+	(region_compare): Use a unintptr_t for the end, not an
+	l4_uint64_t.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c (as_lookup_rel_internal): New function.
+	(as_lookup_rel): Implement this in terms of it.
+	(as_dump_path_rel): New function.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (fault): Assert that calling
+	rm_object_discarded_clear does not fail.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* core.c: Remove dead file.
+	* memory.c: Likewise.
+	* priv.h: Likewise.
+	* store.c: Likewise.
+	* vm.h: Likewise.
+	* vm.c: Likewise.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* map.h: New file.
+	* map.c: New file.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add map.h and map.c.
+	* headers.m4: Link map.h to sysroot/include/hurd/map.h.
+	* pager.h: Rewrite.
+	* pager.c: Likewise.
+	* anonymous.h (ANONYMOUS_STAGING_AREA): New define.
+	(anonymous_pager_fill_t): Don't pass the base of the region.  Pass
+	the location of the storage corresponding to the pages on which
+	the faults were raised and the offset into the region.  Update
+	users.
+	(struct anonymous_pager): Add fields map_area, map_area_count and
+	lock.  Remove field alloced_region.
+	(anonymous_pager_alloc): Replace size parameter with length
+	parameter.  Take access parameter indicating the desired access.
+	Update users.
+	* anonymous.c (offset_compare): Compare the values, not the
+	pointers.
+	(fault): Update signature to be consistent with new API.  Lock
+	ANON->LOCK.  Always look up the storage descriptor corresponding
+	to the faulted page.  Copy the storage to the faulted address as
+	required.  Update how we call ANON->FILL to be consistent with the
+	new API.
+	(destroy): Free ANON->STAGING_AREA.
+	(anonymous_pager_alloc): Update signature to be consistent with
+	new API.  Allocate the staging area if ANONYMOUS_STAGING_AREA is
+	set.  Allocate it separately from the main map.  Create a map
+	corresponding to the region.
+	(anonymous_pager_destroy): Just lock ANON->LOCK.  Don't call
+	destroy, call pager_deinit.
+	* mmap.c: Include <hurd/map.h>.
+	(mmap): Add support for protection other than read/write.
+	(munmap): Rewrite to use new API.  Use map_split to support
+	splitting of memory maps.
+	* exceptions.c: Don't include "pager.h", include "map.h".
+	(exception_handler_normal): Don't call pager_fault but map_fault.
+	(exception_handler_activated): Likewise.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* sbrk.c (sbrk): Improve debugging output.
+
+2008-06-14  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (anonymous_pager_alloc): If allocating a specific
+	address fails, really fail.
+
+2008-06-11  Neal H. Walfield  <neal@gnu.org>
+
+	* mm-init.c (mm_init): Set OUTPUT_DEBUG to 1.
+
+2008-06-10  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): Improve debugging output.  Add more
+	checks.
+
+2008-06-10  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_allocate_page_table): Don't change STORAGE.CAP's
+	shadow, only change RET.CAP's shadow.
+
+2008-06-10  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (storage_have_reserve): New declaration.
+	* storage.c (storage_have_reserve): New function.
+	(storage_check_reserve_internal): Use it.
+	* as.h (as_lock): Check whether there is sufficient memory.
+	(as_lock_readonly): Likewise.
+	(as_unlock): Don't check here.
+
+2008-06-10  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (struct storage_desc): Remove field cap.  Replace with
+	field shadow.  Update users.
+
+	(storage_free_): Clear the object's shadow.
+
+2008-06-07  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): If the remaining bits match the PTE's
+	guard, stop processing no matter what type of object the PTE
+	points to.  Only use lowest GBITS of PTE_GUARD when setting the
+	pivot's guard.
+
+2008-06-07  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (AS_CHECK_SHADOW): If only the types differ and the
+	difference is that the shadow capability says the type is
+	cap_void, then do not error out.
+
+2008-06-07  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): When a guard completes an address
+	translation, do not subtract the bits translated by the guard from
+	REMAINING.  Only assume that capabilities that are void and have a
+	zero length guard are unused.  When inserting a page table, only
+	copy the pivot if it is in use.
+	
+	* as.h (AS_CHECK_SHADOW): New macro.
+	(AS_CHECK_SHADOW2): Likewise.
+	(as_ensure_full): Use them here.
+	(as_insert_full): Likewise.
+	(as_slot_lookup_rel_use): Likewise.
+	(as_cap_lookup_rel): Likewise.
+	(as_object_lookup_rel): Likewise.
+	* as-build.c (as_build): Likewise.  Improve debugging output.
+	* as.h (as_ensure): Change from a function to a macro.
+	(as_insert_full): Correctly check the return value from cap_copy.
+	* as-compute-gbits.h (as_compute_gbits_cappage): Use assertx to
+	assert the conditions and to print out their values on failure.
+	* as-lookup.c (as_lookup_rel): Improve debugging output.
+
+2008-06-06  Neal H. Walfield  <neal@gnu.org>
+
+	* as-build.c (as_build): If a pte's guard matches but the
+	designated object is not a cappage or a folio, don't match the
+	guard and try to index the object, instead, indirect access to the
+	object via a page table.
+
+2008-06-06  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_init): Configure a capability's shadow when we process
+	the capability, not when we process its containing cappage or
+	folio.
+	* storage.c (storage_check_reserve_internal): Only set up the
+	shadow object if AS_INIT_DONE is true.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* as-lookup.c (DUMP_OR_RET): New macro.
+	(as_lookup_rel): On a likely user error, print a trace.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h: Include <hurd/exceptions.h>.
+	[! RM_INTERN]: Include <hurd/storage.h> and <pthread.h>.
+	(as_lock_ensure_stack) [! RM_INTERN]: New function.
+	(as_lock): New function.
+	(as_lock_readonly): Likewise.
+	(as_unlock): Likewise.
+	(meta_data_activity) [RM_INTERN]: Don't declare.
+	(shadow_root) [RM_INTERN]: Don't declare.
+	(struct as_insert_rt): Rename from this...
+	(struct as_allocate_pt_ret): ... to this.  Update users.
+	(as_allocate_page_table_t): New typedef.
+	(as_allocate_page_table): New declaration.
+	(as_build): New declaration.
+	(as_build_custom): Likewise.
+	(as_slot_ensure): Remove declaration.
+	(as_ensure_full): New macro.
+	(as_ensure_use) [! RM_INTERN]: Likewise.
+	(as_ensure) [! RM_INTERN]: New function.
+	(as_insert): Rename from this...
+	(as_insert_full): ... to this.  Don't return the capability.
+	Reverse the order of the source address and cap.  Replace
+	allocate_object parameter with an allocate_page_table parameter.
+	Update users.
+	(as_insert) [! RM_INTERN]: New function.
+	(as_slot_ensure_full_custom): Rename from this...
+	(as_ensure_full_custom): ... to this.  Replace allocate_object
+	parameter with an allocate_page_table parameter.
+	(as_insert_custom): Likewise.
+	(union as_lookup_ret): New definition.
+	(as_lookup_want_cap): New definition.
+	(as_lookup_want_slot): Likewise.
+	(as_lookup_want_object): Likewise.
+	(as_lookup_rel): New declaration.
+	(slot_lookup): Remove declaration.
+	(as_slot_lookup_rel_use): Replace it with this macro.
+	(as_slot_lookup_use) [! RM_INTERN]: New macro.
+	(as_cap_lookup_rel): New function.
+	(cap_lookup): Rename from this...
+	(as_cap_lookup) [! RM_INTERN]: ... to this.  Remove activity
+	parameter.  Implement here as a static inline function.
+	(as_object_lookup_rel): New function.
+	(object_lookup): Rename from this...
+	(as_object_lookup) [! RM_INTERN]: ... to this.  Remove activity
+	parameter.  Implement here as a static inline function.
+	(as_dump_from): New declaration.
+	* as-compute-gbits.h: Include <hurd/folio.h>.
+	* as.c (allocate_object): Rename from this...
+	(as_allocate_page_table): ... to this.  Remove static qualifier.
+	Don't take parameter type, just allocate a cap_cappage.
+	(as_slot_ensure): Remove function.
+	(as_init): Replace use of slot_lookup_rel with as_slot_lookup_use
+	or as_cap_lookup as appropriate.
+	(cap_lookup): Remove function.
+	(object_lookup): Likewise.
+	(slot_lookup): Likewise.
+	(as_dump): Likewise.
+	* as-build.c: Don't include "as.h", but <hurd/as.h>.  Include
+	<hurd/rm.h>, "as-compute-gbits.h".
+	[RM_INTERN]: Don't include "object.h" but "../viengoos/object.h".
+	(CUSTOM) [ID_SUFFIX]: Define.
+	(as_build_internal): Rename from this...
+	(as_build): ... to this.  Remove static qualifier.  Replace
+	parameter allocate_object with allocate_page_table.  Use it
+	instead.
+	(as_slot_ensure_full): Remove function.
+	(as_insert): Likewise.
+	* as-build-custom.c (as_object_index_t): Remove definition.
+	(AS_LOCK): Don't define.
+	(AS_UNLOCK): Don't define.
+	(as_ensure_full_custom): New function.
+	(as_insert_custom): Likewise.
+	* as-lookup.c: Include <hurd/as.h>.
+	[RM_INTERN]: Don't include "object.h" but "../viengoos/object.h".
+	[! RM_INTERN]: Include <pthread.h>.
+	(as_lock) [! RM_INTERN]: Rename from this...
+	(as_rwlock) [! RM_INTERN]: ... to this.
+	(ensure_stack) [! RM_INTERN]: Remove function.
+	(AS_LOCK): Don't define.
+	(AS_UNLOCK): Don't define.
+	(lookup): Rename from this...
+	(as_lookup_rel): ... to this.  Change mode's type to an enum
+	as_lookup_mode.  Change rt's type to a union as_lookup_ret.  Don't
+	use want_object but as_lookup_want_object.  Don't use want_slot
+	but as_lookup_want_slot.  Don't use want_cap but
+	as_lookup_want_cap.
+	(cap_lookup_rel): Remove function.
+	(object_lookup_rel): Likewise.
+	(slot_lookup_rel): Likewise.
+	(print_nr): Move from here...
+	* as-lookup.c (do_walk): Move from here...
+	* as-dump.c (do_walk): ... to here.
+	* as-lookup.c (as_dump_from): Move from here...
+	* as-dump.c (as_dump_from): ... to here.
+	* Makefile.am (lib_LIBRARIES) [ENABLE_TESTS]: Set to libas-check.a
+	(lib_LIBRARIES) [! ENABLE_TESTS]: Add libas-kernel.a.
+	(libhurd_mm_a_SOURCES): Add bits., as-build.c as-build-custom.c,
+	as-lookup.c and as-dump.c.
+	(libas_kernel_a_CPPFLAGS): New variable.
+	(libas_kernel_a_CCASFLAGS): New variable.
+	(libas_kernel_a_CFLAGS): New variable.
+	(libas_kernel_a_SOURCES): New variable.
+	(libas_check_a_CPPFLAGS): New variable.
+	(libas_check_a_CCASFLAGS): New variable.
+	(libas_check_a_CFLAGS): New variable.
+	(libas_check_a_SOURCES): New variable.
+	* anonymous.c (fault): Replace use of as_slot_ensure with
+	as_ensure.
+	* exceptions.c (exception_handler_init): Replace use of
+	as_slot_ensure with as_ensure.
+	* storage.c (storage_check_reserve_internal): Replace use of
+	as_lock with as_rwlock.  Replace use of as_slot_ensure with and
+	slot_lookup with as_ensure and as_slot_lookup_use.
+	(storage_alloc): Replace use of slot_lookup with
+	as_slot_lookup_use.
+
+2008-06-01  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_low_mutex_init_once): Don't declare.
+	(storage_low_mutex_init): Remove function.
+	(storage_low_mutex): Define to
+	PTHREAD_MUTEX_RECURSIVE_INITIALIZER_NP.
+	(storage_check_reserve_internal): Remove call to
+	storage_low_mutex_init_once.
+
+2008-05-31  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (storage_check_reserve): Take additional parameter
+	i_may_have_as_lock.  Update users.
+	* storage.c (storage_check_reserve_internal): Add parameter
+	i_may_have_lock.  If false, assume that we do not hold AS_LOCK.
+	(storage_check_reserve): Add parameter i_may_have_lock.  Pass to
+	storage_check_reserve_internal.
+
+2008-05-31  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_check_reserve_internal): If we don't get
+	AS_LOCK, don't jump to out_unlock, just return.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c: Remove debugging code accidentally checked in in last
+	commit.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (storage_check_reserve): New declaration.
+	* storage.c (MIN_FREE_PAGES): Rename from this...
+	(FREE_PAGES_LOW_WATER): ... to this and bump to 64.  Update users.
+	(FREE_PAGES_SERIALIZE): New define.
+	(storage_low_mutex): New variable.
+	(storage_low_mutex_once): Likewise.
+	(storage_low_mutex_init): New function.
+	(storage_alloc): Move folio allocation code to...
+	(storage_check_reserve_internal): ... this new function.  If the
+	number of pages is less than FREE_PAGES_SERIALIZE, take the
+	storage_low_mutex lock.
+	(storage_alloc): Call that function.
+	(storage_check_reserve): New function.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+	Create symbolic link to package's library in `sysroot/lib/'.
+	* Makefile.am [ENABLE_TESTS]: Don't build package's library.
+
+2008-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_handler_activated): Assume the fault is
+	on the stack if it is one page above or three pages below the
+	stack pointer.
+	(exception_handler_init): Allocate an area of address space
+	EXCEPTION_STACK_SIZE bytes larges.  Fill it with pages.  Set the
+	first page as the thread's exception page and the top of the area
+	minus one word as the stack pointer.  Set the last word to the
+	location of the exception page.
+	* ia32-exception-entry.S: Include <hurd/exceptions.h>.
+	(PAGESIZE): Don't define.
+	(_exception_handler_entry): Rewrite to not assume that the
+	exception page is at the start of the page in which the stack
+	pointer is, but at the location stored in the word after the bottom
+	of the stack.
+
+	* Makefile.am (libhurd_mm_a_CCASFLAGS): New variable.
+
+	* pager.c (ensure_stack): Change SPACE to be EXCEPTION_STACK_SIZE
+	- PAGESIZE bytes large.  Write to each page.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (slot_lookup): Remove parameter type.  Update users.
+	* as.c (as_init): Update user of slot_lookup_rel to be consistent
+	with new API.
+	(as_init): Likewise.
+	(slot_lookup): Likewise.  Remove parameter type.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc): If we allocate the last object in a
+	folio, don't drop STORAGE_DESCS_LOCK until we've removed the folio
+	from the list of folios with free objects to which it is attached.
+
+2008-03-01  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c: Include <signal.h>.
+	(exception_handler_normal): On unresolved fault, raise SIGSEGV.
+	(exception_handler_activated): Likewise.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Remove variable.
+	(libhurd_mm_a_CPPFLAGS): Replace use of above with
+	$(USER_CPPFLAGS).
+	(libhurd_mm_a_CFLAGS): New variable.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.h: Include <hurd/exceptions.h> and <l4/thread.h>.
+	(ANONYMOUS_ZEROFILL): Rename from this...
+	(ANONYMOUS_NO_CLEAR): ... to this, inverting logic.  Update users.
+	(ANONYMOUS_DISCARDABLE): Don't define.
+	(ANONYMOUS_NO_ALLOC): Define.
+	(ANONYMOUS_NO_RECURSIVE): Likewise.
+	(ANONYMOUS_THREAD_SAFE): Likewise.
+	(anonymous_pager_fill_t): Likewise.
+	(struct anonymous_pager): Add fields allocated_region,
+	staging_area, fill, fill_thread, fill_lock and policy.  Change
+	fill's type to anonymous_pager_fill_t.
+	(anonymous_pager_alloc): Take additional parameters, P and
+	ADDR_OUT.  Change the fill function's type to
+	anonymous_pager_fill_t.  Require that the address is not already
+	allocated.  Update users.
+	* anonymous.c: Include <string.h> and <hurd/rm.h>.
+	(struct storage_desc): Remove field addr and replace with offset.
+	(addr_compare): Remove function.
+	(offset_compare): New function.
+	(storage_desc): Change node key from the addr field to the offset
+	field.
+	(fault): Rewrite to handle a fill function, discarded pages, and
+	the ANONYMOUS_NO_RECURSIVE and ANONYMOUS_NO_ALLOC flags.
+	(destroy): Free the allocated region and any staging area.
+	(anonymous_pager_alloc): Rewrite to allocate virtual memory.  Set
+	up the data structure appropriately if ANONYMOUS_THREAD_SAFE is
+	given.
+	* pager.h (PAGER_REGION_LENGTH): New define.
+	(pager_fault_t): Change ABI such that the callback must release
+	PAGER->LOCK.
+	* pager.c (pager_fault): Don't release PAGER->LOCK.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c (destroy) [!NDEBUG]: Clear NODE before freeing it.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (storage_alloc): Take additional parameter policy.
+	Update callers.
+	* storage.c (storage_alloc): Take additional parameter policy.
+	Use it when allocating the object and updating the shadow
+	capability slots.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (shadow_setup): Only update the shadow if IDX is not
+	-1.
+	(storage_alloc_): When allocating an object during initializing,
+	use slot_lookup to check if there is already a shadow capability
+	slot for the capability designating the new folio.  If so, update
+	it in the normal way.
+	* as.c (as_init): Add any additionally allocated objects the last
+	thing we do before finishing.  When checking whether we got all
+	objects, don't check the contents of objects in folios.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-exception-entry.S (ACTIVATED_MODE_BIT): New define.
+	(PENDING_MESSAGE_BIT): Likewise.
+	(INTERRUPT_IN_TRANSITION_BIT): Likewise.
+	(_exception_handler_entry): When testing bits, use the above
+	defines instead of embedded constants.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_insert): Change return type to struct cap *.
+	(as_insert_custom): Likewise.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* mm.h (mm_init_done): New declaration.
+	* mm-init.c (mm_init_done): Define.
+	(mm_init): Assert that MM_INIT_DONE is false.  Set to true just
+	prior to returning.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc_): When allocating a new folio, if
+	there are still reserve pages, try to take AS_LOCK.  If we fail,
+	don't allocate a new folio at this time.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_init): If ODESC->STORAGE is ADDR_VOID,
+	ignore.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_init): Improve debugging output.
+	* storage.c (storage_free_): Likewise.
+	(storage_alloc_): Assert that the allocated storage is zerod.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (__attribute__): New function.
+	(pager_fault): Call it before taking PAGERS_LOCK.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (LINK): Remove dead code.
+	(UNLINK): Likewise.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_object_index_t): New definition.
+	(as_slot_ensure_full_custom): New declaration.
+	(as_insert_custom): Likewise.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_init_done): New variable.
+	(storage_alloc_): Assert that storage_init_done is true.
+	(storage_init): Set storage_init_done to true.
+	
+	(storage_init): Count the number of folios allocated and report it
+	and the number of objects allocated.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_slot_ensure_full): New declaration.
+	(as_insert): Take additional parameters SOURCE_AS and TARGET_AS.
+	* as.c (as_slot_ensure_full): Remove declaration.
+	(as_slot_ensure): Update use of as_slot_ensure full to be
+	consistent with the new API.
+	(as_alloc_slow): Update use of rm_cap_copy to be consistent with
+	new API.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_slot_ensure): Update use of as_slot_ensure_full to be
+	consistent with new API.
+	(as_alloc_slow): Update use of rm_cap_copy to be consistent with
+	new API.
+	(as_init): Likewise.
+	(as_walk): Likewise.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_alloced_dump): Use s_printf rather than printf.
+	(as_walk): Likewise.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Add -I$(LIBC)/include.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* capalloc.c (link): Rename from this...
+	(list_link): ... to this.  Update users.
+	(unlink): Rename from this...
+	(list_unlink): ... to this.  Update users.
+	* storage.c (link): Rename from this...
+	(list_link): ... to this.  Update users.
+	(unlink): Rename from this...
+	(list_unlink): ... to this.  Update users.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (shadow_setup): Update rm_folio_object_alloc use to
+	reflect API changes.
+	(storage_alloc_): Likewise.
+	(storage_free_): Likewise.
+
+2008-01-14  Neal H. Walfield  <neal@gnu.org>
+
+	* sbrk.c: New file.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add sbrk.c.
+
+2008-01-12  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-exception-entry.S (_exception_handler_end): Remove
+	gratuitous lock prefix.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_handler_activated): Move the debug
+	statement after the call to utcb_state_save.
+
+	* Makefile.am (COMMON_CPPFLAGS): Add -mpreferred-stack-boundary=2.
+	Use -O2.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (crc) [! NDEBUG]: New function.
+	(exception_handler_activated) [! NDEBUG]: After saving the frame
+	state, calculate the crc of the header.  Check it before
+	returning.
+
+	(exception_frame_slab_alloc): Save the UTCB state before calling
+	storage_alloc and restore it before returning.
+
+	(exception_handler_activated): Assert that
+	EXCEPTION_PAGE->ACTIVATED_MODE is set.
+
+	(exception_handler_normal): If we fail to handle the fault, panic.
+	(exception_handler_activated): Likewise.
+
+	* ia32-exception-entry.S (_exception_handler_entry): Correctly
+	test and set the flags.
+
+2007-12-25  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h: Change VISIT's signature: pass a struct cap_properties
+	instead of a struct cap_addr_trans.  Update callers.
+	* as.c (as_walk): Change VISIT's signature: pass a struct
+	cap_properties instead of a struct cap_addr_trans.  Call VISIT
+	appropriately.
+	(as_alloc_slow): Update rm_cap_read use to reflect API changes.
+	(as_init): Update rm_cap_read use to reflect API changes.  Use
+	CAP_PROPERTIES_SET to set shadow capability properties.
+	* storage.c (shadow_setup): Update rm_folio_object_alloc use to
+	reflect API changes.  Also save the object policy in the shadow
+	capability.
+	(storage_alloc_): Likewise.
+	(storage_free_): Likewise.
+
+2007-12-22  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc_): Update rm_folio_alloc use to reflect
+	API changes.
+
+2007-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* anonymous.c: Update BTREE_CLASS use to reflect API changes.
+	* as.c: Likewise.
+	* capalloc.c: Likewise.
+	* pager.h: Likewise.
+	* storage.c: Likewise.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c (munmap): Rewrite to avoid race.
+	* pager.h (struct pager): Add field, next.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_walk): Cache the root capability.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_init): If a storage descriptor is full,
+	unlink it.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (shadow_setup): If we allocate the last frame, unlink
+	the folio.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (shadow_setup): Support the case where the folio is
+	full.
+	(storage_alloc_): If AS_INIT_DONE is false, use as_alloc_slow to
+	allocate an address.  Only call shadow_setup if CAP is not NULL.
+	* as.h (as_alloc_slow): Remove parameter data_mappable and
+	parameter may_alloc.  Return a struct hurd_object_desc *, not an
+	addr_t.
+	* as.c (as_alloc): Assert that AS_INIT_DONE is true.  Improve
+	debugging output.
+	(as_slot_ensure): Assert that AS_INIT_DONE is true.
+	(as_alloc_slow): Remove parameter data_mappable and parameter
+	may_alloc.  Return a struct hurd_object_desc *, not an addr_t.
+	Don't special case page-sized objects, always find a void
+	capability.  Don't return an address twice.  Don't use
+	capability slots in folios.
+	(as_init:add): Take additional argument, addr.  Use this rather
+	than DESC->OBJECT.  Generalize code for iterating over folios and
+	cappages.  Correctly walk folios.
+	(as_init): Call add on both a descriptor object and its storage.
+	(as_walk): Rewrite such that if AS_INIT_DONE is not true, we
+	don't use a recursive function.  If the callback function returns -1,
+	then don't descend.
+	(as_walk:do_walk): Also walk folios.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (allocate_object): Correctly save and return the shadow
+	object.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (storage_alloc_): Update to folio_object_alloc's
+	interface change.
+	(storage_free_): Likewise.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (storage_alloc): Rename from this...
+	(storage_alloc_): ... to this.
+	(storage_free): Rename from this...
+	(storage_free_): ... to this.
+	(storage_alloc): New macro.
+	(storage_free): New macro.
+	* storage.c (storage_alloc): Rename from this...
+	(storage_alloc_): ... to this.
+	(storage_free): Rename from this...
+	(storage_free_): ... to this.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_page_cleanup): Remove debugging cruft.
+	
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_frame_alloc): When allocating the first
+	frame, set EXCEPTION_PAGE->EXCEPTION_STACK_BOTTOM.
+	(exception_page_cleanup): New function.
+
+	* ia32-exception-entry.S (_exception_handler_end): Correctly
+	adjust the exception page's exception stack.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c (munmap): Free the virtual addresses.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.c (ss_lock_trace) [! NDEBUG]: New definition.
+	(ss_lock_trace_count) [! NDEBUG]: Likewise.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c (munmap): Implement.
+	* pager.h (pager_destroy_t): New type.
+	(struct pager): New field, destory.
+	(pagers): New declaration.
+	* pager.c (pagers): Remove static qualifier.
+	* anonymous.c (destroy): New function.
+	(anonymous_pager_alloc): Set ANON->PAGER.DESTROY to it.
+	(anonymous_pager_destroy): Call destroy to do the bulk of the
+	work.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c: Don't include <pthread.h>.  Include <hurd/mutex.h>.
+	(free_spaces_lock): Make an ss_mutex_t, not a pthread_mutex_t.
+	Update users.
+	* storage.c: Don't include <pthread.h>.  Include <hurd/mutex.h>.
+	(struct storage_desc): Make lock an ss_mutex_t, not a
+	pthread_mutex_t.  Update users.
+	(storage_descs_lock): Likewise.
+	* pager.h: Don't include <pthread.h>.  Include <hurd/mutex.h>.
+	(struct pager): Make lock an ss_mutex_t, not a pthread_mutex_t.
+	Update users.
+	(pagers_lock): Likewise.
+
+2007-12-06  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_frame_alloc): Correctly set the
+	EXCEPTION_PAGE->EXCEPTION_STACK to the allocated frame.
+	(utcb_state_save): New function.
+	(utcb_state_restore): Likewise.
+	(exception_handler_normal): Call utcb_state_restore before
+	returning.
+	(exception_handler_activated): Save the UTCB state.  If returning
+	without requiring a call to exception_handler_normal, then restore
+	the UTCB state.
+
+2007-12-05  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c: Include <hurd/slab.h> and "as.h".
+	(exception_frame_slab): New local variable.
+	(exception_frame_slab_alloc): New function.
+	(exception_frame_slab_dealloc): Likewise.
+	(exception_frame_alloc): Likewise.
+	(exception_handler): Rename from this...
+	(exception_handler_activated): ... to this.  Update callers.  Only
+	handle the fault if the fault corresponds to the page the stack
+	pointer references at the time of the fault or the next stack
+	page.
+	(exception_handler_normal): New function.
+	(exception_handler_init): Initialize exception_frame_slab.
+	* ia32-exception-entry.S (EXCEPTION_STACK): New macro.
+	(SAVED_EDX): Likewise.
+	(EF_SAVED_EAX): Likewise.
+	(EF_SAVED_ECX): Likewise.
+	(EF_SAVED_EDX): Likewise.
+	(EF_SAVED_FLAGS): Likewise.
+	(EF_SAVED_IP): Likewise.
+	(EF_STACK_START): Likewise.
+	(EF_NEXT): Likewise.
+	(exception_handler_entry): After calling
+	exception_handler_activated, check if the return result is
+	non-zero.  If so, call exception_handler_normal.
+
+2007-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	Remove exception threads.  Replace with support for activations.
+	* Makefile.am (ARCH_SOURCES): New variable.
+	[ARCH_IA32]: Add ia32-exception-entry.S.
+	(libhurd_mm_a_SOURCES): Add $(ARCH_SOURCES).
+	* ia32-exception-entry.S: New file.
+	* exceptions.c: Include <hurd/storage.h> and <hurd/thread.h>.
+	(ARG): Don't define.
+	(ARG64): Likewise.
+	(ARG_ADDR): Likewise.
+	(CHECK): Likewise.
+	(exception_handler_loop): Remove function.
+	(exception_fetch_exception): New function.
+	(exception_handler): New function.
+	(STACK_SIZE): Don't define.
+	(stack): Don't declare.
+	(exception_handler_init): Set up the thread's exception page.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_handler_loop): Use
+	rm_exception_collect_send_marshal, not
+	rm_exception_collect_marshal.
+
+2007-11-27  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c: Include <pthread.h>.  Remove dead code.
+	(free_spaces_lock): New variable.
+	(free_space_split): Assert that it is held.
+	(as_alloc): Make thread-safe.
+	(as_alloc_at): Likewise.
+	(as_free): Likewise.
+	(as_alloced_dump): Likewise.
+	* storage.c: Include <pthread.h> and <atomic.h>.
+	(free_count): Make a uatomic32_t, rather than an int.  Update
+	users to access it using atomic operations.
+	(struct storage_desc): New field, lock.
+	(storage_descs_lock): New global variable.
+	(link): Assert that STORAGE_DESCS_LOCK is held.
+	(unlink): Likewise.  Don't assert that E->NEXT is NULL, which is
+	valid.
+	(slab_space_reserve): Make an atomicptr_t, rather than a void *.
+	Update users to access it using atomic operations.
+	(check_slab_space_reserve): Rewrite function to be thread-safe.
+	(storage_desc_free): Assert that STORAGE_DESCS_LOCK is held.
+	(storage_alloc): Rewrite function to be thread-safe.
+	(storage_free): Likewise.
+	(storage_init): Take STORAGE_DESCS_LOCK.  Initialize SDESC->LOCK.
+	* capalloc.c: Include <pthread.h>.
+	(struct cappage_desc): New field, lock.
+	(unlink): Don't assert E->NEXT.
+	(cappage_descs_lock): New variable.
+	(capalloc): Make thread safe.
+	(capfree): Likewise.
+	* pager.h: Include <pthread.h>.
+	(pager_fault_t): Note that PAGER->LOCK will be held.
+	(struct pager): New field, lock.
+	(pagers_lock): New declaration.
+	(pager_install): Note locking requirements.
+	(pager_relocate): Likewise.
+	(pager_deinstall): Likewise.
+	* pager.c (pagers_lock): New definition.
+	(pager_install): Add asserts.
+	(pager_relocate): Likewise.
+	(pager_deinstall): Likewise.
+	(pager_fault): Likewise.  Make function thread-safe.
+	* anonymous.c (struct storage_desc): Add comment about locking.
+	(fault): Add assert.
+	(anonymous_pager_alloc): Take PAGERS_LOCK before calling
+	pager_install and drop it afterwards.
+	(anonymous_pager_destroy): Take PAGERS_LOCK before calling
+	pager_deinstall and drop it afterwards.  Take ANON->PAGER.LOCK.
+
+2007-11-27  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_handler_init): Use
+	_L4_exchange_registers rather than l4_start_sp_ip to be able to
+	detect errors.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* mm-init.c: Don't include "exceptions.h".  Include
+	<hurd/exceptions.h>.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.c (exception_thread): Rename from this...
+	(exception_handler_loop): ... to this.  Update caller.
+
+	* Makefile.am (libhurd_mm_a_SOURCES): Remove exceptions.h.
+	* exceptions.h: Remove file.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_alloc_slow): Use CAP_COPY_COPY_ADDR_TRANS_GUARD, not
+	CAP_COPY_COPY_GUARD.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* storage.h (struct storage): New struct.
+	(storage_alloc): Return a struct storage, not an addr.  Update all
+	callers.
+	* storage.c (struct storage_desc): Remove field shadow.  Add field
+	cap.
+	(shadow_setup): Save the cap.
+	(storage_alloc): Return a struct storage, not an addr.
+	(storage_free): Correctly free the shadow if not used.  Update
+	STORAGE->CAP to reflect that the folio has been removed.
+	* capalloc.c (struct cappage_desc): Add field cap.
+	(capalloc): Stash CAP.  When allocating a cappage, allocate a
+	shadow object.
+	(capfree): Really free CAPPAGE if there is another page available.
+	If freeing CAPPAGE, unlink DESC and update DESC->CAP to reflect
+	that the page has been deallocated, deallocate the shadow, and
+	deallocate CAPPAGE.
+
+	* exceptions.c (exception_thread): Print IP when a fault cannot be
+	resolved.
+
+	* mmap.c (mmap): Cast addr to a uintptr_t to elide warning.
+
+2007-11-20  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.h (pager_region_compare): Set A_END and B_END to the last
+	byte in their respective region, not the first byte after the end.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (libhurd_mm_a_SOURCES): Add exceptions.h,
+	exceptions.c, pager.h, pager.c, anonymous.h and anonymous.c.
+	* headers.m4: Link $(BUILDDIR)/include/hurd/pager.h to pager.h.
+	Link $(BUILDDIR)/include/hurd/anonymous.h to anonymous.h.
+	* mm-init.c: Include "exceptions.h".
+	(mm_init): Call exception_handler_init.
+	* pager.h: Completely rewrite.
+	* pager.c: Likewise.
+	* anonymous.h: Likewise.
+	* anonymous.c: Likewise.
+	* exceptions.h: New file.
+	* exceptions.c: Likewise.
+	* mmap.c: Include <hurd/anonymous.h>.
+	(mmap): Rewrite to use an anonymous pager.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (__hurd_startup_data): Declare.
+	(free_space_desc_slab_alloc): Use ADDR_TO_PTR and PTR_TO_ADDR
+	correctly.
+	(free_space_desc_slab_dealloc): Likewise.
+	(allocate_object): Likewise.
+	(storage_alloc): Likewise.
+	(as_init): Likewise.
+	* capalloc.c (cappage_desc_slab_alloc): Likewise.
+	(cappage_desc_slab_dealloc): Likewise.
+	* storage.c (__hurd_startup_data): Declare.
+	(check_slab_space_reserve): Likewise.
+	(storage_desc_slab_dealloc): Likewise.
+	(shadow_setup): Likewise.
+	(storage_free): Likewise.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Include \ at end of line.
+	(libhurd_mm_a_CPPFLAGS): New variable.  Set to COMMON_CPPFLAGS.
+
+	* mmap.c (munmap): New function.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (includehurd_HEADERS): Remove vm.h.  Add storage.h
+	and as.h.
+	(AM_CPPFLAGS): Rename from this...
+	(COMMON_CPPFLAGS): ... to this.
+	(libhurd_mm_a_SOURCES): Remove vm.h, vm.c, priv.h, store.c, map.c,
+	memory.c, pager.c, core.c, anonymous.c, anonymous.h,
+	physmem-user.h and physmem-user.c.  Add capalloc.h, capalloc.c,
+	storage.h, storage.c, as.h and mmap.c.
+	* headers.m4: Don't link $(BUILDDIR)/include/hurd/vm.h to vm.h or
+	$(BUILDDIR)/include/hurd/anonymous.h to anonymous.h.  Link
+	$(BUILDDIR)/include/hurd/as.h to as.h,
+	$(BUILDDIR)/include/hurd/storage.h to storage.h, and
+	$(BUILDDIR)/include/hurd/capalloc.h to libhurd-mm/capalloc.h.
+	* mm-init.c: Rewrite.
+	* mm.h: Likewise.
+	* as.c: Likewise.
+	* as.h: New file.
+	* capalloc.h: Likewise.
+	* capalloc.c: Likewise.
+	* mmap.c: Likewise.
+	* storage.h: Likewise.
+	* storage.c: Likewise.
+
+	* physmem-user.h: Remove file.
+	* physmem-user.c: Remove file.
+
+2005-04-06  Neal H. Walfield  <neal@gnu.org>
+
+	* vm.h (hurd_vm_allocate): Remove declaration.
+	(hurd_vm_release): Rename from hurd_vm_deallocate.  Update
+	callers.
+	(VM_HERE): Remove.
+	(VM_ZEROFILL): Remove.
+	* vm.c (hurd_vm_allocate): Remove function.
+	(hurd_vm_release): Rename from hurd_vm_deallocate.
+
+	* mm.h: Include <stdint.h>, <sys/types.h>, <l4/types.h> and
+	<hurd/physmem.h>.
+	(hurd_store_t): New typedef.
+	(hurd_memory_t): Likewise.
+	(hurd_memory_use): New declaration.
+	(hurd_memory_transfer): Likewise.
+	(hurd_store_fault_t): New typedef.
+	(hurd_store_init): New declaration.
+	(hurd_store_size): New declaration.
+	(HURD_VM_HERE): New definition.
+	(hurd_store_bind_to_vm): New declaration.
+	(hurd_store_flush): New declaration.
+
+	* priv.h: Include "vm.h" and "mm.h".
+	(here): New debugging macro.
+	(struct region): Move to...
+	* mm.h: ...here.
+	(struct hurd_memory): Rename from struct frame.
+	Rename field dc_start to cont_start.  Add field cont.  Remove
+	field refs.  Update users.
+	(memory_slab): Rename from frame_slab.  Update users.
+	(memory_alloc_into): Rename from frame_alloc_into.  Update users.
+	(frame_alloc): Move to...
+	* priv.h (frame_insert): Move to...
+	* mm.h (hurd_store_cache): ...here.
+	* priv.h (frame_find_first): Move to...
+	* mm.h (hurd_store_find_cached): ...here.
+	* priv.h (frame_map): Move to...
+	* mm.h (hurd_memory_map): ...here.
+	* priv.h (frame_dealloc): Move to...
+	* mm.h (hurd_memory_dealloc): ...here.
+	* priv.h (struct hurd_store): Rename from struct store.  Remove
+	fields server and handle.  Add fields hook and fault.  Rename
+	field frames to memory.  Update users.
+	(store_find_free): Remove declaration.
+	(struct map): Add field store_offset.
+	(default_container): Likewise.
+	(map_init): Likewise.
+	(map_free): Rename from map_dealloc.  Update callers.
+	(map_init): New declaration.
+	(map_find_first): Rename from map_find.  Update callers.
+	(as_find_free): Rename from map_find_free.  Update callers.
+	(container_find_free): Remove declaration.
+	(core_slab_allocate_buffer): Rename from
+	mem_slab_allocate_buffer.  Update users.
+	(core_slab_deallocate_buffer): Rename from
+	mem_slab_deallocate_buffer.  Update users.
+	(frame_spare): Rename to memory_spare.  Update users.
+	(core_store): New declaration.
+	
+	* map.c (VIRTUAL_MEMORY_START): Move from here...
+	* priv.h: ...to here.
+	* map.c (as): Move from here...
+	* as.c: ...to here.
+	(map_system_init): Rename from map_init.  Reserve the UTCB and the
+	KIP.
+	(memory_spare): Rename from frame_spare.
+	(core_slab_allocate_buffer): Rename from mem_slab_allocate_buffer.
+	(core_slab_deallocate_buffer): Rename from
+	mem_slab_deallocate_buffer.
+	(map_init): New function.
+	(map_free): Rename from map_dealloc.
+	(map_find): Rename from map_find_first.  Avoid gratuitous
+	hurd_btree_map_prev.
+	(map_find_free): Remove function.
+	(store_find_free): Move from here...
+	* as.c (as_find_free): ...to here.
+
+	* frame.c: Move from here...
+	* memory.c: ...to here.  Include <hurd/startup.h>.
+	(swap_store): Remove definition.
+	(memory_slab): Rename from frame_slab.
+	(default_container): New static global.
+	(dc_offset): New function.
+	(memory_system_init): Likewise.
+	(memory_alloc_into): Rename from frame_alloc_into.
+	(hurd_memory_new): New function.  Refactored from frame_alloc.
+	(hurd_memory_delete): New function.
+	(hurd_memory_alloc): Rename from frame_alloc.  Rewritten to use
+	hurd_memory_new.
+	(frame_insert): Move from here...
+	* store.c (hurd_store_cache): ...to here.
+	* memory.c (hurd_memory_use): New function.
+	(hurd_memory_transfer): New function.
+	(hurd_memory_dealloc): Rename from frame_dealloc.  Don't
+	deallocate too eagerly: split memory which is only partially
+	deallocated.
+	(frame_find_first): Move from here...
+	* store.c (hurd_store_find_cached): ...to here.
+	* memory.c (hurd_memory_map): Rename from frame_map.  Loop
+	mapping all of the requested if a single RPC is insufficient.
+	
+	* mm-init.c (default_container): Remove definition.
+	(hurd_mm_init): Don't initialize DEFAULT_CONTAINER.  Don't
+	initialize the store data structures.  Call memory_system_init,
+	core_system_init, hurd_anonymous_init, and map_system_init.  Use
+	core_allocate rather than hurd_vm_allocate to allocate a stack for
+	the pager thread.
+
+	* pager.c (pager): Don't round ADDR.  Call MAP->STORE->FAULT if
+	the physical memory is not cached.
+
+	* physmem-user.h: Include <hurd/physmem.h>.  Improve
+	documentation.
+	(hurd_pm_control_t): Remove redundant typedef.
+	(hurd_pm_container_t): Likewise.
+	(hurd_pm_container_access_t): Remove typedef.
+	(HURD_PM_CONT_ALLOC_PARTIAL): Remove redundant define.
+	(HURD_PM_CONT_ALLOC_SQUASH): Likewise.
+	(HURD_PM_CONT_ALLOC_EXTRA): Likewise.
+	(HURD_PM_CONT_ALLOC_DMA): Likewise.
+	(hurd_pm_container_share): Change ACCESSS from a
+	hurd_pm_container_access_t * to a hurd_pm_container_t *.
+	(hurd_pm_container_map): Rename parameter rights to flags.  Add
+	new parameter AMOUNT.  Update callers.
+	* physmem-user.c (container_ops): Remove redundant enumeration.
+	(hurd_pm_container_create): Use hurd_pm_container_create_id as the
+	RPC identifier.
+	(hurd_pm_container_share): Use hurd_pm_container_share_id as the
+	RPC identifier.
+	(hurd_pm_container_allocate): Use hurd_pm_container_allocate_id as
+	the RPC identifier.
+	(hurd_pm_container_deallocate): Use
+	hurd_pm_container_deallocate_id as the RPC identifier.
+	(hurd_pm_container_map): Use hurd_pm_container_map_id as the RPC
+	identifier.  If AMOUNTP is non-NULL, return the number of bytes
+	mapped in *AMOUNTP.  Remove debugging code.
+	(hurd_pm_container_copy): Use hurd_pm_container_copy_id as the RPC
+	identifier.
+
+	* anonymous.h: New file.
+	* anonymous.c: New file.
+	* as.c: New file.
+	* core.c: New file.
+	* frame.c: Remove file.
+	* store.c: New file.
+	* Makefile.am (libhurd_mm_a_SOURCES): Add as.c, store.c, memory.c,
+	core.c, anonymous.c and anonymous.h.  Remove frame.c.
+	* headers.m4: Install anonymous.h as <hurd/anonymous.h>.
+	
+2005-03-09  Neal H. Walfield  <neal@gnu.org>
+
+	* physmem-user.c (hurd_pm_container_map): Update argument
+	marshalling.
+
+2005-03-09  Neal H. Walfield  <neal@gnu.org>
+
+	* map.c: Include "vm.h".
+	(map_init): Cast HURD_STARTUP_ADDR to a uintptr_t.
+	* pager.c (pager): Comment fix.
+
+2005-03-08  Neal H. Walfield  <neal@gnu.org>
+
+	* physmem-user.h (hurd_pm_container_copy): New declaration.
+	* physmem-user.c (enum container_ops): Add container_copy_id.
+	(hurd_pm_container_copy): New function.
+
+2005-01-11  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am: Initial check in.
+	* README: Likewise.
+	* frame.c: Likewise.
+	* headers.m4: Likewise.
+	* map.c: Likewise.
+	* mm-init.c: Likewise.
+	* mm.h: Likewise.
+	* pager.c: Likewise.
+	* physmem-user.c: Likewise.
+	* physmem-user.h: Likewise.
+	* priv.h: Likewise.
+	* vm.c: Likewise.
+	* vm.h: Likewise.

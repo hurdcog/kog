@@ -1,0 +1,358 @@
+name: OCC Windows Build (Fast - Vendored Deps)
+
+# FAST BUILD: Uses vendored prebuilt dependencies from prebuilt/ directory
+# NO VCPKG REQUIRED - All dependencies are already in the repo
+# Build time: ~5-10 minutes (vs 2+ hours with vcpkg)
+#
+# Prerequisites: Run vendor-dependencies.yml workflow first to populate prebuilt/
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths-ignore:
+      - 'prebuilt/**'  # Don't trigger on prebuilt changes
+      - '*.md'
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+concurrency:
+  group: windows-build-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
+  # Point directly to vendored dependencies - NO VCPKG
+  PREBUILT_DIR: ${{ github.workspace }}/prebuilt/x64-windows
+
+jobs:
+  # Quick check that vendored deps exist
+  check-deps:
+    runs-on: windows-latest
+    name: Verify Vendored Dependencies
+    outputs:
+      deps_exist: ${{ steps.check.outputs.exists }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for vendored dependencies
+        id: check
+        shell: pwsh
+        run: |
+          if (Test-Path "prebuilt/x64-windows/lib/grpc.lib") {
+            $libCount = (Get-ChildItem -Path "prebuilt/x64-windows/lib" -Filter "*.lib").Count
+            Write-Host "Found $libCount vendored libraries" -ForegroundColor Green
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "WARNING: Vendored dependencies not found!" -ForegroundColor Yellow
+            Write-Host "This workflow requires vendored dependencies from 'vendor-dependencies.yml'." -ForegroundColor Yellow
+            Write-Host "Build will be skipped. Please run 'vendor-dependencies.yml' workflow first." -ForegroundColor Yellow
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+          }
+
+  # Stage 1: Build CogUtil (Foundation)
+  build-cogutil:
+    runs-on: windows-latest
+    name: Build CogUtil
+    needs: check-deps
+    if: needs.check-deps.outputs.deps_exist == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Configure CogUtil
+        shell: pwsh
+        run: |
+          Write-Host "=== Configuring CogUtil with Vendored Dependencies ===" -ForegroundColor Cyan
+          Write-Host "Using prebuilt deps from: $env:PREBUILT_DIR" -ForegroundColor Yellow
+
+          New-Item -ItemType Directory -Force -Path cogutil/build | Out-Null
+          Set-Location cogutil/build
+
+          cmake .. `
+            -G "$env:CMAKE_GENERATOR" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_PREFIX_PATH="$env:PREBUILT_DIR" `
+            -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+            -DBoost_NO_SYSTEM_PATHS=ON `
+            -DBOOST_ROOT="$env:PREBUILT_DIR" `
+            -DBoost_INCLUDE_DIR="$env:PREBUILT_DIR/include" `
+            -DBoost_LIBRARY_DIR="$env:PREBUILT_DIR/lib"
+
+      - name: Build CogUtil
+        shell: pwsh
+        run: |
+          Set-Location cogutil/build
+          cmake --build . --config $env:BUILD_TYPE --parallel 4
+
+      - name: Install CogUtil
+        shell: pwsh
+        run: |
+          Set-Location cogutil/build
+          cmake --install . --config $env:BUILD_TYPE
+
+      - name: Upload CogUtil
+        uses: actions/upload-artifact@v4
+        with:
+          name: cogutil-windows
+          path: install/
+          retention-days: 30
+
+  # Stage 2: Build AtomSpace
+  build-atomspace:
+    runs-on: windows-latest
+    name: Build AtomSpace
+    needs: [check-deps, build-cogutil]
+    if: needs.check-deps.outputs.deps_exist == 'true' && needs.build-cogutil.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Download CogUtil
+        uses: actions/download-artifact@v4
+        with:
+          name: cogutil-windows
+          path: install
+
+      - name: Configure AtomSpace
+        shell: pwsh
+        run: |
+          Write-Host "=== Configuring AtomSpace ===" -ForegroundColor Cyan
+
+          New-Item -ItemType Directory -Force -Path atomspace/build | Out-Null
+          Set-Location atomspace/build
+
+          cmake .. `
+            -G "$env:CMAKE_GENERATOR" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_PREFIX_PATH="$env:PREBUILT_DIR;$env:GITHUB_WORKSPACE/install" `
+            -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+            -DBoost_NO_SYSTEM_PATHS=ON `
+            -DBOOST_ROOT="$env:PREBUILT_DIR" `
+            -DBoost_INCLUDE_DIR="$env:PREBUILT_DIR/include" `
+            -DBoost_LIBRARY_DIR="$env:PREBUILT_DIR/lib"
+
+      - name: Build AtomSpace
+        shell: pwsh
+        run: |
+          Set-Location atomspace/build
+          cmake --build . --config $env:BUILD_TYPE --parallel 4
+
+      - name: Install AtomSpace
+        shell: pwsh
+        run: |
+          Set-Location atomspace/build
+          cmake --install . --config $env:BUILD_TYPE
+
+      - name: Upload AtomSpace
+        uses: actions/upload-artifact@v4
+        with:
+          name: atomspace-windows
+          path: install/
+          retention-days: 30
+
+  # Stage 3: Build Moses (parallel with AtomSpace since it only needs CogUtil)
+  build-moses:
+    runs-on: windows-latest
+    name: Build Moses
+    needs: [check-deps, build-cogutil]
+    if: needs.check-deps.outputs.deps_exist == 'true' && needs.build-cogutil.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Download CogUtil
+        uses: actions/download-artifact@v4
+        with:
+          name: cogutil-windows
+          path: install
+
+      - name: Configure Moses
+        shell: pwsh
+        run: |
+          Write-Host "=== Configuring Moses ===" -ForegroundColor Cyan
+
+          New-Item -ItemType Directory -Force -Path moses/build | Out-Null
+          Set-Location moses/build
+
+          cmake .. `
+            -G "$env:CMAKE_GENERATOR" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_PREFIX_PATH="$env:PREBUILT_DIR;$env:GITHUB_WORKSPACE/install" `
+            -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+            -DBoost_NO_SYSTEM_PATHS=ON `
+            -DBOOST_ROOT="$env:PREBUILT_DIR" `
+            -DBoost_INCLUDE_DIR="$env:PREBUILT_DIR/include" `
+            -DBoost_LIBRARY_DIR="$env:PREBUILT_DIR/lib"
+
+      - name: Build Moses
+        shell: pwsh
+        run: |
+          Set-Location moses/build
+          cmake --build . --config $env:BUILD_TYPE --parallel 4
+
+      - name: Install Moses
+        shell: pwsh
+        run: |
+          Set-Location moses/build
+          cmake --install . --config $env:BUILD_TYPE
+
+      - name: Upload Moses
+        uses: actions/upload-artifact@v4
+        with:
+          name: moses-windows
+          path: install/
+          retention-days: 30
+
+  # Stage 4: Build CogServer
+  build-cogserver:
+    runs-on: windows-latest
+    name: Build CogServer
+    needs: [check-deps, build-atomspace]
+    if: needs.check-deps.outputs.deps_exist == 'true' && needs.build-atomspace.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Download AtomSpace (includes CogUtil)
+        uses: actions/download-artifact@v4
+        with:
+          name: atomspace-windows
+          path: install
+
+      - name: Configure CogServer
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "cogserver")) {
+            Write-Host "CogServer not found - skipping" -ForegroundColor Yellow
+            exit 0
+          }
+
+          Write-Host "=== Configuring CogServer ===" -ForegroundColor Cyan
+
+          New-Item -ItemType Directory -Force -Path cogserver/build | Out-Null
+          Set-Location cogserver/build
+
+          cmake .. `
+            -G "$env:CMAKE_GENERATOR" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_PREFIX_PATH="$env:PREBUILT_DIR;$env:GITHUB_WORKSPACE/install" `
+            -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+            -DBoost_NO_SYSTEM_PATHS=ON `
+            -DBOOST_ROOT="$env:PREBUILT_DIR" `
+            -DBoost_INCLUDE_DIR="$env:PREBUILT_DIR/include" `
+            -DBoost_LIBRARY_DIR="$env:PREBUILT_DIR/lib"
+        continue-on-error: true
+
+      - name: Build CogServer
+        shell: pwsh
+        run: |
+          if (Test-Path "cogserver/build") {
+            Set-Location cogserver/build
+            cmake --build . --config $env:BUILD_TYPE --parallel 4
+          }
+        continue-on-error: true
+
+      - name: Install CogServer
+        shell: pwsh
+        run: |
+          if (Test-Path "cogserver/build") {
+            Set-Location cogserver/build
+            cmake --install . --config $env:BUILD_TYPE
+          }
+        continue-on-error: true
+
+      - name: Upload CogServer
+        uses: actions/upload-artifact@v4
+        with:
+          name: cogserver-windows
+          path: install/
+          retention-days: 30
+        continue-on-error: true
+
+  # Final: Consolidate everything
+  consolidate:
+    runs-on: windows-latest
+    name: Consolidate Build
+    needs: [check-deps, build-cogutil, build-atomspace, build-moses, build-cogserver]
+    if: always() && needs.check-deps.outputs.deps_exist == 'true'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Consolidate
+        shell: pwsh
+        run: |
+          Write-Host "=== Consolidating Windows Build ===" -ForegroundColor Cyan
+
+          New-Item -ItemType Directory -Force -Path "consolidated/bin" | Out-Null
+          New-Item -ItemType Directory -Force -Path "consolidated/lib" | Out-Null
+          New-Item -ItemType Directory -Force -Path "consolidated/include" | Out-Null
+
+          Get-ChildItem -Path "artifacts" -Recurse -File | ForEach-Object {
+            $ext = $_.Extension
+            $dest = switch ($ext) {
+              ".dll" { "consolidated/bin/" }
+              ".exe" { "consolidated/bin/" }
+              ".lib" { "consolidated/lib/" }
+              ".h"   { "consolidated/include/" }
+              ".hpp" { "consolidated/include/" }
+              default { $null }
+            }
+            if ($dest) {
+              Copy-Item -Path $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+            }
+          }
+
+          $dllCount = (Get-ChildItem -Path "consolidated/bin" -Filter "*.dll" -ErrorAction SilentlyContinue).Count
+          $libCount = (Get-ChildItem -Path "consolidated/lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+
+          Write-Host "Consolidated: $dllCount DLLs, $libCount libraries" -ForegroundColor Green
+
+      - name: Upload complete build
+        uses: actions/upload-artifact@v4
+        with:
+          name: occ-windows-complete
+          path: consolidated/
+          retention-days: 90
+
+      - name: Build Summary
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "================================================" -ForegroundColor Green
+          Write-Host "     OCC WINDOWS BUILD COMPLETE (FAST MODE)" -ForegroundColor Green
+          Write-Host "================================================" -ForegroundColor Green
+          Write-Host ""
+          Write-Host "Build Results:" -ForegroundColor Yellow
+          Write-Host "  - CogUtil:   ${{ needs.build-cogutil.result }}"
+          Write-Host "  - AtomSpace: ${{ needs.build-atomspace.result }}"
+          Write-Host "  - Moses:     ${{ needs.build-moses.result }}"
+          Write-Host "  - CogServer: ${{ needs.build-cogserver.result }}"
+          Write-Host ""
+          Write-Host "Used vendored dependencies - NO vcpkg build time!" -ForegroundColor Cyan

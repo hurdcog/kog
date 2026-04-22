@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>opencog</id>
+    <version>0.0.0</version>
+    <packageSourceUrl>https://github.com/cogpy/occ</packageSourceUrl>
+    <owners>OpenCog Foundation</owners>
+    <title>OpenCog Framework</title>
+    <authors>OpenCog Foundation</authors>
+    <projectUrl>https://opencog.org/</projectUrl>
+    <iconUrl>https://opencog.org/wp-content/uploads/2022/02/cropped-opencog-logo-512x512-1-192x192.png</iconUrl>
+    <copyright>2025 OpenCog Foundation</copyright>
+    <licenseUrl>https://github.com/cogpy/occ/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/cogpy/occ</projectSourceUrl>
+    <docsUrl>https://wiki.opencog.org/</docsUrl>
+    <bugTrackerUrl>https://github.com/cogpy/occ/issues</bugTrackerUrl>
+    <tags>opencog agi artificial-intelligence cognitive-architecture atomspace reasoning machine-learning</tags>
+    <summary>OpenCog is a framework for developing Artificial General Intelligence (AGI)</summary>
+    <description>
+OpenCog is a framework for developing Artificial General Intelligence (AGI). It provides:
+
+* AtomSpace - A hypergraph database for knowledge representation
+* Pattern Matcher - Advanced pattern matching and query system
+* URE - Unified Rule Engine for logical reasoning
+* PLN - Probabilistic Logic Networks
+* MOSES - Meta-Optimizing Semantic Evolutionary Search
+* CogServer - Network server for AtomSpace access
+* Language Learning - Natural language processing components
+* CogSelf - 9-Layer Unified Self/Identity Model (Friston FEP, Panksepp, Metzinger PSM)
+* And many more cognitive components
+
+This package installs the core OpenCog framework components on Windows.
+
+## Requirements
+- Windows 10 or later (64-bit)
+- Visual C++ Redistributable 2019 or later
+- At least 4GB RAM recommended
+
+## Components Included
+- cogutil - Core utilities
+- atomspace - Hypergraph knowledge representation
+- atomspace-storage - Persistence backends
+- unify - Unification framework
+- ure - Unified Rule Engine
+- cogserver - Network server
+- pln - Probabilistic Logic Networks
+- moses - Evolutionary program learning
+- cogself - 9-Layer Unified Self/Identity Model
+- coggml - Self-Aware Cognitive Microkernel
+
+## Documentation
+Visit https://wiki.opencog.org/ for documentation and tutorials.
+    </description>
+    <releaseNotes>https://github.com/cogpy/occ/releases</releaseNotes>
+    <dependencies>
+      <dependency id="vcredist2019" version="14.0" />
+      <dependency id="cmake" version="3.20.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypergraph Memory Space Unifies Four Memory Types</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 40px 60px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 20px;
+        }
+        .memory-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            position: relative;
+        }
+        .memory-box {
+            border: 2px solid #0f4c81;
+            background: rgba(15, 76, 129, 0.02);
+            padding: 18px;
+            min-height: 200px;
+            position: relative;
+        }
+        .memory-label {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            background: #0f4c81;
+            color: #FFFFFF;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            letter-spacing: 1px;
+        }
+        .memory-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            margin-top: 8px;
+        }
+        .memory-description {
+            font-size: 14px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        .memory-characteristics {
+            font-size: 12px;
+            font-weight: 400;
+            color: #0f4c81;
+            line-height: 1.4;
+        }
+        .char-label {
+            font-weight: 600;
+            color: #1a1a2e;
+            display: block;
+            margin-bottom: 3px;
+        }
+        .unified-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #e94560;
+            color: #FFFFFF;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 20px;
+            letter-spacing: 1px;
+            border: 3px solid #FFFFFF;
+            z-index: 10;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .subtitle {
+            font-size: 15px;
+            font-weight: 500;
+            color: #0f4c81;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Title -->
+        <div class="slide-title">Hypergraph Memory Space Unifies Four Memory Types</div>
+        <div class="title-line"></div>
+        
+        <!-- Subtitle -->
+        <div class="subtitle">Single Mathematical Framework for Diverse Knowledge Representations</div>
+        
+        <!-- Memory Grid -->
+        <div class="memory-grid">
+            
+            <!-- Unified Framework Label (Center) -->
+            <div class="unified-label">
+                UNIFIED<br>HYPERGRAPH
+            </div>
+            
+            <!-- Memory Type 1: Declarative -->
+            <div class="memory-box">
+                <div class="memory-label">TYPE-01</div>
+                <div class="memory-name">Declarative Memory</div>
+                <div class="memory-description">
+                    Stores facts and concepts as atoms in hypergraph with associated truth values (strength and confidence). Enables probabilistic reasoning over factual knowledge.
+                </div>
+                <div class="memory-characteristics">
+                    <span class="char-label">Representation:</span> Atoms with truth values<br>
+                    <span class="char-label">Examples:</span> "cat is-a animal", concepts like "justice"<br>
+                    <span class="char-label">Learning:</span> Gradual truth value updates
+                </div>
+            </div>
+            
+            <!-- Memory Type 2: Procedural -->
+            <div class="memory-box">
+                <div class="memory-label">TYPE-02</div>
+                <div class="memory-name">Procedural Memory</div>
+                <div class="memory-description">
+                    Encodes skills and algorithms as executable patterns within hypergraph. Allows learning new skills by acquiring patterns and improving through refinement.
+                </div>
+                <div class="memory-characteristics">
+                    <span class="char-label">Representation:</span> Executable graph patterns<br>
+                    <span class="char-label">Examples:</span> Parsing sentences, solving equations<br>
+                    <span class="char-label">Learning:</span> Pattern acquisition and refinement
+                </div>
+            </div>
+            
+            <!-- Memory Type 3: Episodic -->
+            <div class="memory-box">
+                <div class="memory-label">TYPE-03</div>
+                <div class="memory-name">Episodic Memory</div>
+                <div class="memory-description">
+                    Captures specific experiences and events with temporal context. Crucial for learning from experience, analogical reasoning, and narrative understanding.
+                </div>
+                <div class="memory-characteristics">
+                    <span class="char-label">Representation:</span> Temporal subgraphs<br>
+                    <span class="char-label">Examples:</span> "What happened when" records<br>
+                    <span class="char-label">Learning:</span> Experience-based pattern recognition
+                </div>
+            </div>
+            
+            <!-- Memory Type 4: Intentional -->
+            <div class="memory-box">
+                <div class="memory-label">TYPE-04</div>
+                <div class="memory-name">Intentional Memory</div>
+                <div class="memory-description">
+                    Represents goals, plans, and intentions as hierarchical structures. Enables goal-directed behavior, planning, and action explanation capabilities.
+                </div>
+                <div class="memory-characteristics">
+                    <span class="char-label">Representation:</span> Hierarchical goal structures<br>
+                    <span class="char-label">Examples:</span> Goals decomposing into subgoals/actions<br>
+                    <span class="char-label">Learning:</span> Activation-based priority management
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

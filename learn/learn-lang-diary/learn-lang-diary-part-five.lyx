@@ -1,0 +1,9261 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Language Learning Diary - Part Five
+\end_layout
+
+\begin_layout Date
+Jan 2022 - March 2022
+\end_layout
+
+\begin_layout Author
+Linas Vepštas
+\end_layout
+
+\begin_layout Abstract
+The language-learning effort involves research and software development
+ to implement the ideas concerning unsupervised learning of grammar, syntax
+ and semantics from corpora.
+ This document contains supplementary notes and a loosely-organized semi-chronol
+ogical diary of results.
+ The notes here might not always makes sense; they are a short-hand for
+ my own benefit, rather than aimed at you, dear reader!
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+Part Five of the diary on the language-learning effort continues work on
+ the English dataset.
+\end_layout
+
+\begin_layout Standard
+Good progress was made.
+ It appears that we have a high-quality, stable, debugged clustering algorithm
+ in place, and it is generating good-quality clusters.
+ However, dozens of questions and hypothesis arise, which is a bit overwhelming.
+ The lack of any kind of theoretical foundations for any of this stuff is
+ frustrating.
+ Without theory, it is hard to get strong insight.
+\end_layout
+
+\begin_layout Standard
+At any rate, results seem solid enough that we can now move on to the next
+ steps of the program.
+ I'm hoping to start work on multi-sentence and cross-paragraph correlations
+ in the coming months.
+ Although, before doing this, perhaps a comparison to the hand-built LG
+ grammars is in order.
+\end_layout
+
+\begin_layout Section*
+Summary Conclusions
+\end_layout
+
+\begin_layout Standard
+A summary of what is found in this part of the diary:
+\end_layout
+
+\begin_layout Itemize
+From Experiment-10: Ranked-MI (Variational MI) seems to mostly make good
+ cluster recommendations, except when it doesn't.
+ Since the actual merge proceeds via a Jaccard-type voting in of disjuncts,
+ it is possible that the poor recommendations results in few contributions.
+ But there is no obvious way to automate a quality measurement.
+\end_layout
+
+\begin_layout Itemize
+From Experiment-10: A list of the first 31 clusters is presented.
+ It seems OK but not great.
+ Hard to say, as the Jaccard-selection mechanism selects membership, and
+ we don't have a window into that.
+ Is there a way of visualizing the 
+\begin_inset Quotes eld
+\end_inset
+
+word-sense
+\begin_inset Quotes erd
+\end_inset
+
+ of a cluster?
+\end_layout
+
+\begin_layout Itemize
+From Experiment-10: A fairly large number of merges are expanding or merging
+ prior classes.
+ This suggests that 
+\begin_inset Quotes eld
+\end_inset
+
+preferential attachment
+\begin_inset Quotes erd
+\end_inset
+
+ is hard at work, and so we should not be surprised to later observe scale-free
+ results.
+\end_layout
+
+\begin_layout Itemize
+This implies that ranked-MI/variational-MI automatically, inherently makes
+ these kind of preferential-attachment suggestions.
+ How does this work? What are the details? Are there alternatives?
+\end_layout
+
+\begin_layout Itemize
+As clustering proceeds, there are several dozen different measurements and
+ indicator values that can be tracked, including the dataset entropy, the
+ MMT-Q value, the size of clusters, the ranked-MI of the top-ranked word-pair,
+ and so on.
+ Many graphs of these indicators are presented.
+ Experiment-10 tracks four of these; experiments 11 and 12 tracks dozens
+ of them.
+ A significant portion of the parameter space is explored.
+\end_layout
+
+\begin_layout Itemize
+Graphs of the word-disjunct marginal entropy distribution is presented.
+ This for the dataset, before clustering is started.
+ It appears to be a normal (Gaussian) distribution.
+\end_layout
+
+\begin_layout Itemize
+Multiple alternatives to the variational-MI (ranked-MI) are proposed and
+ developed.
+ These are computed for the top-200 most common words in the dataset (
+\emph on
+i.e.
+
+\emph default
+ for 
+\begin_inset Formula $N\left(N+1\right)/2$
+\end_inset
+
+ word-pairs, for 
+\begin_inset Formula $N=200$
+\end_inset
+
+.) Although they make different ranking recommendations, the overall distribution
+s are nearly identical.
+ Although roughly Gaussian, these have a very fat tail to the left (
+\emph on
+i.e.
+
+\emph default
+ on the negative side: they find a lot of dis-similarity.) The fat tail is
+ hypothesized to be driven by the number of distinct word-senses (
+\emph on
+i.e.
+
+\emph default
+ word-senses should be dis-similar.) All of these alternatives are more computati
+onally intensive than the ranked-MI, and thus are not really practical to
+ apply.
+ It is hypothesized that all of these might still end up selecting the same
+ in-group (
+\emph on
+i.e.
+
+\emph default
+ although the top-ranked pairs differ, the in-groups would not.)
+\end_layout
+
+\begin_layout Itemize
+From Experiment-11: The top ranked-MI pair is used to form the initial seed
+ of a cluster, and then the regular MI is used to nominate additional members.
+ When the Jaccard overlap of the nominees is computed, it is surprisingly
+ low.
+ Why? Is it because MI is pair-wise, and Jaccard is group-wise?
+\end_layout
+
+\begin_layout Itemize
+Despite the low overlap, the majority of sections get merged, only because
+ their counts are below the noise-floor.
+ How do low-count disjuncts influence the MI?
+\end_layout
+
+\begin_layout Itemize
+Setting the noise-floor causes disjuncts with a count below this floor to
+ be swept up into the group.
+ Later, during the preferential attachment and growth of groups, is it possible
+ that this 
+\begin_inset Quotes eld
+\end_inset
+
+random noise
+\begin_inset Quotes erd
+\end_inset
+
+ hijacks the initial cluster, twisting it in a different direction from
+ where it started? Is it causing the signal to be washed out? What happens
+ if we set the noise-floor to zero?
+\end_layout
+
+\begin_layout Itemize
+After running the algo for about 1060 steps, about 530 word-classes were
+ created (the fact that its about a half is unexplained, but gives a hint
+ of the role of preferential attachment).
+ When comparing the 
+\begin_inset Formula $N\left(N-1\right)/2$
+\end_inset
+
+ class-pairs (for 
+\begin_inset Formula $N=530)$
+\end_inset
+
+, about 93% of them have a similarity of zero: that is, they are completely
+ orthogonal.
+ That's a good thing: we wanted to have classes that are distinct from one-anoth
+er, and that is what we are getting.
+ Of the remaining 7%, the distribution of MI is almost perfectly a Gaussian,
+ centered at about MI of negative 3, and an stddev of 3.5.
+ Negative MI is also good: it means that even if they are not perfectly
+ orthogonal, they are almost-so.
+\end_layout
+
+\begin_layout Itemize
+The above stands in contrast to the word-word orthogonality of the remaining
+ (as yet unmerged) words: more than 80% of them have a non-zero similarity.
+ The distribution of these is almost Gaussian, with a bit of a fat tail
+ towards the low-end.
+ Compared to the pre-merge MI distribution, there is little change, except
+ perhaps in the fat tail.
+\end_layout
+
+\begin_layout Standard
+That pretty much wraps things up for this chapter.
+ Merge experiments are ongoing, and further results will be presented in
+ later diary chapters.
+ I don't expect many changes from the above; just some longer runs with
+ maybe clearer results.
+ A noise=0 run is clearly called for.
+ Examining orthogonality as a function of time is also interesting, to be
+ reported later.
+\end_layout
+
+\begin_layout Section*
+TODO
+\end_layout
+
+\begin_layout Standard
+A list of things to do, here or later:
+\end_layout
+
+\begin_layout Itemize
+In population genetics, a neutral evolutionary model with a static population
+ size results in a power-law distribution of alleles in the population.
+ Can this process model also explain the power-law (Zipfian, square-root-Zipfian
+) distributions seen elsewhere? There is a similar set of results in ecology,
+ with regards to species distribution in an ecological niche.
+\end_layout
+
+\begin_layout Section*
+Expt-10 Merge exploration (Jan 2022)
+\end_layout
+
+\begin_layout Standard
+The end of Diary Part Four describes a dataset with several thousand merged
+ words in it.
+ However, that dataset had assorted issues, and recreating it before investing
+ time in characterizing it seems like a good idea.
+ There were numerous (and ongoing) bug-fixes made.
+ Phew.
+ 5 Jan 2022 Looks like the last of the bugs are now fixed.
+ This took two weeks of very tedious debugging.
+ Ouch.
+ Ready to restart, at last.
+\end_layout
+
+\begin_layout Standard
+Now that we are ready, the questions below arise.
+\end_layout
+
+\begin_layout Subsection*
+Things worth exploring.
+\end_layout
+
+\begin_layout Standard
+What have we actually got? Some questions about the dataset:
+\end_layout
+
+\begin_layout Itemize
+Distribution: size of word-class vs.
+ rank.
+ This was previously examined in 
+\begin_inset Quotes eld
+\end_inset
+
+diary part one
+\begin_inset Quotes erd
+\end_inset
+
+, page 99, for a different collection of merge algorithms (and earlier,
+ different datasets).
+ Do we still get something similar?
+\end_layout
+
+\begin_layout Itemize
+Above, 
+\begin_inset Quotes eld
+\end_inset
+
+size
+\begin_inset Quotes erd
+\end_inset
+
+ might mean 
+\begin_inset Quotes eld
+\end_inset
+
+number of words in the word-class
+\begin_inset Quotes erd
+\end_inset
+
+ or it might mean 
+\begin_inset Quotes eld
+\end_inset
+
+number of disjuncts in word-class
+\begin_inset Quotes erd
+\end_inset
+
+ or it might mean 
+\begin_inset Quotes eld
+\end_inset
+
+number of disjuncts in word-class with count weighting
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Oof.
+ It would be nice to have a dashboard for this, instead of lots of manual
+ work.
+\end_layout
+
+\begin_layout Itemize
+Distribution of word-senses.
+ That is, how many words participate in more than one word-class? If they
+ do participate in more than one word-class, what is the weight in each
+ class?
+\end_layout
+
+\begin_layout Itemize
+For words that belong to word-classes, what fraction of their weight remains
+ unassigned to any word-class?
+\end_layout
+
+\begin_layout Itemize
+Distribution of MI of pairs of word-classes.
+ We might hope that this is low, so that different word-classes are different
+ from one another.
+\end_layout
+
+\begin_layout Itemize
+Distribution of self-MI of word-classes.
+ One might hope that this is high, so that the word-classes do not share
+ much in common with other words or word-classes.
+\end_layout
+
+\begin_layout Itemize
+As above, but distribution of MI of pairs consisting of a word-class, and
+ a word.
+\end_layout
+
+\begin_layout Itemize
+Prior to starting the merge, there's an MI between words and disjuncts.
+ I don't recall examining that in detail, before.
+ Then, after the merge, how does this change?
+\end_layout
+
+\begin_layout Standard
+That's a lot of questions.
+ Not clear which ones should be answered first.
+\end_layout
+
+\begin_layout Subsection*
+Round 43
+\end_layout
+
+\begin_layout Standard
+Done with bug-fixing.
+\end_layout
+
+\begin_layout Standard
+I'm currently using `
+\family sans
+r9-sim-200.rdb
+\family default
+` for marginals plus the similarities for the top 200 most frequent words.
+ Then run 
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+cp -pr r9-sim-200.rdb r10-merge.rdb
+\end_layout
+
+\begin_layout Plain Layout
+
+guile -l cogserver-gram.scm
+\end_layout
+
+\begin_layout Plain Layout
+
+(in-group-cluster covr-obj 0.5 0.2 4 200 100)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This works great until merge 43 where we get
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+------ Round 43 Next in line: ranked-MI = 5.6267 MI = 5.1464 (`could must
+ would should may will can might`, `to`)
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=5: `to` `could must would should may will can might` `you`
+ `I` `we`
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So that looks like a bug.
+ Issues:
+\end_layout
+
+\begin_layout Itemize
+Hard to believe that this is the top ranked-MI pair.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Is the MI being computed correctly? It almost surely is, but still ...
+ ??
+\end_layout
+
+\begin_layout Itemize
+Should the ranked-MI for a cluster be de-rated, say, by the number of words
+ in the cluster?
+\end_layout
+
+\begin_layout Itemize
+The next 10 highest ranked-MI merges look great! So maybe somehow the ranked
+ MI for clusters is wrong?
+\end_layout
+
+\begin_layout Itemize
+Since merging is via a Jaccard-overlap selection mechanism, perhaps most
+ of the contributing disjuncts in the bad recommendations will be ignored?
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Round 88 - Majority voting bug?
+\end_layout
+
+\begin_layout Standard
+Subsequent merges look ..
+ pretty good, except when they don't, and then they look ugly.
+\end_layout
+
+\begin_layout Standard
+At round 88 it goes nuts: it merges a few disjuncts of 
+\begin_inset Quotes eld
+\end_inset
+
+As as
+\begin_inset Quotes erd
+\end_inset
+
+ together.
+ Then it merges zero of them into 
+\begin_inset Quotes eld
+\end_inset
+
+As as.i
+\begin_inset Quotes erd
+\end_inset
+
+, and then hits an inf loop, because what is left after the merge still
+ has a high MI.
+\end_layout
+
+\begin_layout Standard
+Conclude: the majority-voting scheme left behind (left unmerged) too much;
+ enough that the MI between what is left is still high.
+ Can we redefine the voting procedure to lessen this?
+\end_layout
+
+\begin_layout Subsection*
+Bug Fixes
+\end_layout
+
+\begin_layout Standard
+There were multiple bugs, difficult to locate.
+ Some cross-section merges were being done wrong.
+ A bug in cog-delete! was erasing data in DB, thus restarts loaded missing/corru
+pt data.
+ As of 15 Jan all seems to be fixed.
+\end_layout
+
+\begin_layout Subsection*
+Round 31
+\end_layout
+
+\begin_layout Standard
+After fixes, the first 31 rounds merge the following words.
+ The is with quorum=0.5 commonality=0.2 noise=4.
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="34" columns="3">
+<features islongtable="true" headTopDL="true" headBottomDL="true" longtabularalignment="center">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+N
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+class
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+comments
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
++ — “ ” _
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+, ; 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+was is
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+but and that as
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+? .
+ !
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+He It I There
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK, sentence starters
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+" ” , ? .
+ ! what
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Expand group N=5
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell multirow="3" alignment="center" valignment="middle" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+He It I There She This
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Expansion of group N=6
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+A No He It I There She This The
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Expansion of group above!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+of in to from
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+his the a he I
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+odd but plausible
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+' -- but and that as " ” , ? .
+ ! what + — “ ” _
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Yuck! Merge N=4,7,1
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+: ###LEFT-WALL### , ; me
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Yuck.
+ Expand N=2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+14
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+has was is had could
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Expand N=3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row endhead="true">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+be have see make
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK-ish
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+must would
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+asked said has was is had could do did
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK-ish
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+was am think
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK-ish
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+: ] , .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+20
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+he she
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+21
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+are were
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+22
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+It This this what
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+23
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Well You ' -- but and that as 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Yuck.
+ Expand 12
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+" ” , ? .
+ ! what + — “ ” _ you Oh
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+“ Oh
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Left-overs from above.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+might should will may
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+26
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+much well good little long
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+good
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+27
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+could must would might 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great! Merge 16, 25
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+should will may can shall
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+into of in to from
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great! Expand 10
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+29
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+He She
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+no nothing his the a he I an
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Meh.
+ Expand 11
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+31
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+on upon
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+great!
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Notable is that a fairly large number of merges are expanding or merging
+ prior classes.
+ This is curious.
+ This suggests that 
+\begin_inset Quotes eld
+\end_inset
+
+preferential attachment
+\begin_inset Quotes erd
+\end_inset
+
+ is hard at work, and so we should not be surprised to later observe scale-free
+ results.
+\end_layout
+
+\begin_layout Standard
+This implies that ranked-MI/variational-MI automatically, inherently makes
+ these kind of preferential-attachment suggestions.
+ How does this work? What are the details? Are there alternatives?
+\end_layout
+
+\begin_layout Standard
+Regarding the mediocre merge suggestions: The Jaccard-selection mechanism
+ selects membership, and we don't have a window into that.
+ Its possible that the mediocre merge recommendations work out so that very
+ few disjuncts get merged into the final cluster.
+ Is there a way of visualizing the 
+\begin_inset Quotes eld
+\end_inset
+
+word-sense
+\begin_inset Quotes erd
+\end_inset
+
+ of a cluster?
+\end_layout
+
+\begin_layout Standard
+Also being tracked, per merge: rows, cols, lcnt, rcnt, size, sparsity, entropy,
+ ranked-mi, mmt-q.
+ These look good, up to round 28, when lcnt=0, size=0 and some divide-by-zero
+ garbage up the other stats! After that point, the lcnt off by a little
+ bit.
+\end_layout
+
+\begin_layout Standard
+At the conclusion of round 27, mmt-q=+inf.0 is already wrong.
+ But this value gets recorded as part of round 28.
+ During extension of round 27, some occasional garbage:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+MI(`in`, `into`) = +inf.0  rank-MI = +nan.0
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Turns out is was a bad wild-card de-reference that clobbered the wildcard
+ anchor.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Merge Datasets
+\end_layout
+
+\begin_layout Standard
+The following merge parameters are being pursued in the following datasets:
+ 
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+name
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+quorum
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+commonality
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+noise
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r10-mrg-q0.5-c0.2.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r10-mrg-q0.6-c0.3.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r10-mrg-q0.7-c0.4.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r10-mrg-q0.8-c0.5.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Spot sampling of the merges looks much like the above: some pretty good-looking
+ merges interspersed with some head-scratchers.
+ This occasional ugliness continues deeply into the merge stream.
+ What is not clear is how many disjuncts are involved in the uglies, and,
+ if they occur early, exactly how much 
+\begin_inset Quotes eld
+\end_inset
+
+noise
+\begin_inset Quotes erd
+\end_inset
+
+ they carry away.
+\end_layout
+
+\begin_layout Standard
+What does come clear from the spot inspection is that ranked-MI is starting
+ to make some pretty poor recommendations.
+ Basically, the clusters get an 
+\begin_inset Quotes eld
+\end_inset
+
+unnaturally
+\begin_inset Quotes erd
+\end_inset
+
+ large ranked-MI, because they are so large, even though the raw MI to what
+ is being suggested is relatively low.
+ That is, the use of ranked-MI is the reason why the clusters grow preferentiall
+y.
+\end_layout
+
+\begin_layout Standard
+For this round, four stats are tracked: the dataset sparsity, the dataset
+ entropy, the ranked MI of the next pair to be selected, and the 
+\begin_inset Formula $MM^{T}Q$
+\end_inset
+
+ as defined in the previous diary.
+ 
+\end_layout
+
+\begin_layout Standard
+Here's all four of these on one graph: 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-en-merge/log-0.5-0.2.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's just sparsity, for all four merge parameters.
+ Although it is increasing, it is increasing by very small amounts.
+ The quorum=0.8 run crashed in a way that doesn't make it worth restarting
+ (see newer data below).
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-en-merge/sparsity.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The dataset total MM^T entropy.
+ It is dropping because the merges are 
+\begin_inset Quotes eld
+\end_inset
+
+bringing order to the chaos
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-en-merge/entropy.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The ranked-MI of the next pair to merge drops, because, naturally, the highest-r
+anked pairs are merged.
+ It spiked whenever a large cluster is created: the shear size of this cluster
+ guarantees that it will have a large ranked-MI, irrespective of the absolute-MI.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-en-merge/ranked-mi.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The value 
+\begin_inset Formula $Q$
+\end_inset
+
+ is being used as a 
+\begin_inset Quotes eld
+\end_inset
+
+constant
+\begin_inset Quotes erd
+\end_inset
+
+ to offset the common-MI to a non-negative range.
+ The definition was the log of the sum-squared marginals:
+\begin_inset Formula 
+\[
+Q=-\log_{2}\sum_{d}P\left(*,d\right)P\left(*,d\right)
+\]
+
+\end_inset
+
+This is 
+\begin_inset Quotes eld
+\end_inset
+
+constant
+\begin_inset Quotes erd
+\end_inset
+
+ for a fixed dataset, in that it is independent of the word and disjunct.
+ As merges proceed, it changes.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-en-merge/mmtq.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There seems to be a big changes in the quorum=0.7 curve, just before the
+ 800'th merge.
+ Unfortunately, this code failed to track the merged words, so unclear what
+ that's about.
+\end_layout
+
+\begin_layout Standard
+Other issues: the above run fails to compute the marginals correctly, and
+ thus some of the similarities could easily be off.
+ This particular bug is fixed, and a newer run is presented further below.
+\end_layout
+
+\begin_layout Standard
+Notes:
+\end_layout
+
+\begin_layout Itemize
+The quorum=0.8 run died prematurely, after performing 986 merges.
+ At the conclusion, it only had 502 word-classes, so clearly, many classes
+ are being recombined and expanded.
+\end_layout
+
+\begin_layout Itemize
+Failed to write out the MemberLinks on all four datasets, and so these are
+ useless for creating dictionaries.
+\end_layout
+
+\begin_layout Section*
+Marginal Entropy Distributions (Jan 2022)
+\end_layout
+
+\begin_layout Standard
+In the paper 
+\begin_inset Quotes eld
+\end_inset
+
+Connector Set Distributions
+\begin_inset Quotes erd
+\end_inset
+
+, an extensive examination of various relationships between word distributions,
+ entropy, mutual information and rank is explored.
+ Below, we explore a bit more in that vein, that apparently was not previously
+ explored.
+ 
+\end_layout
+
+\begin_layout Standard
+In Diary Part Three we looked at the word-rank vs.
+ support (page 10).
+ Here, we look at rank vs.
+ right-entropy and rank vs.
+ right-MI as well as rank vs log-probability.
+ The goal of asking these questions is two-fold.
+ 
+\end_layout
+
+\begin_layout Itemize
+The current merge algo uses ranked-MI to select the next word-pair to anchor
+ a merge.
+ Perhaps some other linear combination of MI and, say, right-entropy might
+ be better?
+\end_layout
+
+\begin_layout Itemize
+The current merge algo uses a majority-voting scheme, by computing an overlap.
+ Perhaps some log-overlap, of some word-disjunct MI would be better?
+\end_layout
+
+\begin_layout Standard
+Anyway, these relationships seem interesting.
+\end_layout
+
+\begin_layout Subsection*
+Definitions
+\end_layout
+
+\begin_layout Standard
+Some definitions are in order.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+The definitions here are the same as given in earlier texts.
+ The code that implements these was developed primarily in 2017, and can
+ be found in the `opencog/matrix` subdirectory of the git repo at 
+\begin_inset CommandInset href
+LatexCommand href
+name "AtomSpace"
+target "https://github.com/opencog/atomspace/tree/master/opencog/matrix"
+literal "false"
+
+\end_inset
+
+.
+ See, in particular, `frequency.scm` and `entropy.scm`.
+\end_layout
+
+\end_inset
+
+ This repeats definitions given earlier.
+ For a word-disjunct pair 
+\begin_inset Formula $\left(w,d\right)$
+\end_inset
+
+ the frequentist probability is 
+\begin_inset Formula $P\left(w,d\right)=N\left(w,d\right)/N\left(*,*\right)$
+\end_inset
+
+.
+ Since it has two arguments, this can be called the 'joint probability'
+ or 'joint frequency'.
+\end_layout
+
+\begin_layout Subsubsection*
+Total and Marginal Entropies
+\end_layout
+
+\begin_layout Standard
+The total entropy is
+\begin_inset Formula 
+\[
+H=H_{\mbox{tot}}=-\sum_{w,d}P\left(w,d\right)\log_{2}P\left(w,d\right)
+\]
+
+\end_inset
+
+The right-marginal entropy for a given word 
+\begin_inset Formula $w$
+\end_inset
+
+ is
+\begin_inset Formula 
+\[
+h_{\mbox{right}}\left(w\right)=-\sum_{d}P\left(w,d\right)\log_{2}P\left(w,d\right)
+\]
+
+\end_inset
+
+The fractional right-marginal entropy for a given word 
+\begin_inset Formula $w$
+\end_inset
+
+ is 
+\begin_inset Formula 
+\[
+H_{\mbox{right}}\left(w\right)=\frac{h_{\mbox{right}}\left(w\right)}{P\left(w,*\right)}
+\]
+
+\end_inset
+
+The goal of the division by the marginal probability 
+\begin_inset Formula $P\left(w,*\right)$
+\end_inset
+
+ of the word 
+\begin_inset Formula $w$
+\end_inset
+
+ is to rescale the entropy into a sensible range.
+ For the current dataset, this is in the range of 5 to 25, as graphed below.
+ The 
+\begin_inset Formula $h_{\mbox{left}}\left(d\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $H_{\mbox{left}}\left(d\right)$
+\end_inset
+
+ for disjuncts 
+\begin_inset Formula $d$
+\end_inset
+
+are defined likewise.
+ Note that 
+\begin_inset Formula 
+\[
+H_{\mbox{tot}}=\sum_{w}P\left(w,*\right)H_{\mbox{right}}\left(w\right)=\sum_{d}P\left(*,d\right)H_{\mbox{left}}\left(d\right)
+\]
+
+\end_inset
+
+can be used as a consistency check on the numerical results.
+ 
+\end_layout
+
+\begin_layout Standard
+The marginal probabilities also allow two more kinds of entropies to be
+ defined.
+ These are the left and right entropies of the left and right marginal probabili
+ties: 
+\begin_inset Formula 
+\[
+S_{\mbox{right}}=\sum_{w}P\left(w,*\right)\log_{2}P\left(w,*\right)
+\]
+
+\end_inset
+
+and likewise 
+\begin_inset Formula 
+\[
+S_{\mbox{left}}=\sum_{d}P\left(*,d\right)\log_{2}P\left(*,d\right)
+\]
+
+\end_inset
+
+One might argue that the names 
+\begin_inset Quotes eld
+\end_inset
+
+left
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+right
+\begin_inset Quotes erd
+\end_inset
+
+ are incorrectly interchanged in the above, but this is the naming convention
+ used in the implementation, and changing it risks introducing bugs and
+ confusion.
+ 
+\end_layout
+
+\begin_layout Standard
+These two are related to the total mutual information (as defined below)
+ as
+\begin_inset Formula 
+\[
+MI_{\mbox{tot}}=S_{\mbox{right}}+S_{\mbox{left}}-H_{\mbox{tot}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Total and Marginal Mutual Information
+\end_layout
+
+\begin_layout Standard
+The mutual information for a word-disjunct pair 
+\begin_inset Formula $\left(w,d\right)$
+\end_inset
+
+ is 
+\begin_inset Formula 
+\[
+mi\left(w,d\right)=P\left(w,d\right)\log_{2}\frac{P\left(w,d\right)}{P\left(*,d\right)P\left(w,*\right)}
+\]
+
+\end_inset
+
+As always, the fractional MI is
+\begin_inset Formula 
+\[
+MI\left(w,d\right)=\frac{mi\left(w,d\right)}{P\left(w,d\right)}
+\]
+
+\end_inset
+
+thus scaling it into a sensible range of -5 to +20, as shown below.
+ The marginals proceed likewise, as above, so that the right marginal 
+\begin_inset Formula $mi$
+\end_inset
+
+ for word 
+\begin_inset Formula $w$
+\end_inset
+
+ is 
+\begin_inset Formula 
+\[
+mi_{\mbox{right}}\left(w\right)=mi\left(w,*\right)=\sum_{d}mi\left(w,d\right)
+\]
+
+\end_inset
+
+and the fractional right marginal mutual information is 
+\begin_inset Formula 
+\[
+MI_{\mbox{right}}\left(w\right)=\frac{mi_{\mbox{right}}\left(w\right)}{P\left(w,*\right)}
+\]
+
+\end_inset
+
+The grand-total MI for the dataset is
+\begin_inset Formula 
+\[
+MI=MI_{\mbox{tot}}=\sum_{w,d}mi\left(w,d\right)=\sum_{w}P\left(w,*\right)MI_{\mbox{right}}\left(w\right)=\sum_{d}P\left(*,d\right)MI_{\mbox{left}}\left(d\right)
+\]
+
+\end_inset
+
+As noted earlier, the mutual information is minus the total entropy, up
+ to entropies of the marginal probabilities:
+\begin_inset Formula 
+\[
+MI_{\mbox{tot}}=S_{\mbox{right}}+S_{\mbox{left}}-H_{\mbox{tot}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Dataset Summary
+\end_layout
+
+\begin_layout Standard
+Starting point: the dataset `r9-sim-200.rdb` after running `compute-mi` on
+ it, to get the full collection of stats on (w,d) pairs.
+ The stat summary is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+dataset
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $H_{\mbox{tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{\mbox{left}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{\mbox{right}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $MI_{\mbox{tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r9-sim-200+mi.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.463
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.535
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8.5148
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5.5865
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+dataset
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{\mbox{words}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{\mbox{dj}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{\mbox{pairs}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N\left(*,*\right)$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r9-sim-200+mi.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15083
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1043583
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2777968
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+22942644
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, 
+\begin_inset Formula $N_{\mbox{pairs}}$
+\end_inset
+
+ is the total number of pairs 
+\begin_inset Formula $\left(w,d\right)$
+\end_inset
+
+ that were observed (i.e.
+ pairs with non-zero counts).
+ The total number of observations of these pairs is 
+\begin_inset Formula $N\left(*,*\right)$
+\end_inset
+
+.
+ The sparsity is 
+\begin_inset Formula $-\log_{2}N_{\mbox{pairs}}/\left(N_{\mbox{words}}\times N_{\mbox{dj}}\right)=12.468$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection*
+Zipf Distribution
+\end_layout
+
+\begin_layout Standard
+Some graphs follow.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+The data was processed with the `utils/entropy-marginals.scm` scripts in
+ this directory.
+\end_layout
+
+\end_inset
+
+ We begin with a very conventional graph, and a very conventional result.
+ This shows the marginal frequency 
+\begin_inset Formula $P\left(w,*\right)$
+\end_inset
+
+ as a function of the rank.
+ The distribution is almost Zipfian, with a classical Zipf slope.
+ It's a bit noisier than hoped for; the noise may be due to the somewhat
+ imperfect dataset (it contains a lot of words with escaped backslashes
+ in them, due to a very early parsing bug.)
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/rank-wfreq.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A similar figure can be drawn for the entropy; it is very nearly identical.
+\end_layout
+
+\begin_layout Subsection*
+Entropy Distributions
+\end_layout
+
+\begin_layout Standard
+Next: a histogram of 
+\begin_inset Formula $H_{\mbox{right}}\left(w\right)$
+\end_inset
+
+ for the 15083 words 
+\begin_inset Formula $w$
+\end_inset
+
+ in the dataset.
+ These are placed into 200 bins and counted with a weight of 1.0 per word.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/bin-went.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The smooth curve marked G is the Gaussian distribution
+\begin_inset Formula 
+\[
+G\left(x;\mu,\sigma\right)=\frac{1}{\sigma\sqrt{2\pi}}\exp-\frac{\left(x-\mu\right)^{2}}{2\sigma^{2}}
+\]
+
+\end_inset
+
+This fit is not particularly convincing; there's a sharp drop-off to the
+ right that is not being fit.
+ The data is fairly noisy.
+ My guess is that the spiky bits on the right are from infrequently-observed
+ word-disjunct pairs.
+ 
+\end_layout
+
+\begin_layout Standard
+This suggests redoing the bin-counts, weighting each word by it's probability.
+ This is shown below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/bin-wei-went.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This shows the same data, with each word weighted by the probability of
+ that word.
+ That is, this is a graph of 
+\begin_inset Formula $H_{\mbox{right}}\left(w\right)$
+\end_inset
+
+ with each point weighted by 
+\begin_inset Formula $P\left(w,*\right)$
+\end_inset
+
+.
+ This makes it clear that the right side of the picture, the high entropy
+ side, is associated with infrequent words.
+ 
+\end_layout
+
+\begin_layout Standard
+Also, this time, the Gaussian is an excellent fit.
+ Note that the Gaussian is centered on 
+\begin_inset Formula $H_{\mbox{tot}}=19.463$
+\end_inset
+
+ for the dataset.
+ This is as it should be: the total entropy is the average of this distribution.
+\end_layout
+
+\begin_layout Subsection*
+MI Distributions
+\end_layout
+
+\begin_layout Standard
+Same as above, but for the word-disjunct mutual information.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/bin-wei-wmi.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It seems reasonable to expect a Gaussian distribution here, also, but it
+ appears to not be the case.
+ A log-linear fit seems better.
+ It's not clear whether this should be dismissed as 
+\begin_inset Quotes eld
+\end_inset
+
+bad data
+\begin_inset Quotes erd
+\end_inset
+
+ or not.
+ Note that the Gaussian is centered on 
+\begin_inset Formula $MI_{\mbox{tot}}=5.5865$
+\end_inset
+
+.
+ The histogram has been manually checked, and integrates to this same value.
+ That is might be the case is not obvious in this semi-log plot, but the
+ very high frequency of values 
+\begin_inset Formula $MI<5$
+\end_inset
+
+ is enough to balance the long tail on the right.
+\end_layout
+
+\begin_layout Subsection*
+Scatter-plots
+\end_layout
+
+\begin_layout Standard
+How does the MI correlate with the entropy and the frequency? Three scatter-plot
+s reveal this relationship.
+ The first scatter-plot shows the entropy 
+\begin_inset Formula $H_{\mbox{right}}\left(w\right)$
+\end_inset
+
+ vs.
+ the log of the marginal frequency 
+\begin_inset Formula $-\log_{2}P\left(w,*\right)$
+\end_inset
+
+.
+ The two straight lines have the slopes as indicated, and approximately
+ bound the distribution.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/scat-wfreq-went.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The graph below shows the mutual information 
+\begin_inset Formula $MI_{\mbox{right}}\left(w\right)$
+\end_inset
+
+ vs.
+ the log of the marginal frequency 
+\begin_inset Formula $-\log_{2}P\left(w,*\right)$
+\end_inset
+
+.
+ Again, two lines approximately bound the distribution.
+ Note that the average MI of this distribution is 
+\begin_inset Formula $MI_{\mbox{tot}}=5.5865$
+\end_inset
+
+.
+ Thus, we have a very long tail offsetting a very heavy low-MI, high-frequency
+ stub.
+ Similarly, the average of 
+\begin_inset Formula $-\log_{2}P\left(w,*\right)$
+\end_inset
+
+ is 
+\begin_inset Formula $S_{\mbox{right}}=8.5148$
+\end_inset
+
+.
+ Thus, the centroid of this scatter-plot is in the lower-left, and not where
+ one might visually expect it.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/scat-wfreq-wmi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Finally, the the entropy 
+\begin_inset Formula $H_{\mbox{right}}\left(w\right)$
+\end_inset
+
+ vs.
+ he mutual information 
+\begin_inset Formula $MI_{\mbox{right}}\left(w\right)$
+\end_inset
+
+.
+ Rather than attempting to bound this distribution, the two lines attempt
+ to bisect it.
+ This is an 
+\begin_inset Quotes eld
+\end_inset
+
+unweighted
+\begin_inset Quotes erd
+\end_inset
+
+ bisection.
+ The actual centroid of this figure is at 
+\begin_inset Formula $H_{\mbox{tot}}=19.463$
+\end_inset
+
+ and 
+\begin_inset Formula $MI_{\mbox{tot}}=5.5865$
+\end_inset
+
+, at the lower middle of this scatter-plot.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-entropy/scat-went-wmi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In conclusion: there is an obvious correlation between frequency and entropy,
+ and frequency and MI.
+ However, the correlation between entropy and MI is considerably weaker.
+\end_layout
+
+\begin_layout Subsection*
+Alternative Rankings
+\end_layout
+
+\begin_layout Standard
+The Diary Part Three proposes that two words should form the seed of a cluster,
+ if they have the largest ranked-MI of all word-pairs.
+ Can the above provide some alternative rankings? First, recall the definition
+ of the ranked-MI.
+\end_layout
+
+\begin_layout Subsubsection*
+Ranked-MI
+\end_layout
+
+\begin_layout Standard
+The following is a quick recap of the ranked-MI, as discovered and developed
+ in Parts Three and Four of the Diary.
+ The ranked-MI was built out of the common-MI plus Q, as follows.
+ Specifically, this repeats and condenses the content of Part Three, pages
+ 18-19, as well as Diary Part Four, page 19.
+ Start by defining 
+\begin_inset Formula $N\left(w,d\right)$
+\end_inset
+
+ as the observation count on the word-disjunct pair 
+\begin_inset Formula $\left(w,d\right)$
+\end_inset
+
+.
+ From this, the observation frequency follows as 
+\begin_inset Formula 
+\[
+P\left(w,d\right)=\frac{N\left(w,d\right)}{N\left(*,*\right)}
+\]
+
+\end_inset
+
+The joint frequency of two words 
+\begin_inset Formula $w,u$
+\end_inset
+
+ is then defined as the matrix product
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(w,u\right)=\sum_{d}P\left(w,d\right)P\left(u,d\right)
+\]
+
+\end_inset
+
+This is not normalized, in that 
+\begin_inset Formula $f\left(*,*\right)\ne1$
+\end_inset
+
+ which leads to the definition of
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+Q=-\log_{2}f\left(*,*\right)=-\log_{2}\sum_{d}P\left(*,d\right)P\left(*,d\right)
+\]
+
+\end_inset
+
+which has a value of 
+\begin_inset Formula $Q=11.945777$
+\end_inset
+
+ for this dataset.
+ Note the minus sign.
+ This means 
+\begin_inset Formula $1\gg f\left(*,*\right)$
+\end_inset
+
+.
+ The marginals can then be derived as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(w\right)=f\left(w,*\right)=\sum_{d}P\left(w,d\right)P\left(*,d\right)
+\]
+
+\end_inset
+
+The word-pair MI is defined as 
+\begin_inset Formula 
+\[
+MI\left(u,w\right)=\log_{2}\frac{f\left(w,u\right)f\left(*,*\right)}{f\left(w\right)f\left(u\right)}
+\]
+
+\end_inset
+
+Note the definition above is 
+\begin_inset Quotes eld
+\end_inset
+
+projective
+\begin_inset Quotes erd
+\end_inset
+
+, in that it is independent of the overall normalization of 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ This is seen explicitly, by expanding out:
+\begin_inset Formula 
+\begin{align*}
+MI\left(u,w\right)= & \log_{2}\frac{\left[\sum_{d}P\left(u,d\right)P\left(w,d\right)\right]\left[\sum_{d}P\left(*,d\right)P\left(*,d\right)\right]}{\left[\sum_{d}P\left(u,d\right)P\left(*,d\right)\right]\left[\sum_{d}P\left(w,d\right)P\left(*,d\right)\right]}\\
+= & \log_{2}\frac{\left[\sum_{d}N\left(u,d\right)N\left(w,d\right)\right]\left[\sum_{d}N\left(*,d\right)N\left(*,d\right)\right]}{\left[\sum_{d}N\left(u,d\right)N\left(*,d\right)\right]\left[\sum_{d}N\left(w,d\right)N\left(*,d\right)\right]}
+\end{align*}
+
+\end_inset
+
+The ranked-MI is defined as 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\mbox{ranked}MI\left(w,u\right)= & MI\left(u,w\right)+\frac{1}{2}\log_{2}f\left(u\right)+\frac{1}{2}\log_{2}f\left(w\right)+Q\\
+= & \log_{2}\frac{f\left(w,u\right)}{\sqrt{f\left(w\right)f\left(u\right)}}
+\end{align*}
+
+\end_inset
+
+Just like the MI, the ranked-MI is scale invariant; its projective.
+ This suggests that it has some interesting theory behind it.
+ Graphs for the ranked-MI for this dataset can be found at the end of Part
+ Three.
+ They are pretty Gaussians.
+\end_layout
+
+\begin_layout Subsection*
+Probabilities over Word Pairs
+\end_layout
+
+\begin_layout Standard
+The ratio
+\begin_inset Formula 
+\[
+\pi\left(u,w\right)=\frac{f\left(w,u\right)}{f\left(*,*\right)}
+\]
+
+\end_inset
+
+is a probability.
+ Thus, we can play the game again, this time with 
+\begin_inset Formula $\pi$
+\end_inset
+
+ and ask about conditional probabilities, mutual information and entropies.
+ For example, what is the value of
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+RMI_{\mbox{tot}}=\sum_{w,u}\pi\left(w,u\right)\log_{2}\frac{\pi\left(w,u\right)}{\sqrt{\pi\left(w\right)\pi\left(u\right)}}
+\]
+
+\end_inset
+
+This and related questions have to stay out of reach, however, since computing
+ 
+\begin_inset Formula $\pi\left(u,w\right)$
+\end_inset
+
+ for all word-pairs 
+\begin_inset Formula $\left(u,w\right)$
+\end_inset
+
+ is computationally infeasible at this time.
+ (Well, it could be done 
+\begin_inset Quotes eld
+\end_inset
+
+easily
+\begin_inset Quotes erd
+\end_inset
+
+ on a cloud instance with a few hundred CPU's, but I don't have that, or
+ even the code to leverage that.)
+\end_layout
+
+\begin_layout Subsubsection*
+Alternative Rankings
+\end_layout
+
+\begin_layout Standard
+Following the above, several variations suggest themselves: 
+\begin_inset Formula 
+\[
+HMI\left(u,w\right)=MI\left(u,w\right)+\frac{1}{2}H_{\mbox{right}}\left(u\right)+\frac{1}{2}H_{\mbox{right}}\left(w\right)
+\]
+
+\end_inset
+
+and 
+\begin_inset Formula 
+\[
+MMI\left(u,w\right)=MI\left(u,w\right)+\frac{1}{2}MI_{\mbox{right}}\left(u\right)+\frac{1}{2}MI_{\mbox{right}}\left(w\right)
+\]
+
+\end_inset
+
+Either of these feel like promising improvements to ranked-MI, as, experimentall
+y, ranked-MI is proving to be less than reliable for merge determinations.
+ As mentioned earlier, the core problem is that ranked-MI seems to be suggesting
+ that clusters should be merged far too often, presumably because 
+\begin_inset Formula $\frac{1}{2}\log_{2}f\left(w\right)$
+\end_inset
+
+ gets larger and larger as the clusters grow.
+\end_layout
+
+\begin_layout Standard
+Neither of the above have 
+\begin_inset Quotes eld
+\end_inset
+
+pretty
+\begin_inset Quotes erd
+\end_inset
+
+ interpretations, which can be seen by recalling the definitions above:
+\begin_inset Formula 
+\[
+H_{\mbox{right}}\left(w\right)=-\frac{\sum_{d}P\left(w,d\right)\log_{2}P\left(w,d\right)}{P\left(w,*\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and
+\begin_inset Formula 
+\[
+MI_{\mbox{right}}\left(w\right)=\frac{1}{P\left(w,*\right)}\sum_{d}P\left(w,d\right)\log_{2}\frac{P\left(w,d\right)}{P\left(*,d\right)P\left(w,*\right)}
+\]
+
+\end_inset
+
+These are less compelling because of this complexity.
+\end_layout
+
+\begin_layout Subsection*
+Alternative Similarity Distributions
+\end_layout
+
+\begin_layout Standard
+We previously saw that common-MI had a nice Gaussian distribution.
+ Is this still the case for HMI and MMI? Lets find out ...
+\end_layout
+
+\begin_layout Standard
+In Part Three, the graphs were done with a set of similarities for the top
+ 1200 words, computed without shapes.
+ What I have handy for the current dataset is much smaller: just the top
+ 200 most frequent words; however, this time, similarities were computed
+ using shapes.
+ So its ..
+ different.
+ Anyway, there's a total of 
+\begin_inset Formula $N\left(N+1\right)/2=20100$
+\end_inset
+
+ similarities handy.
+ Of these, 175 do not have an MI; that is, the dot-product is zero, so the
+ MI is 
+\begin_inset Formula $-\infty$
+\end_inset
+
+.
+ Thus, only 20100-175=19925 actual pairs.
+\end_layout
+
+\begin_layout Standard
+Four nearly identical graphs, differing only in the horizontal offset:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-sim/sim-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-sim/sim-rmi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-sim/sim-hmi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-sim/sim-mmi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Gaussians are an eyeballed fit.
+ Perhaps there are some popular fat-tailed distributions that would give
+ a better fit? At any rate, the fat-tail is on the left, an excessive of
+ word-pairs judged to be dis-similar.
+ Perhaps this is a good thing? That is, the MPG parsing gave us a bunch
+ of disjuncts that are 
+\begin_inset Quotes eld
+\end_inset
+
+obviously
+\begin_inset Quotes erd
+\end_inset
+
+ dis-similar, which is exactly what we hope to see.
+ Perhaps the fatness of the tail is correlated with the number of distinct
+ word-senses? That is, we expect words with different word-senses to be
+ dis-similar to one-another, and so the more word-senses there are, the
+ fatter the tail? What is the theoretical exposition for this effect?
+\end_layout
+
+\begin_layout Standard
+How similar are these graphs? All four are re-plotted below, with the horizontal
+ offset adjusted by the eyeballed fits, above.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-sim/simil-all.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Clearly, these are almost identical, but not quite.
+ Given the earlier scatter-plots, the specific rankings of specific pairs
+ must be different in each of these.
+ How different? The table below lists the top 17 most similar pairs for
+ each style of similarity.
+ The top number is the similarity score for each style; the negative numbers
+ are how much less the next score is, from the top score.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="18" columns="8">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+MI
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ranked-MI
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+HMI
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+MMI
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+9.755
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+[ +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+9.167
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+28.02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+19.32
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+[ +
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.37
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+; ,
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.01
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+[ +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.58
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— +
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.69
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— [
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.11
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+is was
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.44
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— [
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— [
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-2.63
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+! ?
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.14
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+and but
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.76
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+their our
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.21
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+( +
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-2.79
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+( +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.23
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+.
+ ?
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.41
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+their its
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.53
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] +
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.42
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] :
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.25
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+! ?
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.49
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+your our
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-4.05
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+( [
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.45
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.30
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+It He
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.64
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+their your
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-4.31
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] [
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.46
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+should might
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.35
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+[ +
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.64
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+! ?
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-4.91
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] :
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.51
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+( [
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.94
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+” "
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.77
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+their his
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-5.02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+* +
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.82
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+should could
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.97
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+No A
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.78
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+make take
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-5.55
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+! ?
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.90
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+their our
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.97
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+in of
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.81
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+its our
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-5.70
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— (
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.91
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+.
+ ?
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-0.97
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+she he
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.88
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+make get
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-5.88
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] —
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.95
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+— (
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.02
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+It There
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.93
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+upon into
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-6.18
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+[ *
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.96
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+were are
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.06
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+and as
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.98
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+his our
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-6.48
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+] (
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-3.99
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+upon on
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+! .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-2.00
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+my your
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-6.65
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+) ]
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-4.03
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+might could
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.13
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+‘ “
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-2.06
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+upon from
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-6.83
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+should might
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-4.06
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+in into
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-1.20
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+She It
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-2.07
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+get take
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+-7.31
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+well long
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+What can we conclude? Clearly, the naked MI score is exploring all pairings
+ of similar things.
+ By using the in-group algo, we could expect that all the punctuation gets
+ lumped together.
+ The HMI seems to fall into a similar trap: the in-group seems to be 
+\begin_inset Quotes eld
+\end_inset
+
+their our its your his my
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Hard to figure out what to make of this.
+\end_layout
+
+\begin_layout Standard
+A tempting conclusion, perhaps a bit 
+\emph on
+ad hoc
+\emph default
+, is to use ranked-MI to suggest the initial pair to seed a cluster, but
+ then to use either MI, HMI or MMI to expand the actual in-group.
+ So, MMI looks pretty slick, but is computationally the heaviest to recompute.
+ HMI should be fairly fast, as it's just some logs.
+ And MI is computationally 
+\begin_inset Quotes eld
+\end_inset
+
+free
+\begin_inset Quotes erd
+\end_inset
+
+, it has to be computed anyway.
+\end_layout
+
+\begin_layout Standard
+Where to change this: search code for `optimal-in-group` and specify the
+ desired similarity function.
+\end_layout
+
+\begin_layout Standard
+Hypothesis: it is also possible that these different in-group suggestions
+ won't alter very much.
+ This is because it is not the initial pair that matters, it is the in-group
+ near that initial pair that matters.
+ Perhaps all of these end up suggesting similar, or the same in-groups?
+\end_layout
+
+\begin_layout Section*
+Experiment-11 – Deep Merge (also Expt 12 graphs)
+\end_layout
+
+\begin_layout Standard
+Given the above results, it seems time for a deeper-merge experiment.
+ Unlike experiment-10, this one focuses on:
+\end_layout
+
+\begin_layout Itemize
+Using plain-MI instead of rank-MI for determining the in-group.
+\end_layout
+
+\begin_layout Itemize
+Fixes quorum=0.7 and commonality=0.2 and varies the noise: noise= 4,3,2,1
+\end_layout
+
+\begin_layout Standard
+Based on expt-10 it looks like quorum=0.7 or 0.8 would give better results.
+ Also, it seems like commonality has almost no effect: the chosen grouping
+ pretty much always is arrived at with the back-off strategy, rather than
+ with commonality exceeding the threshold.
+ By contrast, the noise-threshold appears to have a huge effect on what
+ gets merged.
+ Here's an example.
+ For the very first merge, we see
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+------ Round 1 Next in line:
+\end_layout
+
+\begin_layout Plain Layout
+
+ranked-MI = 9.1671 MI = 9.3888 (`—`, `+`)
+\end_layout
+
+\begin_layout Plain Layout
+
+------ Start merge 1 with seed pair `—` and `+` Initial in-group size=8:
+ `+` `—` `”` `_` `)` `[` `(` `]` 
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=8 overlap = 9 of 10975 disjuncts, commonality= 0.08%
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=7 overlap = 17 of 10530 disjuncts, commonality= 0.16%
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=6 overlap = 33 of 10107 disjuncts, commonality= 0.33%
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=5 overlap = 29 of 9433 disjuncts, commonality= 0.31%
+\end_layout
+
+\begin_layout Plain Layout
+
+In-group size=6: `+` `—` `”` `_` `)` `[`
+\end_layout
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+Notable is just how pathetically low the commonality is.
+ However, when the merge is actually performed, we see something quite different.
+ For noise=4, we get
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+------ merge-majority: Merge 5550 of 7957 sections in 12 secs
+\end_layout
+
+\begin_layout Plain Layout
+
+------ merge-majority: Remaining 14284 of 22825 cross in 43 secs  
+\end_layout
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+which tells us that almost all of the merged sections had an observation
+ count of less than or equal to 4! That is, 5550+14284 were merged, whereas
+ we expected only 6 x 33 x 70% = 140 to get merged! Yowie! This means that
+ only 140 sections/cross-sections had an observation count of greater than
+ 4; the rest of them had a lesser count, and were merged only because they
+ were swept up as being under the noise floor.
+\end_layout
+
+\begin_layout Standard
+For noise=3, we see that the number of merged sections drops:
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+------ merge-majority: Merge 4884 of 7957 sections in 11 secs
+\end_layout
+
+\begin_layout Plain Layout
+
+------ merge-majority: Remaining 12502 of 22863 cross in 37 secs
+\end_layout
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For noise=2, the number of merged sections drops again.
+ It's tempting to say that it's 
+\begin_inset Quotes eld
+\end_inset
+
+surprisingly high
+\begin_inset Quotes erd
+\end_inset
+
+, but its not: The Zipfian distribution tells us that there's an incredibly
+ fat tail at these low counts.
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+------ merge-majority: Merge 3586 of 7957 sections in 10 secs
+\end_layout
+
+\begin_layout Plain Layout
+
+------ merge-majority: Remaining 9135 of 22963 cross in 35 secs
+\end_layout
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+How much harm is there in merging of these low-count tails? My current guess
+ is 
+\begin_inset Quotes eld
+\end_inset
+
+none
+\begin_inset Quotes erd
+\end_inset
+
+.
+ These low-count tails contribute very little, or nothing to the word-pair
+ MI.
+ Right? Or are they nickel-n-diming us to death? (Hmm.
+ If they contribute nothing, then they could have been trimmed away from
+ the get-go...) Mostly, they hang around, chewing up space...
+ Later on, when a dictionary is created, these can be trimmed away, to arrive
+ at a more compact dictionary.
+ I don't have insight here.
+ It's confusing.
+\end_layout
+
+\begin_layout Standard
+On the other hand, due to the preferential-attachment phenomenon that is
+ being seen (large clusters getting larger) it might be that these fat tails
+ are wagging the dog: they suck in the noise, and then this noise sucks
+ in other tails.
+ These tails might end up dominating the sense of the cluster? Perhaps we
+ should have a noise=0 run to compare against?
+\end_layout
+
+\begin_layout Standard
+At any rate, its kind of surprising that the MI can be high but the commonality
+ is so low.
+ This doesn't make sense intuitively.
+\end_layout
+
+\begin_layout Subsection*
+What contributes to the MI?
+\end_layout
+
+\begin_layout Standard
+The last sentence immediately above seems important enough to get it's own
+ subsection.
+ What, exactly, is contributing to the MI? We see high MI values, but a
+ low Jaccard similarity.
+ This seems surprising.
+ Is it because the MI's are pairwise, while the Jaccard is for the group
+ as a whole?
+\end_layout
+
+\begin_layout Standard
+How does the low-count tail influence the MI? When does trimming tails help?
+ When does it hurt? 
+\end_layout
+
+\begin_layout Subsection*
+Progress graphs
+\end_layout
+
+\begin_layout Standard
+Far more graphs from this run.
+ All of these graphs are for datasets for which quorum=0.7 and commonality=0.2.
+ They differ in the noise setting, varying from 4 to 1.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+older
+\begin_inset Quotes erd
+\end_inset
+
+ dataset is from the previous run, way up above, which had quorum=0.7, commonalit
+y=0.4 and noise=4.
+ Note that assorted buglets were fixed since that older run.
+ 
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+precise
+\begin_inset Quotes erd
+\end_inset
+
+ dataset recomputes all word-pair MI for every possible word that was affected
+ by the merge.
+ This can be hundreds of words, thousands of word-pairs (and is thus slow
+ to compute).
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+imprecise
+\begin_inset Quotes erd
+\end_inset
+
+ datasets recompute the MI only for the words directly involved in the merge
+ (so, for only a handful of words, and so much faster to compute.) Thus,
+ one of the questions is whether the 
+\begin_inset Quotes eld
+\end_inset
+
+precise
+\begin_inset Quotes erd
+\end_inset
+
+ datasets provide materially better classifications, or not.
+\end_layout
+
+\begin_layout Standard
+Computation of these datasets was terminated with a snowstorm power outage.
+ Rather than resuming where these left off, a fresh computation was started,
+ with a slightly cleaned up dataset, Experiment 12.
+ As can be seen, there are no substantial changes arising from this.
+\end_layout
+
+\begin_layout Standard
+Shown for comparison are the Experiment-12 graphs.
+ These are based on the same underlying dataset as Experiment-11, but are
+ cleaned up to remove unconnectable words and disjuncts.
+ That is, the dataset is scrubbed to remove all connectors that cannot connect
+ to words, and vice-versa.
+ This has a minor effect on the graphs, but reduces the amount of annoyance
+ and confusion during inspection and debugging.
+ 
+\end_layout
+
+\begin_layout Standard
+The Experiment-12 
+\begin_inset Quotes eld
+\end_inset
+
+imprecise
+\begin_inset Quotes erd
+\end_inset
+
+ runs all failed when they ran out of hugepage memory.
+ Foo.
+ Unable to recover and pick up where they left off; there is some kind of
+ bug that prevents restarting (the marginals get unbalanced, and recomputing
+ them leaves something wrong...) These halted as shown:
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="2">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Dataset
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+nmerges
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n1.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1343
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n2.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+891
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n3.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1062
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n4.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1058
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The last two stopped at almost the same place, and thus allow head-to-head
+ comparisons.
+ See much farther below.
+\end_layout
+
+\begin_layout Subsubsection*
+Sparsity
+\end_layout
+
+\begin_layout Standard
+Sparsity is defined as always: it is log2 of the fraction of non-zero matrix
+ entries to total possible matrix entries.
+ Gut instinct says 'slower sparsity growth is better'.
+ From the first graph, though, we find a very non-linear growth rate depending
+ on the noise threshold.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-sparsity.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-sparsity.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-sparsity.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-sparsity.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For the new improved cleaned-up dataset, the initial sparsity is lower.
+\end_layout
+
+\begin_layout Subsubsection*
+MMT Entropy
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $MM^{T}$
+\end_inset
+
+-entropy is as defined before; it is 
+\begin_inset Formula 
+\[
+H=\log_{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula 
+\[
+f\left(w,u\right)=\sum_{d}P\left(w,d\right)P\left(u,d\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that the cleanup has almost no impact on the MMT Entropy.
+ It is slightly different, but not by much.
+\end_layout
+
+\begin_layout Subsubsection*
+MMT-q
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $MM^{T}q$
+\end_inset
+
+ is the 
+\begin_inset Formula $Q$
+\end_inset
+
+ value as defined before, above, and in 'Diary Part Four':
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+Q=-\log_{2}\sum_{d}P\left(*,d\right)P\left(*,d\right)
+\]
+
+\end_inset
+
+It varies over time, as both new disjuncts are created, old disjuncts have
+ counts drop to zero, and similarly, come words have counts drop to zero
+ as they are transferred to the word-classes.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-mmtq.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-mmtq.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-mmtq.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-mmtq.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Ranked-MI
+\end_layout
+
+\begin_layout Standard
+The next graph shows the ranked-MI of the top-ranked word-pair that triggers
+ the merge.
+ Were it not for the re-computations of word-pair MI's, this should trend
+ downwards, monotonically.
+ The re-computation of MI exposes new fragments/remainders of merged classes
+ that elevate this MI, briefly, until undisturbed word-pairs are encountered
+ again.
+\end_layout
+
+\begin_layout Standard
+Ranked-MI is defined as in 'Diary Part Four', and restated earlier, above.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-ranked-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-ranked-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-ranked-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-ranked-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+MI
+\end_layout
+
+\begin_layout Standard
+The ranked-MI is build as a linear combination of the word-pair MI, plus
+ the log of the frequencies, plus Q.
+ It seems reasonable to ask what the MI was of the pair that initiated the
+ merge.
+ This is shown below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-plain-mi.eps
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Marginal Entropies
+\end_layout
+
+\begin_layout Standard
+The next four graphs require the frequencies 
+\begin_inset Formula $P\left(w,d\right)$
+\end_inset
+
+ to be computed.
+ This turns out to be error-prone and challenging, and thus will be reported
+ here, but turned off in future versions of the code (can be re-enabled
+ by setting 
+\family sans
+(define TRACK-ENTROPY #t)
+\family default
+ in the code.).
+ The problems are these:
+\end_layout
+
+\begin_layout Itemize
+The pair-frequencies must be recomputed before starting, and stored.
+ This includes the frequencies on CrossSections, which are not normally
+ stored.
+ After this, the marginal frequencies and the marginal entropies must be
+ computed.
+\end_layout
+
+\begin_layout Itemize
+As the merges proceed, entropies must be recomputed (they are, if the flag
+ is set).
+ This adds approx 5 minutes to each merge cycle, which is a significant
+ overhead.
+\end_layout
+
+\begin_layout Itemize
+The alternative is to create a new matrix API for entropies that always
+ computes what is needed on-the-fly, from the counts (which are always correct).
+ Doing this is ...
+ OK, as it will reduce operational errors, but will add yet more CPU overhead
+ to obtaining these stats.
+\end_layout
+
+\begin_layout Standard
+Given these issues, it seems that tracking entropies is not worth it.
+ I mean, the graphs below are interesting, and all, but they are not Earth-shaki
+ng, and don't seem to offer any new insight, beyond some warm fuzzies that
+ everything is going fine.
+\end_layout
+
+\begin_layout Standard
+These remarks apply to some of the class entropies, much further below.
+ They won't be available because of the dependency on the 
+\family sans
+pair-freq-api
+\family default
+ object.
+\end_layout
+
+\begin_layout Subsubsection*
+Marginal Word Entropy
+\end_layout
+
+\begin_layout Standard
+The right-marginal or word entropy is as defined above:
+\begin_inset Formula 
+\[
+S_{\mbox{right}}=\sum_{w}P\left(w,*\right)\log_{2}P\left(w,*\right)
+\]
+
+\end_inset
+
+Yes, this probably should have been called 
+\begin_inset Quotes eld
+\end_inset
+
+left
+\begin_inset Quotes erd
+\end_inset
+
+, but that introduces new confusions.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-right-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-right-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-right-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-right-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Marginal disjunct entropy
+\end_layout
+
+\begin_layout Standard
+As defined above: 
+\begin_inset Formula 
+\[
+S_{\mbox{left}}=\sum_{d}P\left(*,d\right)\log_{2}P\left(*,d\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-left-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-left-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-left-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-left-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Total Entropy
+\end_layout
+
+\begin_layout Standard
+The total entropy is as defined above
+\begin_inset Formula 
+\[
+H_{\mbox{tot}}=-\sum_{w,d}P\left(w,d\right)\log_{2}P\left(w,d\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-word-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-word-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-word-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-word-dj-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Total MI
+\end_layout
+
+\begin_layout Standard
+The total MI is as defined above:
+\begin_inset Formula 
+\begin{align*}
+MI_{\mbox{tot}}= & \sum_{w,d}P\left(w,d\right)\log_{2}\frac{P\left(w,d\right)}{P\left(*,d\right)P\left(w,*\right)}\\
+= & S_{\mbox{right}}+S_{\mbox{left}}-H_{\mbox{tot}}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-word-dj-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-p-word-dj-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-word-dj-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-p-word-dj-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Number of Words per Class
+\end_layout
+
+\begin_layout Standard
+As mergers proceed, it is not uncommon to lump additional words into an
+ existing class (possibly splitting that class into two).
+ Thus, over time, one expects the size of classes to grow.
+ This is charted below.
+ It shows the size of the word-class created at that time-step.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-nwords.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-nwords.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Self-MI of a Class
+\end_layout
+
+\begin_layout Standard
+The MI of two words is as defined above:
+\begin_inset Formula 
+\[
+MI\left(u,w\right)=\log_{2}\frac{f\left(w,u\right)f\left(*,*\right)}{f\left(w\right)f\left(u\right)}
+\]
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+f\left(w,u\right)=\sum_{d}P\left(w,d\right)P\left(u,d\right)
+\]
+
+\end_inset
+
+The self-MI of a word 
+\begin_inset Formula $w$
+\end_inset
+
+ is them 
+\begin_inset Formula $MI\left(w,w\right)$
+\end_inset
+
+.
+ The graph below shows the self-MI of the class created at that time-step.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-self-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-self-mi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Self-ranked-MI
+\end_layout
+
+\begin_layout Standard
+As above, but this is the ranked-MI of the class against itself.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-self-rmi.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-self-rmi.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Support of the Class
+\end_layout
+
+\begin_layout Standard
+The support of a word is the grand-total number of disjuncts assigned to
+ that word; likewise for a word-class.
+ In formulas, the support is 
+\begin_inset Formula 
+\[
+\Delta\left(w\right)=\sum_{d}\delta\left(w,d\right)
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula 
+\[
+\delta\left(w,d\right)=\begin{cases}
+1 & \mbox{if }N\left(w,d\right)>0\\
+0 & \mbox{otherwise}
+\end{cases}
+\]
+
+\end_inset
+
+Shown below is 
+\begin_inset Formula $\log_{2}\Delta\left(w\right)$
+\end_inset
+
+ for 
+\begin_inset Formula $w$
+\end_inset
+
+the recently created class.
+ Thus, the larger this is, the greater the support.
+\end_layout
+
+\begin_layout Standard
+It might be more edifying to subtract this from the total number of disjuncts:
+ this is mildly variable, approximately equal to 
+\begin_inset Formula $1.05\times10^{6}$
+\end_inset
+
+ – that is, a little over a million disjuncts, or about 
+\begin_inset Formula $\log_{2}1.05\times10^{6}\approx20$
+\end_inset
+
+.
+ This would then give the fraction of all possible disjuncts appearing in
+ the given word-class.
+\end_layout
+
+\begin_layout Standard
+It might be interesting to relate this to the size of the word-class.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-support.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-support.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Marginal Probability of the Class
+\end_layout
+
+\begin_layout Standard
+The marginal probability of the class is as defined above:
+\begin_inset Formula 
+\[
+P\left(w\right)=P\left(w,*\right)=\sum_{d}P\left(w,d\right)
+\]
+
+\end_inset
+
+The graph below shows 
+\begin_inset Formula $\log_{2}P\left(w\right)$
+\end_inset
+
+.
+ It might be interesting to look at how this correlates with the support.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-logli.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-logli.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Class Fractional Entropy
+\end_layout
+
+\begin_layout Standard
+The entropy of a word is as defined earlier: 
+\begin_inset Formula 
+\[
+h\left(w\right)=-\sum_{d}P\left(w,d\right)\log_{2}P\left(w,d\right)
+\]
+
+\end_inset
+
+The fractional entropy is 
+\begin_inset Formula 
+\[
+H\left(w\right)=\frac{h\left(w\right)}{P\left(w,*\right)}
+\]
+
+\end_inset
+
+This is graphed below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-fentropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-fentropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Compositional Entropy
+\end_layout
+
+\begin_layout Standard
+The compositional entropy is a brand-new concept not discussed earlier in
+ this diary.
+ It is the entropy of the of the words that went in to form the class.
+\end_layout
+
+\begin_layout Standard
+When a class is formed out of the words 
+\begin_inset Formula $w_{1},w_{2},\cdots,w_{n}$
+\end_inset
+
+, the total counts of each of these contributions 
+\begin_inset Formula $N\left(w_{1},*\right),N\left(w_{2},*\right),\cdots,N\left(w_{n},*\right)$
+\end_inset
+
+ is tracked on the 
+\family sans
+MemberLink
+\family default
+ for that class.
+ Define the total observation count on this class as 
+\begin_inset Formula 
+\[
+N_{C}=\sum_{k}N\left(w_{k},*\right)
+\]
+
+\end_inset
+
+This can be used to define a class-relative fraction of how much each word
+ contributed to the class:
+\begin_inset Formula 
+\[
+P_{C}\left(w_{k},*\right)=\frac{N\left(w_{k},*\right)}{N_{C}}
+\]
+
+\end_inset
+
+The compositional entropy is then the ordinary entropy with regards to this
+ compositional probability.
+ It is defined as
+\begin_inset Formula 
+\[
+CH=-\sum_{k}P_{C}\left(w_{k},*\right)\log_{2}P_{C}\left(w_{k},*\right)
+\]
+
+\end_inset
+
+It is shown in the graph below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-run-11-merge/r11-cls-compo-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p5-run-12-merge/r12-cls-compo-entropy.eps
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The compositional entropy is interesting because it gives a hint of how
+ different words are contributing to form the class: it's a weighted average
+ of the contributions.
+ For example, for two words, the compositional entropy is maximized when
+ both words contribute equally (and is equal to 1.0).
+ Given how the above is scaling, it might be interesting to redo this graph,
+ dividing by (the log of) the number of words in the class.
+\end_layout
+
+\begin_layout Section*
+Experiment-12
+\end_layout
+
+\begin_layout Standard
+Some ongoing confusion motivates an attempt at a cleaner starting point
+ for merges.
+ Start with `
+\family sans
+run-1-t1234-tsup-1-1-1.rdb
+\family default
+` and build a new, clean file, using the scripts in `
+\family sans
+scm/gram-class/cleanup.scm
+\family default
+`.
+ Here's where it's at:
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="12" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r1-t1234-tsup-1-1-1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-mst.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-shape.rdb
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{L}$
+\end_inset
+
+= words
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15083
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9495
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9495
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{R}$
+\end_inset
+
+= dj
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+205003
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+204680
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1015850
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $D_{\mbox{Tot}}$
+\end_inset
+
+= size
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+855718
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+833833
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2717117
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{\mbox{Tot}}$
+\end_inset
+
+= obs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7313131
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7202301
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+22643824
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{word}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13.881
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13.213
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13.213
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{dj}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.645
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.643
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.954
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}D_{\mbox{Tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.707
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.669
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+21.374
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+sparsity
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11.819
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11.187
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11.794
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+rarity
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.944
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4.241
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4.790
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{Tot}}/D_{\mbox{Tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.095
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.111
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.059
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Entropy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.352
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15.720
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.117
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Recall that 
+\begin_inset Formula 
+\[
+\mbox{Sparsity}=-\log_{2}D_{\mbox{Tot}}/N_{L}\times N_{R}
+\]
+
+\end_inset
+
+while 
+\begin_inset Formula 
+\[
+\mbox{Rarity}=\log_{2}D_{\mbox{Tot}}/\sqrt{N_{L}\times N_{R}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's the word-disjunct entropies and MI's; its in r12-mi.rdb which is just
+ 
+\family sans
+`r12-shape.rdb
+\family default
+` with the MI scores in it.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="5">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+name
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Entropy total
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Left
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Right
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+MI
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+r12-mi.rdb
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.421
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.501
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8.4683
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5.5480
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What's done:
+\end_layout
+
+\begin_layout Itemize
+`
+\family sans
+r12-mst.rdb
+\family default
+` copies `
+\family sans
+run-1-t1234-tsup-1-1-1.rdb
+\family default
+` and forces bi-directional linkage symmetry.
+ It also recomputes support marginals and MM^T via contents of `
+\family sans
+run-common/marginals-mst.scm
+\family default
+`.
+\end_layout
+
+\begin_layout Itemize
+`
+\family sans
+r12-shape.rdb
+\family default
+` adds shapes, and recomputed the MMT marginals for these.
+ The dimensions includes the CrossSections.
+\end_layout
+
+\begin_layout Itemize
+`
+\family sans
+r12-mi.rdb
+\family default
+` batch-computes the word-disjunct MI (with `
+\family sans
+batch-all-pair-mi
+\family default
+`).
+\end_layout
+
+\begin_layout Itemize
+`
+\family sans
+r12-mi-sim200.rdb
+\family default
+` is just `
+\family sans
+r12-mi.rdb
+\family default
+` with word-similarities pre-computed for the top 200 ranked words.
+\end_layout
+
+\begin_layout Subsection*
+The Crash
+\end_layout
+
+\begin_layout Standard
+As noted above, the runs crashed.
+ Will try restarting one more time, after nuking invalid CrossSections.
+ Nope.
+ That doesn't work.
+\end_layout
+
+\begin_layout Subsection*
+Similarity between WordClasses vs.
+ Words
+\end_layout
+
+\begin_layout Standard
+Two datasets halted at almost the same place.
+ Perhaps they are comparable.
+ As below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Dataset
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+nmerges
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+nclasses
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+nwords
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n3.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1062
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+536
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9490
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+r12-log-q0.7-c0.2-n4.dat
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1058
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+530
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9486
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In both cases, the number of word-classes that survived is almost exactly
+ half the number of merges run (why half?) This is because classes get repeatedl
+y merged into, instead of having new classes being created out of the blue.
+ Kind of surprising, this needs to be understood better.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+The datasets for the below are located in the p5-class-sim directory.
+ The scripts used to build the datasets are in the utils/similarity-p5.scm.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Anyway: One hypothesis: the similarity distributions between word-classes
+ should be low.
+ That should be quite distinct from one another, one might hope.
+ So, three batches of similarity distributions:
+\end_layout
+
+\begin_layout Itemize
+Similarity between all of the 530 (or 536) word-classes.
+ (not counting self-similarity).
+\end_layout
+
+\begin_layout Itemize
+Similarity between the top-ranked 530 words.
+\end_layout
+
+\begin_layout Itemize
+Similarity between the top-ranked words and word-classes.
+\end_layout
+
+\begin_layout Standard
+What will it be like? Can we expect the third bullet to show higher similarity
+ than the second?
+\end_layout
+
+\begin_layout Standard
+All similarities will be recomputed from scratch, as the existing similarities
+ are tainted by the altered disjuncts – i.e.
+ the old similarities might not have been recomputed, after a change to
+ their disjuncts.
+ Only the 
+\begin_inset Quotes eld
+\end_inset
+
+precise
+\begin_inset Quotes erd
+\end_inset
+
+ merges recompute all similarities.
+\end_layout
+
+\begin_layout Subsubsection*
+Conclusions – Summary
+\end_layout
+
+\begin_layout Standard
+Lets summarize what was found below.
+ First, the self-similarity distribution for word-classes and other words
+ are dramatically different.
+ Word-classes have a high self-similarity.
+ The shapes of the distributions are different, too.
+\end_layout
+
+\begin_layout Standard
+The distribution of non-zero similarities between classes, and classes and
+ words, and just words, are all more-or-less normal distributions (Gaussians),
+ all quite similar, all centered on a small negative MI (around -3 to -1.5,
+ depending) and fairly narrow (a standard deviation of about 3).
+ There are no dramatic differences at this level.
+\end_layout
+
+\begin_layout Standard
+There is a very dramatic difference, when looking at the fraction of all
+ possible pairs with zero similarity! Zero similarity corresponds to 
+\begin_inset Formula $-\infty$
+\end_inset
+
+ in the MI value; that is, there is zero overlap between the disjuncts.
+ They are orthogonal.
+\end_layout
+
+\begin_layout Standard
+Of all of the possible similarities between the word-classes, only 7% are
+ non-zero.
+ The classes are highly orthogonal to one-another; only a few of them are
+ not.
+ By comparison, more than 80% of the words have non-zero similarity between
+ one another.
+ The words are mostly not orthogonal to one-another.
+ In the middle are the similarities between words and classes, coming in
+ at just 20% of all pairings.
+\end_layout
+
+\begin_layout Standard
+Conclude: the classification algorithms is fairly good at 
+\begin_inset Quotes eld
+\end_inset
+
+orthogonalizing
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Post-classification, the classes are fairly distinct from one-another,
+ quite unlike the situation with raw words.
+ During classification, it appears that the algo is 
+\begin_inset Quotes eld
+\end_inset
+
+sweeping up
+\begin_inset Quotes erd
+\end_inset
+
+ words in an effective way: The 20% figure seems to say that classification
+ really is vacuuming up the words.
+\end_layout
+
+\begin_layout Standard
+The above suggests a strong signal for the quality of classification: the
+ orthogonal fraction of pairings.
+ All three of the above figures should be tracked during classification.
+\end_layout
+
+\begin_layout Subsubsection*
+Self-similarity Distributions
+\end_layout
+
+\begin_layout Standard
+The similarity is given by the (symmetric) word-MI.
+ The self-similarity is the self-MI.
+ Here we go:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/self-mi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Above is the distribution of the self-MI for the 530 word-classes and the
+ 9490 words in 
+\family sans
+r12-log-q0.7-c0.2-n3.dat.
+
+\family default
+ Also, the 536 classes and 9486 words in 
+\family sans
+r12-log-q0.7-c0.2-n4.dat.
+
+\family default
+ Clearly, seems to be quite different.
+ What does it mean?
+\end_layout
+
+\begin_layout Subsubsection*
+Class–Class Similarity Distributions
+\end_layout
+
+\begin_layout Standard
+The noise=3 dataset had only 10154 non-vanishing similarities out of a total
+ of 
+\begin_inset Formula $(530\times531)/2=140715$
+\end_inset
+
+ possible pairings of word-classes with one-another (excluding self-similarity).
+ For noise=4, there were only 9988 out a possible 536 x 537/2 = 143916 pairings.
+ This means that only seven percent (approx.) of the word-classes are similar
+ to each other enough to have at least one disjunct in common.
+ The rest had zero disjuncts in common! So, word classes are not perfectly
+ orthogonal to one-another, but most of them are, considered pair-wise.
+ That's a pretty hot result.
+ I like it.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/class-mi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Gaussian G(-3,3.5) is just an eyeballed fit, as usual.
+ The noise=3 curve seems to be shifted slightly to the left.
+ One would expect that better clustering shifts these curves leftward.
+\end_layout
+
+\begin_layout Subsubsection*
+Word–Word Similarity Distributions
+\end_layout
+
+\begin_layout Standard
+The noise=3 dataset had 117218 non-vanishing similarities out of a total
+ of 
+\begin_inset Formula $(530\times531)/2=140715$
+\end_inset
+
+ possible pairings of word-classes with one-another (excluding self-similarity).
+ For noise=4, there were 117023 out a possible 536 x 537/2 = 143916 pairings.
+ So this time, approx 83% of all possible similarity pairs have similarities.
+ A very non-orthogonal situation.
+\end_layout
+
+\begin_layout Standard
+The selected words were the top-ranked ones, out of all possible words.
+ The number of words was limited, with the idea that they would be comparable
+ in number to the classes.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/word-mi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Gaussian G(-1.5,3.1) is just an eyeballed fit, as usual.
+ Note that it is shifted to the right, and is narrower, than the Gaussian
+ in the previous figure.
+ The noise=3 curve seems to be shifted slightly to the left.
+ It is not clear why it should be shifted.
+\end_layout
+
+\begin_layout Standard
+Compare this to the earlier, pre-merge word-word MI distribution graph,
+ about half-way up in this document.
+ It's the same distribution, but before any merges have been done.
+ This is shown below, relative to the current noise=3 graph.
+ Both the mean and the stddev are about the same; maybe a bit of a shift
+ of the mean.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/pre-post.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+pre-merge
+\begin_inset Quotes erd
+\end_inset
+
+ curve is the one from half-way up: it shows similarities for only 200 words,
+ and so is noisier.
+ The shape of the fat tail is ambiguous.
+ Earlier, it looked like a well-defined Gaussian with a very fat tail; but
+ here, this is not so clear.
+ Clearly, noise=4 suppresses the tail a lot more than noise=3.
+\end_layout
+
+\begin_layout Subsubsection*
+Class–Word Similarity Distributions
+\end_layout
+
+\begin_layout Standard
+The noise=3 dataset had 58555 non-vanishing similarities out of a total
+ of 
+\begin_inset Formula $530^{2}=280900$
+\end_inset
+
+ possible pairings of word-classes with one-another (excluding self-similarity).
+ For noise=4, there were 55194 out a possible 
+\begin_inset Formula $536^{2}=287296$
+\end_inset
+
+ pairings.
+ So this is a relatively meek 20% of all possible pairings.
+ Conclude that the word-classes have swept up those things that have overlaps.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/clawrd-mi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Gaussian G(-1.5,3.1) is just an eyeballed fit, as usual.
+ This is the same Gaussian as used above.
+ The noise=3 curve seems to be shifted slightly to the left.
+ It is not clear why it should be shifted.
+\end_layout
+
+\begin_layout Subsubsection*
+All-in-one Similarity Distributions
+\end_layout
+
+\begin_layout Standard
+The below reproduces all of the above curves, in one figure.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p5-class-sim/all-mi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hmm.
+ Graphed this way, it seems that there are no dramatic differences.
+ There are subtle differences, already noted.
+\end_layout
+
+\begin_layout Standard
+To conclude: perhaps the most surprising is not the distributions of the
+ similarities, but the fraction of the pairs that have non-zero similarity.
+ This is the dramatic result we were looking for, even if its not evident
+ in these graphs.
+\end_layout
+
+\begin_layout Section*
+The End
+\end_layout
+
+\begin_layout Standard
+This is the end of Part Five of the diary.
+ 
+\end_layout
+
+\end_body
+\end_document

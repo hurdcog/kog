@@ -1,0 +1,943 @@
+2008-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (L4_ABI_SUBDIR): Remove check for v2.
+
+2008-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Only link the header files if $ARCH is ia32.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/space.h: Don't include <assert.h>.
+	(_L4_fpage): Remove asserts.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/misc.h: Include <l4/space.h>.
+
+2008-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32/l4/bits/syscall.h: New function.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32/l4/bits/vregs.h (_L4_utcb): Use %gs:0.
+
+2008-08-16  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/ipc.h (_L4_reply_wait_timeout): Use _L4_zero_time, not
+	_L4_time_period (0).
+	* l4/schedule.h (_L4_time_period): Correctly handle the case where
+	USEC is zero.
+
+2008-08-14  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/gnu/kip.h (l4_memory_desc_type_to_string): New function.
+
+2008-06-18  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* ia32/l4/bits/syscall.h (_L4_kernel_interface): Cast return value.
+	* ia32/l4/bits/vregs.h (_L4_utcb_base): Don't do calculations with a
+	void *.  Cast return value.
+	* l4/gnu/thread.h (l4_set_user_defined_handle): Change name of argument
+	as to avoid using a C++ keyword.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+
+	* tests/Makefile.am (noinst_PROGRAMS): Rename to...
+	(check_PROGRAMS): ... this.
+	(AM_CPPFLAGS): Set to $(CHECK_CPPFLAGS).
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/math.h (_L4_lsb): Count correctly.
+
+	* l4/space.h: Include <assert.h>.
+	(_L4_fpage): Add asserts.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/features.h [_L4_COMPAT]: Enable the L4 compatability
+	interface.
+	[! _L4_COMPAT]: Enable the GNU interface.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/compat/kip.h (L4_ApiVersion): Cast result of
+	_L4_kernel_interface to elide gcc warning.
+	(L4_ApiFlags): Likewise.
+	(L4_KernelId): Likewise.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/pagefault.h (_L4_pagefault_reply_formulate_in): New function.
+	(_L4_pagefault_reply_formulate): Reimplement in terms of this new
+	function.
+	* l4/gnu/pagefault.h (l4_pagefault_reply_formulate_in): New
+	function.
+	
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/ipc.h (_L4_msg_put): Correctly advance ANY_TYPED.
+	(_L4_msg_get): Likewise.
+
+2007-12-08  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32/l4/bits/vregs.h (_L4_utcb_base): New function.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/thread-start.h (_L4_thread_start): Don't send, reply.
+
+2007-10-26  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/math.h (_L4_msb64): New function.
+	(_L4_lsb64): Likewise.
+	* l4/gnu/math.h (l4_msb64): Likewise.
+	(l4_lsb64): Likewise.
+
+2007-10-16  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/gnu/ipc.h (l4_set_msg_msg_tag): Rename from this...
+	(l4_msg_set_msg_tag): ... to this.
+	(l4_msg_set_untyped_words): New function.
+	(l4_msg_set_typed_words): Likewise.
+	(l4_msg_set_words): Likewise.
+
+2007-08-05  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/pagefault.h (_L4_pagefault_reply_formulate): New function.
+	(_L4_pagefault_reply): Refactor code into the above new function
+	and use it.
+	* l4/gnu/pagefault.h (l4_pagefault_reply): New function.
+
+2007-07-27  Neal H. Walfield  <neal@gnu.org>
+
+	* l4/abi.h: New file.
+	* v2/Makefile.am: New file.
+	* v2/ia32/Makefile.am: New file.
+	* v2/ia32/l4/abi/bits/kip.h: New file.
+	* v2/l4/abi/abi.h: New file.
+	* v2/l4/abi/kip.h: New file.
+	* x2/Makefile.am: New file.
+	* x2/l4/abi/abi.h: New file.
+	* x2/l4/abi/kip.h: New file.
+	* headers.m4: Configure a link from libl4/l4/abi.h to
+	include/l4/abi.h, libl4/${l4_abi}/l4/abi/kip.h to
+	include/l4/abi/kip.h, libl4/${l4_abi}/l4/abi/abi.h to
+	include/l4/abi/abi.h.  If L4_AVI is v2, then also configure a link
+	from libl4/v2/${arch}/l4/abi/bits/kip.h to
+	include/l4/abi/bits/kip.h.
+	* Makefile.am [L4_ABI_V2]: Set L4_ABI_SUBDIR to v2.
+	[L4_ABI_X2]: Set L4_ABI_SUBDIR to x2.
+	(SUBDIRS): Also include $(L4_ABI_SUBDIR).
+	* l4.h: Include <l4/abi.h>.
+	* l4/kip.h: Include <l4/abi/kip.h>.
+	(_L4_API_VERSION_L4SEC): New define.
+	(_L4_API_VERSION_N1): Likewise.
+	(_L4_API_VERSION_2PP): Likewise.
+	(__L4_kernel_version_t): New typedef.
+	(_L4_kernel_version): Rather than returning the version in the
+	arguments, return a __L4_kernel_version_t.  Update callers.
+	(_L4_page_info_t): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_page_info_t): ... to here.
+	* l4/kip.h (__L4_page_info_t): Move from here...
+	* l4/x2/l4/abi/kip.h (__L4_page_info_t): ... to here.
+	* l4/kip.h (struct _L4_kip): Move from here...
+	* l4/x2/l4/abi/kip.h (struct _L4_kip): ... to here.
+	* l4/kip.h (__L4_proc_desc_t): Move from here...
+	* l4/x2/l4/abi/kip.h (__L4_proc_desc_t): ... to here.
+	* l4/kip.h (_L4_proc_desc_t): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_proc_desc_t): ... to here.
+	* l4/kip.h (__L4_kern_desc_t): Move from here...
+	* l4/x2/l4/abi/kip.h (__L4_kern_desc_t): ... to here.
+	* l4/kip.h (_L4_kern_desc_t): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kern_desc_t): ... to here.
+	* l4/kip.h (_L4_api_flags): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_api_flags): ... to here.
+	* l4/kip.h (_L4_kernel_desc): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_desc): ... to here.
+	* l4/kip.h (_L4_kernel_id): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_id): ... to here.
+	* l4/kip.h (_L4_kernel_gen_date): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_gen_date): ... to here.
+	* l4/kip.h (_L4_kernel_version): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_version): ... to here.
+	* l4/kip.h (_L4_kernel_supplier): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_supplier): ... to here.
+	* l4/kip.h (_L4_num_processors): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_num_processors): ... to here.
+	* l4/kip.h (_L4_proc_desc): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_proc_desc): ... to here.
+	* l4/kip.h (_L4_proc_internal_freq): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_proc_internal_freq): ... to here.
+	* l4/kip.h (_L4_proc_external_freq): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_proc_external_freq): ... to here.
+	* l4/kip.h (_L4_MIN_PAGE_SIZE_LOG2): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_MIN_PAGE_SIZE_LOG2): ... to here.
+	* l4/kip.h (_L4_page_size_mask): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_page_size_mask): ... to here.
+	* l4/kip.h (_L4_page_rights): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_page_rights): ... to here.
+	* l4/kip.h (_L4_thread_id_bits): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_thread_id_bits): ... to here.
+	* l4/kip.h (_L4_thread_system_base): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_thread_system_base): ... to here.
+	* l4/kip.h (_L4_thread_user_base): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_thread_user_base): ... to here.
+	* l4/kip.h (_L4_read_precision): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_read_precision): ... to here.
+	* l4/kip.h (_L4_schedule_precision): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_schedule_precision): ... to here.
+	* l4/kip.h (_L4_utcb_area_size_log2): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_utcb_area_size_log2): ... to here.
+	* l4/kip.h (_L4_utcb_alignment_log2): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_utcb_alignment_log2): ... to here.
+	* l4/kip.h (_L4_utcb_size): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_utcb_size): ... to here.
+	* l4/kip.h (_L4_kip_area_size_log2): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kip_area_size_log2): ... to here.
+	* l4/kip.h (_L4_kernel_version_string): Move from here...
+	* l4/x2/l4/abi/kip.h (_L4_kernel_version_string): ... to here.
+	* l4/gnu/kip.h: Include <l4/abi.h>.
+	(L4_API_VERSION_2): Define.
+	(L4_API_VERSION_X0): Likewise.
+	(L4_API_SUBVERSION_X0): Likewise.
+	(L4_API_VERSION_X1): Likewise.
+	(L4_API_SUBVERSION_X1): Likewise.
+	(L4_API_VERSION_X2): Likewise.
+	(L4_API_SUBVERSION_X2): Likewise.
+	(L4_API_VERSION_L4SEC): Likewise.
+	(L4_API_VERSION_N1): Likewise.
+	(L4_API_VERSION_2PP): Likewise.
+	(L4_API_VERSION_4): Likewise.
+	(l4_api_version_t): New typedef.
+	(l4_api_version_from): New function.
+	(l4_read_precision_from): Only define if _L4_X2 is defined.
+	(l4_read_precision): Likewise.
+	(l4_schedule_precision_from): Likewise.
+	(l4_schedule_precision): Likewise.
+	(l4_utcb_area_size_log2_from): Likewise.
+	(l4_utcb_area_size_log2): Likewise.
+	(l4_utcb_area_size): Likewise.
+	(l4_utcb_alignment_log2_from): Likewise.
+	(l4_utcb_alignment_log2): Likewise.
+	(l4_utcb_alignment): Likewise.
+	(l4_utcb_size_from): Likewise.
+	(l4_utcb_size): Likewise.
+	(l4_proc_desc_t): Only define is _L4_X2 is define.
+	(l4_proc_desc_from): Only define if _L4_X2 is defined.
+	(l4_proc_desc): Likewise.
+	(l4_proc_external_freq): Likewise.
+	(l4_proc_internal_freq): Likewise.
+	* l4/compat/kip.h: Include <l4/abi.h>.
+	(L4_ProcDesc_t): Only define if _L4_X2 is defined.
+	(L4_APIVERSION_L4SEC): New define.
+	(L4_APIVERSION_N1): Likewise.
+	(L4_APIVERSION_2PP): Likewise.
+	(L4_KernelVersion): Call _L4_kernel_version to get the version.
+	(L4_KernelSupplier): Call _L4_kernel_supplier to get the supplier.
+	(L4_ReadPrecision): Only declare if _L4_X2 is defined.
+	(L4_SchedulePrecision): Likewise.
+	(L4_UtcbAreaSizeLog2): Likewise.
+	(L4_UtcbAlignmentLog2): Likewise.
+	(L4_UtcbSize): Likewise.
+	(L4_ProcDesc): Likewise.
+	(L4_ExternalFreq): Likewise.
+	(L4_ProcDescExternalFreq): Likewise.
+	(L4_InternalFreq): Likewise.
+	(L4_ProcDescInternalFreq): Likewise.
+	* tests/t-l4-kip.c (test_magic): Only check KIP->API_FLAGS if
+	_L4_X2 is defined.
+	(test_kernel_version) [_L4_V2]: Provide values for a v2 interface.
+	(test_processor_info): Only check if _L4_X2 is defined.
+	(test_clock_info): Likewise.
+	(test_utcb_info): Likewise.
+	(test_syscalls): Likewise.
+
+2005-04-07  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h (_L4_msg_append_word): Decrease loop variable.
+
+2005-02-24  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/compat/space.h (L4_FullyAccessible): Fix typo.
+	Submitted by Glen Kaukola <gkaukola@charter.net>.
+
+2005-02-23  Marco Gerards  <metgerards@student.han.nl>
+
+	* l4/sigma0.h (_L4_sigma0_get_page_rcv_window): Add local variable TAG.
+	* l4/compat/sigma0.h (L4_Sigma0_GetAny): Change the argument name
+	rcvwindow to rcv_window.  Add local variable fpage.
+	* l4/gnu/sigma0.h (l4_sigma0_set_verbosity): Do not store the
+	return value of _L4_call.
+	(l4_sigma0_dump_memory): Likewise, also for l4_send.  Fix typos.
+
+2005-02-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/syscall.h (l4_strerror): Drop superfluous const from the
+	pointer return value.
+	* l4/syscall.h (_L4_strerror): Likewise.
+	Submitted by Dawid Gajownik <gajownik@gmail.com>.
+	
+2005-02-21  Marcus Brinkmann  <marcus@gnu.org>
+
+	* tests/t-l4-kip.c (test_page_info): Add checks for minimum page
+	size and the trunc/round/ptoa/atop functions.
+	(test_memory_info): New function.
+	(test): Invoke test_memory_info.
+
+2005-02-18  Marcus Brinkmann  <marcus@gnu.org>
+
+	Everywhere: Add support for disabling/enabling testing individual
+	interfaces, including the internal interface.
+	* README: New file.
+
+	* tests/t-l4-kip.c (test_utcb_info): New function.
+	(test_boot_info): Likewise.
+	(test_clock_info): Likewise.
+	(test_kip_area_info): Likewise.
+	(test_thread_info): Likewise.
+	(test_syscalls): Likewise.
+	(test): Call test_utcb_info, test_clock_info, test_kip_area_info,
+	test_thread_info, test_boot_info and test_syscalls.
+	(test_processor_info): Test the RAW member of an L4_ProcDesc_t.
+	(test_magic): Also check L4_GetKernelInterface.
+
+2005-02-15  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32/l4/bits/vregs.h (_L4_utcb) [_L4_TEST_ENVIRONMENT]: Use
+	_L4_TEST_UTCB_IMPL instead real implementation.
+	* tests/Makefile.am (TESTS): Add l4-message.
+	* tests/t-l4-message.c: New file.
+	* tests/environment.h: Include stdio.h.
+	(getenv): Define prototype (can't include stdlib.h, urgs).
+	(environment_utcb, environment_utcb_address): New global
+	variables.
+	(_L4_TEST_UTCB_IMPL): New macro.
+	(environment_init): Parse arguments and TESTOPTS environment
+	variable.
+	(vebose): Rename to ...
+	(opt_verbose): ... this and initialize to 0.
+	(keep_going): Rename to ...
+	(keep_going): ... this and initialize to 0.
+
+2005-02-10  Marcus Brinkmann  <marcus@gnu.org>
+
+	* tests/environment.h: Insert a second processor and adjust
+	descriptor offsets.
+	(check): Print newline after error.
+	(check_nr): New macro.
+	* tests/t-l4-kip.c: Include <string.h> and <stddef.h>.
+	(test_magic): Change return type to _L4_kip_t and return kip.
+	(test_api_and_kernel_id, test_kernel_gen_date,
+	test_kernel_version, test_kernel_supplier, test_version_string,
+	test_kernel_feature, test_processor_info, test_page_info): New
+	functions.
+	(main): Call all these new functions with the kip returned from
+	test_magic.
+
+	* l4/kip.h (_L4_proc_desc): Fix parenthesis to suppress wrong
+	pointer arithmetic.
+	(__L4_page_info_t): Add a new interpretation of the bit-field
+	where all individual access rights are grouped together in a
+	member rwx.
+	(_L4_page_rights): Return only the access rights.
+	_L4_API_VERSION_2, _L4_API_VERSION_X0, _L4_API_SUBVERSION_X0,
+	_L4_API_VERSION_X1, _L4_API_SUBVERSION_X1, _L4_API_VERSION_X2,
+	_L4_API_VERSION_4): New macros.
+	(L4_API_FLAGS_LITTLE_ENDIAN): Rename to ...
+	(_L4_API_FLAGS_LITTLE_ENDIAN): ... this.
+	(L4_API_FLAGS_BIG_ENDIAN): Rename to ...
+	(_L4_API_FLAGS_BIG_ENDIAN): ... this.
+	(L4_API_FLAGS_WORDSIZE_32): Rename to ...
+	(_L4_API_FLAGS_WORDSIZE_32): ... this.
+	(L4_API_FLAGS_WORDSIZE_64): Rename to ...
+	(_L4_API_FLAGS_WORDSIZE_64): ... this.
+	(_L4_KERNEL_ID_L4_486, _L4_KERNEL_SUBID_L4_486,
+	_L4_KERNEL_ID_L4_PENTIUM, _L4_KERNEL_SUBID_L4_PENTIUM,
+	_L4_KERNEL_ID_L4_X86, _L4_KERNEL_SUBID_L4_X86,
+	_L4_KERNEL_ID_L4_MIPS, _L4_KERNEL_SUBID_L4_MIPS,
+	_L4_KERNEL_ID_L4_ALPHA, _L4_KERNEL_SUBID_L4_ALPHA,
+	_L4_KERNEL_ID_FIASCO, _L4_KERNEL_SUBID_FIASCO,
+	_L4_KERNEL_ID_L4KA_HAZELNUT, _L4_KERNEL_SUBID_L4KA_HAZELNUT,
+	_L4_KERNEL_ID_L4KA_PISTACHIO, _L4_KERNEL_SUBID_L4KA_PISTACHIO,
+	_L4_KERNEL_ID_L4KA_STRAWBERRY, _L4_KERNEL_SUBID_L4KA_STRAWBERRY): 
+	New macros.
+	(_L4_KERNEL_SUPPLIER_GMD, _L4_KERNEL_SUPPLIER_IBM,
+	_L4_KERNEL_SUPPLIER_UNSW, _L4_KERNEL_SUPPLIER_TUD,
+	_L4_KERNEL_SUPPLIER_UKA): New macros.
+	* l4/compat/kip.h (L4_APIVERSION_2, L4_APIVERSION_X0,
+	L4_APISUBVERSION_X0, L4_APIVERSION_X1, L4_APISUBVERSION_X1,
+	L4_APIVERSION_X2, L4_APISUBVERSION_X2, L4_APIVERSION_4,
+	L4_APIFLAG_LE, L4_APIFLAG_BE, L4_APIFLAG_32BIT,
+	L4_APIFLAG_64BIT, L4_KID_L4_486, L4_KID_L4_PENTIUM,
+	L4_KID_L4_X86, L4_KID_L4_MIPS, L4_KID_L4_ALPHA, L4_KID_FIASCO,
+	L4_KID_L4KA_X86, L4_KID_L4KA_ARM, L4_KID_L4KA_HAZELNUT,
+	L4_KID_L4KA_PISTACHIO, L4_KID_L4KA_STRAWBERRY,
+	_L4_KERNEL_SUPPLIER, L4_SUPL_GMD, L4_SUPL_IBM, L4_SUPL_UNSW,
+	L4_SUPL_TUD, L4_SUPL_UKA): New macros.
+	* l4/gnu/kip.h (L4_KERNEL_SUPPLIER_GMD, L4_KERNEL_SUPPLIER_IBM,
+	L4_KERNEL_SUPPLIER_UNSW, L4_KERNEL_SUPPLIER_TUD,
+	L4_KERNEL_SUPPLIER_UKA): New macros.
+
+2005-02-09  Marcus Brinkmann  <marcus@gnu.org>
+
+	* tests/Makefile.am: New file.
+	* tests/environment.h: New file.
+	* tests/t-l4-kip.c: New file.
+	* Makefile.am (SUBDIRS): Add tests.
+	* ia32/l4/bits/syscall.h (_L4_kernel_interface)
+	[_L4_TEST_ENVIRONMENT]: Replace function body with
+	_L4_TEST_KERNEL_INTERFACE_IMPL.
+
+2005-02-08  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h: Major overhaul.  Avoid breaking struct aliasing rules.
+	Fix many bugs.  Beautify the code.
+	* l4/misc.h (_L4_set_pages_attributes): Remove superfluous cast.
+	* l4/pagefault.h (_L4_pagefault_reply): Avoid breaking the strict
+	aliasing rules.
+
+	* l4/gnu/schedule.h (l4_is_time_longer): Change return type to
+	bool.
+
+2005-02-07  Johan Rydberg  <jrydberg@gnu.org>
+
+	* l4/schedule.h (_L4_time_add): Implement.
+	(_L4_time_sub): Likewise.
+	(_L4_time_add_usec): Likewise.
+	(_L4_time_sub_usec): Likewise.
+	(_L4_time_make): New function.
+	(_L4_time_alter_exps): Likewise.
+	(_L4_TIME_PERIOD_M_MAX): Define.
+
+2005-01-30  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h: Replace l4_word_t with _L4_word_t.
+
+2005-01-27  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32/l4/bits/arch.h: Include <l4/syscall.h>.
+
+2005-01-22  Matthieu Lemerre  <racin@free.fr>
+
+	* l4/gnu/ipc.h (_L4_add_substring_to): Change type of second
+	argument to l4_string_item_t *.
+	(_L4_add_substring_address_to): Change type of second argument to
+	void *.
+	(_L4_add_substring_address_to): Exchange name with ...
+	(_L4_add_substring_to): ... this function.  Fix off by one error.
+
+	* l4/gnu/ipc.h (l4_string_buffer): New function.
+
+	* powerpc/l4/bits/vregs.h (_L4_load_br, _L4_store_br,
+	_L4_load_brs, _L4_store_brs): Fix buffer register addressing.
+	* ia32/l4/bits/vregs.h (_L4_load_br, _L4_store_br,
+	_L4_load_brs, _L4_store_brs): Likewise.
+	
+2005-01-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32/Makefile.am (nobase_include_HEADERS): Add l4/bits/arch.h,
+	l4/bits/compat/arch.h, l4/bits/compat.h.
+	* ia32/l4/bits/arch.h, ia32/l4/bits/compat/arch.h,
+	ia32/l4/bits/gnu/arch.h: New file.
+	* ia32/l4/bits/stubs-init.h (__L4_SETUP_SYSCALL_X): New macro.
+	(__L4_SETUP_SYSCALL): Implement using __L4_SETUP_SYSCALL_X.
+	(l4_init_stubs): Setup set_gs0 syscall stub.
+	* ia32/l4/bits/syscall.h (_L4_set_gs0): New function.
+	* ia32/l4/bits/stubs.h (__l4_set_gs0): New prototype.
+	* l4/arch.h: New file.
+	* l4/kip.h (struct _L4_kip): New members _pad5, arch0, arch1,
+	arch2 and arch3.
+	* headers.m4: Add arch.h, bits/arch.h, bits/compat/arch.h,
+	bits/gnu/arch.h.
+	* l4.h: Include l4/arch.h.
+	* Makefile.am: Add arch.h.
+	* ia32/l4/bits/vregs.h (_L4_utcb): Use %gs:4, not %gs:0.
+
+2005-01-06  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32/l4/bits/syscall.h (_L4_unmap): Fix register assignments.
+	Return mr0.
+	
+2004-10-28  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/thread.h (L4_THREAD_VERSION_VALID): New macro.
+
+	* l4/gnu/types.h: Include <stdbool.h>.
+	* l4/gnu/ipc.h (l4_is_msg_tag_equal, l4_is_msg_tag_not_equal) 
+	(l4_is_map_item, l4_is_grant_item, l4_is_string_item) 
+	(l4_compound_string, l4_has_string_items, l4_has_map_grant_items) 
+	(l4_ipc_succeeded, l4_ipc_failed, l4_ipc_propagated) 
+	(l4_ipc_redirected, l4_ipc_xcpu): Change return type to bool.
+	* l4/gnu/kip.h (l4_is_memory_desc_virtual): Likewise.
+	* l4/gnu/schedule.h (l4_is_time_shorter, l4_is_time_equal) 
+	(l4_is_time_not_equal, l4_enable_preemption_fault_exception) 
+	(l4_disable_preemption_fault_exception, l4_enable_preemption) 
+	(l4_disable_preemption, l4_preemptionpending): Likewise.
+	* l4/gnu/space.h (l4_is_nil_fpage, l4_was_referenced) 
+	(l4_was_written, l4_was_executed): Likewise.
+	* l4/gnu/thread.h (l4_is_thread_equal, l4_is_thread_not_equal) 
+	(l4_same_threads, l4_is_nil_thread, l4_is_local_id) 
+	(l4_is_global_id): Likewise.
+
+	* l4/compat/thread.h (L4_ThreadId_t): Move to ...
+	* l4/compat/types.h (L4_ThreadId_t): ... here.
+
+2004-10-27  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/space.h (l4_fpage_xspan): New function.
+
+2004-10-23  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h (l4_ipc, l4_lipc): New functions.
+
+2004-10-07  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h (_L4_clear_propagation): New function.
+	* l4/gnu/ipc.h (l4_clear_propagation): New function.
+
+2004-08-04  Peter Bruin  <pjbruin@dds.nl>
+
+	* l4/schedule.h (_L4_set_priority): Use mask consisting of
+	lower 8 bits instead of lower 16.
+	(_L4_set_processor_no): Use mask consisting of lower 16 bits
+	instead of lower 8.
+
+	* powerpc/l4/bits/syscall.h (__L4_PPC_XCLOB): Move r18 and r19
+	to ...
+	(__L4_PPC_CLOB): ... here.
+	(_L4_system_clock): Interchange registers used for TIME_LOW and
+	TIME_HIGH.
+	(_L4_unmap): Pass the first 10 message registers in physical
+	registers to comply with L4 ABI change.
+	(_L4_memory_control): Likewise.
+	(_L4_ipc): Add r18 and r19 to list of clobbered registers.
+	(_L4_lipc): Likewise.
+
+	* ia32/l4/bits/syscall.h (_L4_processor_control): Remove parameter
+	CONTROL to comply with L4 API change.
+	* l4/compat/misc.h (L4_ProcessorControl): Likewise.
+	* l4/gnu/misc.h: Likewise.
+
+2004-10-06  Marcus Brinkmann  <marcus@gnu.org>
+	
+	* l4/compat/schedule.h (_L4_CLOCK_OP): Make CLOCK argument a
+	reference.
+	(_L4_CLOCK_OP) [__cplusplus]: Add another instance of the macro to
+	define operator+(L4_Clock_t&, L4_Clock_t&) and
+	operator-(L4_Clock_t&, L4_Clock_t&).
+	(_L4_CLOCK_OP) [!__cplusplus]: Add another instance of the macro
+	to define L4_ClockAdd and L4_ClockSub.
+	* l4/thread.h (_L4_user_defined_handle_of, _L4_pager_of,
+	__L4_STOP): Add the _L4_XCHG_REGS_DELIVER bit to CONTROL.
+	* l4/syscall.h (_L4_XCHG_REGS_DELIVER): New macro.
+
+	* l4/compat/space.h: Change all tests for _cplusplus to tests
+	for __cplusplus.
+	(L4_FlushFpage) [!__cplusplus]: Rename to ...
+	(L4_FlushFpages) [!__cplusplus]: ... this.
+
+	* l4/gnu/space.h (L4_FPAGE_READ_WRITE_ONLY): Define macro.
+	* l4/space.h (_L4_read_write_only): Define macro.
+	* l4/compat/space.h (L4_ReadWriteOnly): Define macro.
+	* l4/compat/syscall.h (L4_ErrOk): Define macro.
+	* l4/misc.h (_L4_set_page_attribute): Wrap the ATTRIBUTE argument
+	into an object of the correct type.
+
+2004-08-02  Peter Bruin  <pjbruin@dds.nl>
+
+	* powerpc/l4/bits/vregs.h (_L4_my_local_id): Remove variable
+	ID, and return the desired value directly.
+	(_L4_my_global_id): Likewise.
+	(_L4_pager): Remove variable THREAD, and return the desired value
+	directly.
+	(_L4_exception_handler): Likewise.
+	(_L4_intended_receiver): Likewise.
+	(_L4_actual_sender): Likewise.
+	(_L4_set_pager): Use `thread' instead of `thread.raw'.
+	(_L4_set_exception_handler): Likewise.
+	(_L4_set_virtual_sender): Likewise.
+	(_L4_xfer_timeout): Rename function to _L4_xfer_timeouts.
+	(_L4_set_xfer_timeout): Rename function to _L4_set_xfer_timeouts.
+
+	* powerpc/l4/bits/syscall.h (_L4_kernel_interface): Change return
+	type to _L4_kip_t.
+	(_L4_memory_control): Change return type to _L4_word_t.  Rename
+	variable CTRL to CTRL_RESULT and use it to hold the return value
+	of the system call.
+
+	* l4/compat/thread.h (L4_Set_XferTimeouts): Do not return a value.
+	* l4/gnu/thread.h (l4_set_xfer_timeouts): Likewise.
+
+2004-08-02  Peter Bruin  <pjbruin@dds.nl>
+
+	* powerpc/l4/bits/math.h (__L4_msb): Count leading zeros of
+	`data' instead of `data & -data'.
+	(__L4_lsb): Call __L4_msb instead of __l4_msb.  Remove unused
+	variable `lsb'.
+
+2004-04-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h (__L4_map_item_t, __L4_grant_item_t,
+	__L4_string_item_t): New member MR.
+	(_L4_msg_append_map_item): Fix use of map_item.
+	(_L4_msg_put_map_item): Likewise.
+	(_L4_msg_get_map_item): Likewise.
+	(_L4_msg_append_grant_item): Fix use of grant_item.
+	(_L4_msg_put_grant_item): Likewise.
+	(_L4_msg_get_grant_item): Likewise.
+	(_L4_msg_append_simple_string_item): Fix use of string item.
+	(_L4_msg_append_string_item): Likewise.
+	(_L4_msg_put_string_item): Likewise.
+	(_L4_msg_get_string_item): Likewise.
+
+2004-04-23  Marco Gerards  <metgerards@student.han.nl>
+
+	* l4/thread.h (__L4_STOP): Don't use _L4_XCHG_REGS_SET_SP and
+	_L4_XCHG_REGS_SET_IP.
+
+2004-04-21  Marco Gerards  <metgerards@student.han.nl>
+
+	* Makefile.am (common_headers, l4_headers): Add sigma0.h.
+	* headers.m4: Add libl4/l4/sigma0.h, libl4/l4/compat/sigma0.h
+	and libl4/l4/gnu/sigma0.h.
+	* l4/sigma0.h, l4/compat/sigma0.h, l4/gnu/sigma0.h: New files.
+
+2004-04-21  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/space.h (L4_FPAGE_SPAN_MAX): Increase value.
+
+2004-04-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h (l4_msg_tag_set_label,
+	(l4_msg_tag_set_untyped_words, l4_msg_tag_set_typed_words): New
+	functions.
+
+2004-04-10  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/thread.h (_L4_THREAD_VERSION_BITS, _L4_THREAD_NO_BITS,
+	_L4_anylocalthread): Fix macro.
+
+	* l4/pagefault.h, l4/gnu/pagefault.h: New files.
+	* Makefile.am (gnu_headers): Add pagefault.h.
+	(l4_headers): Likewise.
+	* headers.m4: Add l4/pagefault.h and l4/gnu/pagefault.h.
+
+	* l4/thread-start.h, l4/gnu/thread-start.h: New files.
+	* Makefile.am (gnu_headers): Add thread-start.h.
+	(l4_headers): Likewise.
+	* headers.m4: Add l4/thread-start.h and l4/gnu/thread-start.h.
+
+	* l4/gnu/space.h (L4_FPAGE_SPAN_MAX): New macro.
+	(l4_fpage_span): New function.
+
+2004-04-06  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h: Revert last change.  Local IPC must always include
+	a send and a receive phase.
+
+2004-04-05  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h (l4_lwait_timeout, l4_lwait, l4_lreply): New
+	functions.
+
+	* l4/syscall.h (_L4_IPC_TIMEOUT, _L4_IPC_NO_PARTNER,
+	_L4_IPC_CANCELED, _L4_IPC_MSG_OVERFLOW,
+	_L4_IPC_XFER_TIMEOUT_INVOKER, _L4_IPC_XFER_TIMEOUT_PARTNER,
+	_L4_IPC_ABORTED): New macros.
+	* l4/gnu/syscall.h (L4_IPC_TIMEOUT, L4_IPC_NO_PARTNER,
+	L4_IPC_CANCELED, L4_IPC_MSG_OVERFLOW, L4_IPC_XFER_TIMEOUT_INVOKER,
+	L4_IPC_XFER_TIMEOUT_PARTNER, L4_IPC_ABORTED): New macros.
+
+2004-04-02  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/space.h (L4_FPAGE_NO_ACCESS): Change L4_FPAGE_NO_ACCESS
+	from _l4_no_access to _L4_no_access.
+
+2004-04-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32/l4/bits/syscall.h (_L4_system_clock): Add "edi" to
+	clobbered registers.
+
+	* l4/space.h (_L4_unmap_fpage): Change return type to _L4_fpage_t.
+	Return FPAGE.
+	(_L4_flush): Likewise.
+	* l4/compat/space.h (L4_UnmapFpage): Store the result of
+	_L4_unmap_fpage in FPAGE.
+	(L4_Flush): Likewise.
+	* l4/gnu/space.h (l4_unmap_fpage): Change return type to
+	l4_fpage_t.  Return result of _L4_unmap_fpage.
+	(l4_flush): Change return type to l4_fpage_t.  Return result of
+	_L4_flush.
+
+2004-03-30  Wolfgang Jährling  <wolfgang@pro-linux.de>
+
+	* l4/compat/types.h (L4_Word32_t): New type, as required by
+	the L4 specification.
+
+	* README: Doc fixes.
+
+2003-03-30  Wolfgang Jährling  <wolfgang@pro-linux.de>
+
+	* l4/types.h (_L4_WORDSIZE_32, _L4_WORDSIZE_64): Removed.
+	All users changed to use numeric constants 32 and 64 instead.
+	* l4/gnu/types.h (L4_WORDSIZE_32, L4_WORDSIZE_64): Removed.
+	* l4/math.h: All users of _L4_WORDSIZE_32 or _L4_WORDSIZE_64
+	changed to use numeric constants 32 and 64 instead.
+	* l4/thread.h: Likewise.
+	* l4/kip.h: Likewise.  Use _L4_WORDSIZE instead of L4_WORDSIZE.
+	* ia32/l4/bits/types.h (_L4_WORDSIZE): Define to 32.
+	* powerpc/l4/bits/types.h (_L4_WORDSIZE): Likewise.
+
+2004-03-29  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/compat/space.h (L4_Unmap) [_cplusplus]: Remove spurious comma.
+	(L4_Flush) [_cplusplus]: Likewise.
+
+2004-03-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/ipc.h (_L4_msg_put): Rename argument TYPED to ANY_TYPED, add
+	new variable TYPED that takes its value in casted form.  Remove
+	casts in assignment.
+	(_L4_msg_get): Likewise.
+
+2004-03-23  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32/Makefile.am (nobase_include_HEADERS): Fix typo that
+	prevented l4/bits/gnu/space.h from being installed.  Reported by
+	Daniel Wagner.
+
+2004-03-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h (l4_send_timeout): Call _L4_send_timeout.
+	* l4/gnu/schedule.h (l4_is_time_longer): Call _L4_is_time_longer.
+	(l4_is_time_shorter): Call _L4_is_time_shorter.
+	(l4_is_time_equal): Call _L4_is_time_equal.
+	(l4_is_time_not_equal): Call _L4_is_time_not_equal.
+	* l4/gnu/kip.h (l4_num_processors_desc_from): Rename to ...
+	(l4_num_processors_from): ... this.  Fix implementation.
+	(l4_num_processors_desc): Rename to ...
+	(l4_num_processors): ... this.  Fix implementation.
+
+2004-03-21  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/schedule.h (l4_SystemClock): Rename to ...
+	(l4_system_clock): ... this.
+
+	* ia32/l4/bits/gnu/space.h (l4_io_fpage, l4_io_fpage_log2,
+	l4_small_space): Convert to wrapper function.
+
+2004-03-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/gnu/ipc.h (L4_string_items_acceptor): Rename to ...
+	(L4_STRING_ITEMS_ACCEPTOR): ... this.
+	(L4_untyped_words_acceptor): Rename to ...
+	(L4_UNTYPED_WORDS_ACCEPTOR): ... this.
+
+	* ia32/l4/bits/vregs.h (_L4_utcb): Make the assembler volatile.
+
+2004-03-17  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/schedule.h (_L4_TIME_M_BITS, _L4_TIME_PERIOD_E_BITS,
+	_L4_TIME_PERIOD_E_MAX): New macros.
+	(_L4_time_period): Use them.
+	(_L4_zero_time): Use them.
+	* l4/gnu/schedule.h (L4_TIME_PERIOD_MAX): Define macro.
+	(l4_time_mul2): New function.
+
+	* l4/thread.h (_L4_start, _L4_start_sp_ip, _L4_start_sp_ip_flags):
+	Add _L4_XCHG_REGS_CANCEL_IPC to control flags, to match L4 CVS.
+	* l4/compat/space.h (L4_UnmapFpage): Change the return type to
+	L4_Fpage_t and return the fpage to match L4 CVS.
+	(L4_Flush): Likewise.
+	* l4/syscall.h (_L4_ERR_INV_SPACE, _L4_ERR_INV_SCHEDULER,
+	_L4_ERR_INV_PARAM, _L4_ERR_UTCB_AREA, _L4_ERR_KIP_AREA,
+	_L4_ERR_NO_MEM): Decrement by one to match the L4 CVS.
+
+2004-03-17  Johan Rydberg  <jrydberg@night.trouble.net>
+
+	* l4/gnu/kip.h (l4_utcb_alignment_log2): Use void as argument type.
+	(l4_utcb_alignment): Likewise.
+
+	* l4/gnu/ipc.h (l_map_item): Rename to ...
+	(l4_map_item): ... this.
+	(l_is_map_item): Rename to ...
+	(l4_is_map_item): ... this.
+	(l4_add_cache_allocation_hint_to): Put attribute properly behind type.
+
+	* l4/thread.h (__L4_STOP): Undefine after last use.
+
+2004-03-16  Marcus Brinkmann  <marcus@gnu.org>
+
+	Total overhaul, and I am not going to list all the changes.  Every
+	single file, and every single interface has been touched, to be
+	able to cleanly provide multiple interfaces in parallel.  The
+	compatibility interface has been added.  Some bugs have been
+	fixed, some others have been introduced.
+
+2003-10-20  Johan Rydberg  <jrydberg@night.trouble.net>
+
+	* l4/kip.h (l4_page_trunc): New function.
+	(l4_page_round): Likewise.
+	(l4_atop): Likewise.
+	(l4_ptoa): Likewise.
+
+2003-10-16  Johan Rydberg  <jrydberg@night.trouble.net>
+
+	* powerpc/l4/bits/stubs-init.h (__L4_SETUP_SYSCALL): Do correct
+	relocation (that means none).
+
+	* powerpc/l4/bits/syscall.h (__L4_PPC_XCLOB): Add ctr and lr.
+
+2003-10-05  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/kip.h: Include <l4/math.h>.
+	(l4_min_page_size_log2): Reimplement using l4_lsb().
+
+	* l4/math.h (l4_msb): Use __builtin_expect for optimization.
+	(l4_lsb): Likewise.
+
+2003-09-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* powerpc/l4/bits/syscall.h (_L4_EXTERN_STUBS): Define macro and
+	include <l4/bits/stubs.h>.  Then undefine it.
+	* powerpc/l4/bits/stubs.h: Only error if _L4_EXTERN_STUBS is not
+	defined.
+	(_L4_EXTERN): New macro.
+	(__l4_syscall_stub_t): Define as macro and only add typedef if it
+	is not defined yet.
+	Use _L4_EXTERN to prefix all system stubs declarations.
+
+	* powerpc/l4/bits/syscall.h (l4_kernel_interface): Remove clobber
+	list.
+
+	* powerpc/l4/bits/syscall.h (l4_kernel_interface): Fix setting
+	return variables.
+	(l4_exchange_registers): Fix typo.
+	(l4_space_control): Fix cut and paste bug and use .raw member to
+	access fpages and thead ID objects.
+	(l4_ipc): Remove superfluous comma.
+	(l4_lipc): Likewise.
+	* powerpc/l4/bits/math.h (__l4_msb): Add missing name parameter
+	for input constraint.
+	Submitted by Maurizio Boriani <debauxit@yahoo.it>.
+
+2003-09-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/types.h (_L4_BITFIELD5): Fix macro definition.
+
+2003-09-24  Maurizio Boriani  <debauxit@yahoo.it>
+ 
+	* l4/types.h (_L4_BITFIELD4): Fix macro definition.
+	(_L4_BITFIELD6): Was defined twice.  The second instance is
+	renamed to ...
+	(_L4_BITFIELD7): ... this.
+
+2003-09-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* headers.m4: Add arch-dependent files using a shell variable.
+	* headers-ia32.m4, headers-powerpc.m4: Files removed.
+
+	* Makefile.am (ARCH_SUBDIR) [ARCH_POWERPC]: Add powerpc.
+	* headers-powerpc.m4: New file.
+	* powerpc/Makefile.am: New file.
+	* powerpc/l4/bits/ipc.h, powerpc/l4/bits/space.h,
+	powerpc/l4/bits/types.h, powerpc/l4/bits/kip.h,
+	powerpc/l4/bits/stubs-init.h, powerpc/l4/bits/vregs.h,
+	powerpc/l4/bits/math.h, powerpc/l4/bits/stubs.h,
+	powerpc/l4/bits/misc.h, powerpc/l4/bits/syscall.h: New files.
+	
+2003-09-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/init.h: Include <l4/syscall.h>
+
+2003-09-18  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (nobase_include_HEADERS): Add l4/init.h.
+	* headers.m4: Likewise.
+
+	* l4/kip.h (L4_MIN_PAGE_SIZE): New macro.
+	(l4_memory_desc_high): Return the address of the last byte, not
+	the byte following it, according to 20030912 version of the L4 X.2
+	specification, revision 4.
+
+	* l4/types.h (__L4_PRI_PREFIX, L4_PRIdWORD, L4_PRIiWORD,
+	L4_PRIoWORD, L4_PRIuWORD, L4_PRIxWORD, L4_PRIXWORD, L4_SCNdWORD,
+	L4_SCNiWORD, L4_SCNoWORD, L4_SCNuWORD, L4_SCNxWORD, L4_SCNXWORD):
+	New macros.
+
+	* l4/types.h (L4_WORD_C): Fix macro.
+
+	* l4.h (l4_init): Move to ...
+	* l4/init.h (l4_init): ... here.  New file.
+
+	* l4/kip.h (l4_api_version): Replace with always inlined static
+	inline function.
+	* l4/thread.h (_L4_EXTERN_INLINE): Do not define.  Replace all
+	uses of it with static inline, and mark these functions with
+	attribute __always_inline__.
+	* l4/ipc.h (_L4_EXTERN_INLINE): Likewise.
+	* l4/math.h (_L4_EXTERN_INLINE): Likewise.
+	* l4/misc.h (_L4_EXTERN_INLINE): Likewise.
+	* l4/schedule.h (_L4_EXTERN_INLINE): Likewise.
+	* l4/space.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/math.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/space.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/stubs-init.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/syscall.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/vregs.h (_L4_EXTERN_INLINE): Likewise.
+	* l4/kip.h (_L4_EXTERN_INLINE): Likewise.
+	* l4.h (_L4_EXTERN_INLINE): Likewise.
+	* ia32/l4/bits/vregs.h (__l4_utcb): Mark with attributes
+	always_inline and const.
+	* globals.c, ipc.c, kip.c, l4.c, math.c, misc.c, schedule.c,
+	space.c, stubs-init.c, stubs.c, syscall.c, thread.c, vregs.c:
+	Files removed.
+	* Makefile.am (lib_LIBRARIES): Variable removed.
+	(libl4_a_SOURCES): Likewise.
+	(libl4_a_CFLAGS): Likewise.
+
+2003-09-18  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/kip.h (l4_get_kernel_interface): Rename to ...
+	(l4_kip): ... this.  Also in all callers.
+	* ia32/l4/bits/stubs-init.h (__L4_SETUP_SYSCALL): Likewise in
+	caller.
+
+	* l4/kip.h (l4_min_page_size): New function.
+	(l4_min_page_size_log2): Likewise.
+
+	* l4/types.h (L4_WORD_C): Define macro.
+
+2003-09-17  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/math.h (__l4_msb): Rename to ...
+	(l4_msg): ... this.  Return 1 more, so the least significant bit
+	is 1 (to match ffs() behaviour).  Call __l4_msb(), not
+	__l4_msb_().
+	(l4_lsb): New function.
+	* ia32/l4/bits/math.h (__l4_msb_): Rename to ...
+	(__l4_msb): ... this.  Add one to result.
+	(__l4_lsb): New function.
+	* l4/space.h (l4_fpage): Subtract one from MSB.  Check that size
+	is not zero before using MSB.
+
+2003-09-08  Marcus Brinkmann  <marcus@gnu.org>
+
+	* l4/space.h (l4_is_nil_fpage): New function.
+	(l4_complete_address_space): Fix initializer.
+
+	* l4/types.h: Fix size of error field.
+
+	* l4/ipc.h (l4_ipc_succeeded): Invert return value.
+	(l4_ipc_failed): Likewise.
+	(l4_msg_word): New function.
+
+2003-07-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.
+

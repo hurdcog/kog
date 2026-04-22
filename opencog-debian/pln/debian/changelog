@@ -1,0 +1,35 @@
+opencog-pln (0.0~git20240330.80c08fd-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 30 Mar 2024 08:36:35 +0900
+
+opencog-pln (0.0~git20240327.80c08fd-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 27 Mar 2024 08:28:12 +0900
+
+opencog-pln (0.0~git20201222.9a03e86-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 22 Dec 2020 13:53:17 +0900
+
+opencog-pln (0.0~git20200823.f07d9a9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 06:32:16 +0900
+
+opencog-pln (0.0~git20200404.f07d9a9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 09:15:34 +0900
+
+opencog-pln (0.0~git20200401.f07d9a9-1) mhatta-unstable; urgency=medium
+
+  * Initial release.
+  
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 01 Apr 2020 17:34:59 +0900

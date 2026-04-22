@@ -1,0 +1,91 @@
+name: OCC Dependencies - Windows Native
+
+# ============================================================================
+# Dependencies for (OCC) - Windows-Native Build Workflow
+# ============================================================================
+#
+# This workflow builds the OpenCog Collection monorepo natively on Windows
+# using state-of-the-art Windows tooling and idioms.
+#
+# ============================================================================
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_cache
+  INSTALL_PREFIX: C:\OpenCog
+
+jobs:
+
+  # ==========================================================================
+  # Stage 1: Build CogUtil (Foundation)
+  # ==========================================================================
+  build-cogutil:
+    runs-on: windows-latest
+    name: "Stage 1: Build CogUtil (Foundation)"
+    needs: []
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Setup Build Environment
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: '11bbc873e00e9e58d4e9dffb30b7a5493a030e0b'
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "vcpkg cache directory created" -ForegroundColor Green
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies for cogutil ===" -ForegroundColor Cyan
+        
+        # Install vcpkg dependencies from manifest (vcpkg.json)
+
+        & "$env:VCPKG_ROOT\vcpkg.exe" install --triplet x64-windows
+        
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+        
+        # NOTE: Foundation library - no Guile on Windows
+    
+    
+    - name: Check cogutil Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "cogutil") {
+          Write-Host "✓ cogutil directory exists" -ForegroundColor Green
+          Get-ChildItem "cogutil" | Select-Object -First 10
+        } else {
+          Write-Host "cogutil directory not found" -ForegroundColor Yellow
+        }
+
+    - name: Upload vcpkg Installed Packages
+      uses: actions/upload-artifact@v4
+      continue-on-error: true
+      with:
+        name: vcpkg-installed-x64-windows
+        path: |
+          vcpkg_installed/**/*
+          ${{ github.workspace }}/vcpkg_installed/**/*
+        retention-days: 90
+        if-no-files-found: warn
+

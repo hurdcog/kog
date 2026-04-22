@@ -1,0 +1,601 @@
+2009-01-19  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (build_assert): Use gnulib's version.
+
+2009-01-18  Neal H. Walfield  <neal@gnu.org>
+
+	* inttypes.h: New file.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (ARCH_COMMON_SOURCES) [ARCH_X86_64]: Define.
+	(ARCH_USER_SOURCES) [ARCH_X86_64]: Likewise.
+	(ARCH_KERNEL_SOURCES) [ARCH_X86_64]: Likewise.
+	* x86-64-crt0.S: New file.
+
+	* loader.c (loader_elf_load): Add support for ELF 64 and x86-64.
+
+2009-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* s_printf.c (FLAG_LONGLONG): Define.
+	(FLAG_PAD_ZERO): Define.
+	(FLAG_BASE): Define.
+	(FLAG_UPPERCASE): Define.
+	(FLAG_LONG): Define.
+	(print_nr): Take additional parameters precision and flags.  Use
+	them.  Update users.
+	(print_signed_nr): Likewise.
+	(s_cvprintf): Support precision, base and type modifiers.
+	Contributed by Tom Bachmann <e_mc_h2@web.de>.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* _exit.c (_exit): Use sched_yield, not l4_yield.
+	* backtrace.c [USE_L4]: Only include <l4.h> in this case.
+	[! RM_INTERN]: Include <hurd/thread.h>.
+	(backtrace_print) [! USE_L4 && ! RM_INTERN]: Use hurd_myself to
+	get the caller's tid.
+	[! USE_L4 && RM_INTERN]: Don't print a tid.
+	* ia32-cmain.c [! USE_L4]: Don't include <l4/globals.h>,
+	<l4/init.h>, <l4/stubs.h>, or <l4/stubs-init.h>.
+	(cmain) [! USE_L4]: Don't call l4_init or l4_init_stubs.
+	* loader.c: Don't include <l4.h>.  Include <bits/wordsize.h> and
+	<endian.h>.
+	(loader_elf_load): Use __WORDSIZE, __BYTE_ORDER, __LITTLE_ENDIAN
+	and __BIG_ENDIAN instead of their L4 names.
+	* panic.c: Include <viengoos/thread.h>.
+	[! RM_INTERN]: Include <hurd/thread.h>.
+	(panic_) [! USE_L4 && ! RM_INTERN]: Use hurd_myself, not
+	l4_myself.
+	[! USE_L4 && RM_INTERN]: Don't print a tid.
+	(panic_): Call sched_yield, not l4_yield.
+	* process-spawn.c (process_spawn) [! USE_L4]: Don't pass utcb and
+	kip information.  Change sp from a l4_word_to to a uintptr_t.
+	* profile.c [! USE_L4]: Don't include <l4.h>.
+	(now) [__gnu_hurd_viengoos__ && ! USE_L4]: Just return 0.
+	(struct profile_block): Change tid to a vg_thread_id_t.
+	(MYSELF) [__gnu_hurd_viengoos__ && ! USE_L4]: Just return 0.
+	* s_printf.c (io_buffer_flush) [! USE_L4]: Abort.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): Don't use vg_cap_copy but
+	vg_cap_copy_simple.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* backtrace.c: Don't include <hurd/exceptions.h>.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* panic.c: Include <backtrace.h>
+	(panic_): Use backtrace print.
+	* _exit.c: Include <backtrace.h>
+	(_exit): Use backtrace print.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* t-setjmp.c (RM_INTERN): Define.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	Update to new RPC interfaces.
+
+	* _exit.c (_exit): Update use of rm_folio_object_alloc to be
+	consistent with the new interface.
+
+	* backtrace.c (RA) [!RM_INTERN]: Set up a fault catch handler to
+	avoid gratuitously faulting.
+	(backtrace) [!RM_INTERN]: Set up a jump buffer.  Jump to it on a
+	fault.
+	(backtrace_print): Use s_printf, not printf.
+
+	* ia32-crt0.S (STACK_SIZE): Increase to 128 kb.
+
+	* process-spawn.c (process_spawn): Don't use a capability slot to
+	identify the root of the new thread's address space, allocate a
+	thread object.  Allocate messengers for the new thread and save
+	them in STARTUP_DATA->MESSENGERS.
+
+	* s_printf.c (io_buffer_flush): Use the debug output interface.
+	(s_putchar): Don't call rm_write but use io_buffer_flush.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c: Include <hurd/storage.h>.
+	(finish): If the thread is not using the initial stack, free it.
+	(_pthread_init_routine): Add the weak attribute to the
+	declaration.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* backtrace.h: New file.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Create sysroot/lib/libssp.a and
+	sysroot/lib/libssp-nonshared.a.
+	* stack-protector.c: New file.
+	* Makefile.am (common_sources): Add stack-protector.c.
+
+2008-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (assertx): Replace use of backtrace with
+	backtrace_print.
+
+2008-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (common_sources): Add stack-protector.c.
+	
+2008-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (common_sources): Remove strtol.c, strtoll.c,
+	strtoul.c and strtoull.c.
+	(libc_kernel_a_SOURCES): Add strtol.c, strtoll.c, strtoul.c and
+	strtoull.c.
+
+2008-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* setjmp.h [!RM_INTERN]: Just #include_next <setjmp.h>.
+	* Makefile.am (ARCH_COMMON_SOURCES): Remove ia32-setjmp.S.
+	(ARCH_KERNEL_SOURCES): Add ia32-setjmp.S.
+	(libc_kernel_a_SOURCES): Add setjmp.h.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.h (profile_start): Take additional parameter name2.
+	Update users.
+	(profile_region): Create the id from the function name and the
+	description.
+	* profile.c [__gnu_hurd_viengoos__]: Include <s-printf.h>.
+	[! __gnu_hurd_viengoos__]: Include <pthread.h>.
+	(THREADS): Define.
+	(struct site): Rename from this...
+	(struct call_site): ... to this.  Add fields name2 and
+	nested_calls.
+	(SIZE): Rename from this...
+	(CALL_SITES): ... to this.
+	(sites_hash): Replace this variable...
+	(sites_hash_buffer): ... and this one...
+	(init): ... and this one...
+	(sites): ... and this one...
+	(used): ... and this one...
+	(epoch): ... and this one...
+	(calls): ... and this one...
+	(total_time): ... and this one...
+	(extant): ... and this one...
+	(struct profile_block): ... with this new structure...
+	(thread_count): ... this variable...
+	(profile_blocks): ... and this variable.  Update users.
+	(struct profile_block): New function.
+	(profile_stats_dump): Improve output.
+	(profile_end): Increment SITE->NESTED_CALLS.
+	(profile_start): Take additional parameter name2.  Save it in
+	SITE->NAME2.  Call profile_block to get the thread's profile
+	block.  Remove initialization code.
+	(profile_end): Call profile_block to get the thread's profile
+	block.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* backtrace.c (backtrace_print): New function.
+
+2008-11-13  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.c (profile_stats_dump): Sort by the total time.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* s_printf.c [! RM_INTERN] (s_printf): Don't use s_putchar to send
+	individual characters.  Use an io_buffer instead.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.c [! __gnu_hurd_viengoos__]: Don't include <l4.h> or
+	<hurd/rm.h>.  Include <sys/time.h> and <stdio.h>.
+	[! __gnu_hurd_viengoos__ && ! PAGESIZE] (PAGESIZE): Define.
+	[! __gnu_hurd_viengoos__ && ! panic] (panic): Define.
+	[! __gnu_hurd_viengoos__ && ! do_debug] (do_debug): Define.
+	(now): New function.
+	(profile_stats_dump): Use it instead of l4_system_clock.
+	(profile_start): Likewise.
+	(profile_end): Likewise.
+	(profile_start) [__gnu_hurd_viengoos__]: If NAME is NULL, use
+	"unknown".
+
+	* profile.h [! RM_INTERN] (NPROFILE): Don't define.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty libc-parts/libc-parts.a.
+
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.h: Moved here from ../viengoos/profile.h.
+	(profile_region): New macro.
+	(profile_region_end): Likewise.
+	(profile_start) [NPROFILE]: Do nothing in this case.
+	(profile_end) [NPROFILE]: Likewise.
+	(profile_stats_dump) [NPROFILE]: Likewise.
+	* profile.c: Moved here from ../viengoos/profile.c.
+	(profile_start) [! RM_INTERN]: Use a static buffer.
+	* Makefile.am (common_sources): Add fields profile.c and
+	profile.h.
+
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): Don't add an extra trailing NUL
+	to the argment vector or the environment vector.
+
+	* ia32-cmain.c (finish): Assume the command line is in argz
+	format and parse it appropriately.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* _exit.c (_exit): Print a backtrace.
+
+2008-07-01  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): Separate arguments with a NUL,
+	not a space.  Likewise of environment variables.  Correctly off by
+	one error when calculating the size required by the environment.
+	Remember the regions of address space that we allocated and free
+	them after we are done.  Correctly set the folio's subpage.  Add a
+	check that ensures that allocated pages are really zeroed.  When
+	freeing AS_ROOT, overwrite the used capability slot. Destroy AS.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* md5.h: New file from glibc 2.7.
+	* md5.c: Likewise.
+	* Makefile.am (common_sources): Add md5.h and md5.c.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* _exit.c (_exit) [RM_INTERN]: Don't l4_yield.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* s_printf.c (io_buffer_flush) [! RM_INTERN]: New function.
+	(io_buffer_append) [! RM_INTERN]: Likewise.
+	(s_puts)[! RM_INTERN]: Use them.
+	(s_vprintf) [! RM_INTERN]: Likewise.
+	(s_putchar)[! RM_INTERN]: Use rm_write.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (build_assert): Define.
+	
+	(assertx): Call _exit on failure.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* s-printf.h (s_printf): Use gcc's format attribute.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): [! NDEBUG]: Only free folios
+	address space after we are really done using it.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* errno.h (_ERRNO_H) [! _ENABLE_TESTS && ! RM_INTERN]: Undef.
+	[! _ENABLE_TESTS && ! RM_INTERN]: Include next <errno.h>.
+
+2008-06-18  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* strings.h: New file, from today's glibc CVS HEAD.
+
+2008-06-11  Neal H. Walfield  <neal@gnu.org>
+
+	* s-printf.h: New file.
+	* Makefile.am (common_sources): Add s-printf.h.
+	* s_printf.c: Include "s-printf.h".
+
+2008-06-07  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): When allocating a folio, only
+	update the shadow capability's type after the folio has actually
+	been allocated.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (as_insert_custom): Replace use of as_insert
+	with as_insert_full.
+	(allocate_object): Change return type to struct
+	as_allocate_pt_ret.  Replace use of as_slot_ensure with
+	as_ensure_use.
+	(allocate_page_table): New function.
+	(process_spawn): Update use of as_insert_custom to be consistent
+	with new API, in particular, pass allocate_page_table instead of
+	allocate_object.  Replace use of object_lookup_rel with
+	as_object_lookup_rel.
+
+2008-05-31  Neal H. Walfield  <neal@gnu.org>
+
+	* ucontext.h: New file.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* s_printf.c (s_cputs): New function.
+	(s_puts): Reimplement in terms of this.
+	(print_nr): Take additional parameter, the putchar routine to use.
+	(print_signed_nr): Likewise.
+	(s_cvprintf): New function.
+	(s_vprintf): Reimplement in terms of this.
+	(s_cprintf): New function.
+	(s_printf): Call s_cvprintf, not s_vprintf.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: New file.
+	* Makefile.am [ENABLE_TESTS]: Don't build package's libraries.
+
+	* assert.h [_ENABLE_TESTS]: Handle as done with [_L4_TEST_ENVIRONMENT].
+	* errno.h [_ENABLE_TESTS]: Handle specially.
+	* features.h [_ENABLE_TESTS]: Use the system's standard file instead.
+	
+	* sys/cdefs.h: New file, from today's glibc CVS HEAD.
+	[_ENABLE_TESTS]: Use the system's standard file instead.
+	* bits/wchar.h: Likewise.
+	* time.h: Likewise.
+	* stdint.h: Likewise.
+
+	* stdio.h: New file.
+	* stdlib.h: Likewise.
+	* string.h: Likewise.
+	* unistd.h: Likewise.
+	* bits/types.h: Likewise.
+	* sys/types.h: Likewise.
+
+	* Makefile.am (t_setjmp_CPPFLAGS): Remove special `printf' handling.
+
+2008-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-crt0.S: Increase size of stack.
+	(stack): Declare.
+	(stack_end): Likewise.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn): Update use of
+	folio_object_alloc to be consistent with new API.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Remove variable.
+	(libc_parts_a_CPPFLAGS): Set to $(USER_CPPFLAGS).
+	(libc_parts_a_CFLAGS): New variable.
+	(libc_kernel_a_CPPFLAGS): Set to $(KERNEL_CPPFLAGS).
+	(libc_kernel_a_CFLAGS): New variable.
+	(t_setjmp_CPPFLAGS): Remove use of $(COMMON_CPPFLAGS) with
+	$(CHECK_CPPFLAGS).
+
+2008-02-20  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* alloca.h: New file, from today's glibc CVS HEAD.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.c (process_spawn) [RM_INTERN]: Don't take
+	LRU_LOCK.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (assertx): Improve printing of backtrace.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (cmain): Update user of _pthread_init_routine to
+	reflect API change.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* process-spawn.h: New file.
+	* process-spawn.c: New file.
+	* Makefile.am (common_sources): Add process-spawn.h and
+	process-spawn.c.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* loader.h (loader_allocate_object_callback_t): Add parameter ro.
+	* loader.c (loader_elf_load): When calling ALLOC, pass whether or
+	not the page should be mapped read-only to the callback.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (program_name): Change type to char *.
+	* t-setjmp.c (program_name): Likewise.
+	* assert.h (assertx): Change program_name's type to char *.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-crt0.S (_start): Clear EBP before jumping to cmain.
+
+	* backtrace.c (backtrace): Limit to 21 stack frames.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* backtrace.c (RA): Return if __builtin_frame_address returns 0.
+	Correctly assign the return address to the appropriate slot in
+	ARRAY.
+	(backtrace): Limit to four stack frames.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* _exit.c (_exit): Destroy the activity by finding its associated
+	storage and deallocating that.  If killing the activity fails, try
+	the same approach with the thread.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (routines, routines_subexp, routines_objects)
+	(routines_varname, $(routines_objects)): Remove.  Partially moved to
+	newlib.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* errno.h: Protect from multiple inclusion.  Don't include the
+	next errno.h.  Include <hurd/error.h>.
+	(errno): Don't undef.
+	(error_t): Define.
+
+2008-01-26  Neal H. Walfield  <neal@gnu.org>
+
+	* features.h: Don't include <gnu/stubs.h>.
+	(__GNU_LIBRARY__): Don't define.
+	(__GLIBC__): Likewise.
+	(__GLIBC_MINOR__): Likewise.
+	(__GLIBC_PREREQ): Likewise.
+	(__USE_LARGEFILE): Likewise.
+	(__USE_LARGEFILE64): Likewise.
+	(__USE_EXTERN_INLINES): Define even if __extern_inline is not
+	defined.
+
+2008-01-26  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* features.h: New file, from today's glibc CVS HEAD.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* loader.h: Include <stdint.h> and <stdbool.h>.  Don't include
+	<l4/types.h>, "cap.h", or "as.h".
+	(struct activity): Remove forward.
+	(struct thread): Remove forward.
+	(loader_allocate_object_callback_t): New definition.
+	(loader_lookup_object_callback_t): New definition.
+	(loader_elf_load): Change prototype to take an allocation, a
+	lookup, a start, an end, and an entry arguments.  Return a
+	boolean.
+	* loader.c: Don't include "cap.h", "object.h", "as.h" or
+	"thread.h".  Include <l4.h>.
+	(loader_elf_load): Change prototype to take an
+	allocation, a lookup, a start, an end, and an entry arguments.
+	Return a boolean.  Don't panic on an error.  Instead, print some
+	debugging output and return false.  On success, return true.
+	Update to use alloc and lookup callback functions.
+	* elf.h: Move here from ../viengoos.
+	* Makefile.am (common_sources): Add elf.h, loader.h and loader.c.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (finish): Only copy what comes after the last '/'
+	into program_name.
+	* Makefile.am (routines): Add strrchr.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (ARCH_SOURCES): Rename from this...
+	(ARCH_COMMON_SOURCES): ... to this.
+	(ARCH_USER_SOURCES): New variable.
+	(ARCH_KERNEL_SOURCES): Likewise.
+	(noinst_LIBRARIES): Add libc-kernel.a.
+	(common_sources): New variable.
+	(libc_parts_a_SOURCES): Move most files to common_sources.  Add
+	$(ARCH_COMMON_SOURCES), $(ARCH_USER_SOURCES)
+	(libc_parts_a_CPPFLAGS): Add -I$(LIBC)/include.
+	(libc_kernel_a_SOURCES): New variable.
+	(libc_kernel_a_CPPFLAGS): Likewise.
+	(libc_kernel_a_LIBADD): Likewise.
+	* s_printf.c: Move from ../ruth/output.c.
+	(s_putchar) [RM_INTERN || _L4_TEST_ENVIRONMENT]: Add appropriate
+	implementation.
+	* _exit.c: New file.
+	* getpagesize.c: Likewise.
+	* ia32-cmain.c: Copied from ../ruth/ia32-cmain.c.  Removed dead
+	code.  Don't include "ruth.h".  Add prototype for main.
+	(program_name): New variable.
+	(finish): Setup program_name based on ARGV[0].
+	* ia32-crt0.S: Copied from ../ruth/ia32-crt0.S.
+	* panic.c: Copied from ../ruth/panic.c.
+	(panic_): Call _exit.
+	* startup.c: New file.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (t_setjmp_CPPFLAGS): Remove -D_L4_TEST_ENVIRONMENT.
+	Add -DS_PRINTF=printf.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h: Include <hurd/stddef.h>.
+	(assertx): Use S_PRINTF rather than printf.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* sys/mman.h: New file based on Glibc's <sys/mman.h> and
+	<bits/mman.h>.
+
+2008-01-13  Neal H. Walfield  <neal@gnu.org>
+
+	* backtrace.c: New file.
+	* Makefile.am (libc_parts_a_SOURCES): Add backtrace.c.
+
+	* assert.h (assertx): Print a back trace.
+
+2008-01-08  Neal H. Walfield  <neal@gnu.org>
+
+	* setjmp.h: New file.
+	* ia32-setjmp.S: New file.
+	* t-setjmp.c: New file.
+	* Makefile.am (ARCH_SOURCES): New variable.
+	[ARCH_IA32]: Set to ia32-setjmp.S.
+	(libc_parts_a_SOURCES): Add $(ARCH_SOURCES).
+	(COMMON_CPPFLAGS): New variable.
+	(libc_parts_a_CPPFLAGS): Set it to $(COMMON_CPPFLAGS).
+	(TESTS): New variable.
+	(check_PROGRAMS): Likewise.
+	(t_setjmp_CPPFLAGS): Likewise.
+	(t_setjmp_SOURCES): Likewise.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* strtol.c: Don't inlcude <stdlib.h>.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (assertx): New macro.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h [! NDEBUG]: Include <l4/thread.h>.
+	[! NDEBUG] (assert): Also print the caller's thread id.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h (assert): Print program_name and EXPR as a string.
+
+2007-10-17  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h [_L4_TEST_ENVIRONMENT]: Include the next <assert.h>.
+
+2005-01-12  Neal H. Walfield  <neal@gnu.org>
+
+	* assert.h: Include prototype for printf.
+	(assert) [!NDEBUG]: Rewrite to do something useful.
+
+2004-10-20  Marcus Brinkmann  <marcus@gnu.org>
+
+	* assert.h (assert): Only define if not defined.
+
+2004-04-05  Marcus Brinkmann  <marcus@gnu.org>
+
+	* assert.h (assert): Fix last change.
+
+2004-03-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* assert.h (assert): Provide a dummy statement.
+
+2003-10-16  Johan Rydberg  <jrydberg@night.trouble.net>
+
+	* Makefile.am (libc_parts_a_SOURCES): Add assert.h.
+	* assert.h: New file.
+
+2003-09-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ctype.h, errno.h, errno.c: New files.
+	* c-ctype.h, c-ctype.c, strtol.c: New files from gnulib.
+	* Makefile.am (libc_parts_a_SOURCES): Add ctype.h, c-ctype.h,
+	c-ctype.c, errno.h, errno.c, strtol.c, strtoll.c, strtoul.c and
+	strtoull.c.
+	(routines): Add atoi, atoll, strtoimax and strtoumax.

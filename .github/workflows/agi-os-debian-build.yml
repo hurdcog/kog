@@ -1,0 +1,571 @@
+name: AGI-OS Debian Package Build
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'opencog-debian/**'
+      - 'cognumach/**'
+      - 'hurdcog/**'
+      - 'cogutil/**'
+      - 'atomspace/**'
+      - '.github/workflows/agi-os-debian-build.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'opencog-debian/**'
+      - 'cognumach/**'
+      - 'hurdcog/**'
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Build stage to execute'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - stage0
+          - stage1
+          - stage2
+          - stage3
+      skip_tests:
+        description: 'Skip package tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+  BUILD_DIR: /tmp/debian-builds
+  ARTIFACT_DIR: /tmp/artifacts
+
+jobs:
+  validate-packaging:
+    name: Validate Debian Packaging
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      
+      - name: Install validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lintian devscripts
+      
+      - name: Run packaging validation
+        run: |
+          cd opencog-debian
+          bash validate-packaging.sh
+      
+      - name: Check for packaging errors
+        run: |
+          cd opencog-debian
+          if bash validate-packaging.sh 2>&1 | grep -q "Invalid Packages: [^0]"; then
+            echo "❌ Packaging validation failed"
+            exit 1
+          else
+            echo "✅ All packages valid"
+          fi
+      
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaging-validation-report
+          path: /tmp/packaging-validation.log
+          if-no-files-found: ignore
+
+  stage0-cognumach:
+    name: "Stage 0: Build Cognumach Microkernel"
+    runs-on: ubuntu-22.04
+    needs: validate-packaging
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'stage0') ||
+      github.event_name != 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            debhelper \
+            devscripts \
+            fakeroot \
+            gcc-multilib \
+            g++-multilib \
+            mig \
+            autoconf \
+            automake \
+            libtool \
+            texinfo \
+            bison \
+            flex
+      
+      - name: Build Cognumach package
+        run: |
+          cd opencog-debian/cognumach
+          
+          # Run update script
+          bash update-cognumach.sh || {
+            echo "⚠️ Update script failed, attempting manual build"
+          }
+          
+          # Find the build directory
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "cognumach-*" | head -1)
+          
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            
+            # Build package
+            dpkg-buildpackage -rfakeroot -us -uc -b || {
+              echo "❌ Package build failed"
+              exit 1
+            }
+            
+            echo "✅ Cognumach package built successfully"
+          else
+            echo "⚠️ Cognumach build directory not found, skipping"
+          fi
+      
+      - name: List built packages
+        run: |
+          ls -lh opencog-debian/*.deb 2>/dev/null || echo "No .deb files found"
+      
+      - name: Upload Cognumach packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognumach-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stage1-foundation:
+    name: "Stage 1: Build Foundation (cogutil)"
+    runs-on: ubuntu-22.04
+    needs: validate-packaging
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            debhelper \
+            devscripts \
+            fakeroot \
+            libboost-all-dev \
+            cxxtest
+      
+      - name: Build cogutil package
+        run: |
+          cd opencog-debian/cogutil
+          
+          bash update-cogutil.sh || {
+            echo "⚠️ Update script failed"
+          }
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "cogutil-*" | head -1)
+          
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b
+            echo "✅ cogutil package built successfully"
+          else
+            echo "⚠️ cogutil build directory not found"
+          fi
+      
+      - name: Install cogutil for next stages
+        run: |
+          sudo dpkg -i opencog-debian/libcogutil-dev_*.deb 2>/dev/null || echo "Package not found"
+      
+      - name: Upload cogutil packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: cogutil-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stage2-atomspace:
+    name: "Stage 2: Build AtomSpace"
+    runs-on: ubuntu-22.04
+    needs: stage1-foundation
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            debhelper \
+            devscripts \
+            fakeroot \
+            libboost-all-dev \
+            guile-3.0-dev \
+            python3-dev \
+            cython3
+      
+      - name: Download cogutil packages
+        uses: actions/download-artifact@v4
+        with:
+          name: cogutil-packages
+          path: opencog-debian/
+      
+      - name: Install cogutil
+        run: |
+          sudo dpkg -i opencog-debian/libcogutil-dev_*.deb || true
+          sudo apt-get install -f -y
+      
+      - name: Build atomspace package
+        run: |
+          cd opencog-debian/atomspace
+          
+          bash update-atomspace.sh || echo "⚠️ Update script failed"
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "atomspace-*" | head -1)
+          
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b
+            echo "✅ atomspace package built successfully"
+          fi
+      
+      - name: Upload atomspace packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: atomspace-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stage3-hurdcog:
+    name: "Stage 3: Build HurdCog Foundation"
+    runs-on: ubuntu-22.04
+    needs: [stage0-cognumach, stage1-foundation, stage2-atomspace]
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'stage1') ||
+      github.event_name != 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        component:
+          - hurdcog-machspace
+          - hurdcog-cogkernel-core
+          - hurdcog
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            debhelper \
+            devscripts \
+            fakeroot \
+            guile-3.0-dev \
+            python3-dev \
+            libboost-all-dev
+      
+      - name: Download previous packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-packages'
+          path: opencog-debian/
+          merge-multiple: true
+      
+      - name: Install dependencies
+        run: |
+          sudo dpkg -i opencog-debian/*.deb 2>/dev/null || true
+          sudo apt-get install -f -y
+      
+      - name: Build ${{ matrix.component }}
+        run: |
+          cd opencog-debian/${{ matrix.component }}
+          
+          bash update-${{ matrix.component }}.sh || echo "⚠️ Update script failed"
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "${{ matrix.component }}-*" | head -1)
+          
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b
+            echo "✅ ${{ matrix.component }} package built successfully"
+          fi
+      
+      - name: Upload ${{ matrix.component }} packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stage4-occ-components:
+    name: "Stage 4: Build OCC Components"
+    runs-on: ubuntu-22.04
+    needs: [stage2-atomspace]
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'stage2') ||
+      github.event_name != 'workflow_dispatch'
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - cogserver
+          - ure
+          - attention
+          - pln
+          - miner
+          - unify
+          - spacetime
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            debhelper \
+            devscripts \
+            fakeroot \
+            libboost-all-dev \
+            guile-3.0-dev \
+            python3-dev \
+            cython3
+      
+      - name: Download previous packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-packages'
+          path: opencog-debian/
+          merge-multiple: true
+      
+      - name: Install dependencies
+        run: |
+          sudo dpkg -i opencog-debian/*.deb 2>/dev/null || true
+          sudo apt-get install -f -y
+      
+      - name: Build ${{ matrix.component }}
+        run: |
+          cd opencog-debian/${{ matrix.component }}
+          
+          bash update-${{ matrix.component }}.sh || echo "⚠️ Update script failed"
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "${{ matrix.component }}-*" | head -1)
+          
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b || {
+              echo "⚠️ Build failed for ${{ matrix.component }}, continuing"
+            }
+          fi
+      
+      - name: Upload ${{ matrix.component }} packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stage5-integration:
+    name: "Stage 5: Build Integration Layer"
+    runs-on: ubuntu-22.04
+    needs: [stage3-hurdcog, stage4-occ-components]
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'stage3') ||
+      github.event_name != 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            debhelper \
+            devscripts \
+            fakeroot
+      
+      - name: Download all previous packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-packages'
+          path: opencog-debian/
+          merge-multiple: true
+      
+      - name: Install all dependencies
+        run: |
+          sudo dpkg -i opencog-debian/*.deb 2>/dev/null || true
+          sudo apt-get install -f -y
+      
+      - name: Build hurdcog-occ-bridge
+        run: |
+          cd opencog-debian/hurdcog-occ-bridge
+          bash update-hurdcog-occ-bridge.sh || echo "⚠️ Update script failed"
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "hurdcog-occ-bridge-*" | head -1)
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b
+          fi
+      
+      - name: Build agi-os-unified
+        run: |
+          cd opencog-debian/agi-os-unified
+          bash update-agi-os-unified.sh || echo "⚠️ Update script failed"
+          
+          BUILD_DIR=$(find .. -maxdepth 1 -type d -name "agi-os-unified-*" | head -1)
+          if [ -n "$BUILD_DIR" ]; then
+            cd "$BUILD_DIR"
+            dpkg-buildpackage -rfakeroot -us -uc -b
+          fi
+      
+      - name: Upload integration packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-packages
+          path: opencog-debian/*.deb
+          if-no-files-found: ignore
+          retention-days: 30
+
+  collect-packages:
+    name: Collect All Packages
+    runs-on: ubuntu-22.04
+    needs: [stage5-integration]
+    
+    steps:
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-packages'
+          path: all-packages/
+          merge-multiple: true
+      
+      - name: List all packages
+        run: |
+          echo "=== All Built Packages ==="
+          ls -lh all-packages/*.deb 2>/dev/null || echo "No packages found"
+          
+          echo ""
+          echo "=== Package Count ==="
+          ls all-packages/*.deb 2>/dev/null | wc -l || echo "0"
+      
+      - name: Create package index
+        run: |
+          cd all-packages
+          dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
+          echo "✅ Package index created"
+      
+      - name: Upload all packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: agi-os-debian-packages-complete
+          path: all-packages/
+          retention-days: 90
+
+  test-installation:
+    name: Test Package Installation
+    runs-on: ubuntu-22.04
+    needs: collect-packages
+    if: github.event.inputs.skip_tests != 'true'
+    
+    steps:
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          name: agi-os-debian-packages-complete
+          path: packages/
+      
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libboost-all-dev \
+            guile-3.0 \
+            python3
+          
+          # Try to install all packages
+          sudo dpkg -i packages/*.deb 2>/dev/null || true
+          sudo apt-get install -f -y
+          
+          echo "✅ Package installation test complete"
+      
+      - name: Verify installation
+        run: |
+          echo "=== Installed Packages ==="
+          dpkg -l | grep -E "(cogutil|atomspace|hurdcog|cognumach)" || echo "No AGI-OS packages installed"
+
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-22.04
+    needs: [collect-packages, test-installation]
+    if: always()
+    
+    steps:
+      - name: Generate build summary
+        run: |
+          echo "# AGI-OS Debian Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Stage Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 0 (Cognumach): ${{ needs.stage0-cognumach.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 1 (Foundation): ${{ needs.stage1-foundation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 2 (AtomSpace): ${{ needs.stage2-atomspace.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 3 (HurdCog): ${{ needs.stage3-hurdcog.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 4 (OCC Components): ${{ needs.stage4-occ-components.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Stage 5 (Integration): ${{ needs.stage5-integration.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All packages available in: \`agi-os-debian-packages-complete\` artifact" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,30 @@
+From 9ef7971a7fbb2bd7a910919db405dded30732fb1 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Tue, 12 Aug 2025 20:23:19 +0000
+Subject: [PATCH] ipc: replace THREAD_STATE_MAX_SIZE with THREAD_STATE_MAX in
+ kern/ipc_mig.c; align with include/mach/thread_status.h and fix undeclared
+ constant build error
+
+---
+ kern/ipc_mig.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kern/ipc_mig.c b/kern/ipc_mig.c
+index e4c6331c..e170802e 100644
+--- a/kern/ipc_mig.c
++++ b/kern/ipc_mig.c
+@@ -904,9 +904,9 @@ kern_return_t thread_set_self_state(
+ {
+ 	thread_t	t = current_thread();
+ 	kern_return_t	kr;
+-	natural_t	new_state_copy[THREAD_STATE_MAX_SIZE];
++	natural_t	new_state_copy[THREAD_STATE_MAX];
+ 
+-	if (new_state_count <= 0 || new_state_count > THREAD_STATE_MAX_SIZE)
++	if (new_state_count <= 0 || new_state_count > THREAD_STATE_MAX)
+ 		return KERN_INVALID_ARGUMENT;
+ 
+ 	if (copyin(new_state, new_state_copy, new_state_count * sizeof(natural_t)))
+-- 
+2.48.1
+

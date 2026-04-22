@@ -1,0 +1,10 @@
+<launch>
+    <!--TODO: roslauch doesn't guarantee order so check if it matters
+    for these nodes-->
+    <node pkg="minecraft_bot" type="actionsnode.py" name="action_server" />
+    <node pkg="minecraft_bot" type="visnode.py" name="visibility_node" />
+    <node pkg="minecraft_bot" type="mapnode.py" name="minecraft_map_server" />
+    <node pkg="minecraft_bot" type="test_mc_bot.py" name="spock_controller" />
+    <node pkg="minecraft_bot" type="opencog_initializer.py"
+          name="OpenCog_Perception" />
+</launch>

@@ -1,0 +1,51 @@
+[[!meta copyright="Copyright © 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
+2015, 2016 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+<strong>Welcome to...</strong> [[!img /logo/boxes-redrawn.png link=/logo]] <strong>... the GNU Hurd!</strong>
+
+---
+
+  * **[[Home|/index]]**
+  * **[[Community]]**
+      * [[Contact_Us]]
+  * **[[Donate]]**
+  * **[[Contributing]]**
+      * [[Source Code|source_repositories]]
+      * [[Public_Hurd_Boxen]]
+      * [[QEMU Images|hurd/running/qemu]]
+      * [[Getting Help]]
+      * [[Project Ideas|community/gsoc/project_ideas]]
+      * [[Open Issues]]
+  * **[[Documentation]]**
+      * [[FAQ]]
+
+---
+
+  * **[[Hurd]]**
+      * [[Hurd/Documentation]]
+      * [[hurd/Running]]
+  * **[[microkernel/Mach]]**
+      * [[microkernel/mach/Documentation]]
+      * [[GNU Mach|microkernel/mach/gnumach]]
+  * **[[microkernel/mach/MIG]]**
+      * [[Documentation|microkernel/mach/mig/documentation]]
+      * [[microkernel/mach/mig/GNU MIG]]
+
+---
+
+  * **[[Debian GNU/Hurd|hurd/running/debian]]**
+  * **[[Guix GNU/Hurd|hurd/running/Guix]]**
+  * **[[Arch GNU/Hurd|hurd/running/live_cd/]]**
+  * **[[GNU System|hurd/running/gnu]]**
+
+---
+
+  * **[[Hurd NG|hurd/ng]]**

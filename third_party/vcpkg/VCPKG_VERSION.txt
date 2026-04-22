@@ -1,0 +1,24 @@
+vcpkg Version Information
+=========================
+
+Commit: (latest from December 12, 2025)
+Date: 2025-12-12
+Integrated: December 12, 2025
+Integrated by: Manus AI
+
+This vcpkg installation is part of the OCC monorepo and does not
+contain git history. To update vcpkg, run the update script:
+  ./third_party/update-vcpkg.sh
+
+Source: https://github.com/microsoft/vcpkg
+
+Integration Method:
+1. Cloned with --depth 1 (shallow clone)
+2. Removed .git directory
+3. Integrated as regular folder in monorepo
+
+Benefits:
+- No network dependency during builds
+- Deterministic builds across all environments
+- Full control over vcpkg updates
+- Faster CI/CD builds (no vcpkg clone step)

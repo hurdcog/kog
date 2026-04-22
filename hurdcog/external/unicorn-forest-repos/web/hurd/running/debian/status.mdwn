@@ -1,0 +1,4 @@
+Debian GNU/Hurd is currently an official, non-releasing Debian port. I.e., there is no testing or stable distribution.
+
+ - [Build daemon/archive status](https://buildd.debian.org/status/architecture.php?a=hurd-i386&suite=sid)
+ - [Number of registered users](https://popcon.debian.org/stat/sub-hurd-i386.png)

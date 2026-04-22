@@ -1,0 +1,1758 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Aggregate Satisfaction
+\end_layout
+
+\begin_layout Date
+Version of 29 April 2025 (Started on 17 April 2025)
+\end_layout
+
+\begin_layout Author
+Linas Vepštas
+\end_layout
+
+\begin_layout Abstract
+Diary entry, attempting to work out some ideas.
+ Written in pseudo–chronological order.
+ Stream–of–consciousness, kind of.
+ Moving forward, I hope.
+ Maybe going in circles.
+\end_layout
+
+\begin_layout Abstract
+The goal was to try give a precise conception of how to take a collection
+ of statements or assertions, and to satisfy as many of them as possible,
+ all at the same time, while keeping contradictions under control.
+ 
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+What follows will be free–form unstructured writing about aggregate satisfiabili
+ty.
+ It is an attempt to reconcile a number of quite common and inter–related
+ ideas, and to develop a mathematical framework for them.
+ The key ingredients are:
+\end_layout
+
+\begin_layout Itemize
+The Ising model as a motivational example.
+ This pulls in assorted concepts from physics that can be elaborated on.
+\end_layout
+
+\begin_layout Itemize
+Link Grammar parsing, in which syntactic jigsaw pieces are assembled to
+ create parses, called 
+\begin_inset Quotes eld
+\end_inset
+
+linkages
+\begin_inset Quotes erd
+\end_inset
+
+, that are assigned a score.
+ The lower the linkage cost, the more likely correct linkage is correct.
+\end_layout
+
+\begin_layout Itemize
+Aggregate satisfiability, in that satisfiability refers to discrete logical
+ expressions, while aggregate suggests that there is some mean that indicates
+ the best possible solution.
+\end_layout
+
+\begin_layout Standard
+There are also some other inter–related concepts, which may of may not the
+ ideas to be developed here.
+ These include ideas like:
+\end_layout
+
+\begin_layout Itemize
+Markov Logic Networks: perhaps what I intend to describe will end up being
+ a Markov Logic Network.
+ Or maybe not.
+\end_layout
+
+\begin_layout Itemize
+Hopfield networks: these have commonality with regard to assorted physics
+ concepts.
+ Maybe they connect with what I intend to describe, and maybe they don't.
+\end_layout
+
+\begin_layout Itemize
+Mean field theory.
+ Who knows.
+ A knee–jerk reaction is that mean–field theory will describe the rsults.
+ I suppose.
+ Seems plausible.
+\end_layout
+
+\begin_layout Itemize
+Ensembles.
+ Of course, everything to be considered is meant to be an ensemble.
+ But I won't list this as a central point.
+\end_layout
+
+\begin_layout Standard
+This text is incomplete and imprecise.
+ So here we go.
+\end_layout
+
+\begin_layout Section*
+Ising Model
+\end_layout
+
+\begin_layout Standard
+The part of the Ising Model that is interesting here is the Hamiltonian.
+ It is a sum of pair–wise interactions of nearest neighbors:
+\begin_inset Formula 
+\[
+\mathcal{H}=-\sum_{ij}J_{ij}\sigma_{i}\sigma_{j}-\mu\sum_{j}h_{j}\sigma_{j}
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula $\sigma_{i}$
+\end_inset
+
+ the spins.
+ I won't explain this.
+ I copied it from Wikipedia.
+ Read that article if you don't know what this is.
+\end_layout
+
+\begin_layout Subsection*
+Motivation
+\end_layout
+
+\begin_layout Standard
+Why start this essay with the Ising Model? For several reasons:
+\end_layout
+
+\begin_layout Itemize
+Imagine one has a collection of 
+\begin_inset Quotes eld
+\end_inset
+
+facts
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+assertions
+\begin_inset Quotes erd
+\end_inset
+
+, or 
+\begin_inset Quotes eld
+\end_inset
+
+constraints
+\begin_inset Quotes erd
+\end_inset
+
+, each of which can be True or False.
+ Map 
+\begin_inset Quotes eld
+\end_inset
+
+True
+\begin_inset Quotes erd
+\end_inset
+
+ to 
+\begin_inset Quotes eld
+\end_inset
+
+spin up
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+false
+\begin_inset Quotes erd
+\end_inset
+
+ to 
+\begin_inset Quotes eld
+\end_inset
+
+spin down
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The if there is a relationship between two assertions 
+\begin_inset Formula $\sigma_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma_{j}$
+\end_inset
+
+ then set 
+\begin_inset Formula $J_{ij}\ne0$
+\end_inset
+
+ and set it positive, if both have to be true at the same time, else set
+ it negative.
+\end_layout
+
+\begin_layout Itemize
+For the conventional Ising model on a 2D grid, 
+\begin_inset Formula $J_{ij}\ne0$
+\end_inset
+
+ only when 
+\begin_inset Formula $\sigma_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma_{j}$
+\end_inset
+
+ are nearest neighbors, in which case 
+\begin_inset Formula $J_{ij}=J$
+\end_inset
+
+.
+ For zero temperature and zero magnetic field, the Hamiltonian is obviously
+ minimized by having all spins aligned.
+ The model is interesting because of it's thermodynamic behavior, at finite
+ temperature, in which thermal energy is allows some of the spins to be
+ non–aligned.
+\end_layout
+
+\begin_layout Itemize
+The attempt being made here is to draw an analogy to systems of logic, such
+ as the Boolean SAT problem.
+ By convention, Boolean SAT is solved with DPLL.
+ The algo there recasts 
+\begin_inset Formula $J_{ij}$
+\end_inset
+
+ as a graph adjacency matrix.
+ The corresponding graph is then some graph with cycles, and a bunch of
+ trees attached to it.
+ The trees are trimmed away, because they can be uniquely determined by
+ the root.
+ This leaves an interconnected kernel.
+ Then, conventionally, one performs a search, possibly an exhaustive search
+ over that kernel, and determine if it is satisfiable.
+ Various techniques can be attempted to speed that search.
+\end_layout
+
+\begin_layout Itemize
+For example, there may be a circular chain of connections, 
+\begin_inset Formula $\sigma_{a}\to\sigma_{b}\to\cdots\to\sigma_{p}\to\lnot\sigma_{a}$
+\end_inset
+
+ which cannot be satisfied because it forces a self–contradiction.
+ So strict zero–temperature Boolean SAT indicates this problem is unsatisfiable.
+ However, by using simulated annealing, one might be able to find find truth
+ assignments that satisfy most of the constraints.
+\end_layout
+
+\begin_layout Itemize
+The problem of satisfiability reared its head in Dough Lenat's CYC; the
+ solution there was to propose 
+\begin_inset Quotes eld
+\end_inset
+
+microtheories
+\begin_inset Quotes erd
+\end_inset
+
+ which were known to be self–consistent, and then hop between these.
+ The suggestion being made here is that such inconsistencies can be thought
+ of as 
+\begin_inset Quotes eld
+\end_inset
+
+lattice frustrations
+\begin_inset Quotes erd
+\end_inset
+
+, and mostly resolved through annealing.
+\end_layout
+
+\begin_layout Itemize
+In the human world of common–sense judgments, it is clear that most humans
+ insist that they are 
+\begin_inset Quotes eld
+\end_inset
+
+rational
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+logical
+\begin_inset Quotes erd
+\end_inset
+
+, even though it is clear that this cannot possibly be true, if one tries
+ to drill down and interrogate the foundations of beliefs.
+ Yet, except for extreme cases involving various forms of mental illness,
+ most humans mostly do have a collection of beliefs that they perceive to
+ be consistent.
+ Those beliefs appear to be malleable via persuasion, propaganda, cult indoctrin
+ation, etc.
+ The proposal here is that perhaps a Hamiltonian approach to a description
+ of belief networks can give some sense of the grounded–ness of those beliefs.
+\end_layout
+
+\begin_layout Itemize
+The relational weights 
+\begin_inset Formula $J_{ij}$
+\end_inset
+
+ can be made dynamic.
+ Thus, for example, inconsistent beliefs about what time of day one left
+ the house might be utterly inconsequential, unless this plays a role in
+ a criminal trial, in which case the truth/falsehood coupling 
+\begin_inset Formula $J_{ab}$
+\end_inset
+
+ between a statement 
+\begin_inset Formula $\sigma_{a}$
+\end_inset
+
+ of when one left the house, and the statement of 
+\begin_inset Formula $\sigma_{b}$
+\end_inset
+
+ of the defendant becomes very important.
+ A large enough value of 
+\begin_inset Formula $J_{ab}$
+\end_inset
+
+ can make the prosecutions case fall apart or to firmly establish guilt.
+ A much softer variant of this can occur during attempts to solve quotidian
+ engineering problems, where one wishes to make trade–offs between different
+ design parameters or criteria: the assigned weights 
+\begin_inset Formula $J_{ab}$
+\end_inset
+
+ can be raised or lowered to taste.
+\end_layout
+
+\begin_layout Standard
+The above is a motivational sketch of why the Ising Model can be interesting
+ and useful in the pursuit of 
+\begin_inset Quotes eld
+\end_inset
+
+common sense
+\begin_inset Quotes erd
+\end_inset
+
+ inference or during evidence gathering.
+ It provides a formalism in which 
+\begin_inset Quotes eld
+\end_inset
+
+aggregate satisfiability
+\begin_inset Quotes erd
+\end_inset
+
+ can be discussed.
+\end_layout
+
+\begin_layout Standard
+There are several problems with the direct use of the Ising Model:
+\end_layout
+
+\begin_layout Itemize
+The matrix entries 
+\begin_inset Formula $J_{ij}$
+\end_inset
+
+ are (by convention) symmetric: 
+\begin_inset Formula $J_{ij}=J_{ji}$
+\end_inset
+
+ whereas conventional logic is causitive or inferential; one writes 
+\begin_inset Formula $P\to Q$
+\end_inset
+
+ to say 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $P$
+\end_inset
+
+ implies 
+\begin_inset Formula $Q$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $P$
+\end_inset
+
+ causes 
+\begin_inset Formula $Q$
+\end_inset
+
+ to happen
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $P$
+\end_inset
+
+ believes that 
+\begin_inset Formula $Q$
+\end_inset
+
+ is true
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Logical statements typically have multiple antecedents: 
+\begin_inset Formula $A,B\to C$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+One may wish to strongly couple inferences: that is, to write 
+\begin_inset Formula $A\to B,C$
+\end_inset
+
+.
+ Now, in conventional logic, this can be decomposed into two statements:
+ 
+\begin_inset Formula $\left(A\to B,C\right)\implies\left(A\to B\right)\wedge\left(A\to C\right) $
+\end_inset
+
+ which is fine for crisp logic, but a problem if one is looking for approximate
+ satisfiability.
+ That is, one may want to strongly avoid the situation of 
+\begin_inset Formula $\left(A\to B\right)\wedge\lnot\left(A\to C\right)$
+\end_inset
+
+, choosing instead to negate both 
+\begin_inset Formula $B,C$
+\end_inset
+
+ or neither.
+\end_layout
+
+\begin_layout Standard
+A lesser issue, but one that we should get out of the way, is that of hierarchic
+al satisfiability.
+ That is, one may have strongly interacting clusters, with only weak connections
+ between the clusters.
+ That is, the 
+\begin_inset Formula $J_{ij}$
+\end_inset
+
+ are large, when 
+\begin_inset Formula $i,j$
+\end_inset
+
+ both belong to the same cluster, but are small when 
+\begin_inset Formula $i,j$
+\end_inset
+
+ are in different clusters.
+ The Ising Model doesn't prevent this, but perhaps there's some better way
+ of describing natural clustering.
+\end_layout
+
+\begin_layout Subsection*
+Jigsaws
+\end_layout
+
+\begin_layout Standard
+In light of the criticisms above, the suggestion is to move to a jigsaw
+ or tiling approach to relationships.
+ The jigsaw paradigm provides a natural setting for writing expressions
+ such as 
+\begin_inset Formula $A,B\to C,D$
+\end_inset
+
+ as well as many other more complex relationships.
+ For example, boolean logic is two–valued: logical variables can assume
+ the values of true or false.
+ In intuitionistic logic, three states are available: true, false or unknown.
+ In typed term algebras, or typed lambda calculii, the variables are typed,
+ and terms, atomic sentences and so on can only be composed if the types
+ match.
+\end_layout
+
+\begin_layout Standard
+The prototypical setting for jigsaws is Link Grammar.
+ See next section..
+\end_layout
+
+\begin_layout Section*
+Link Grammar
+\end_layout
+
+\begin_layout Standard
+I won't explain what Link Grammar (LG) is, or how it works.
+ Read the docs.
+ (Note: I do end up explaining much of it, further below.
+ It's unavoidable.) 
+\end_layout
+
+\begin_layout Standard
+I want to write down a Hamiltonian for it, which is something that the Link
+ Grammar docs do not do.
+ It is analogous to the Ising Model Hamiltonian:
+\begin_inset Formula 
+\[
+\mathcal{H}=-\sum_{ijk\cdots}C_{ijk\cdots}w_{i}w_{j}w_{k}\cdots
+\]
+
+\end_inset
+
+The 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ are the words in the sentence.
+ Written out here, in order to resemble the Ising Model.
+ The 
+\begin_inset Formula $C_{ijk\cdots}$
+\end_inset
+
+ is meant to be the LG cost, a single real–valued floating point number,
+ of the the LG disjunct 
+\begin_inset Formula $ijk\cdots$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The analogy here is strained, and the notation is inadequate.
+ This is a brainstorm idea, so we'll fix the problems here later.
+ If the idea pans out.
+\end_layout
+
+\begin_layout Standard
+What are the 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ really? One interpretation is to say 
+\begin_inset Formula $w_{i}=+1$
+\end_inset
+
+ always, no matter what, and then the sum is simply a sum over the costs
+ of the disjuncts appearing in the sentence.
+ This is the conventional LG model.
+ Another interpretation is to write 
+\begin_inset Formula $w_{i}=+1$
+\end_inset
+
+ if that word appears in position 
+\begin_inset Formula $i$
+\end_inset
+
+ in the sentence, else it is zero.
+ To arrive at this, we have to be more carefully with the notation: Define
+\begin_inset Formula 
+\[
+\delta\left(w,v\right)=\begin{cases}
+1 & \mbox{if }w=v\\
+0 & \mbox{if }w\ne v
+\end{cases}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $w,v$
+\end_inset
+
+ are specific words in the lexis.
+ Then the Hamiltonian is
+\begin_inset Formula 
+\[
+\mathcal{H}=-\sum_{uv\cdots}C_{uv\cdots}\delta\left(u,w_{i}\right)\delta\left(v,w_{j}\right)\delta\left(\cdots\right)\cdots
+\]
+
+\end_inset
+
+so that the subscript 
+\begin_inset Formula $i$
+\end_inset
+
+ encodes the position of a word in a sentence, and 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ is the word in that position.
+\end_layout
+
+\begin_layout Standard
+This interpretation is unsatisfying, and wrong, the analogy doesn't work.
+ First of all, the spins in the Ising model can flip up and down, whereas
+ the observed word–order in a given sentence is fixed, inviolable.
+ The above picture could work for sentence generation, where we are considering
+ how to generate some sentence, but that is not yet currently viable given
+ what is written here, so far,
+\end_layout
+
+\begin_layout Standard
+The other issue is that, in classical LG, the disjunct costs 
+\begin_inset Formula $C_{uvw\cdots}$
+\end_inset
+
+ are hand–crafted by the academic scholar defining the lexis.
+ The learn project attempts to replace these costs by those learned from
+ a training corpus, starting from a pair–wise frequentist counting scheme.
+ The 
+\begin_inset Formula $C_{uvw\cdots}$
+\end_inset
+
+ are interpreted as mutual entropies, not energies.
+ There is a reasonable argument for why it should be entropy.
+ For the present case, we note that energies are also additive, so we can
+ keep our minds open about what is being additive, here: energy, information,
+ something else abelian, maybe.
+\end_layout
+
+\begin_layout Standard
+The symbolic learning project is to determine the lexis automatically.
+ To learn the correct numerical values of
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ 
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\xout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+
+\begin_inset Formula $C_{uvw\cdots}$
+\end_inset
+
+.
+ And I want to do this by writing down some kind of Hamiltonian–like summation,
+ and attempting to minimize that.
+ But to do that, I need a dramatic change of notation.
+ Lets try it.
+ See what happens.
+ I have no idea if this is a good idea or a bad idea.
+ Or an old idea or a new idea.
+\end_layout
+
+\begin_layout Section*
+Corpus Model
+\end_layout
+
+\begin_layout Standard
+So, first, define a corpus: a collection of sentences.
+ For the moment, let this be 
+\begin_inset Quotes eld
+\end_inset
+
+bag of sentences
+\begin_inset Quotes erd
+\end_inset
+
+, in jumbled order.
+ A 
+\begin_inset Quotes eld
+\end_inset
+
+sentence
+\begin_inset Quotes erd
+\end_inset
+
+ double be a dozen words.
+ But it could also be an ordered sequence of 100K words, i.e.
+ a book, article, newspaper story, twitter/bluesky post, whatever.
+ The length is immaterial; instead, we just take a collection of them, assumed
+ to be independent.
+ For now.
+ Of course, ten books written on the same topic are not really independent
+ of one–another, but lets not get ahead of ourselves.
+\end_layout
+
+\begin_layout Standard
+The corpus is 
+\begin_inset Formula $\mathcal{C}=\left\{ S_{a}\right\} $
+\end_inset
+
+ which is a set of sentences 
+\begin_inset Formula $S_{a}$
+\end_inset
+
+ labelled with some index 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ There is a total of 
+\begin_inset Formula $\left|\mathcal{C}\right|$
+\end_inset
+
+ sentences, where 
+\begin_inset Formula $\left|\cdot\right|$
+\end_inset
+
+ denotes the size (cardinal) of a set.
+ The Hamiltonian is then
+\begin_inset Formula 
+\[
+\mathcal{H}=\sum_{S_{a}\in\mathcal{C}}H\left(S_{a}\right)
+\]
+
+\end_inset
+
+where the sum ranges over all sentences in the corpus, and 
+\begin_inset Formula $H\left(S_{a}\right)$
+\end_inset
+
+ is the total cost of the parse (linkage) of that sentence.
+\end_layout
+
+\begin_layout Standard
+And so here we meet our first conceptual problem: the linkage is not unique:
+ any given sentence may have many linkages, and, in fact, we have to consider,
+ in principle, all possible linkages.
+\end_layout
+
+\begin_layout Standard
+So here we flop over the a graph/network representation.
+ First, lets drop the subscript 
+\begin_inset Formula $a$
+\end_inset
+
+ on 
+\begin_inset Formula $S_{a}$
+\end_inset
+
+ and just say 
+\begin_inset Formula $S\in\mathcal{C}$
+\end_inset
+
+ is some sentence in the training corpus, and the Hamiltonian will be a
+ sum over these.
+ That doesn't change.
+\end_layout
+
+\begin_layout Standard
+Next, we say that each sentence 
+\begin_inset Formula $S=\left[w_{1},w_{2},\cdots,w_{n}\right]$
+\end_inset
+
+ is a temporal sequence of specific words 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ aka 
+\begin_inset Quotes eld
+\end_inset
+
+tokens
+\begin_inset Quotes erd
+\end_inset
+
+ in conventional machine learning.
+ Here, the index 
+\begin_inset Formula $i$
+\end_inset
+
+ has a specific meaning: it indicates word–order.
+ Sequential time.
+\end_layout
+
+\begin_layout Standard
+For each sentence 
+\begin_inset Formula $S$
+\end_inset
+
+, consider the set 
+\begin_inset Formula $\mathcal{G}\left(S\right)=\left\{ G\left(S\right)\right\} $
+\end_inset
+
+ of all possible connected graphs 
+\begin_inset Formula $G\left(S\right)$
+\end_inset
+
+ for that sentence.
+ A graph here is a set of edges and vertexes: 
+\begin_inset Formula $G=\left\{ V,E\right\} $
+\end_inset
+
+ (dropping the indicator 
+\begin_inset Formula $S$
+\end_inset
+
+ because we fix the sentence for now.) For a given sentence 
+\begin_inset Formula $S$
+\end_inset
+
+, the set of vertexes is fixed: 
+\begin_inset Formula $V=\left\{ w_{i}|w_{i}\in S\right\} $
+\end_inset
+
+ is the set of the words in the sentence 
+\begin_inset Formula $S$
+\end_inset
+
+.
+ As a set, the order no longer really matters.
+ But it is a multi–set, so its OK to have a word show repeatedly.
+ An edge is just a conventional graph edge: it is an ordered pair of vertexes.
+ Notation: 
+\begin_inset Formula $E_{ij}=\left(w_{i},w_{j}\right)$
+\end_inset
+
+ is the edge connecting words at locations 
+\begin_inset Formula $i,j$
+\end_inset
+
+.
+ It is an ordered pair: edges have direction.
+ For a fixed graph 
+\begin_inset Formula $G$
+\end_inset
+
+ the set of edges can be thought of that the adjacency matrix.
+ This is all very super–basic stuff, but I am trying to be as clear as possible
+ here.
+ Sorry.
+ The adjacency matrix is usually take to be a matrix with just ones and
+ zeros in it, with one's taken to mean there is an edge, and zero meaning
+ there is not.
+ This can be generalized, but we're not doing that yet.
+\end_layout
+
+\begin_layout Standard
+A connected graph is one where every vertex is reachable by a path from
+ any other vertex.
+ We want to consider only connected graphs; the ability to disconnect will
+ be handled via a different mechanism.
+\end_layout
+
+\begin_layout Standard
+For a fixed sentence 
+\begin_inset Formula $S$
+\end_inset
+
+, write the Hamiltonian
+\begin_inset Formula 
+\[
+H\left(S\right)=\sum_{G\in\mathcal{G}}h\left(G\right)
+\]
+
+\end_inset
+
+The sum ranges over all possible connected graphs over the words in the
+ sentence.
+\end_layout
+
+\begin_layout Standard
+Here, we arrive at the next stumbling block.
+ Is it correct to call 
+\begin_inset Formula $h\left(G\right)$
+\end_inset
+
+ the energy, or is it something else? The above has the classic form of
+ a superposition.
+ If we interpret a single graph to be a 
+\begin_inset Quotes eld
+\end_inset
+
+state
+\begin_inset Quotes erd
+\end_inset
+
+, then the above is a superposition of states, and 
+\begin_inset Formula $H\left(S\right)$
+\end_inset
+
+ should be interpreted as the partition function, and not the energy.
+ For partition functions, the appropriate notation would be a Boltzmann
+ sum:
+\begin_inset Formula 
+\[
+Z_{\beta}=\sum_{G\in\mathcal{G}}e^{-\beta h\left(G\right)}
+\]
+
+\end_inset
+
+So, which is it? I'm confused, here.
+\end_layout
+
+\begin_layout Standard
+Lets go outside and touch grass.
+ In classical physics, in the classical Ising model, we say that the spins
+ at each lattice site have a distinct, explicit value.
+ Any given physical instance consists of only one configuration of those
+ spins.
+ The thermodynamic ensemble is the collection of all possible spin arrangements.
+ The partition function is a sum over the entire ensemble, giving a Boltzmann
+ weight to each particular spin arrangement.
+\end_layout
+
+\begin_layout Standard
+What, exactly am I doing here, if I am confronted by a sentence, a sequence
+ of words, a sequence of tokens? Should I say that there is only one acceptable
+ parse of that sentence? This is the classic Chomskian answer.
+ Do I need to acknowledge the possibility of multiple ambiguous parses?
+ Of course: 
+\begin_inset Quotes eld
+\end_inset
+
+I saw the man with the telescope.
+\begin_inset Quotes erd
+\end_inset
+
+ said the linguistics textbooks, back when I was in college.
+ Is my reality split, a superposition of two different possibilities? Well,
+ yes it is.
+ The quantum people say so.
+ The Bayesian people say so, and so do the neuroscientists.
+ The linguists merely state that both parses are possible, until I learn
+ some additional information: how has the telescope: me, or the man? Once
+ I learn this additional bit of information, the wave function collapses,
+ the sentence is no longer ambiguous, I know which parse to use, and how
+ to determine the meaning of that sentence.
+\end_layout
+
+\begin_layout Standard
+Several problems here.
+ First, the mistake of treating sentences as assertions of truth.
+ Peotry is ambiguous, and one of the points of poetry is that it never collapses.
+ You get to reinterpret poetry in various ways: its evocative, not assertive.
+ Next, parsing is a syntactic activity; we've not touched base with semantics.
+\end_layout
+
+\begin_layout Section*
+Training vs.
+ Parsing
+\end_layout
+
+\begin_layout Standard
+So, where does that leave us? For now, lets ditch semantics: th In particular,
+ we wante original problem was to discover a collection of disjuncts that
+ adequately describe possible syntactic parses of sentences.
+ The goal was to do this with some sort of expression of aggregate satisfiabilit
+y: some kind of function assigning weights to disjuncts, and maximizing
+ it.
+\end_layout
+
+\begin_layout Standard
+That is, the corpus is fixed, immutable.
+ The words in the sentences are fixed, immutable.
+ There's a confusion between two different tasks.
+ In one task, the costs of the disjuncts are known, fixed, and the goal
+ of parsing is to find the collection of disjuncts that best fit the sentence.
+ The sum–total of these costs is the aggregate satisfiability.
+ In this mode, the disjuncts are analogous to the Ising spins, and we want
+ to find an arrangement of these spins/disjuncts that minimize the parsing
+ error: minimize the parse cost.
+\end_layout
+
+\begin_layout Standard
+Just like a ferromagnetic lattice, we acknowledge that there might be multiple
+ ambiguous parses, and that's OK, there is nothing wrong with that ambiguity.
+ For this task, it is entirely appropriate to use the partition function,
+ because the partition function captures the likelihood of any given parse
+ as being correct.
+ That is, 
+\begin_inset Formula $h\left(G\right)$
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+energy
+\begin_inset Quotes erd
+\end_inset
+
+ of a parse 
+\begin_inset Formula $G$
+\end_inset
+
+ and the probability of that parse being reasonable is
+\begin_inset Formula 
+\[
+P_{\beta}\left(G\right)=\frac{e^{-\beta h\left(G\right)}}{Z_{\beta}}
+\]
+
+\end_inset
+
+This is the 
+\begin_inset Quotes eld
+\end_inset
+
+configuration probability
+\begin_inset Quotes erd
+\end_inset
+
+ of the parse 
+\begin_inset Formula $G$
+\end_inset
+
+, and there sentences like 
+\begin_inset Quotes eld
+\end_inset
+
+I saw the man with the telescope
+\begin_inset Quotes erd
+\end_inset
+
+ just says there are two parses 
+\begin_inset Formula $G$
+\end_inset
+
+ and 
+\begin_inset Formula $G^{\prime}$
+\end_inset
+
+ with 
+\begin_inset Formula $h\left(G\right)=h\left(G^{\prime}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+So that is one task: find the statistical distribution of parses that are
+ the most likely.
+\end_layout
+
+\begin_layout Standard
+The other task is to learn what the disjuncts are, to learn the cost of
+ each disjunct.
+ The costs are NOT fixed, we are instead exploring the space of possible
+ disjunct assignments.
+ For this we need to take the other form: 
+\begin_inset Formula 
+\[
+H\left(S\right)=\sum_{G\in\mathcal{G}}h\left(G\right)
+\]
+
+\end_inset
+
+This is the appropriate form, because we want to consider all possible disjunct
+ cost assignments, and minimize those.
+ Unlike the earlier case where multiple distinct (ambiguous) parses can
+ be tolerated and are even desirable, here, not so much.
+ Here, we do want to discover single unique, unambiguous collection of disjuncts.
+ It is hard to understand why more than one would be desired.
+ Perhaps some hand–waving is possible, but hard to see what that is.
+\end_layout
+
+\begin_layout Standard
+So lets try that.
+ Lets say that there is 
+\begin_inset Quotes eld
+\end_inset
+
+one true set
+\begin_inset Quotes erd
+\end_inset
+
+ of disjuncts that guide the parsing and understanding of the external world.
+ If they are correct and accurate, then all is well and we continue onwards.
+ Sometimes, model updates would be needed.
+ Most of these should be small, but it is easy to imagine avalanches in
+ 
+\begin_inset Quotes eld
+\end_inset
+
+understanding
+\begin_inset Quotes erd
+\end_inset
+
+: if some lexis no longer parses reality, that lexis may need an update.
+ That update may be dramatic.
+\end_layout
+
+\begin_layout Standard
+So why would one want to keep around multiple different lexis? Well, to
+ try them out, maybe see how they differ.
+ In this model, each lexis is an 
+\begin_inset Quotes eld
+\end_inset
+
+individual
+\begin_inset Quotes erd
+\end_inset
+
+, and that individual has it's own view of what the best kinds of parses
+ might be.
+ Most individuals agree, but clearly, if the training corpus for one individual
+ is a bit different from that of another individual, there will be differences.
+\end_layout
+
+\begin_layout Standard
+So I'm having fun with this: any particular collection of disjuncts is an
+ individual.
+ This can of course be taken much more broadly: different LLM weight–sets
+ are indeed 
+\begin_inset Quotes eld
+\end_inset
+
+individuals
+\begin_inset Quotes erd
+\end_inset
+
+, but this diary is not about LLM's, so we won't go there.
+\end_layout
+
+\begin_layout Section*
+Disjuncts
+\end_layout
+
+\begin_layout Standard
+It's time to firm up what the disjunct discovery process will be.
+ For that, an expression for 
+\begin_inset Formula $h\left(G\right)$
+\end_inset
+
+ is needed.
+ So, 
+\begin_inset Formula $G$
+\end_inset
+
+ is a graph, having edges between some words in a sentence, but not others.
+ Talking about words keeps things concrete, but most of the below should
+ generalize just fine for any kind of network graph.
+\end_layout
+
+\begin_layout Standard
+For each word 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ in the sentence, define the disjunct 
+\begin_inset Formula $D_{i}$
+\end_inset
+
+ to be the set of edges attached to that word: so
+\begin_inset Formula 
+\[
+D_{i}=\left\{ E_{ij}:E_{ij}\ne0\right\} =\left\{ E_{ij}:E_{ij}\in G\right\} 
+\]
+
+\end_inset
+
+which are two different notations for the same thing: the edge 
+\begin_inset Formula $E_{ij}$
+\end_inset
+
+ is in the graph 
+\begin_inset Formula $G$
+\end_inset
+
+.
+ The colon notation : means 
+\begin_inset Quotes eld
+\end_inset
+
+such that
+\begin_inset Quotes erd
+\end_inset
+
+: the edges such that they belong to the graph.
+ Properly, the disjunct is an ordered list.
+ The sequence of the edges matters (because word–order matters).
+ 
+\end_layout
+
+\begin_layout Standard
+Thus, instead of using set–builder notation 
+\begin_inset Formula $\left\{ \cdot\right\} $
+\end_inset
+
+ we could use other kids of notation.
+ Don't freak, but here are other notations commonly found in the literature:
+\begin_inset Formula 
+\[
+D_{i}=E_{ij_{1}}\otimes E_{ij_{2}}\otimes\cdots\otimes E_{ij_{k}}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\otimes$
+\end_inset
+
+ is the tensor product.
+ The reason that the tensor product notation is correct can be found in
+ a variety of other places, so I won't try to explain the motivation for
+ it.
+ Link Grammar uses the & instead of 
+\begin_inset Formula $\otimes$
+\end_inset
+
+ to write down disjuncts.
+ The above is a tensor of arity 
+\begin_inset Formula $k$
+\end_inset
+
+ – it has 
+\begin_inset Formula $k$
+\end_inset
+
+ different connectors.
+ 
+\end_layout
+
+\begin_layout Standard
+Another notation is the bra–ket notation:
+\begin_inset Formula 
+\[
+D_{i}=\left|E_{ij_{1}}\right\rangle \otimes\left|E_{ij_{2}}\right\rangle \otimes\cdots\left|E_{ij_{m}}\right\rangle \otimes\left\langle E_{ij_{m+1}}\right|\otimes\cdots\otimes\left\langle E_{ij_{k}}\right|
+\]
+
+\end_inset
+
+where kets are used whenever 
+\begin_inset Formula $j_{n}<i$
+\end_inset
+
+ and bras are used when 
+\begin_inset Formula $j_{n}>i$
+\end_inset
+
+.
+ That is, 
+\begin_inset Formula $j_{m}$
+\end_inset
+
+ is the index such that 
+\begin_inset Formula $j_{m}<i<j_{m+1}$
+\end_inset
+
+.
+ Note the inequalities are strict: a word ca never link to itself.
+ The point of bra–ket notation is to say that words with 
+\begin_inset Formula $j_{n}<i$
+\end_inset
+
+ link to the left, otherwise they link to the right.
+ This is fine for English but just makes things hard for other languages
+ and for general graphs; the bra–ket notation is problematic for a number
+ of reasons.
+ One is that natural language is not a symmetric monoidal category: the
+ is no dagger operator.
+ It is not true that 
+\begin_inset Formula $\left|\cdot\right\rangle ^{\dagger}=\left\langle \cdot\right|$
+\end_inset
+
+.
+ Another problem is that bra–ket notation is inherently 
+\begin_inset Quotes eld
+\end_inset
+
+heterosexual
+\begin_inset Quotes erd
+\end_inset
+
+, in that inner products can only be formed with one bra and one ket, whereas
+ in 
+\begin_inset Quotes eld
+\end_inset
+
+real life
+\begin_inset Quotes erd
+\end_inset
+
+, connectors may come with other kinds of sexes and mating rules.
+ For example, monosexual connectors, where there is only one sex, are appropriat
+e for graphs with undirected edges, for which left–right ordering does not
+ matter.
+ In other languages, such as Turkish, Finnish and Lithuanian, word order
+ mostly does not matter, but head–dependent order matters very strongly.
+ For those languages, there are four sexes: a product of the dominant head–depen
+dent dependency, and a much weaker left–right mating distinction for a small
+ minority of words.
+ Enough linguistics for now; this gives a flavor of some of the issues that
+ come up in practice.
+\end_layout
+
+\begin_layout Standard
+Although the bra–ket notation is problematic, the tensor notation is not:
+ the non–symmetric monoidal category really is the appropriate category
+ for language.
+ It really is a fragment of linear logic.
+ See Wikipedia articles on pre–group grammars.
+ See all my (Vepstas) paper on 
+\begin_inset Quotes eld
+\end_inset
+
+Categorial Grammars are Equivalent to Link Grammar
+\begin_inset Quotes erd
+\end_inset
+
+; I think search engines can find this.
+\end_layout
+
+\begin_layout Standard
+To conclude: a single disjunct is the same thing as a single–element tensor
+ (a basis tensor, i.e.
+ a product of basis vectors) and this is the same thing as a jigsaw piece.
+ All three of these are the same thing.
+\end_layout
+
+\begin_layout Section*
+Costs
+\end_layout
+
+\begin_layout Standard
+To each disjunct, we wish to assign a cost: a floating–point, real–valued
+ number 
+\begin_inset Formula $\alpha_{i}$
+\end_inset
+
+ for each 
+\begin_inset Formula $D_{i}$
+\end_inset
+
+.
+ The total cost is then 
+\begin_inset Formula 
+\[
+h\left(G\right)=\sum_{1\le i\le n}\alpha_{i}
+\]
+
+\end_inset
+
+Recall that 
+\begin_inset Formula $G$
+\end_inset
+
+ is fixed, and that therefore the 
+\begin_inset Formula $D_{i}$
+\end_inset
+
+ are fixed: they are uniquely determined by the graph.
+ The task is to find an assignment of 
+\begin_inset Formula $\alpha_{i}$
+\end_inset
+
+ that minimize the total cost over the entire training corpus.
+\begin_inset Formula 
+\[
+\mathcal{H}=\sum_{S\in\mathcal{C}}H\left(S\right)=\sum_{S\in\mathcal{C}}\sum_{G\in\mathcal{G}}h\left(G\right)
+\]
+
+\end_inset
+
+Of course, this can be met by setting 
+\begin_inset Formula $\alpha_{i}=-\infty$
+\end_inset
+
+ which is pointless, and so a bound is needed: let the costs 
+\begin_inset Formula $0\le\alpha_{i}$
+\end_inset
+
+ be always positive (or above some lower bound.
+ It doesn't matter just right now.)
+\end_layout
+
+\begin_layout Standard
+The above is a general expression.
+ Its correct, but awkward, in a way.
+ For natural language, we want 
+\begin_inset Formula $D_{i}$
+\end_inset
+
+ not to depend on the word–position 
+\begin_inset Formula $i$
+\end_inset
+
+ but on the word 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ at that position.
+ That is, write not 
+\begin_inset Formula $D_{i}$
+\end_inset
+
+ but 
+\begin_inset Formula $D\left(w_{i}\right)$
+\end_inset
+
+ and since the disjunct should not depend on the word position, but only
+ the word, then 
+\begin_inset Formula $D\left(w\right)$
+\end_inset
+
+ should be written for the word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Likewise, for the edge 
+\begin_inset Formula $E_{ij}$
+\end_inset
+
+ we don't want a dependency on the word–position 
+\begin_inset Formula $j$
+\end_inset
+
+ but instead on the word 
+\begin_inset Formula $w_{j}$
+\end_inset
+
+ at location 
+\begin_inset Formula $j$
+\end_inset
+
+.
+ Thus, write 
+\begin_inset Formula $E_{ij}=E\left(w_{i},w_{j}\right)$
+\end_inset
+
+ or, better yet, since 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ is the same for all edges in the disjunct, simply write 
+\begin_inset Formula $D\left(w\right)=u\otimes v\otimes\cdots$
+\end_inset
+
+ where 
+\begin_inset Formula $u,v,\cdots$
+\end_inset
+
+ are other words.
+ That is, the disjunct no longer depends on the sentence that it is on,
+ nor does it depend on which location it has in the sentence: it only depends
+ on the word, and it's connectors.
+\end_layout
+
+\begin_layout Standard
+So as not to get lost in abstraction, a practical example is in order.
+ Consider the canonical parse of 
+\begin_inset Quotes eld
+\end_inset
+
+the dog chased the cat
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This has 
+\begin_inset Quotes eld
+\end_inset
+
+chased
+\begin_inset Quotes erd
+\end_inset
+
+ as a transitive verb, 
+\begin_inset Quotes eld
+\end_inset
+
+dog
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+cat
+\begin_inset Quotes erd
+\end_inset
+
+ as nouns, and 
+\begin_inset Quotes eld
+\end_inset
+
+the
+\begin_inset Quotes erd
+\end_inset
+
+ as determiner.
+ The disjuncts are:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Formula $D\left(\mbox{CHASED}\right)=\mathtt{DOG-\,\&\,CAT+}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula $D\left(\mbox{DOG}\right)=\mathtt{THE-\,\&\,CHASED+}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula $D\left(\mbox{CAT}\right)=\mathtt{THE-\,\&\,CHASED-}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula $D\left(\mbox{THE}\right)=\mathtt{DOG+}\mbox{ or }\mathtt{CAT+}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, the plus and minus indicate a linkage to the left or to the right.
+ The transitive verb links to a subject on the left and an object on the
+ right.
+ English is an SVO language, so we can tell apart the subject noun and the
+ object noun from the directional indicators + and -.
+ So 
+\begin_inset Quotes eld
+\end_inset
+
+cat
+\begin_inset Quotes erd
+\end_inset
+
+ is the object, because it has 
+\begin_inset Quotes eld
+\end_inset
+
+chased-
+\begin_inset Quotes erd
+\end_inset
+
+ on it, and not 
+\begin_inset Quotes eld
+\end_inset
+
+chased+
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The ampersand 
+\begin_inset Formula $\&$
+\end_inset
+
+ was used in place of the tensor 
+\begin_inset Formula $\otimes$
+\end_inset
+
+ otimes symbol.
+ This is in keeping with Link Grammar.
+\end_layout
+
+\begin_layout Standard
+Again, this is super–basic stuff; I'm repeating it here so that we can keep
+ our feet on the ground.
+\end_layout
+
+\begin_layout Standard
+That's the good news.
+ The bad news is that I am laboriously re–inventing the skip–gram.
+ To some large degree, if we walk much farther down this path, we risk re–invent
+ing BERT.
+ And that is not really the goal.
+ Soo....
+\end_layout
+
+\begin_layout Section*
+Training
+\end_layout
+
+\begin_layout Standard
+So, armed with a definition of a disjunct that closely resembles a BERT–style
+ skip–gram, can we invent a training technique that avoids the standard
+ transformer foot–path? That is, the goal here is to ask 
+\begin_inset Quotes eld
+\end_inset
+
+is there another way, and what might it be?
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Section*
+The End
+\end_layout
+
+\begin_layout Standard
+That's all for now.
+\end_layout
+
+\end_body
+\end_document

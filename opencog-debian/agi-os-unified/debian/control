@@ -1,0 +1,100 @@
+Source: agi-os-unified
+Section: metapackages
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: agi-os-unified
+Architecture: all
+Depends: ${misc:Depends},
+         cognumach,
+         hurdcog,
+         hurdcog-machspace,
+         hurdcog-cogkernel-core,
+         hurdcog-occ-bridge,
+         opencog,
+         opencog-atomspace,
+         opencog-atomspace-cog,
+         opencog-atomspace-rocks,
+         opencog-atomspace-pgres,
+         opencog-cogserver,
+         opencog-ure,
+         opencog-pln,
+         opencog-attention,
+         opencog-miner,
+         opencog-learn,
+         opencog-generate,
+         opencog-moses,
+         libcogself1
+Recommends: opencog-lg-atomese,
+            opencog-relex,
+            opencog-vision,
+            opencog-agi-bio,
+            opencog-spacetime,
+            opencog-unify
+Suggests: postgresql,
+          guile-3.0,
+          python3-numpy,
+          python3-pandas,
+          python3-scikit-learn
+Description: Complete AGI Operating System - unified stack
+ This meta-package installs the complete AGI Operating System stack,
+ integrating three foundational layers into a unified cognitive computing
+ platform. The AGI-OS represents the world's first complete operating
+ system designed from the ground up for artificial general intelligence
+ research and development.
+ .
+ The three-layer architecture consists of:
+ .
+ Layer 1 - Cognumach Microkernel: An enhanced GNU Mach microkernel
+ providing advanced memory management, symmetric multiprocessing support,
+ and optimized inter-process communication for cognitive workloads.
+ .
+ Layer 2 - HurdCog Cognitive OS: An OpenCog-powered GNU Hurd system that
+ integrates cognitive computing primitives at the operating system level,
+ enabling learning, reasoning, and adaptation in system services.
+ .
+ Layer 3 - OpenCog Collection: A comprehensive AGI research platform
+ featuring the AtomSpace hypergraph database, Probabilistic Logic Networks,
+ attention allocation mechanisms, pattern mining, language learning, and
+ evolutionary optimization.
+ .
+ This unified system enables cognitive synergy across all layers, where
+ the interaction of diverse AI components produces emergent intelligence
+ beyond the capabilities of individual parts. The AGI-OS provides a
+ complete environment for AGI research, cognitive robotics, natural
+ language understanding, knowledge representation, and autonomous systems.
+ .
+ Key capabilities include distributed hypergraph processing, real-time
+ cognitive monitoring, self-optimization, probabilistic reasoning,
+ attention-driven resource allocation, and continuous learning from
+ experience. The system is built on free software principles and provides
+ reproducible builds through GNU Guix integration.
+
+Package: agi-os-dev
+Architecture: all
+Depends: ${misc:Depends},
+         agi-os-unified,
+         cognumach-dev,
+         hurdcog-dev,
+         libcogutil-dev,
+         libcogself-dev,
+         build-essential,
+         cmake,
+         guile-3.0-dev,
+         python3-dev
+Description: Development tools for AGI Operating System
+ This package provides the complete development environment for building
+ applications and system components on the AGI Operating System.
+ .
+ It includes header files, libraries, and tools for developing cognitive
+ translators, AtomSpace-aware applications, and system-level components
+ that integrate with the three-layer AGI-OS architecture.
+ .
+ Developers can create applications that leverage cognitive capabilities
+ at the microkernel, operating system, and application layers, enabling
+ unprecedented integration of AI capabilities into system software.

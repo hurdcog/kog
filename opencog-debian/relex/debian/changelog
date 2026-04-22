@@ -1,0 +1,84 @@
+opencog-relex (1.6.3~git20240330.407d9ed-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 30 Mar 2024 08:28:15 +0900
+
+opencog-relex (1.6.3~git20240327.407d9ed-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 27 Mar 2024 13:16:19 +0900
+
+opencog-relex (1.6.3~git20200823.6ce17c1-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 06:46:06 +0900
+
+opencog-relex (1.6.3~git20200404.6ce17c1-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 09:47:59 +0900
+
+opencog-relex (1.6.3~git20200402.6ce17c1-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 12:51:23 +0900
+
+opencog-relex (1.6.3~git20190823.2f71dc0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Fri, 23 Aug 2019 10:49:29 -0700
+
+opencog-relex (1.6.3~git20190822.2f71dc0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 22 Aug 2019 11:12:16 -0700
+
+opencog-relex (1.6.3~git20181217.e8e3ef4-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Mon, 17 Dec 2018 09:02:14 +0900
+
+opencog-relex (1.6.3~git20181216.e8e3ef4-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 16 Dec 2018 10:55:27 +0900
+
+opencog-relex (1.6.3~git20180615.252c806-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Fri, 15 Jun 2018 15:24:48 +0900
+
+opencog-relex (1.6.3~git20180501.252c806-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 01 May 2018 04:24:31 +0900
+
+opencog-relex (1.6.3~git20180424.252c806-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+  * Bumped Standards-Version to 4.1.4.
+	
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 24 Apr 2018 19:33:00 +0900
+
+opencog-relex (1.6.3~git20170831.a983a49-2) mhatta-unstable; urgency=medium
+
+  * debian/control: added libuuid-perl to Dep.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 31 Aug 2017 15:10:13 +0900
+
+opencog-relex (1.6.3~git20170831.a983a49-1) mhatta-unstable; urgency=medium
+
+  * Initial release.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 30 Aug 2017 23:16:17 +0900

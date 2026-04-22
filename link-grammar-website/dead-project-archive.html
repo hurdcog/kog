@@ -1,0 +1,292 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Archive of Obsolete Projects that used Link Grammar</title>
+  </head>
+<body>
+<h2>Archive of Obsolete Projects that used Link Grammar</h2>
+<hr />
+
+Perhaps of historical interest!
+<P>
+The below is an ad-hoc listing of old announcements and listings
+of obsolete projects and dead website links. All of these made use
+of Link Grammar in some way, but went stale & obsolete for various
+reasons. In some cases, the code was merged into the main LG distro.
+In other cases, it was simply abandoned.
+
+<h3>Old Link Grammar Abisource Website</h3>
+The Link Grammar project used to be hosted by abisource.com, but that
+website went down without warning in the fall of 2023. For your
+amusement,
+<a href="https://web.archive.org/web/20230825022816/http://www.abisource.com/projects/link-grammar/">here is the last saved version available from the
+Wayback Machine</a>, dated from the 25th of August 2023. They even
+<a href="https://web.archive.org/web/20230729033641/http://www.abisource.com/downloads/link-grammar/">captured what the download site looked like</a>, but they
+did not capture the actual tarballs.
+<p>
+As a reminder, the current Link Grammar website is at
+<a href="https://opencog.github.io/link-grammar-website/">https://opencog.github.io/link-grammar-website/</a>,
+and the source-code tarballs are at
+<a href="https://www.gnucash.org/link-grammar/downloads/">https://www.gnucash.org/link-grammar/downloads/</a>.
+
+<h3>Old Abisource Word Processor Website</h3>
+If you are looking for AbiWord, the word processor, and not Link Grammar,
+you can find it on the Wayback Machine. Not all Wayback snapshots grab
+all Abisouce content. The following seem to work:
+<ul>
+<li>The last AbiWord version for Windows was 2.94. It is available at
+    <a href="https://web.archive.org/web/20130306003951/http://www.abisource.com/downloads/abiword/2.9.4/">a
+    2013 snapshot</a>.
+<li>The last version for Linux was 3.05. The download page for a flatpack
+    binary install is in
+    <a href="https://web.archive.org/web/20210712042527/http://www.abisource.com/download/">a 2021
+    snapshot</a>.
+<li>The source code for version 3.0.5 is located in
+    <a href="https://web.archive.org/web/20210730175714/https://abisource.com/downloads/abiword/3.0.5/source/">the
+    2021 snapshot</a>.
+<li>The online help documentation is available in
+    <a href="https://web.archive.org/web/20210731224703/http://abisource.com/help/en-US/index.html">another
+    2021 snapshot</a>.
+</ul>
+<p>
+<h3>Stanford Parser Compatibility</h3>
+<p>A sibling project, <a href="https://wiki.opencog.org/w/RelEx">RelEx</a>,
+uses constraint-grammar-like techniques to extract dependency relations
+that are compatible with the
+<a href="https://nlp.stanford.edu/software/lex-parser.shtml">
+Stanford parser</a>. It's performance is comparable to the Stanford
+PCFG parsing model, and is more than three times faster than the
+Stanford "lexicalized" (factored) model.
+</p>
+<p>
+The RelEx project is no longer in active development. We learned (the hard
+way) that the native Link Grammar parses contain much more information
+than the Stanford dependency markup is capable of supporting. The
+Stanford-style dependencies are simply are not rich or sophisticated enough
+to produce the kind of data needed for semantic analysis and comprehension,
+viz. tasks such as predicate-argument extraction, framing, semantic selection,
+and the like.
+</p>
+
+<h3>Language generation</h3>
+<p>For sentence generation, i.e. the creation of grammatically correct
+sentences from a bag of semantic relations, the
+<a href="https://wiki.opencog.org/w/Microplanner">
+microplanner</a> and
+<a href="https://wiki.opencog.org/w/Surface_Realization_(SuReal)">
+surface realization (sureal)</a> portion of OpenCog is strongly recommended.
+A short example is
+<a href="https://github.com/opencog/opencog/blob/master/examples/sureal/basic.scm">here</a>.
+These "sort-of work", but not very well.  The primary issue is that they
+do not make use of the statistical information available in language to
+choose likely or reasonable sentence constructions.
+</p>
+
+<p>We previously recommended two projects that should now be considered
+obsolete: NLGen and NLGen2. For your entertainment, they're still listed
+below: The <a href="https://launchpad.net/nlgen">NLGen</a>
+and <a href="https://launchpad.net/nlgen2">NLGen2</a> projects
+provide natural language generation modules, based on, and compatible
+with link-grammar and RelEx. They implement the
+<a href="https://wiki.opencog.org/w/SegSim">SegSim</a> ideas for NL
+generation.
+
+<P>
+See the following YouTube videos of a virtual dog,
+showing some of NLGen's capabilities (circa 2009):
+
+<ul>
+<li><a href="https://www.youtube.com/watch?v=FEmpGRLwbqE">Demo of
+Virtual Dog Learning to Play Fetch via Imitation and Reinforcement</a>,
+
+<li><a href="https://www.youtube.com/watch?v=vZtnjKcrdZQ">AI Virtual
+Dog's Emotions Fluctuate Based on Its Experiences</a>,
+
+<li><a href="https://www.youtube.com/watch?v=of-BahzS8qQ">Demo of
+Embodied Anaphora Resolution</a> and
+
+<li><a href="https://www.youtube.com/watch?v=ii-qdubNsx0">AI Virtual
+Dog Answers Simple Questions about Itself and Its Environment</a>.
+</ul>
+</p>
+
+<hr />
+<h3>Assorted Obsolete projects</h3>
+
+<dl>
+
+<dt><b>RelEx Semantic Relation Extractor</b></dt>
+<dd><a href="https://wiki.opencog.org/w/RelEx">RelEx</a>
+    is an English-language semantic relationship extractor, built on
+    the Link Parser. It can identify subject, object,
+    indirect object and many other relationships between words in a
+    sentence. It will also provide part-of-speech tagging, noun-number
+    tagging, verb tense tagging, gender tagging, and so on. RelEx includes a
+    basic implementation of the Hobbs anaphora (pronoun) resolution
+    algorithm.
+    </dd>
+
+<dt>On-line Link Grammar &amp; RelEx Demo</dt>
+<dd>You can try the parser online,
+    <a href="https://linkgrammar.herokuapp.com/">here</a>.
+    <p>
+    Gone; Heroku was unmaintainable.
+    </dd>
+
+<dt><b>C#.Net Framework bindings</b></dt>
+<dd><a href="http://proai.com/cs/files/folders/linkgrammar/default.aspx">C#.Net
+     interface to Link Grammar</a> from Leonard Chalk/ProAI.
+     <p>
+     Old, circa 2007, probably bit-rotted.
+     The proai.com domain has been abandoned in 2010.
+     <a href="./mirrors/LinkGrammar-01-22-07.zip">Archive copy here</a>
+     </dd>
+
+<dt><b>Ruby bindings</b></dt>
+<dd>Ruby bindings are coordinated at the
+     <a href="https://www.deveiate.org/projects/Ruby-LinkParser">Ruby-LinkParser</a>
+     website.  The code can be found at the
+     <a href="https://github.com/ged/linkparser">ged/link-parser</a>
+     github page.
+     <p>
+     Obsolete, no longer available.
+     </dd>
+
+<dt><b>Perl bindings</b></dt>
+<dd>Perl bindings, created by Danny Brian, can be found on the
+    <a href="https://search.cpan.org/~dbrian/Lingua-LinkParser/">Lingua-LinkParser</a>
+    page on CPAN. Caution: those bindings appear to be unmaintained;
+    currently, they include features that were removed more than than
+    five years ago. (We encourage a new maintainer to step up!)
+    There is also a
+    <a href="https://www.foo.be/docs/tpj/issues/vol5_3/tpj0503-0010.html">tutorial</a>
+    written against a very old version of the bindings; some details may
+    be different.
+    </dd>
+    <p>
+
+<dt><b>Psi Toolkit (Perl)</b></dt>
+<dd>The <a href="http://psi-toolkit.amu.edu.pl/">Psi Toolkit</a>, an NLP
+    toolkit aimed at linguists and NLP engineers, includes bindings for
+    link-grammar, via perl.
+    <p>
+    Website no longer exists.
+    </dd>
+
+<dt><b>Delphi bindings</b></dt>
+<dd>Delphi (Pascal) is a popular development environment for Windows.
+    The
+    <a href="https://web.archive.org/web/20111013120024/http://www.lakraven.com/delphi-stuff/link-grammar-parser/">LaKraven
+    Page</a> provides the source for Delphi bindings, as well as
+    pre-compiled DLL's for Windows.
+    <p>
+    The lakraven website went off-line sometime in 2012 or 2013 ...
+    </dd>
+
+<dt><b>Alternative Java bindings</b></dt>
+<dd>Another, completely different set of Java bindings have been
+    developed: a
+    <a href="http://www.chrisjordan.ca/~cjordan/code/LGInterface.tar.gz">tar
+    ball is here</a>. These are for the old version 4.1 only.
+    Note that these are not compatible with the bindings that ship, by
+    default, with the main link-grammar package.
+    <p>
+    Out of date since 2006 ...
+    </dd>
+
+<dt><b>Javascript</b></dt>
+<dd>Obsolete Javascript bindings can be found at the
+    <a href="https://github.com/dijs/link-grammar/">dijs/link-grammar</a>
+    github page. Someone, please port these to the latest version!
+    <p>
+    Merged into mainline Link Grammar. Now part of version 5.8.0
+    </dd>
+
+<dt><b>Pre-parsed Wikipedia</b></dt>
+<dd>Parsed versions of various texts, including all articles from a
+    May 2008 dump of Wikipedia, as well as a partial parse of an October
+    2010 dump, are available at
+    <a href="https://gnucash.org/linas/nlp/data/">https://gnucash.org/linas/nlp/data/</a>
+    <p>
+    Deprecated.
+    </dd>
+
+<dt><b>English dictionary extensions</b></dt>
+<dd><a href="http://www.eturner.net/linkgrammar-wn/">LinkGrammar-WN</a>
+     is a lexicon expansion for the English language Link Grammar Parser.
+     This project adds 14K new words to the dictionaries. The extended
+     lexicon is provided under the GPL license, and thus cannot be
+     merged back into the current project.  <b>NOTE:</b> these
+     extensions are rather old, and it is likely that they are no longer
+     compatible with current link-grammar versions.
+    <p>
+     Deprecated
+    </dd>
+
+<dt><b>Medical Text Analysis</b></dt>
+<dd>The <a href="http://groups.csail.mit.edu/medg/projects/text/">
+    MIT Computer Science and Artificial Intelligence Laboratory (CSAIL)
+    Clinical Decision Making Group</a>
+    has done work to extend the Link Grammar dictionaries by adding
+    many new words. All but the six largest of these dictionaries
+    have been merged into link-grammar, since version 4.3.1 (January
+    2008). The
+    large dictionaries EXTRA.2, EXTRA.3, EXTRA.8, EXTRA.9, EXTRA.12,
+    and EXTRA.17 have not been merged. These dictionaries contain
+    180K assorted medical, biological and biochemical terms and
+    phrases.
+    <p>
+    Olde news. Merged into mainline in version 4.5
+    </dd>
+
+<dt><b>BioLG</b></dt>
+<dd>The <a href="http://mars.cs.utu.fi/biolg/">BioLG</a> project is
+    a modification of the Link Grammar Parser adapted for the
+    biomedical domain, as described in
+    <a href="http://www.biomedcentral.com/1471-2105/7/S3/S2">Lexical
+    Adaptation of Link Grammar to the Biomedical Sublanguage: a
+    Comparative Evaluation of Three Approaches (Sampo Pyysalo,
+    Tapio Salakoski, Sophie Aubin and Adeline Nazarenko; BMC
+    Bioinformatics 2006)</a>. Almost all of the BioLG changes
+    have been merged back into the main line, as of version 4.5.0
+    (April 2009), with scattered bug-fixes after that.
+    </dd>
+</dl>
+
+<p>
+<h3>More Dead Software Resources</h3>
+
+<ul>
+<li>Java Native Code Interface for the Link Grammar API, by Chris Jordan.
+<a href="http://www.chrisjordan.ca/research/LGInterface.tar">[Download]</a>
+<a href="http://www.chrisjordan.ca/research/LGdocs">[Documentation]</a>
+
+<li>Perl module for the link grammar parser, by Dan Brian.
+<a href="http://www.cpan.org/authors/id/D/DB/DBRIAN/Lingua-LinkParser-1.09.tar.gz">[Download]</a>
+<a href="http://www.cpan.org/authors/id/D/DB/DBRIAN/Lingua-LinkParser-1.09.readme">[Documentation]</a>
+
+<li>A version of the parser for the C#.NET platform, by Thanh Bui.
+<a href="http://www.viettrans.org/LinkGrammar/link41a.NET.zip">[Download]</a>
+
+<li>A lexical expansion of the Link Grammar Parser using WordNet,
+by Elliot Turner.
+<a href="http://www.eturner.net/linkgrammar-wn/">[Download]</a>
+
+<li> A link grammar for Russian, by Sergey Protasov.
+<a href="http://sz.ru/parser/">[Try online]</a>
+This has been merged into the mainline LG distro.
+
+<li>An English-to-Turkish translator, by Aykutlu Dane.
+<a href="http://www.fen.bilkent.edu.tr/~aykutlu/ceviri.htm">[Download here]</a>
+
+<li>AbiWord, the open-source word processor, now uses Link
+Grammar for grammar-checking (as of version 2.4).
+<a href="http://www.abisource.com">[AbiWord Website]</a>
+</ul>
+
+<hr>
+Return to the
+<A HREF="../">Link Grammar front page</A>
+
+</body>
+</html>

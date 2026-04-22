@@ -1,0 +1,23 @@
+[[!meta copyright="Copyright © 2011, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="ELFOSABI_GNU"]]
+
+GNU/Hurd uses the `ELFOSABI_GNU` value for operating system/ABI identification.
+This is shared with GNU/Linux.
+
+
+# History
+
+  * [[!debbug 630180]], [[!debbug 632686]]
+  * [[!sourceware_PR 12913]]
+  * [[!message-id "20110619130724.GV6349@const.famille.thibault.fr"]]
+  * [[!message-id "20110619201952.GS27884@const.famille.thibault.fr"]]
+  * [[!message-id "20110619203224.GT27884@const.famille.thibault.fr"]]

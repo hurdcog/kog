@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Architecture: Monitoring and Interface Systems</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 60px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 24px;
+        }
+        .context-label {
+            font-size: 11px;
+            color: #0f4c81;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding: 6px 12px;
+            border: 1px solid #0f4c81;
+            display: inline-block;
+            background: rgba(15, 76, 129, 0.05);
+        }
+        .extensions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .extension-box {
+            border: 2px solid #0f4c81;
+            background: #FFFFFF;
+            padding: 24px;
+            min-height: 180px;
+            position: relative;
+        }
+        .extension-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #e94560;
+        }
+        .extension-box.full-width {
+            grid-column: 1 / -1;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .extension-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-left: 16px;
+        }
+        .extension-component {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0f4c81;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-left: 16px;
+        }
+        .extension-purpose {
+            font-size: 14px;
+            font-weight: 500;
+            color: #16213e;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            padding-left: 16px;
+        }
+        .extension-capabilities {
+            font-size: 12px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.6;
+            padding-left: 16px;
+        }
+        .capability-label {
+            font-weight: 600;
+            color: #0f4c81;
+        }
+        .continuation-note {
+            font-size: 12px;
+            color: #e94560;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Continuation Note -->
+        <div class="continuation-note">Part 2 of 2</div>
+        
+        <!-- Title -->
+        <div class="slide-title">Extension Architecture: Monitoring and Interface Systems</div>
+        <div class="title-line"></div>
+        
+        <!-- Context Label -->
+        <div class="context-label">Extension Membrane • Plugin Container</div>
+        
+        <!-- Extensions Grid -->
+        <div class="extensions-grid">
+            
+            <!-- Extension 4: Introspection System -->
+            <div class="extension-box">
+                <div class="extension-name">Introspection System</div>
+                <div class="extension-component">EchoselfIntrospection</div>
+                <div class="extension-purpose">
+                    Enables self-monitoring and debugging through internal state examination, reasoning trace, and error identification for autonomous improvement.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span> Internal state examination • Reasoning process tracing • Error identification • Behavior reporting • Self-debugging
+                </div>
+            </div>
+            
+            <!-- Extension 5: Monitoring Dashboard -->
+            <div class="extension-box">
+                <div class="extension-name">Monitoring Dashboard</div>
+                <div class="extension-component">DeepEchoMonitor</div>
+                <div class="extension-purpose">
+                    Provides real-time system visibility through visualization and monitoring tools displaying state, resources, and processing activity.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span> Activation pattern visualization • Memory usage tracking • Processing bottleneck detection • System health monitoring
+                </div>
+            </div>
+            
+            <!-- Extension 6: Sensory Motor Interface (Full Width) -->
+            <div class="extension-box full-width">
+                <div class="extension-name">Sensory Motor Interface</div>
+                <div class="extension-component">SensoryMotorBridge</div>
+                <div class="extension-purpose">
+                    Connects cognitive system to physical sensors and actuators, enabling embodied interaction with the environment through perception and action.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span> Sensor data integration • Motor control • Embodied cognition • Environment interaction • Perception-action loops
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

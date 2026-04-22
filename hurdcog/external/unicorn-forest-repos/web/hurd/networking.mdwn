@@ -1,0 +1,40 @@
+[[!meta copyright="Copyright © 2000, 2008, 2010 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+For each supported `PF_*` protocol family (domain), there is a file `/servers/socket/N`
+where `N` is the numeric value for the `PF_*` symbol. libc's `socket()`,
+`socketpair()` and friends use `_hurd_socket_server` to open them: the latter
+computes the `/servers/socket/N` path, then opens it with `__file_name_lookup`,
+and returns the result. Since those paths are translated (see showtrans on
+`/servers/socket/N`), it's a port to a translator which is returned. Right now
+[[`PF_LOCAL`|translator/pflocal]] (a.k.a. `PF_UNIX` or `AF_UNIX`) `N=1`,
+[[`PF_INET`|translator/pfinet]] (a.k.a `AF_INET`) `N=2` and
+[[`PF_INET6`|translator/pfinet/ipv6]] (a.k.a `AF_INET6`) `N=26` are supported.
+
+In case of problems to find out which server is called rpctrace can be of use:
+search for the output `dir_lookup ("servers/socket/N" ...)`
+
+User programs open those files, and use the `socket_create` [[RPC]] to make a
+new socket.  With that socket, they can use the other `socket_*` RPCs and also
+the `io_*` RPCs.  The `socket_*` RPCs are essentially clones of the [[Unix]]
+[[system call]]s in question.
+
+The only exception is `sockaddrs`, which are implemented as [[ports|libports]]
+instead of the opaque data arrays they are in the system calls.  You manipulate
+`sockaddr` ports with the `socket_create_address`, `socket_fabricate_address`,
+and `socket_whatis_address` calls.  The `sockaddr` port is then used in socket
+calls like `socket_connect` and `socket_accept`.
+
+`PF_INET` `sockaddr` ports are manipulated with `socket_create_address` from
+the usual `struct sockaddr_in`.  `PF_LOCAL` `sockaddr` ports are stored by
+`S_IFSOCK` filesystem nodes; you find the address associated with a node with
+`ifsock_getsockaddr`.  The [[file_system_server|translator]] will get a
+`sockaddr` to return with `socket_fabricate_address`.

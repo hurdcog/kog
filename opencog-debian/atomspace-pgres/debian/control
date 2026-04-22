@@ -1,0 +1,27 @@
+Source: opencog-atomspace-pgres
+Section: libdevel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11), cmake, cxxtest, libboost-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-regex-dev, libboost-serialization-dev, libboost-system-dev, libboost-thread-dev, libiberty-dev, binutils-dev, python3-dev, valgrind, cython3, opencog-atomspace, atomspace-storage, python3-nose, guile-3.0-dev, patchelf, libpq-dev, postgresql-server-dev-all
+Standards-Version: 4.6.2
+Homepage: https://opencog.org/
+Vcs-Git: https://github.com/opencog/atomspace-pgres.git
+Vcs-Browser: https://github.com/opencog/atomspace-pgres
+
+Package: opencog-atomspace-pgres
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, opencog-atomspace, atomspace-storage, python3, postgresql-client
+Description: PostgreSQL storage backend for OpenCog AtomSpace
+ This package provides a PostgreSQL-backed persistent storage system for the
+ OpenCog AtomSpace hypergraph database. It enables distributed and scalable
+ storage of knowledge graphs with full ACID compliance.
+ .
+ Features include:
+  - High-performance bulk loading and retrieval
+  - Distributed storage across multiple PostgreSQL instances
+  - Full transaction support
+  - Query optimization for hypergraph patterns
+  - Automatic schema management
+ .
+ This backend is suitable for production deployments requiring robust
+ persistence and multi-user access to large knowledge bases.

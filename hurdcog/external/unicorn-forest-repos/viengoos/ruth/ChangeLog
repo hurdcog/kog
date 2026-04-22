@@ -1,0 +1,317 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c [USE_L4]: Only include <l4.h> in this case.
+	(main) [! USE_L4]: Don't print resource manager's thread id.
+	(main): Use uintptr_t, not l4_word_t.  Use hurd_myself, not
+	l4_myself.  Use sched_yield, not l4_yield.  Improve
+	synchronization for object_reply_on_destruction test in case
+	sched_yield is a no-op.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): When done with all tests, don't spin, just
+	return.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	Update to new RPC interfaces.
+	* ruth.c (main): Update use of rm_folio_alloc,
+	rm_folio_object_alloc, rm_thread_exregs, rm_activity_policy,
+	rm_activity_info.  Replace use of rm_thread_wait_object_destroy
+	with rm_object_reply_on_destruction.  Replace use of `struct
+	exception_info' with `struct activation_fault_info'.  Fix signal
+	test's use of condition variables to not rely on the scheduler.
+	When checking deallocation code, set up a fault handler to
+	programmatically determine success.
+
+2008-11-04  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Use OBJECT_PRIORITY_DEFAULT, not
+	OBJECT_PRIORITY_LRU.
+
+2008-08-15  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Allocate objects after setting up their
+	respective shadow capabilities.  When allocating all available
+	memory, limit the amount to at most 1 GB.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update to use activity_info instead of
+	activity_stats.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (visit): When encountering a folio, return -1
+	immediately.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Improve mmap test.  Update use of
+	anonymous_pager_alloc to be consistent with new API.  Update fill
+	functions to be consistent with new API.  Remove redundant test.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Replace use of slot_lookup with as_cap_lookup.
+	Replace use of as_slot_ensure with as_ensure_use.  Replace use of
+	slot_lookup with as_slot_lookup_use.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am [ENABLE_TESTS]: Don't build package's program.
+	
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update use of slot_lookup to be consistent with
+	new API.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update user of rm_activity_stats to be consistent
+	with new interface.
+
+2008-03-01  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c Include <signal.h>.
+	(main): Test signal signal implementation.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Remove variable.
+	(ruth_CPPFLAGS): Set to $(USER_CPPFLAGS).
+	(ruth_CFLAGS): New variable.
+	(ruth_LDFLAGS): Set to $(USER_LDFLAGS).
+	(ruth_LDADD): Set to $(USER_LDADD).
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c: Include <hurd/anonymous.h>, <stdlib.h> and <l4.h>.
+	(main): Add tests to check rendered regions and discardable pages.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update use of storage_alloc to be consistent with
+	new API.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (program_name): Change type to char *.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): When checking the ability to get and set an
+	activity's policy, don't use the main activity.  Instead, allocate
+	a new activity and use that.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update use of rm_cap_read to be consistent with
+	new API.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update use of rm_cap_read to be consistent with
+	new API.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Update.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (ARCH_SOURCES): Remove variable.
+	(ruth_SOURCES): Set to ruth.c.
+	(COMMON_CPPFLAGS): Remove -I$(top_builddir)/newlib/include, add
+	-I$@LIBC@/include.
+	* output.c: Move to ../libc-parts/s_printf.c.
+	* output.h: Remove file.
+	* panic.c: Move to ../libc-parts/panic.c.
+	* ruth.h: Remove file.
+	* malloc.c: Likewise.
+	* malloc-wrap.c: Likewise.
+	* ia32-cmain.c: Move to ../libc-parts/ia32-cmain.c.
+	* ia32-crt0.S: Move to ../libc-parts/ia32-crt0.S.
+	* ruth.c: Include <stdio.h>.  Don't include "ruth.h".
+	(output_debug): Declare, don't define.
+	(exit): Remove function.
+	(abort): Likewise.
+	(getpagesize): Likewise.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (putchar): Rename from this...
+	(s_putchar): ... to this.
+	(puts): Rename from this...
+	(s_puts): ... to this.
+	(vprintf): Rename from this...
+	(s_vprintf): ... to this.
+	(printf): Rename from this...
+	(s_printf): ... to this.
+	* output.c (putchar): Rename from this...
+	(s_putchar): ... to this.  Update users.
+	(puts): Rename from this...
+	(s_puts): ... to this.  Update users.
+	(vprintf): Rename from this...
+	(s_vprintf): ... to this.  Update users.
+	(printf): Rename from this...
+	(s_printf): ... to this.
+	* Makefile.am (ruth_SOURCES): Add object.h and object.c.
+	* ia32-cmain.c: Include <stddef.h>.
+	(cmain): Use s_printf rather than printf.
+	* panic.c (panic_): Use s_printf and s_vprintf rather than printf
+	and vprintf.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Add -I$(LIBC)/include.
+	(ruth_SOURCES): Remove malloc-wrap.c, output.h and output.c.
+	(ruth_LDADD): Set to $(top_builddir)/libc.a.
+	* panic.c: Don't include "output.h".  Include <stdio.h>.
+	* ruth.h: Likewise.
+
+	* ruth.c (getpagesize): Return a size_t, not an int.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* panic.c (panic_): Print the thread id of the thread that called
+	panic.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update rm_folio_object_alloc use to reflect API
+	changes.  Add test case for thread_wait_object_destroy.
+
+2008-01-15  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c: Include <hurd/futex.h>.
+	(main) Test futex implementation.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Remove activity_properties test.  Replace with
+	activity_policy test.
+
+2007-12-25  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Change visit to be consistent with as_walk's
+	expected function signature.  Update rm_folio_object_alloc use to
+	reflect API changes.
+
+2007-12-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (exit): Declare.
+	(finish): Cast PROGRAM_NAME.
+
+2007-12-22  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update rm_folio_alloc use to reflect API changes.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Only check the objects contained immediately
+	within a folio for shadow objects.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update users of folio_object_alloc to interface
+	change.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Don't call rm_activity_create.
+
+2007-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update to use new rm_thread_exregs interface.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Add test for activity_properties.
+
+2007-11-28  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c: Include <hurd/activity.h>.
+	(main): Add test for activity_create.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Don't call rm_object_slot_copy_in to update the
+	address space slot.  Just use rm_thread_exregs.  Add test for
+	pthread library.
+
+	* ia32-cmain.c (cmain): If _pthread_init_routine is not NULL, call
+	it.  Otherwise, just call finish directly.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c: Include <hurd/thread.h>.
+	(main): Add test case for thread creation.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Update uses of stroage_alloc to its new
+	interface.
+
+2007-11-20  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (finish): New function.
+	(cmain): Call _pthread_init_routine.  Switch to the new sp and
+	jump to finish.  Move argument passing there.
+	* ia32-crt0.S (STACK_SIZE): Change to a single page.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* ruth.c (main): Use ADDR_TO_PTR and PTR_TO_ADDR correctly.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (ruth_CPPFLAGS): Move value from here...
+	(COMMON_CPPFLAGS): ... to this new variable.
+	(ruth_CPPFLAGS): Set to COMMON_CPPFLAGS.
+	(ruth_SOURCES): Remove task-user.h, task-user.c and mmap.c.
+	(ruth_LDADD): Remove ../libhurd-cap-server/libhurd-cap-server.a
+	and ../viengoos/libhurd-cap.a.
+	* ruth.h: Don't include <hurd/cap-server.h>.
+	(program_name): Make const.
+	* ruth.c: Rewrite.
+	* output.h: Include <stdarg.h>.
+	(shutdown): Don't declare.
+	(program_name): Likewise.
+	(output_debug): Likewise.
+	(debug): Don't define.
+	(panic): Don't define.
+	(vprintf): New declaration.
+	* output.c: Don't include <hurd/wortel.h>.
+	Include <hurd/rm.h>.
+	(output_debug): Don't define.
+	(shutdown): Don't call wortel_shutdown.
+	(putchar): Call rm_putchar, not wortel_putchar.
+	(vprintf): New function.  Body copied from printf.
+	(printf): Implement in terms of vprintf.
+	* malloc.c: Update to version 2.8.3.
+	* malloc-wrap.c (ABORT): Define.
+	(ABORT_ON_ASSERT_FAILURE): Likewise.
+	(LACKS_SYS_TYPES_H): Likewise.
+	(size_t): New definition.
+	(LACKS_STDLIB_H): Likewise.
+	(LACKS_STDIO_H): Likewise.
+	(MORECORE): Don't define.
+	(HAVE_MORECORE): Define to 0.
+	* ia32-crt0.S (STACK_SIZE): Increase to 32 pages.  Set
+	__hurd_startup_data to the value of %sp.
+	* ia32-cmain.c: Rewrite.
+	* panic.c: New file.
+	* mmap.c: Remove file.
+	* task-user.h: Likewise.
+	* task-user.c: Likewise.
+
+2005-04-06  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c: Include <hurd/anonymous.h>.
+	(mmap): Call hurd_anonymous_allocate, not hurd_vm_allocate.
+	(munmap): Call hurd_vm_release, not hurd_vm_deallocate.
+
+2005-01-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.

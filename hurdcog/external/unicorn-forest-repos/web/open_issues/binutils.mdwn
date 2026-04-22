@@ -1,0 +1,1577 @@
+[[!meta copyright="Copyright © 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015,
+2016 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title=binutils-gdb]]
+
+[[!tag stable_URL open_issue_binutils open_issue_gdb]]
+
+Here's what's to be done for maintaining GNU Binutils and GDB.
+
+
+[[!toc levels=2]]
+
+
+# General Information
+
+
+## [[/Binutils]]
+
+As these tools primarily deal with low-level parts of the target architecture
+and the object file format (ELF ABI), which are essentially (at least meant to
+be) the same, there shouldn't be many differences comparing the binutils
+between the GNU/Hurd and GNU/Linux ports, for example.  There are a few,
+though, as explained below.
+
+
+## [[/GDB]]
+
+GDB needs a processor architecture as well as an operating system port.
+
+
+# Configuration
+
+<!--
+
+git checkout reviewed
+git diff --patience --stat=$COLUMNS,$COLUMNS --patch --src-prefix=./ --dst-prefix=./ --word-diff --color --find-renames --ignore-space-change ..upstream/master | awk '/^(\x1b\[[0-9]+m)?diff/ { c = " " $0; } /^(\x1b\[[0-9]+m)?@@/ { print c; } { print; }' | less
+-i
+/^---.*/([^.]*|.*\.texi.*|[^/]*gnu[^/]*)$|hurd|linux|nacl|nptl|glibc|gs:
+
+-->
+
+Last reviewed up to Git commit 03b62bbbce3dc5f15131d9e78f77d035cd1cffb3
+(2016-11-23).
+
+  * Globally
+
+      * a.out (such as `ld/emulparams/i386linux.sh`, `ld/emultempl/linux.em`,
+        etc.), COFF, PE image support and 64-bit support are not interesting.
+
+      * In the testsuites, `.exp` and `.d` files very likely should not only
+        care for `*-*-linux*`, but also `*-*-gnu*`.  (If they need to be
+        conditionalized like this at all.)
+
+  * `bfd/`
+
+      * `config.bfd`
+
+          * `i[3-7]86-*-gnu*`
+
+            Comparing to `i[3-7]86-*-linux-*`:
+
+              * `i386linux_vec` -- a.out.
+
+              * `i386pei_vec` -- PE.
+
+              * 64 bit.
+
+      * `configure.host`
+
+        Souldn't need anything.  x86 Linux neither.
+
+      * `configure.in`
+
+        Linux:
+
+          * `COREFILE=trad-core.lo` with `TRAD_HEADER='"hosts/i386linux.h"'`
+
+            We don't have any such core file support configured.  TODO: should
+            we?  Where is this core file reading exactly used?  GDB?
+
+          * `i386linux_vec` -- a.out.
+
+          * `i386pei_vec` -- PE.
+
+  * `binutils/`
+
+      * `configure.tgt`
+
+  * `gas/`
+
+      * `config/te-gnu.h`
+
+        C.f. `te-linux.h`; search tree for `TE_LINUX` vs. `TE_GNU` usage.
+
+          * `tc-i386.h`
+
+            Sole `TE_LINUX` usage is for a.out.
+
+      * `configure.tgt`
+
+  * `gdb/`
+
+      * Have a look at config/i386/i386gnu.mh.
+
+      * configure.tgt
+
+          * glibc-tdep et al. also for GNU/Hurd?
+
+      * [[gdb/gdbserver]]
+
+      * In `gdb/gnu-nat.c:gnu_wait`, we don't implement
+        `gdb/target/wait.h:TARGET_WNOHANG`.  What is this needed for?
+
+      * Watchpoints
+
+          * Unresolved issues w.r.t. watchpoint usage in context of multiple
+            threads, and `fork`/`vfork`.  The Linux port has a bunch of
+            special-case code.
+
+          * We don't have anything corresponding to Linux'
+            `linux_nat_set_forget_process`, `x86_forget_process`, or Linux'
+            whole `linux-fork.c` machinery.  Likewise for
+            `linux_nat_set_prepare_to_resume`, `x86_linux_prepare_to_resume`,
+            which the Linux port uses to actually set the debug registers.
+            Likewise for `linux_nat_set_new_thread`, `x86_linux_new_thread`,
+            and `linux_nat_set_new_fork`, `x86_linux_new_fork`.
+
+          * Look into `*_cleanup_dregs`, `*_post_startup_inferior`.  Commits
+            53a5351d907ef4eacd463a48a86d35b2b70b9f60,
+            52b9821179d84d61852ac2ae2bd16fbb56ffe277,
+            9742079a314711c13d269e9e583b7b82dc42f1a6,
+            e24d4c64ff2e89327ba84fdcc77cc557791eb3cd,
+            fa4ba8da6c28c972dd1b6b9971e29b51aabaafcc,
+            9b4f1ba7ede77d776fabb9642cbeef5091e38e1d,
+            4de4c07c6b48659ae212352236be9413c853a23c,
+            4056d25828218621e7276a3a0c0567cac892ae84,
+            10d6c8cd3f92fadf295eb3c91d550626f6080f79,
+            4105de343e714e0096723905ada442f1524776a6,
+            c5af0dad33ff96dbb404710539f01b011cff0453,
+            9bb9e8ade770027f5cced2856574e2d317b15254,
+            1ced966e3458bf3db742913f4d0a55549824e298,
+            4403d8e9b35649c5b24f65c0ec0decc3839e1164,
+            26cb8b7c1a23586ea311d7480f882e2883f6f1f5.
+
+          * [[!message-id "201112051601.59664.pedro@codesourcery.com"]].
+
+          * `I386_WATCHPOINTS_IN_TARGET_VECTOR`
+
+          * `prepare_to_resume`
+
+          * `new_fork`
+
+          * `forget_process`
+
+          * `dr_status_mirror` is not really used anywhere.  Get rid of it; or,
+            update it everytime the real value is read from the kernel?
+
+      * TODO
+
+              {+set_gdbarch_vsyscall_range (gdbarch, linux_vsyscall_range);+}
+            {+  set_gdbarch_infcall_mmap (gdbarch, linux_infcall_mmap);+}
+
+      * TODO
+
+             diff --git ./gdb/doc/gdb.texinfo ./gdb/doc/gdb.texinfo
+            @@ -17340,6 +17433,24 @@ Access to those variables will generate a compiler error which @value{GDBN}
+            will print to the console.
+            @end table
+            
+            {+@subsection Compiler search for the @code{compile} command+}
+            {+[...]+}
+            {+Specifically @code{PATH} is searched for binaries matching regular expression+}
+            {+@code{@var{arch}(-[^-]*)?-@var{os}-gcc} [...].  @var{os} is currently supported only for+}
+            {+pattern @code{linux(-gnu)?}.+}
+
+      * GDB got support for Linux namespaces: *able to access executable and
+        shared library files without a "set sysroot" command when attaching to
+        processes running in different mount namespaces from the debugger.
+        This makes it possible to attach to processes in containers as simply
+        as "gdb -p PID" or "gdbserver --attach PID"*.  Similar support might be
+        useful for [[hurd/subhurd]]s?
+
+      * gdbarch `infcall_munmap`
+
+            default_infcall_munmap (CORE_ADDR addr, CORE_ADDR size)
+            {
+              /* Memory reserved by inferior mmap is kept leaked.  */
+            }
+
+      * Support for Intel Processor Trace (--with-intel-pt; libipt)?
+
+      * `supports_get_siginfo_type`
+
+        Has previously been hard-coded in individual tests, now in
+        gdb/testsuite/lib/gdb.exp:
+
+            # Return 1 if GDB can get a type for siginfo from the target, otherwise
+            # return 0.
+            
+            proc supports_get_siginfo_type {} {
+                if { [istarget "*-*-linux*"] } {
+                  return 1
+                } else {
+                  return 0
+                }
+            }
+
+      * Check testsuite with check-read1 / READ1=t [./gdb/testsuite/README]
+
+  * `libdecnumber/`
+
+    Should/can probably align to GNU/Linux.
+
+  * `ld/`
+
+     * `configure.host`
+
+         * `*-*-gnu*`
+
+            TODO: resolve `crt0.o` vs. `crt1.o` issue.  [[Testsuite
+            failures|binutils#static]].
+
+      * `configure.tgt`
+
+          * `i[3-7]86-*-gnu*`
+
+            Compare to `i[3-7]86-*-linux-*`, but don't need a.out (`i386linux`)
+            and 64 bit support.
+
+      * Linuxism
+
+         diff --git ./ld/testsuite/ld-i386/i386.exp ./ld/testsuite/ld-i386/i386.exp
+        @@ -263,3 +263,93 @@ run_dump_test "pr12627"
+        {+# Must be Linux native with the C compiler+}
+        {+if { [isnative]+}
+        {+     && [istarget "i?86-*-linux*"]+}
+        +[...]
+
+        {+ PASS: ld-i386/pr17935-1+}
+        {+ PASS: ld-i386/pr17935-2+}
+        {+-PASS: Build plt-lib.so+}
+        {+-PASS: Build libplt-main1.a+}
+        {+-PASS: Build libplt-main2.a+}
+        {+-PASS: Build libplt-main3.a+}
+        {+-PASS: Build libplt-main4.a+}
+        {+-PASS: Build plt-main+}
+        {+-PASS: Build plt-main with PIE+}
+        {+-PASS: Run plt-main+}
+        {+-PASS: Run plt-main with PIE+}
+
+        diff --git ./ld/testsuite/ld-i386/i386.exp ./ld/testsuite/ld-i386/i386.exp
+        {+if { !([istarget "i?86-*-linux*"]+}
+        {+       || [istarget "x86_64-*-linux*"]) } {+}
+        {+    return+}
+        {+}+}
+        
+        {+# Linux only tests+}
+        {+run_dump_test "pltgot-1"+}
+        {+run_dump_test "pltgot-2"+}
+
+  * `__ehdr_start symbol`, c84ed8d89d0b8bf5a2968d465f77ac24bcfc40c2 -- can this
+    be helpful in the exec server, glibc, or elsewhere?  Used in GDB (BFD)
+    commit bdbd9758806ed855af89244870fdc52cf3ff09bc.
+    Used in glibc commit 288f7d79fe2dcc8e62c539f57b25d7662a2cd5ff `Use
+    __ehdr_start, if available, as fallback for AT_PHDR.`.
+
+  * `Add HOSTING_SCRT0 for PIE test`, 49cc20aa5c416ea4307931cccf6353247368187d
+    -- is for GNU/Linux only; but also seems unused.
+
+  * 82763a3d329b0d342d0273941b1521be9ef0c604 »MODIFIED is unknown, pass it as
+    true.«
+
+  * Configure so that Debian system's `/usr/lib/debug/[...]` will be loaded
+    automatically.
+
+      * [[!message-id "m3ei24vh4l.fsf@fleche.redhat.com"]]
+
+  * [low] c26e9cbb0ce70e8fca32a40c434a0837bf46750a,
+    `gdb/gnu-nat.c:set_exceptions_cmd`, `Make this take effect immediately in a
+    running process`.
+
+  * [low] b27caf75c311991772b316fe7c0eecfd5788eeaf, ld, `Add HOSTING_SLIBS and
+    use it for -pie`.  For us, too?
+
+  * [high] `gdb/remote.c`: `PATH_MAX` usage.  Probably,
+    `gdb/gdbserver/remote-utils.c` is the producer, whose `PATH_MAX` might
+    differ from the consumer's.
+
+  * [high] In
+    96f9814df23564e16909bb5ba00de4a202c63417..9ef9e6a6a0dd8f948708cb67c9afcfd0be40cb0a:
+
+        ../../W._C._Handy/gdb/gnu-nat.c: In function 'set_sig_thread_cmd':
+        ../../W._C._Handy/gdb/gnu-nat.c:2973:7: warning: implicit declaration of function 'thread_id_to_pid' [-Wimplicit-function-declaration]
+               ptid_t ptid = thread_id_to_pid (atoi (args));
+               ^
+        ../../W._C._Handy/gdb/gnu-nat.c:2973:7: error: invalid initializer
+
+    Commit 5d5658a1d3c3eb2a09c03f2f0662a1c01963c869
+    `Per-inferior/Inferior-qualified thread IDs` renamed `thread_id_to_pid` to
+    `global_thread_id_to_ptid`.
+
+  * 9ef9e6a6a0dd8f948708cb67c9afcfd0be40cb0a..a932d108b10518994c873b38a363af9f21bc2e87
+
+        diff --git ./ld/testsuite/lib/ld-lib.exp ./ld/testsuite/lib/ld-lib.exp
+        @@ -1796,6 +1797,13 @@ proc check_lto_available { } {
+                {+# This test will hide LTO bugs in ld.  Since GCC 4.9 adds+}
+        {+      # -ffat-lto-objects, we always run LTO tests on Linux with+}
+        {+      # GCC 4.9 or newer.+}
+        {+      if { [istarget "*-*-linux*"] && [at_least_gcc_version 4 9] } {+}
+        {+          set lto_available_saved 1+}
+        {+          return 1+}
+        {+      }+}
+        
+        diff --git ./ld/testsuite/lib/ld-lib.exp ./ld/testsuite/lib/ld-lib.exp
+        @@ -1830,6 +1840,13 @@ proc check_lto_fat_available { } {
+                {+# This test will hide LTO bugs in ld.  Since GCC 4.9 adds+}
+        {+      # -ffat-lto-objects, we always run LTO tests on Linux with+}
+        {+      # GCC 4.9 or newer.+}
+        {+      if { [istarget "*-*-linux*"] && [at_least_gcc_version 4 9] } {+}
+        {+          set lto_fat_available_saved 1+}
+        {+          return 1+}
+        {+      }+}
+        
+         diff --git ./ld/testsuite/lib/ld-lib.exp ./ld/testsuite/lib/ld-lib.exp
+        @@ -1864,6 +1883,13 @@ proc check_lto_shared_available { } {
+                {+# This test will hide LTO bugs in ld.  Since GCC 4.9 adds+}
+        {+      # -ffat-lto-objects, we always run LTO tests on Linux with+}
+        {+      # GCC 4.9 or newer.+}
+        {+      if { [istarget "*-*-linux*"] && [at_least_gcc_version 4 9] } {+}
+        {+          set lto_shared_available_saved 1+}
+        {+          return 1+}
+        {+      }+}
+
+
+  * a932d108b10518994c873b38a363af9f21bc2e87..f245535cf583ae4ca13b10d47b3c7d3334593ece
+
+    `gas/NEWS`: `Default to --enable-compressed-debug-sections=gas for
+    Linux/x86 targets.`
+
+    `gas/configure.tgt`:
+
+        +case ${cpu_type}-${fmt}-${os} in
+        +i386-elf-linux*)
+        +  # Default to compress DWARF debug sections for Linux/x86.
+        +  if test ${ac_default_compressed_debug_sections} = unset; then
+        +    ac_default_compressed_debug_sections=yes
+        +  fi
+        +  ;;
+        +esac
+
+
+    `ld/NEWS`: `Add a configure option --enable-relro to decide whether -z
+    relro should be enabled in ELF linker by default.  Default to yes for all
+    Linux targets except FRV, HPPA, IA64 and MIPS.`
+
+    `ld/configure.tgt`:
+
+        +case "${target}" in
+        +frv-*-* | hppa*-*-* | ia64-*-* | mips*-*-*)
+        +  # Don't enable -z relro by default since many relro tests fail on these
+        +  # targets:
+        +  # FAIL: strip -z relro (relro1)
+        +  # FAIL: strip -z relro -shared (relro1)
+        +  # FAIL: objcopy -z relro (relro1)
+        +  # FAIL: objcopy -z relro -shared (relro1)
+        +  # FAIL: objcopy -z relro (tdata1)
+        +  # FAIL: objcopy -shared -z relro (tdata1)
+        +  # FAIL: objcopy -z relro (tdata2)
+        +  # FAIL: objcopy -shared -z relro (tdata2)
+        +  # FAIL: objcopy -z relro (tdata3)
+        +  # FAIL: objcopy -shared -z relro (tdata3)
+        +  # FAIL: objcopy -shared -z relro (tbss1)
+        +  # FAIL: objcopy -shared -z relro (tbss2)
+        +  # FAIL: objcopy -shared -z relro (tbss3)
+        +  ;;
+        +*-*-linux*)
+        +  if test ${ac_default_ld_z_relro} = unset; then
+        +    ac_default_ld_z_relro=1
+        +  fi
+        +  ;;
+        +esac
+
+
+        --- /dev/null
+        +++ ./ld/testsuite/ld-i386/tls.exp
+        +# Only on Linux for now.
+        +if ![istarget "i?86-*-linux*"] {
+        +    return
+        +}
+
+        --- /dev/null
+        +++ ./ld/testsuite/ld-i386/tlsgd3.dd
+        +++ ./ld/testsuite/ld-i386/tlsld2.dd
+        +#target: i?86-*-linux*
+
+
+# Build
+
+Here's a log of a binutils-gdb build run; this is from Git commit
+03b62bbbce3dc5f15131d9e78f77d035cd1cffb3 (2016-11-23),
+plus `PATH_MAX` hard-coded in `gdb/inferior.c` and `gdb/remote.c`,
+and `global_thread_id_to_ptid` used instead of
+`thread_id_to_pid` in `gdb/gnu-nat.c`,
+and C++ compatibility changes for the x86 GNU/Hurd port, run on kepler.SCHWINGE
+and laplace.SCHWINGE.
+
+    $ export LC_ALL=C
+    $ ../W._C._Handy/configure --prefix="$PWD".install --enable-gold --enable-plugins --with-sysroot=/ SHELL=/bin/dash CC=gcc-6 CXX=g++-6 --disable-werror 2>&1 | tee log_build
+    [...]
+    $ make 2>&1 | tee log_build_
+    [...]
+
+Different hosts may default to different shells and compiler versions; thus
+harmonized.  Debian GCC (which is used in the testsuite) likes to pass
+`-plugin [...]` and `--sysroot=/` to `ld`,
+so we need to configure with support for plugins and
+sysroots.  In the GDB build, there are compiler diagnostics reported in the
+MIG-generated stub files; thus no `-Werror` until that is resolved.
+
+This takes up around 1.8 GiB, and runs for [[25 min|performance#measure]] on
+kepler.SCHWINGE and [[25 min|performance#measure]] on laplace.SCHWINGE.
+
+<!--
+
+    $ (make && touch .go-install) 2>&1 | tee log_build_ && test -f .go-install && (make install && touch .go-test) 2>&1 | tee log_install && test -f .go-test && sed -e 's%^\([A-Z]\+ = g..-6\)%override \1 -fno-pie -fno-PIE -no-pie%g' -i gold/testsuite/Makefile && make -k check RUNTESTFLAGS=CC_FOR_TARGET='gcc-6\ -fno-pie\ -fno-PIE\ -no-pie'\ CXX_FOR_TARGET='g++-6\ -fno-pie\ -fno-PIE\ -no-pie' CC_FOR_TARGET='gcc-6 -fno-pie -fno-PIE -no-pie' CXX_FOR_TARGET='g++-6 -fno-pie -fno-PIE -no-pie' 2>&1 | tee log_test
+    $ (make && touch .go-install) 2>&1 | tee log_build_ && test -f .go-install && (make install && touch .go-test) 2>&1 | tee log_install && test -f .go-test && sed -e 's%^\([A-Z]\+ = g..-6\)%override \1 -fno-pie -fno-PIE -no-pie%g' -i gold/testsuite/Makefile && LD_PRELOAD=$HOME/fopen,unlink-NULL-wrapper.so make -k check RUNTESTFLAGS=CC_FOR_TARGET='gcc-6\ -fno-pie\ -fno-PIE\ -no-pie'\ CXX_FOR_TARGET='g++-6\ -fno-pie\ -fno-PIE\ -no-pie' CC_FOR_TARGET='gcc-6 -fno-pie -fno-PIE -no-pie' CXX_FOR_TARGET='g++-6 -fno-pie -fno-PIE -no-pie' 2>&1 | tee log_test
+
+-->
+
+
+## Analysis
+
+x86 GNU/Linux' and GNU/Hurd's configurations are slightly different, thus mask
+out most of the differences that are due to GNU/Linux supporting more core file
+formats, and more emulation vectors.
+
+    $ toolchain/logs/process binutils-gdb build
+
+  * For GDB, why do we specify `-D_GNU_SOURCE`, and GNU/Linux doesn't?
+
+  * GNU/Linux: `gdb/symfile-mem.c` for [[vDSO]].
+
+  * GNU/Linux: `gdb/i386-nat.c` for hardware breakpoints, etc. -- we should
+    probably use that, too.  Related to Samuel's Hurd GDB patch?
+
+  * `gdb/gnu-nat.c`
+
+        In file included from ../../W._C._Handy/gdb/defs.h:454:0,
+                         from ../../W._C._Handy/gdb/gnu-nat.c:23:
+        ../../W._C._Handy/gdb/gnu-nat.c: In function 'proc_trace':
+        ./nm.h:35:60: warning: right-hand operand of comma expression has no effect [-Wunused-value]
+            ((((struct i386_thread_state *) (state))->efl &= ~0x100), 1)
+                                                                    ^
+        ../../W._C._Handy/gdb/gnu-nat.c:526:5: note: in expansion of macro 'THREAD_STATE_CLEAR_TRACED'
+             THREAD_STATE_CLEAR_TRACED (state);
+             ^
+
+    This is no longer seen after the switch to build with C++ instead of C.
+
+  * fe19822761b4635f392875a186e48af446b40f41..7a63e9515491f21eaf07301df87d389def20e317:
+
+    `-Wmissing-prototypes`
+
+    On 2015-10-30 noticed that the following are gone:
+
+        notify_S.c:341:28: warning: no previous prototype for 'notify_server_routine' [-Wmissing-prototypes]
+        process_reply_S.c:379:28: warning: no previous prototype for 'process_reply_server_routine' [-Wmissing-prototypes]
+        msg_reply_S.c:201:28: warning: no previous prototype for 'msg_reply_server_routine' [-Wmissing-prototypes]
+        exc_request_S.c:193:28: warning: no previous prototype for 'exc_server_routine' [-Wmissing-prototypes]
+
+    ... however these still remain:
+
+        notify_S.c:305:24: warning: no previous prototype for 'notify_server' [-Wmissing-prototypes]
+        process_reply_S.c:343:24: warning: no previous prototype for 'process_reply_server' [-Wmissing-prototypes]
+        msg_reply_S.c:165:24: warning: no previous prototype for 'msg_reply_server' [-Wmissing-prototypes]
+        exc_request_S.c:157:24: warning: no previous prototype for 'exc_server' [-Wmissing-prototypes]
+
+    These are no longer seen after the switch to build with C++ instead of C
+    (but these files are built with `-x c`?).
+
+  * `O_NOFOLLOW`
+
+    First seen in
+    20f498edfd7e57d3297febcf9c7c7d667cc74239..69a5e2b022c7d15ec4c7c49e6f53a8d924d3b72b:
+
+        -checking for working fcntl.h... yes
+        +checking for working fcntl.h... no (bad O_NOFOLLOW)
+
+    [[!taglink open_issue_glibc]]?
+
+  * On GNU Hurd, the `checking types of arguments for ptrace...` configure
+    check takes a rather long time to determine the result,
+    `int,int,long,long`.
+
+  * Something's wrong with Hurd's [[!tag open_issue_glibc]]`rename`?
+
+        -checking whether rename honors trailing slash on destination... yes
+        -checking whether rename honors trailing slash on source... yes
+        +checking whether rename honors trailing slash on destination... no
+        +checking whether rename honors trailing slash on source... no
+
+        -      -e 's|@''REPLACE_RENAME''@|0|g' \
+        +      -e 's|@''REPLACE_RENAME''@|1|g' \
+
+  * Some MIG change causes generated code, `gdb/msg_U.c` to change as follows:
+
+                const mach_msg_type_t portType = {
+        -               /* msgt_name = */               -1,
+        +               /* msgt_name = */               MACH_MSG_TYPE_POLYMORPHIC,
+
+    ... which looks like an improvement indeed.  But given
+    `mach/message.h`:`#define MACH_MSG_TYPE_POLYMORPHIC ((mach_msg_type_name_t)
+    -1)`, this causes:
+
+        msg_U.c: In function 'msg_set_init_port':
+        msg_U.c:777:22: warning: large integer implicitly truncated to unsigned type [-Woverflow]
+           /* msgt_name = */  MACH_MSG_TYPE_POLYMORPHIC,
+                              ^
+        msg_U.c: In function 'msg_set_init_ports':
+        msg_U.c:1043:22: warning: large integer implicitly truncated to unsigned type [-Woverflow]
+           /* msgtl_name = */ MACH_MSG_TYPE_POLYMORPHIC,
+                              ^
+        msg_U.c: In function 'msg_set_dtable':
+        msg_U.c:1837:22: warning: large integer implicitly truncated to unsigned type [-Woverflow]
+           /* msgtl_name = */ MACH_MSG_TYPE_POLYMORPHIC,
+                              ^
+        msg_U.c: In function 'msg_set_fd':
+        msg_U.c:2108:22: warning: large integer implicitly truncated to unsigned type [-Woverflow]
+           /* msgt_name = */  MACH_MSG_TYPE_POLYMORPHIC,
+                              ^
+
+
+# Install
+
+    $ make install 2>&1 | tee log_install
+    [...]
+
+This takes up around 270 MiB, and runs for [[0 min|performance#measure]] on
+kepler.SCHWINGE and [[1 min|performance#measure]] on laplace.SCHWINGE.
+
+
+## Analysis
+
+    $ toolchain/logs/process binutils-gdb install
+
+  * `libtool: finish`: `ldconfig` is not run for the Hurd.
+
+
+# Testsuite
+
+At least for GNU/Linux, Debian's GCC 6 is configured with
+`--enable-default-pie` -- which the *gdb*, *gold*, and *ld* testsuites don't
+like, so we have to cancel that for testing.
+`CC_FOR_TARGET` and `CXX_FOR_TARGET` in `RUNTESTFLAGS` is considered by the *gdb* testsuite,
+`CC_FOR_TARGET` and `CXX_FOR_TARGET` on the `make` command line by the *ld* testsuite,
+`CC` and `CXX` on the `make` command line by the *gold* testsuite
+but only when invoked (from the top level) as `make check-gold` and not when run as part of `make check`...
+I couldn't figure out a command-line variant for *gold* testsuite,
+so instead we apply an ugly hack to `gold/testsuite/Makefile`.
+
+    $ sed -e 's%^\([A-Z]\+ = g..-6\)%override \1 -fno-pie -fno-PIE -no-pie%g' -i gold/testsuite/Makefile
+    $ make -k check RUNTESTFLAGS=CC_FOR_TARGET='gcc-6\ -fno-pie\ -fno-PIE\ -no-pie'\ CXX_FOR_TARGET='g++-6\ -fno-pie\ -fno-PIE\ -no-pie' CC_FOR_TARGET='gcc-6 -fno-pie -fno-PIE -no-pie' CXX_FOR_TARGET='g++-6 -fno-pie -fno-PIE -no-pie' 2>&1 | tee log_test
+    [...]
+
+This runs for [[25 min|performance#measure]] on kepler.SCHWINGE and [[71
+min|performance#measure]] on laplace.SCHWINGE.
+
+When running `make -k check 2>&1 | tee log_test`, at the end of the testsuite
+the `tee` process does not terminate if there are still stray leftover
+processes that [have their stdout/stderr
+open](http://sourceware.org/ml/gdb-patches/2012-10/msg00489.html).  `kill`ing
+these (`SIGKILL` may be needed), makes the `tee` process terminate, too.
+
+On laplace.SCHWINGE, running with
+`LD_PRELOAD=$HOME/fopen,unlink-NULL-wrapper.so` to get past [[!message-id
+"87a907b5f3.fsf@kepler.schwinge.homeip.net"]].
+
+    COLLECT_GCC=gcc-4.9 COLLECT_LTO_WRAPPER=/usr/lib/gcc/i586-linux-gnu/4.9/lto-wrapper COMPILER_PATH=gcctestdir/:/usr/lib/gcc/i586-linux-gnu/4.9/:/usr/lib/gcc/i586-linux-gnu/4.9/:/usr/lib/gcc/i586-linux-gnu/:/usr/lib/gcc/i586-linux-gnu/4.9/:/usr/lib/gcc/i586-linux-gnu/ LIBRARY_PATH=gcctestdir/:/usr/lib/gcc/i586-linux-gnu/4.9/:/usr/lib/gcc/i586-linux-gnu/4.9/../../../i386-linux-gnu/:/usr/lib/gcc/i586-linux-gnu/4.9/../../../../lib/:/lib/i386-linux-gnu/:/lib/../lib/:/usr/lib/i386-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/i586-linux-gnu/4.9/../../../:/lib/:/usr/lib/ COLLECT_GCC_OPTIONS='-Wextra -Wall -Wstrict-prototypes -Wmissing-prototypes -Wshadow -D _LARGEFILE_SOURCE -D _FILE_OFFSET_BITS=64 -fmerge-constants -g -O2 -fno-use-linker-plugin -o incremental_test -B gcctestdir/ -v -mtune=generic -march=i586' gdb -q --args /usr/lib/gcc/i586-linux-gnu/4.9/collect2 --sysroot=/ --build-id --eh-frame-hdr -m elf_i386 --hash-style=gnu -dynamic-linker /lib/ld-linux.so.2 -o incremental_test /usr/lib/gcc/i586-linux-gnu/4.9/../../../i386-linux-gnu/crt1.o /usr/lib/gcc/i586-linux-gnu/4.9/../../../i386-linux-gnu/crti.o /usr/lib/gcc/i586-linux-gnu/4.9/crtbegin.o -Lgcctestdir -L/usr/lib/gcc/i586-linux-gnu/4.9 -L/usr/lib/gcc/i586-linux-gnu/4.9/../../../i386-linux-gnu -L/usr/lib/gcc/i586-linux-gnu/4.9/../../../../lib -L/lib/i386-linux-gnu -L/lib/../lib -L/usr/lib/i386-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/i586-linux-gnu/4.9/../../.. --incremental-full incremental_test_1.o incremental_test_2.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/i586-linux-gnu/4.9/crtend.o /usr/lib/gcc/i586-linux-gnu/4.9/../../../i386-linux-gnu/crtn.o -debug
+    break __fopen_internal
+    r
+    (possibly) c
+    Breakpoint 1, __fopen_internal (filename=filename@entry=0x0, mode=mode@entry=0x809b4a7 "r", is32=is32@entry=0) at iofopen.c:65
+    65      in iofopen.c
+    (gdb) bt
+    #0  __fopen_internal (filename=filename@entry=0x0, mode=mode@entry=0x809b4a7 "r", is32=is32@entry=0) at iofopen.c:65
+    #1  0xb7e38c1b in _IO_fopen64 (filename=0x0, mode=0x809b4a7 "r") at iofopen64.c:39
+    #2  0x0804c289 in ?? ()
+    #3  0x0804e670 in ?? ()
+    #4  0x0804aa8d in ?? ()
+    #5  0xb7deba73 in __libc_start_main (main=0x804a080, argc=38, argv=0xbfffe6a4, init=0x8098f90, fini=0x8099000, rtld_fini=0xb7fedc90 <_dl_fini>,
+        stack_end=0xbfffe69c) at libc-start.c:287
+    #6  0x0804b3a2 in ?? ()
+    (and another one after that)
+
+Goes away if `-debug` is removed.
+
+    commit 9a65bef918dd14d722ef2a1fec90f527158eabe0
+    Author: rguenth <rguenth@138bc75d-0d04-0410-961f-82ee72b054a4>
+    Date:   Tue Jun 11 08:21:22 2013 +0000
+    
+        2013-06-11  Richard Biener  <rguenther@suse.de>
+        
+            * collect2.c (main): Do not redirect ld stdout/stderr when
+            debugging.
+        
+        
+        git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@199936 138bc75d-0d04-0410-961f-82ee72b054a4
+    
+    diff --git gcc/collect2.c gcc/collect2.c
+    index 99dd41d..d3119b0 100644
+    --- gcc/collect2.c
+    +++ gcc/collect2.c
+    @@ -1189,8 +1189,11 @@ main (int argc, char **argv)
+     #ifdef COLLECT_EXPORT_LIST
+       export_file = make_temp_file (".x");
+     #endif
+    -  ldout = make_temp_file (".ld");
+    -  lderrout = make_temp_file (".le");
+    +  if (!debug)
+    +    {
+    +      ldout = make_temp_file (".ld");
+    +      lderrout = make_temp_file (".le");
+    +    }
+
+    id:"alpine.LNX.2.00.1306101358420.26078@zhemvz.fhfr.qr"
+
+Does this also cause:
+
+    [-FAIL:-]{+PASS:+} justsyms
+
+
+## Analysis
+
+GDB's testsuite uses the system's default `gcc` (and similar) compilers, not
+those specified on the `configure` line ([[!taglink open_issue_gdb]]?), see
+`find_gcc` (and similar) usage in the testsuite and DejaGnu.  Maybe something
+like `gdb/testsuite/boards/cc-with-tweaks.exp` would help, or setting
+`CC_FOR_TARGET` (and similar) per `gdb/testsuite/lib/future.exp`?
+
+    $ toolchain/logs/process binutils-gdb test
+
+  * <a name="static"><!-- stable_URL -->`FAIL: static [...]`</a>
+
+    The testsuite isn't prepared for using `crt0.o` instead of `crt1.o`
+    depending on whether a static or dynamic executable is created.  Documented
+    in `ld/configure.host`.  Perhaps we should finally rewrite this messy code
+    in glibc?  Or, something similar to commit
+    49cc20aa5c416ea4307931cccf6353247368187d `Add HOSTING_SCRT0 for PIE test`
+    or commit b27caf75c311991772b316fe7c0eecfd5788eeaf `Add HOSTING_SLIBS and
+    use it for -pie`
+    can be used.
+
+    Same issue for `FAIL: Common symbol override ifunc *` ones?
+
+    Same issue for `FAIL: Run pr19579`?
+
+  * <a name="64ksec">`FAIL: ld-elf/64ksec`</a>
+
+    On the idle grubber, this one takes a few minutes wall time to complete
+    successfully ([[I/O system
+    weakness|performance/io_system/binutils_ld_64ksec]]), so assuming some
+    system load variation, the testsuite's timeout may trigger.
+
+  * `FAIL: gas/i386/rept` (intermittently)
+
+    Added in commit 06f1247c54126b9f1e6acb8ff8c7be35aec6f44c (2012-06-07) as
+    part of the fix for [[!sourceware_PR 14201]], renamed in commit
+    d654e24bbc2f601df4dc43b26049b0339528b93a (2012-06-07):
+
+        WARNING: program timed out.
+        FAIL: gas/i386/rept
+
+  * ld IFUNC execution tests
+
+    Missing [[IFUNC]] support on GNU/Hurd.
+
+    Added in commit 82c5587db078581cfe94a4385ed99de1d1fa6657 (2012-09-19):
+
+        FAIL: Common symbol override ifunc test 1a
+        FAIL: Common symbol override ifunc test 1b
+
+  * gold GNU/Linux vs. GNU/Hurd
+
+        -FAIL: relro_test.sh
+        +PASS: relro_test.sh
+
+        -PASS: ver_matching_test.sh
+        +FAIL: ver_matching_test.sh
+
+        -PASS: script_test_3
+        +FAIL: script_test_3
+
+        -PASS: tls_phdrs_script_test
+        +FAIL: tls_phdrs_script_test
+
+  * `gdb.base/attach-pie-misread.exp`
+
+    Is only run for GNU/Linux; needs [[prelink]].
+
+  * Disabled
+
+      * `gdb.base/attach-wait-input.exp`
+
+      * `gdb.base/interrupt.exp`
+
+             PASS: gdb.base/interrupt.exp: child process is alive
+             a
+             a
+             PASS: gdb.base/interrupt.exp: child process ate our char
+             ^C
+             Program received signal SIGINT, Interrupt.
+            -0x010bf5a2 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+            +0x010bdb09 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+             (gdb) PASS: gdb.base/interrupt.exp: send_gdb control C
+             p func1 ()
+             
+             Program received signal SIGTRAP, Trace/breakpoint trap.
+            -0x010bf5a2 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+            +0x010bdb09 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+             The program being debugged was signaled while in a function called from GDB.
+             GDB remains in the frame where the signal was received.
+             To change this behavior use "set unwindonsignal on".
+             Evaluation of the expression containing the function
+             (func1) will be abandoned.
+             When the function is done executing, GDB will silently stop.
+             (gdb) FAIL: gdb.base/interrupt.exp: call function when asleep (wrong output)
+             p func1 ()
+             
+             Program received signal SIGTRAP, Trace/breakpoint trap.
+            -0x010bf5a2 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+            +0x010bdb09 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+             The program being debugged was signaled while in a function called from GDB.
+             GDB remains in the frame where the signal was received.
+             To change this behavior use "set unwindonsignal on".
+             Evaluation of the expression containing the function
+             (func1) will be abandoned.
+             When the function is done executing, GDB will silently stop.
+             (gdb) FAIL: gdb.base/interrupt.exp: call function a second time
+             continue
+             Continuing.
+            -PASS: gdb.base/interrupt.exp: continue
+            +
+            +Program received signal SIGSEGV, Segmentation fault.
+            +0x010bdb09 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+            +(gdb) FAIL: gdb.base/interrupt.exp: continue
+             data
+             PASS: gdb.base/interrupt.exp: echo data
+             ^C(gdb) Quit
+             (gdb) FAIL: gdb.base/interrupt.exp: Send Control-C, second time
+             signal SIGINT
+             Continuing with signal SIGINT.
+             PASS: gdb.base/interrupt.exp: signal SIGINT
+             more data
+             PASS: gdb.base/interrupt.exp: echo more data
+             
+             Program received signal SIGSEGV, Segmentation fault.
+            -0x010bf6c8 in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+            +0x010bdc9d in _hurd_intr_rpc_mach_msg () from /lib/i386-gnu/libc.so.0.3
+             (gdb) more data
+             Undefined command: "more".  Try "help".
+             (gdb) FAIL: gdb.base/interrupt.exp: send end of file
+            -testcase ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/interrupt.exp completed in 6 seconds
+            +[hangs]
+
+             7939 1000  6817  7939  7939  2  144M 8.92M 93.8  5:29.23    10hrs /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/testsuite/../../gdb/gdb -nw -nx -data-directory /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/testsuite/../data-directory
+             7944 1000  7939  7944  7939  2  146M  744K  0.0  0:00.00  0:00.01 /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/testsuite/gdb.base/interrupt
+
+            $ gdb -q tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/gdb 7961
+            Reading symbols from /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/gdb...done.
+            Attaching to program `/media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/gdb', pid 7961
+            [New Thread 7961.1]
+            [New Thread 7961.2]
+            
+            warning: Can't modify tracing state for pid 7961: (ipc/rcv) timed out
+            Reading symbols [...]
+            (gdb) thread apply all bt full
+            
+            Thread 2 (Thread 7961.2):
+            #0  0x014949cc in swtch_pri () at /build/eglibc-wYOBb2/eglibc-2.17/build-tree/hurd-i386-libc/mach/swtch_pri.S:2
+            No locals.
+            #1  0x01496354 in __spin_lock_solid (lock=0x168100c) at spin-solid.c:26
+            No locals.
+            #2  0x014aa677 in __spin_lock (__lock=<optimized out>) at ../mach/lock-intern.h:54
+            No locals.
+            #3  _hurd_sigstate_lock (ss=0x1681808) at hurdsig.c:175
+            No locals.
+            #4  0x014acbfb in post_signal (untraced=untraced@entry=0) at hurdsig.c:680
+                    err = <optimized out>
+                    handler = <optimized out>
+                    blocked = <optimized out>
+                    __PRETTY_FUNCTION__ = "post_signal"
+                    signo = 11
+                    act = 23593696
+                    ss = 0x1681808
+                    thread_state = {set = 0, basic = {gs = 1, fs = 17840912, es = 23594144, ds = 17840912, edi = 23290621, esi = 21506724, ebp = 23281960, esp = 1, ebx = 3, edx = 27255556, ecx = 23599112, eax = 163840, eip = 23273912, 
+                        cs = 29351492, efl = 29351424, uesp = 0, ss = 29351336}, fpu = {fpkind = 17840912, initialized = 29351344, 
+                        hw_state = "\364\213\002\000\000\000\000\000\000\000\000\000cfH\001\000\000\000\000\377\377\377\377\000 c\001T\244G\001\020;\020\001\b\030h\001\000\260g\001\370ݿ\001\060\357\277\001p\000\000\000\233\322e\001\220ݿ\001\216\246J\001\000\300b\001\260\341J\001\b\030h\001\000\000\000\000\000\000\000\000\000 c\001\022\000\000\000\000\200\002\000\020;\020\001\030\306b\001", exc_status = 359}}
+                    ss_suspended = 0
+                    reply = 0x1bfddf4
+                    detail = 0x1bfde4c
+            #5  0x014ae29e in _hurd_internal_post_signal (ss=ss@entry=0x1681808, signo=11, detail=detail@entry=0x1bfde4c, reply_port=reply_port@entry=0, reply_port_type=reply_port_type@entry=17, untraced=untraced@entry=0) at hurdsig.c:1221
+                    reply_rpc = 0x165d200 <__msg_sig_post_reply>
+            #6  0x014af98f in _S_catch_exception_raise (port=142, thread=112, task=1, exception=1, code=2, subcode=19137735) at catch-exc.c:88
+                    ss = 0x1681808
+                    signo = 11
+                    d = {exc = 1, exc_code = 2, exc_subcode = 19137735, code = 2, error = EKERN_PROTECTION_FAILURE}
+            #7  0x016442c2 in _Xexception_raise (OutHeadP=0x1bfdf20, InHeadP=0x1bfef30) at /build/eglibc-wYOBb2/eglibc-2.17/build-tree/hurd-i386-libc/mach/mach/exc_server.c:150
+            No locals.
+            #8  _Xexception_raise (InHeadP=0x1bfef30, OutHeadP=0x1bfdf20) at /build/eglibc-wYOBb2/eglibc-2.17/build-tree/hurd-i386-libc/mach/mach/exc_server.c:41
+                    In0P = 0x1bfef30
+                    OutP = 0x1bfdf20
+            #9  0x01644344 in _S_exc_server (InHeadP=InHeadP@entry=0x1bfef30, OutHeadP=OutHeadP@entry=0x1bfdf20) at /build/eglibc-wYOBb2/eglibc-2.17/build-tree/hurd-i386-libc/mach/mach/exc_server.c:189
+                    InP = 0x1bfef30
+                    OutP = 0x1bfdf20
+                    routine = 0x1644220 <_Xexception_raise>
+            #10 0x014a58ec in msgport_server (outp=0x1bfdf20, inp=0x1bfef30) at msgportdemux.c:49
+            No locals.
+            #11 msgport_server (inp=inp@entry=0x1bfef30, outp=outp@entry=0x1bfdf20) at msgportdemux.c:36
+                    d = 0x0
+            #12 0x01495898 in __mach_msg_server_timeout (demux=demux@entry=0x14a5890 <msgport_server>, max_size=max_size@entry=4096, rcv_name=rcv_name@entry=142, option=option@entry=0, timeout=timeout@entry=0) at msgserver.c:108
+                    request = 0x1bfef30
+                    reply = 0x1bfdf20
+                    mr = <optimized out>
+                    __PRETTY_FUNCTION__ = "__mach_msg_server_timeout"
+            #13 0x014959cb in __mach_msg_server (demux=demux@entry=0x14a5890 <msgport_server>, max_size=4096, rcv_name=142) at msgserver.c:195
+            No locals.
+            #14 0x014a597d in _hurd_msgport_receive () at msgportdemux.c:67
+            No locals.
+            #15 0x010f7956 in entry_point (self=0x8520788, start_routine=0x14a5920 <_hurd_msgport_receive>, arg=0x0) at ./pthread/pt-create.c:61
+            No locals.
+            #16 0x00000000 in ?? ()
+            No symbol table info available.
+            
+            Thread 1 (Thread 7961.1):
+            #0  _hurd_userlink_unlink (link=0x81c2a20 <command_handler+48>) at ../hurd/hurd/userlink.h:123
+            No locals.
+            #1  __sigreturn (scp=0x81c2950 <handle_sigint>) at ../sysdeps/mach/hurd/i386/sigreturn.c:47
+                    link = 0x81c2a20 <command_handler+48>
+                    reply_port = <optimized out>
+            #2  0x014aef46 in trampoline () from /lib/i386-gnu/libc.so.0.3
+            No locals.
+            #3  0x081c2950 in ?? () at ../../Ferry_Tagscherer/gdb/event-top.c:869
+                    sigtstp_token = 0x860a7c0
+                    sighup_token = 0x86089e0
+                    more_to_come = 0
+                    sigfpe_token = 0x860a7a8
+                    sigquit_token = 0x86089c8
+                    sigint_token = 0x860a3b0
+                    call_readline = 0x81c2ab0 <rl_callback_read_char_wrapper>
+                    exec_done_display_p = 0
+                    input_handler = 0x81c2c50 <command_line_handler>
+                    async_command_editing_p = 1
+                    after_char_processing_hook = 0x0
+                    async_annotation_suffix = 0x83d8648 "prompt"
+                    input_fd = 0
+                    readline_input_state = {linebuffer = 0x0, linebuffer_ptr = 0x0}
+            Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+            (gdb) kill
+            Kill the program being debugged? (y or n) y
+
+      * `gdb.base/fileio.exp`
+
+            FAIL: gdb.base/fileio.exp: Stat a NULL pathname returns ENOENT or EFAULT
+            FAIL: gdb.base/fileio.exp: Stat an empty pathname returns ENOENT
+            FAIL: gdb.base/fileio.exp: Stat a nonexistant file returns ENOENT (the program is no longer running)
+            FAIL: gdb.base/fileio.exp: [...] (the program is no longer running)
+
+        Is this actually a correct assumption?
+
+      * `gdb.base/random-signal.exp`
+
+        Several things (suddenly?) seem to go wrong here.  It seems we do hit
+        (something similar to?) the issue described in the log of commit
+        427cd150eed8c0dd4f0d0a1105448b4ebe36da6d, which adds this test.  The
+        `alarm` call in `random-signal.c` doesn't seem to trigger, so
+        `random-signal` keeps running (comsuming *system* CPU time) until
+        manually terminated.
+
+      * `gdb.base/readline.exp`
+
+        [[term_blocking]] issue.
+
+      * `gdb.base/sigall.exp`
+
+        From `send signal TSTP` on, all FAIL running into timeouts.
+
+      * `gdb.base/watch-vfork.exp`
+
+            Running ../../../W._C._Handy/gdb/testsuite/gdb.base/watch-vfork.exp ...
+            PASS: gdb.base/watch-vfork.exp: Watchpoint on global variable (hw)
+            FAIL: gdb.base/watch-vfork.exp: Watchpoint triggers after vfork (hw)
+            PASS: gdb.base/watch-vfork.exp: Watchpoint on global variable (sw)
+            FAIL: gdb.base/watch-vfork.exp: Watchpoint triggers after vfork (sw) (timeout)
+            Running ../../../W._C._Handy/gdb/testsuite/gdb.base/watch_thread_num.exp ...
+            PASS: gdb.base/watch_thread_num.exp: successfully compiled posix threads test case
+            ERROR: Couldn't load [...]/tschwinge/W._C._Handy.build/gdb/testsuite/gdb.base/watch_thread_num into [...]/tschwinge/W._C._Handy.build/gdb/testsuite/../../gdb/gdb (timeout).
+            ERROR: Delete all breakpoints in delete_breakpoints (timeout)
+
+              PID  UID  PPID  PGrp  Sess TH  Vmem   RSS %CPU     User   System Args
+            10067 1000     1 10067 10062  2  146M  696K  0.0  0:00.02  0:08.40 /media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/gdb/testsuite/gdb.base/watch-vfork
+            10107 1000 22500 10107 10107  2  150M   13M 97.3  0:00.04  3:10.07 /media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/gdb/testsuite/../../gdb/gdb -nw -nx -data-directory /media/erich/home/thomas/tmp/binutils-gdb/tschwin
+
+        Open new screen window.  Prompt is being displayed, but any input not
+        shown/reacted on.  Once the watch-vfork process is killed, the input
+        shows up.
+
+        Once the busy-looping GDB process is killed, testing proceeds.
+
+      * `gdb.python/py-inferior.exp` (mostly disabled)
+
+            Running ../../../Ferry_Tagscherer/gdb/testsuite/gdb.python/py-inferior.exp ...
+            [...]
+            python print 'result =', i0.was_attached
+            result = False
+            (gdb) PASS: gdb.python/py-inferior.exp: test Inferior.was_attached
+            python print i0.threads ()
+            (<gdb.InferiorThread object at 0x61170>, <gdb.InferiorThread object at 0x61160>)
+            (gdb) FAIL: gdb.python/py-inferior.exp: test Inferior.threads
+            break check_threads
+            Breakpoint 2 at 0x8048869: file ../../../Ferry_Tagscherer/gdb/testsuite/gdb.python/py-inferior.c, line 61.
+            (gdb) continue
+            Continuing.
+            [New Thread 25670.6]
+            [New Thread 25670.7]
+            [New Thread 25670.8]
+            [New Thread 25670.9]
+            [New Thread 25670.10]
+            [New Thread 25670.11]
+            [New Thread 25670.12]
+            [New Thread 25670.13]
+            
+            Breakpoint 2, check_threads (barrier=0x15ff144) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.python/py-inferior.c:61
+            61        pthread_barrier_wait (barrier);
+            (gdb) PASS: gdb.python/py-inferior.exp: continue to breakpoint: cont to check_threads
+            python print len (i0.threads ())
+            10
+            (gdb) FAIL: gdb.python/py-inferior.exp: test Inferior.threads 2
+            break 28
+            Breakpoint 3 at 0x80487c2: file ../../../Ferry_Tagscherer/gdb/testsuite/gdb.python/py-inferior.c, line 28.
+            (gdb) continue
+            Continuing.
+            FAIL: gdb.python/py-inferior.exp: continue to breakpoint: cont to Break here. (timeout)
+            python addr = gdb.selected_frame ().read_var ('str')
+            FAIL: gdb.python/py-inferior.exp: read str address (timeout)
+            [All following tests FAIL with timeout.]
+            FAIL: gdb.python/py-inferior.exp: Switch to first inferior (timeout)
+            remove-inferiors 3
+            FAIL: gdb.python/py-inferior.exp: Remove second inferior (timeout)
+
+        At this point, the system hangs; no new processes can be spawned, so
+        perhaps an issue with the exec server.
+
+      * `gdb.threads/hand-call-in-threads.exp`
+
+      * `gdb.threads/manythreads.exp`
+
+        [[!taglink open_issue_libpthread]].  Perhaps fails due to pthread
+        attributes usage?  Doesn't execute properly:
+
+            $ gdb/testsuite/gdb.threads/manythreads
+            manythreads: ../libpthread/sysdeps/mach/pt-thread-halt.c:51: __pthread_thread_halt: Unexpected error: (ipc/rcv) invalid name.
+            Killed
+
+      * `gdb.threads/signal-delivered-right-thread.exp`
+
+      * `gdb.threads/step-over-trips-on-watchpoint.exp`
+
+      * `gdb.threads/thread-find.exp`
+
+  * Linux syscall usage, `<asm/unistd.h>`
+
+      * `UNSUPPORTED: gdb.threads/ia64-sigill.exp: Couldn't compile ../../../master/gdb/testsuite/gdb.threads/ia64-sigill.c: unrecognized error`
+
+      * `UNSUPPORTED: gdb.threads/siginfo-threads.exp: Couldn't compile ../../../Ferry_Tagscherer/gdb/testsuite/gdb.threads/siginfo-threads.c: unrecognized error`
+
+        Also uses `tgkill`.
+
+      * `gdb.threads/sigstep-threads.c`
+
+        Also uses `tgkill`.
+
+      * `UNSUPPORTED: gdb.threads/watchpoint-fork.exp: parent: multithreaded: Couldn't compile ../../../Ferry_Tagscherer/gdb/testsuite/gdb.threads/watchpoint-fork-mt.c ../../../Ferry_Tagscherer/gdb/testsuite/gdb.threads/watchpoint-fork-parent.c: unrecognized error`
+
+  * `UNSUPPORTED: gdb.threads/multi-create.exp: Couldn't compile ../../../master/gdb/testsuite/gdb.threads/multi-create.c: unrecognized error`
+        ../../../master/gdb/testsuite/gdb.threads/multi-create.c: In function 'create_function':
+        ../../../master/gdb/testsuite/gdb.threads/multi-create.c:46:39: error: 'PTHREAD_STACK_MIN' undeclared (first use in this function)
+        ../../../master/gdb/testsuite/gdb.threads/multi-create.c:46:39: note: each undeclared identifier is reported only once for each function it appears in
+        ../../../master/gdb/testsuite/gdb.threads/multi-create.c: In function 'main':
+        ../../../master/gdb/testsuite/gdb.threads/multi-create.c:73:39: error: 'PTHREAD_STACK_MIN' undeclared (first use in this function)
+
+  * `UNSUPPORTED: gdb.threads/staticthreads.exp: Couldn't compile ../../../master/gdb/testsuite/gdb.threads/staticthreads.c: unrecognized error`
+
+        ../../../master/gdb/testsuite/gdb.threads/staticthreads.c: In function 'main':
+        ../../../master/gdb/testsuite/gdb.threads/staticthreads.c:52:37: error: 'PTHREAD_STACK_MIN' undeclared (first use in this function)
+        ../../../master/gdb/testsuite/gdb.threads/staticthreads.c:52:37: note: each undeclared identifier is reported only once for each function it appears in
+
+  * `UNSUPPORTED: gdb.threads/create-fail.exp: Couldn't compile ../../../Ferry_Tagscherer/gdb/testsuite/gdb.threads/create-fail.c: unrecognized error`
+
+        [...]/gdb.threads/create-fail.c:77: undefined reference to `pthread_attr_setaffinity_np'
+        [...]/gdb.threads/create-fail.c:83: undefined reference to `pthread_create'
+
+  * `UNTESTED: gdb.base/longest-types.exp: longest-types.exp`
+
+        ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/longest-types.c:20:8: error: size of array 'buf' is too large
+
+    Also on GNU/Linux.
+
+  * `FAIL: gdb.base/jit.exp: PIE: one_jit_test-1: Can't run to main`
+
+        (gdb) break main
+        Breakpoint 1 at 0xb84: file ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/jit-main.c, line 128.
+        (gdb) run 
+        Starting program: /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/testsuite/gdb.base/jit-main 
+        Cannot access memory at address 0x393
+        Cannot access memory at address 0x38f
+        (gdb) FAIL: gdb.base/jit.exp: PIE: one_jit_test-1: Can't run to main
+
+    [[GCC/PIE]].
+
+    Is the following supposed to terminate in this way?
+
+        (gdb) break main
+        Breakpoint 1 at 0x675: file ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/attach-pie-noexec.c, line 23.
+        (gdb) run 
+        Starting program: /media/erich/home/thomas/tmp/gdb/tschwinge/Ferry_Tagscherer.build/gdb/testsuite/gdb.base/attach-pie-noexec 
+        Cannot access memory at address 0x6c626172
+        Cannot access memory at address 0x6c62616e
+        (gdb) testcase ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/attach-pie-noexec.exp completed in 3 seconds
+
+    IRC, freenode, #hurd, 2013-09-06:
+
+        <gnu_srs1> How to debug a program that works in the shell but Cannot
+          access memory at address ... in gdb?
+        <tschwinge> Build it without -pie -- but that is just a guess of what
+          might be going on.
+        * tschwinge clearly has spent enough time with obscure things to be
+            able to make such guesses.
+        <gnu_srs1> tschwinge: looks like -fPIE is used.
+        <gnu_srs1> verified: some (all?) executables compiled with -fPIE, -fpie
+          and linked with -pie cannot be debugged in gdb :(
+
+  * `solib-event stop`
+
+        Running ../../../Ferry_Tagscherer/gdb/testsuite/gdb.mi/mi-catch-load.exp ...
+        PASS: gdb.mi/mi-catch-load.exp: breakpoint at main
+        PASS: gdb.mi/mi-catch-load.exp: mi runto main
+        PASS: gdb.mi/mi-catch-load.exp: catch-load: auto-solib-add on
+        PASS: gdb.mi/mi-catch-load.exp: catch-load: catch load
+        FAIL: gdb.mi/mi-catch-load.exp: catch-load: solib-event stop
+        PASS: gdb.mi/mi-catch-load.exp: breakpoint at main
+        PASS: gdb.mi/mi-catch-load.exp: mi runto main
+        PASS: gdb.mi/mi-catch-load.exp: catch-unload: auto-solib-add on
+        PASS: gdb.mi/mi-catch-load.exp: catch-unload: catch unload
+        FAIL: gdb.mi/mi-catch-load.exp: catch-unload: solib-event stop
+
+        *stopped,reason="signal-received",signal-name="SIGSEGV",signal-meaning="Segmentation fault",frame={addr="0x00014add",func="??",args=[],from="/lib/ld.so"},thread-id="4",stopped-threads="all"
+
+  * `gdb.base/call-signal-resume.exp`
+
+        $ gdb -q gdb/testsuite/gdb.base/call-signals
+        (gdb) break stop_one
+        (gdb) r
+        (gdb) call gen_signal()
+        (gdb) bt
+        (gdb) frame [<function called from gdb>]
+        (gdb) return
+        (gdb) break handle_signal
+        (gdb) c
+        (gdb) c
+
+    kepler.SCHWINGE:
+
+        Breakpoint 2, handle_signal (sig=6) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:28
+        28      }
+        (gdb) bt
+        #0  handle_signal (sig=6) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:28
+        #1  <signal handler called>
+        #2  0xb7fde416 in __kernel_vsyscall ()
+        #3  0xb7dffd96 in kill () at ../sysdeps/unix/syscall-template.S:81
+        #4  0x0804859c in gen_signal () at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:35
+        #5  0x08048610 in main () at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:81
+
+    laplace.SCHWINGE:
+
+        Breakpoint 2, handle_signal (sig=6) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:28
+        28      }
+        (gdb) bt
+        #0  handle_signal (sig=6) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:28
+        #1  0x010baac2 in trampoline () from /lib/i386-gnu/libc.so.0.3
+        #2  0x00000006 in ?? ()
+        #3  0x00000000 in ?? ()
+
+    kepler.SCHWINGE:
+
+        (gdb) c
+        Continuing.
+        no signal
+        [Inferior 1 (process 10401) exited normally]
+
+    laplace.SCHWINGE:
+
+        (gdb) c
+        Continuing.
+        no signal
+        
+        Program received signal SIGSEGV, Segmentation fault.
+        0x00000000 in ?? ()
+        (gdb) bt
+        #0  0x00000000 in ?? ()
+        #1  0x01116c28 in _IO_acquire_lock_fct (p=<synthetic pointer>) at libioP.h:905
+        #2  _IO_puts (str=0x80487e0 "no signal") at ioputs.c:45
+        #3  0x080486d8 in gen_signal () at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:38
+        #4  0x0804873d in main () at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/call-signals.c:81
+
+    This is apparently new with the glibc 2.17 upgrade.  If not doing the
+    manual `gen_signal` call, it works fine.  TODO.
+
+  * `gdb.base/relativedebug.exp`
+
+        (gdb) PASS: gdb.base/relativedebug.exp: continue
+        bt
+        #0  0x010a1afc in ?? () from /lib/i386-gnu/libc.so.0.3
+        #1  0x010a23be in mach_msg () from /lib/i386-gnu/libc.so.0.3
+        #2  0x0126cd98 in msg_sig_post () from /lib/i386-gnu/libhurduser.so.0.3
+        #3  0x010e2141 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #4  0x010e23ed in kill () from /lib/i386-gnu/libc.so.0.3
+        #5  0x010e17f4 in raise () from /lib/i386-gnu/libc.so.0.3
+        #6  0x010e5b7c in abort () from /lib/i386-gnu/libc.so.0.3
+        #7  0x08048607 in handler (signo=14) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/relativedebug.c:25
+        #8  0x010bdac2 in ?? () from /lib/i386-gnu/libc.so.0.3
+        Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+        (gdb) FAIL: gdb.base/relativedebug.exp: pause found in backtrace
+
+    This is apparently new with the glibc 2.17 upgrade.  Previously it said:
+
+        (gdb) PASS: gdb.base/relativedebug.exp: continue
+        bt
+        #0  0x0107c85c in ?? () from /lib/i386-gnu/libc.so.0.3
+        #1  0x0107d069 in mach_msg () from /lib/i386-gnu/libc.so.0.3
+        #2  0x01220d4f in msg_sig_post () from /lib/i386-gnu/libhurduser.so.0.3
+        #3  0x010bb683 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #4  0x010bb8f6 in kill () from /lib/i386-gnu/libc.so.0.3
+        #5  0x010bad76 in raise () from /lib/i386-gnu/libc.so.0.3
+        #6  0x010bf029 in abort () from /lib/i386-gnu/libc.so.0.3
+        #7  0x08048597 in handler (signo=14) at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/relativedebug.c:25
+        #8  0x01098282 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #9  0x010bbe5a in sigsuspend () from /lib/i386-gnu/libc.so.0.3
+        #10 0x0112fee1 in pause () from /lib/i386-gnu/libc.so.0.3
+        #11 0x080485c5 in main () at ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/relativedebug.c:32
+        (gdb) PASS: gdb.base/relativedebug.exp: pause found in backtrace
+
+    TODO.
+
+  * `gdb.gdb/selftest.exp`
+
+        (gdb) PASS: gdb.gdb/selftest.exp: send SIGINT signal to child process
+        backtrace
+        #0  0x0146fafc in ?? () from /lib/i386-gnu/libc.so.0.3
+        #1  0x014703be in mach_msg () from /lib/i386-gnu/libc.so.0.3
+        #2  0x0163bd98 in msg_sig_post () from /lib/i386-gnu/libhurduser.so.0.3
+        #3  0x014b0141 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #4  0x014b03ed in kill () from /lib/i386-gnu/libc.so.0.3
+        #5  0x082cf471 in _rl_handle_signal (sig=2) at ../../Ferry_Tagscherer/readline/signals.c:221
+        #6  0x0148bac2 in ?? () from /lib/i386-gnu/libc.so.0.3
+        Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+        (gdb) FAIL: gdb.gdb/selftest.exp: backtrace through signal handler
+
+    This is apparently new with the glibc 2.17 upgrade.  Previously it said:
+
+        (gdb) PASS: gdb.gdb/selftest.exp: send SIGINT signal to child process
+        backtrace
+        #0  0x0144885c in ?? () from /lib/i386-gnu/libc.so.0.3
+        #1  0x01449069 in mach_msg () from /lib/i386-gnu/libc.so.0.3
+        #2  0x015ecd4f in msg_sig_post () from /lib/i386-gnu/libhurduser.so.0.3
+        #3  0x01487683 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #4  0x014878f6 in kill () from /lib/i386-gnu/libc.so.0.3
+        #5  0x082cf401 in _rl_handle_signal (sig=2) at ../../Ferry_Tagscherer/readline/signals.c:221
+        #6  0x01464282 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #7  0x0144fce3 in ?? () from /lib/i386-gnu/libc.so.0.3
+        #8  0x0153975b in poll () from /lib/i386-gnu/libc.so.0.3
+        #9  0x081c91c2 in gdb_wait_for_event (block=1) at ../../Ferry_Tagscherer/gdb/event-loop.c:804
+        #10 0x081c998f in gdb_do_one_event () at ../../Ferry_Tagscherer/gdb/event-loop.c:402
+        #11 0x081c9b07 in start_event_loop () at ../../Ferry_Tagscherer/gdb/event-loop.c:431
+        #12 0x081c2f42 in captured_command_loop (data=data@entry=0x0) at ../../Ferry_Tagscherer/gdb/main.c:260
+        #13 0x081c0e57 in catch_errors (func=func@entry=0x81c2f30 <captured_command_loop>, func_args=func_args@entry=0x0, errstring=errstring@entry=0x83
+        5b81b "", mask=mask@entry=6) at ../../Ferry_Tagscherer/gdb/exceptions.c:546
+        #14 0x081c388c in captured_main (data=data@entry=0x19ff150) at ../../Ferry_Tagscherer/gdb/main.c:1055
+        #15 0x081c0e57 in catch_errors (func=func@entry=0x81c3130 <captured_main>, func_args=func_args@entry=0x19ff150, errstring=errstring@entry=0x835b
+        81b "", mask=mask@entry=6) at ../../Ferry_Tagscherer/gdb/exceptions.c:546
+        #16 0x081c43c0 in gdb_main (args=0x19ff150) at ../../Ferry_Tagscherer/gdb/main.c:1064
+        #17 0x08099533 in main (argc=5, argv=0x19ff1e8) at ../../Ferry_Tagscherer/gdb/gdb.c:34
+        (gdb) PASS: gdb.gdb/selftest.exp: backtrace through signal handler
+
+    TODO.
+
+  * `gdb.base/restore.exp`, `gdb.base/store.exp`
+
+    Several FAILs, starting with GCC 4.8 usage:
+
+        (gdb) PASS: gdb.base/restore.exp: caller3 calls callee1; return callee now
+        print l1
+        $16 = <optimized out>
+        (gdb) FAIL: gdb.base/restore.exp: caller3 calls callee1; return restored l1 to 32492
+
+    [[!GCC_PR 55056]], [[!message-id
+    "20130126202645.GA4888@host2.jankratochvil.net"]], and maybe [[!message-id
+    "CAO2gOZXvCLdaKE2=ZKpjGVGq8A0wQ94-AUo7eKvvWHWncrU_yg@mail.gmail.com"]] look
+    related.
+
+  * `gdb.base/default.exp`
+
+        shell echo Hi dad!
+        bash: relocation error: /lib/i386-gnu/libdl.so.2: symbol __libc_lock_self, version GLIBC_PRIVATE not defined in file libc.so.0.3 with link time reference
+        (gdb) FAIL: gdb.base/default.exp: shell echo Hi dad!
+
+    TODO.
+
+  * `gdb.base/exitsignal.exp`
+
+        Running ../../../Ferry_Tagscherer/gdb/testsuite/gdb.base/exitsignal.exp ...
+        PASS: gdb.base/exitsignal.exp: $_exitsignal is void before running
+        PASS: gdb.base/exitsignal.exp: $_exitcode is void before running
+        PASS: gdb.base/exitsignal.exp: trigger SIGSEGV
+        PASS: gdb.base/exitsignal.exp: program terminated with SIGSEGV
+        FAIL: gdb.base/exitsignal.exp: $_exitsignal is 11 (SIGSEGV) after SIGSEGV.
+        PASS: gdb.base/exitsignal.exp: $_exitcode is still void after SIGSEGV
+        PASS: gdb.base/exitsignal.exp: rerun to main
+        FAIL: gdb.base/exitsignal.exp: $_exitsignal is 11 (SIGSEGV) after restarting the inferior
+        PASS: gdb.base/exitsignal.exp: $_exitcode is still void after restarting the inferior
+        PASS: gdb.base/exitsignal.exp: $_exitsignal is void before normal inferior is executed
+        PASS: gdb.base/exitsignal.exp: $_exitcode is void before normal inferior is executed
+        PASS: gdb.base/exitsignal.exp: continue until exit
+        PASS: gdb.base/exitsignal.exp: $_exitcode is zero after normal inferior is executed
+        PASS: gdb.base/exitsignal.exp: $_exitsignal is still void after normal inferior is executed
+
+    TODO.
+
+  * `gdb.base/watchpoint-hw-hit-once.exp`
+
+        PASS: gdb.base/watchpoint-hw-hit-once.exp: rwatch watchee
+        PASS: gdb.base/watchpoint-hw-hit-once.exp: continue
+        FAIL: gdb.base/watchpoint-hw-hit-once.exp: continue to break-at-exit
+
+    The watchpoint does trigger again, wrongly.
+
+  * `gdb.arch/i386-prologue.exp`
+
+    There are several FAILs, where there are unexpected frames showing up in
+    backtraces, for example.  Earlier on, these just FAILed on
+    laplace.SCHWINGE; since
+    9939e1314f970c6ba568956148a518ac710a280a..c2853f3d99797a321c37948297441ca6021f719a
+    on kepler.SCHWINGE, too.  Later, FAILs again disappeared on
+    kepler.SCHWINGE.
+
+  * [[libgc|boehm_gc]] `GC_find_limit_with_bound` SIGSEGVs
+
+    On laplace.SCHWINGE, in
+    9939e1314f970c6ba568956148a518ac710a280a..c2853f3d99797a321c37948297441ca6021f719a
+    several PASSes regressed to FAILs:
+
+        Starting program: [...]/gdb/testsuite/gdb.gdb/xgdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+        [New Thread 13417.5]
+        
+        Program received signal SIGSEGV, Segmentation fault.
+        0x0126b961 in GC_find_limit_with_bound () from /usr/lib/i386-gnu/libgc.so.1
+        (gdb) FAIL: gdb.gdb/complaints.exp: run until breakpoint at captured_command_loop
+        WARNING: Couldn't test self
+
+        Starting program: [...]/gdb/testsuite/gdb.gdb/xgdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+        [New Thread 13448.5]
+        
+        Program received signal SIGSEGV, Segmentation fault.
+        0x0126b961 in GC_find_limit_with_bound () from /usr/lib/i386-gnu/libgc.so.1
+        (gdb) FAIL: gdb.gdb/python-interrupts.exp: run until breakpoint at captured_command_loop
+        WARNING: Couldn't test self
+
+        Starting program: [...]/gdb/testsuite/gdb.gdb/xgdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+        [New Thread 13464.3]
+        
+        Program received signal SIGSEGV, Segmentation fault.
+        0x0126b961 in GC_find_limit_with_bound () from /usr/lib/i386-gnu/libgc.so.1
+        (gdb) FAIL: gdb.gdb/python-selftest.exp: run until breakpoint at captured_command_loop
+        WARNING: Couldn't test self
+
+        (gdb) PASS: gdb.gdb/selftest.exp: step into xmalloc call
+        continue
+        Continuing.
+        
+        Program received signal SIGSEGV, Segmentation fault.
+        0x0126b961 in GC_find_limit_with_bound () from /usr/lib/i386-gnu/libgc.so.1
+        (gdb) FAIL: gdb.gdb/selftest.exp: xgdb is at prompt
+
+    These are all tests where GDB examines itself; being linked against libgc
+    (new dependency due to new Guile scripting support; all Guile scripting
+    tests PASS).  So, probably some bad interaction between GDB and a debuggee
+    that is using libgc; maybe libgc is using SIGSEGV for internal signalling
+    purposes; see the `HEURISTIC2` discussion on [[boehm_gc]].
+
+        #0  0x0126b961 in GC_find_limit_with_bound () from /usr/lib/i386-gnu/libgc.so.1
+        #1  0x0126ba2e in GC_find_limit () from /usr/lib/i386-gnu/libgc.so.1
+        #2  0x0126bb15 in GC_get_stack_base () from /usr/lib/i386-gnu/libgc.so.1
+        #3  0x011be0ec in scm_init_guile () from /usr/lib/libguile-2.0.so.22
+        #4  0x081203ba in _initialize_guile () at ../../W._C._Handy/gdb/guile/guile.c:704
+        #5  0x082dc94d in initialize_all_files () at init.c:291
+        #6  0x082a3c7f in gdb_init (argv0=0x8563e90 "[...]/gdb/testsuite/gdb.gdb/xgdb") at ../../W._C._Handy/gdb/top.c:1822
+        #7  0x081da3b8 in captured_main (data=0x1bff164) at ../../W._C._Handy/gdb/main.c:747
+        #8  0x081d70e9 in catch_errors (func=func@entry=0x81da110 <captured_main>, func_args=func_args@entry=0x1bff164, errstring=errstring@entry=0x837a0e5 "", mask=mask@entry=RETURN_MASK_ALL) at ../../W._C._Handy/gdb/exceptions.c:524
+        #9  0x081db277 in gdb_main (args=0x1bff164) at ../../W._C._Handy/gdb/main.c:1062
+        #10 0x0809714b in main (argc=5, argv=0x1bff1f4) at ../../W._C._Handy/gdb/gdb.c:33
+
+    2016-05-25, commit 9ef9e6a6a0dd8f948708cb67c9afcfd0be40cb0a (2016-02-10):
+    problem confirmed, when manually running GDB to debug another GDB instance.
+    Worked around by `#if 0`ing the bodies of
+    `gdb/guile/guile.c:_initialize_guile`, and
+    `gdb/guile/guile.c:gdbscm_finish_initialization`.
+
+    TODO.
+
+  * In
+    96f9814df23564e16909bb5ba00de4a202c63417..9ef9e6a6a0dd8f948708cb67c9afcfd0be40cb0a:
+
+        Running [...]/gdb/testsuite/gdb.arch/i386-size-overlap.exp ...
+        [-PASS:-]{+FAIL:+} gdb.arch/i386-size-overlap.exp: run past main
+        PASS: gdb.arch/i386-size-overlap.exp: backtrace shows the outer function
+
+    ..., and:
+
+        Running [...]/gdb/testsuite/gdb.arch/i386-unwind.exp ...
+        [-PASS-]{+FAIL:+} gdb.arch/i386-unwind.exp: run past gdb1435
+        PASS: gdb.arch/i386-unwind.exp: backtrace past gdb1435
+
+        PASS: gdb.cp/cpexprs.exp: list tclass<int>::do_something
+        PASS: gdb.cp/cpexprs.exp: list tclass<long>::do_something
+        PASS: gdb.cp/cpexprs.exp: list tclass<short>::do_something
+        PASS: gdb.cp/cpexprs.exp: list test_function
+        [-PASS:-]{+FAIL: gdb.cp/cpexprs.exp: continue+}
+        {+FAIL:+} gdb.cp/cpexprs.exp: continue to {+test_function for+} base1::a_function
+        [-PASS:-]{+FAIL: gdb.cp/cpexprs.exp: continue+}
+        {+FAIL:+} gdb.cp/cpexprs.exp: continue to {+test_function for+} base1::base1(int)
+        [-PASS:-]{+FAIL: gdb.cp/cpexprs.exp: continue+}
+        [...]
+
+    From a quick look, the problem appears to be that we print `Thread 4 hit
+    Breakpoint 2, test_function [...]`, but the test harness doesn't expect to
+    see the `Thread 4 hit` prefix.
+
+    That might also explain the several other `continue` regressions, where
+    only the `continue` itself "FAILs", but otherwise the test case still
+    works, so the breakpoint has actually been hit as expected.
+
+    System vs new GDB:
+
+        @@ -1,31 +1,27 @@
+        $ [-gdb-]{+gdb/gdb+} -q bfd/doc/chew
+        Reading symbols from bfd/doc/chew...done.
+        (gdb) show version
+        GNU gdb [-(Debian 7.10-1+b1) 7.10-]{+(GDB) 7.10.50.20160210-git+}
+        [...]
+        (gdb) break main
+        Breakpoint 1 at 0x8048730: file ../../../W._C._Handy/bfd/doc/chew.c, line 1494.
+        (gdb) r
+        Starting program: /media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/bfd/doc/chew 
+        [New Thread [-6718.3]-]{+6737.5]+}
+        
+        {+Thread 4 hit+} Breakpoint 1, main (ac=1, av=0x102cda4) at ../../../W._C._Handy/bfd/doc/chew.c:1494
+        1494    {
+        (gdb) info threads
+          Id   Target Id         Frame 
+        [-  3    Thread 6718.3     0x0105d4fc in mach_msg_trap () at /build/glibc-2.22/build-tree/hurd-i386-libc/mach/mach_msg_trap.S:2-]
+        [-* 2    Thread 6718.2     main (ac=1, av=0x102cda4) at ../../../W._C._Handy/bfd/doc/chew.c:1494-]
+          1    bogus thread id 1 Can't fetch registers from thread bogus thread id 1: No such thread
+        (gdb) r
+        The program being debugged has been started already.
+        Start it from the beginning? (y or n) y
+        Starting program: /media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/bfd/doc/chew 
+        [New Thread [-6719.8]-]{+6738.10]+}
+        
+        {+Thread 4 hit+} Breakpoint 1, main (ac=1, av=0x102cda4) at ../../../W._C._Handy/bfd/doc/chew.c:1494
+        1494    {
+        (gdb) info threads 
+          Id   Target Id         Frame 
+          [-5    Thread 6719.8     0x0105d4fc in mach_msg_trap () at /build/glibc-2.22/build-tree/hurd-i386-libc/mach/mach_msg_trap.S:2-]
+        [-* 4    Thread 6719.7     main (ac=1, av=0x102cda4) at ../../../W._C._Handy/bfd/doc/chew.c:1494-]
+        [-  3-]{+1+}    bogus thread id 6 Can't fetch registers from thread bogus thread id 6: No such thread
+
+    Commit f303dbd60d9c7984832446eeb9d4e4d89703c615 `Fix PR threads/19422 -
+    show which thread caused stop` needs additional changes for Hurd.
+    Reverting that one, the `Thread 4 hit` prefix goes away, but `info threads`
+    still doesn't work.
+
+    Bisected the `info threads` problem to commit
+    7e0aa6aa9983c745aedc203db0cc360a0ad47cac `List inferiors/threads/pspaces in
+    ascending order`.  Does that one sort the `bogus thread id 6` first, and
+    GDB stops after running into any such bogus thread ID?
+
+    $ gdb/gdb -q --args gdb/gdb -q bfd/doc/chew --batch -ex 'break main' -ex r -ex 'info threads'
+
+    new_thread calls:
+
+        #0  new_thread (ptid=...) at ../../W._C._Handy/gdb/thread.c:234
+        #1  0x081dc973 in add_thread_silent (ptid=...) at ../../W._C._Handy/gdb/thread.c:304
+        #2  0x080bcc9b in fork_inferior (exec_file_arg=0x877b868 "/media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/bfd/doc/chew", allargs=0x8787d28 "", env=0x87312f0, traceme_fun=0x2804864, init_trace_fun=0x0, pre_trace_fun=0x0, shell_file_arg=0x0, exec_fun=0x0) at ../../W._C._Handy/gdb/fork-child.c:397
+        #3  0x080ba574 in gnu_create_inferior (ops=0x868c148, exec_file=0x877b868 "/media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/bfd/doc/chew", allargs=0x8787d28 "", env=0x87312f0, from_tty=0) at ../../W._C._Handy/gdb/gnu-nat.c:2136
+        #4  0x081c4687 in run_command_1 (args=<optimized out>, from_tty=0, tbreak_at_main=<optimized out>) at ../../W._C._Handy/gdb/infcmd.c:604
+        #5  0x082aa39d in execute_command (p=<optimized out>, from_tty=0) at ../../W._C._Handy/gdb/top.c:475
+        #6  0x081e18c8 in catch_command_errors (command=0x82aa160 <execute_command>, arg=0x102d079 "r", from_tty=0) at ../../W._C._Handy/gdb/main.c:368
+
+        #0  new_thread (ptid=...) at ../../W._C._Handy/gdb/thread.c:234
+        #1  0x081dc973 in add_thread_silent (ptid=...) at ../../W._C._Handy/gdb/thread.c:304
+        #2  0x080b8359 in inf_validate_procs (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1104
+        #3  0x080b85f1 in inf_update_procs (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1123
+        #4  0x080b871e in inf_suspend (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1179
+        #5  0x080b97a7 in gnu_wait (ops=0x868c148, ptid=..., status=0x2804810, options=0) at ../../W._C._Handy/gdb/gnu-nat.c:1530
+        #6  0x08204a17 in delegate_wait (self=<optimized out>, arg1=..., arg2=0x2804810, arg3=0) at ../../W._C._Handy/gdb/target-delegates.c:116
+        #7  0x08213c18 in target_wait (ptid=..., status=0x2804810, options=0) at ../../W._C._Handy/gdb/target.c:2256
+        #8  0x080bce8d in startup_inferior (ntraps=1) at ../../W._C._Handy/gdb/fork-child.c:445
+        #9  0x080ba612 in gnu_create_inferior (ops=0x868c148, exec_file=0x877b868 "/media/erich/home/thomas/tmp/binutils-gdb/tschwinge/W._C._Handy.build/bfd/doc/chew", allargs=0x8787d28 "", env=0x87312f0, from_tty=0) at ../../W._C._Handy/gdb/gnu-nat.c:2158
+        #10 0x081c4687 in run_command_1 (args=<optimized out>, from_tty=0, tbreak_at_main=<optimized out>) at ../../W._C._Handy/gdb/infcmd.c:604
+        #11 0x082aa39d in execute_command (p=<optimized out>, from_tty=0) at ../../W._C._Handy/gdb/top.c:475
+        #12 0x081e18c8 in catch_command_errors (command=0x82aa160 <execute_command>, arg=0x102d079 "r", from_tty=0) at ../../W._C._Handy/gdb/main.c:368
+
+        #0  new_thread (ptid=...) at ../../W._C._Handy/gdb/thread.c:234
+        #1  0x081dc973 in add_thread_silent (ptid=...) at ../../W._C._Handy/gdb/thread.c:304
+        #2  0x081dca36 in add_thread_with_info (ptid=..., priv=0x0) at ../../W._C._Handy/gdb/thread.c:313
+        #3  0x081dcaa6 in add_thread (ptid=...) at ../../W._C._Handy/gdb/thread.c:327
+        #4  0x080b84b7 in inf_validate_procs (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1106
+        #5  0x080b85f1 in inf_update_procs (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1123
+        #6  0x080b871e in inf_suspend (inf=0x87a31e0) at ../../W._C._Handy/gdb/gnu-nat.c:1179
+        #7  0x080b97a7 in gnu_wait (ops=0x868c148, ptid=..., status=0x2804828, options=0) at ../../W._C._Handy/gdb/gnu-nat.c:1530
+        #8  0x08204a17 in delegate_wait (self=<optimized out>, arg1=..., arg2=0x2804828, arg3=0) at ../../W._C._Handy/gdb/target-delegates.c:116
+        #9  0x08213c18 in target_wait (ptid=..., status=0x2804828, options=0) at ../../W._C._Handy/gdb/target.c:2256
+        #10 0x081c80fe in do_target_wait (ptid=..., status=0x2804828, options=0) at ../../W._C._Handy/gdb/infrun.c:3642
+        #11 0x081d30f5 in fetch_inferior_event (client_data=0x0) at ../../W._C._Handy/gdb/infrun.c:3900
+        #12 0x081e8c54 in inferior_event_handler (event_type=INF_REG_EVENT, client_data=0x0) at ../../W._C._Handy/gdb/inf-loop.c:44
+        #13 0x081c782c in infrun_async_inferior_event_handler (data=0x0) at ../../W._C._Handy/gdb/infrun.c:9082
+        #14 0x081e72ec in check_async_event_handlers () at ../../W._C._Handy/gdb/event-loop.c:1038
+        #15 gdb_do_one_event () at ../../W._C._Handy/gdb/event-loop.c:302
+        #16 0x082aa126 in wait_sync_command_done () at ../../W._C._Handy/gdb/top.c:373
+        #17 0x082aa323 in maybe_wait_sync_command_done (was_sync=0) at ../../W._C._Handy/gdb/top.c:388
+        #18 execute_command (p=<optimized out>, from_tty=0) at ../../W._C._Handy/gdb/top.c:477
+        #19 0x081e18c8 in catch_command_errors (command=0x82aa160 <execute_command>, arg=0x102d079 "r", from_tty=0) at ../../W._C._Handy/gdb/main.c:368
+
+    ---
+    
+    Changes `renumber_threads|prune_threads`
+    
+    +/* Implement the "to_update_thread_list" target_ops method.  */
+    +
+    +static void
+    +fbsd_update_thread_list (struct target_ops *ops)
+    +{
+    +#ifdef PT_LWP_EVENTS
+    +  /* With support for thread events, threads are added/deleted from the
+    +     list as events are reported, so just try deleting exited threads.  */
+    +  delete_exited_threads ();
+    +#else
+    +  prune_threads ();
+    +
+    +  fbsd_add_threads (ptid_get_pid (inferior_ptid));
+    +#endif
+    +}
+    
+     static void
+     linux_nat_update_thread_list (struct target_ops *ops)
+     {
+    -  if (linux_supports_traceclone ())
+    -    {
+    -      /* With support for clone events, we add/delete threads from the
+    -        list as clone/exit events are processed, so just try deleting
+    -        exited threads still in the thread list.  */
+    -      delete_exited_threads ();
+    -    }
+    -  else
+    -    prune_threads ();
+    +  /* We add/delete threads from the list as clone/exit events are
+    +     processed, so just try deleting exited threads still in the
+    +     thread list.  */
+    +  delete_exited_threads ();
+     }
+    
+    commit 8a06aea71e0aa9099d0ca593dbb58f6e056af4ff
+    Author: Pedro Alves <palves@redhat.com>
+    Date:   Tue Apr 7 15:47:22 2015 +0100
+    
+        update thread list, delete exited threads
+        [...]
+    
+    ... looks very relevant
+    
+    commit 44ee4a526db6160b302417127e736b73fc00ee87
+    Author: Pedro Alves <palves@redhat.com>
+    Date:   Wed Oct 15 22:48:35 2014 +0100
+    
+        DEC threads: Simplify updating the thread list
+        [...]
+    
+    commit ab970af19746364a4f236bebc238ebb036adc898
+    Author: Pedro Alves <palves@redhat.com>
+    Date:   Wed Oct 15 22:44:00 2014 +0100
+    
+        remote: get rid of all the T packets when syncing the thread list
+        [...]
+    
+    commit e8032dde10b743253125d7defb5f5503b21c1d26
+    Author: Pedro Alves <palves@redhat.com>
+    Date:   Wed Oct 15 22:44:00 2014 +0100
+    
+        Push pruning old threads down to the target
+        [...]
+    
+    commit c82f56d9d760a9b4034eeaac44f2f0fa5779ff69
+    Author: Thomas Schwinge <thomas@codesourcery.com>
+    Date:   Wed Jan 8 21:42:07 2014 +0100
+    
+        Hurd: Adjust to startup-with-shell changes.
+        [...]
+    
+    
+        If this is not done, GDB will get confused in the following.  For example,
+        "info threads" will stop early with "bogus thread id 6 Can't fetch
+        registers from thread bogus thread id 6: No such thread".
+    
+        Calling delete_exited_threads instead of prune_threads does not work.
+    
+        It's not clear if this really should be called here, or if we fail to
+        properly track/report our own threads.  For example, we're not calling
+        delete_thread anywhere.
+    
+        Alternatively, should/could we provide a update_thread_list function, and
+        do the pruning there?
+    
+    TODO.
+
+  * a932d108b10518994c873b38a363af9f21bc2e87..f245535cf583ae4ca13b10d47b3c7d3334593ece
+
+         Running [...]/tschwinge/W._C._Handy/ld/testsuite/ld-i386/i386.exp ...
+        +FAIL: Run ifunc-1b
+        +Running [...]/tschwinge/W._C._Handy/ld/testsuite/ld-i386/no-plt.exp ...
+        +FAIL: No PLT (static 1d)
+        +FAIL: No PLT (static 1j)
+        +FAIL: Run pr20244-3b
+        +FAIL: Run pr20253-1b
+        +FAIL: Run pr20253-1g
+        +FAIL: Run pr20253-2b
+        +FAIL: Run pr20253-2d
+
+    TODO.
+
+TODO.
+
+
+# Open Issues
+
+## [[tag/open_issue_binutils]]
+
+## [[tag/open_issue_gdb]]
+
+## GDB `info files` SIGSEGV
+
+[[!tag open_issue_gdb]]
+
+
+### IRC, freenode, #hurd, 2013-09-07
+
+    <rekado> I'm trying to debug pfinet, but I'm not very familiar with gdb.
+      Tried to attach to the running pfinet process (built with debug symbols),
+      set a breakpoint and ... when I ran "info files" the process segfaulted.
+    <teythoon> which process segfaults, pfinet or gdb?
+    <rekado> gdb segfaults.

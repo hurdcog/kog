@@ -1,0 +1,2401 @@
+[[!meta copyright="Copyright © 2010, 2011, 2012, 2013, 2014, 2016 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc open_issue_libpthread]]
+
+[[!toc]]
+
+# Packaging_libpthread.
+
+    <youpi> it's the same libpthread
+    <youpi> symbol forwarding does not magically resolve that libpthread lacks
+      some libthread features :)
+    <pinotree> i know, i was referring about the clash between actively using
+      both
+    <youpi> there'll still be the issue that only one will be initialized
+    <youpi> and one that provides libc thread safety functions, etc.
+    <pinotree> that's what i wanted to knew, thanks :)
+
+
+## IRC, freenode, #hurd, 2012-07-23
+
+    <bddebian> So I am not sure what to do with the hurd_condition_wait stuff
+    <braunr> i would also like to know what's the real issue with cancellation
+      here
+    <braunr> because my understanding is that libpthread already implements it
+    <braunr> does it look ok to you to make hurd_condition_timedwait return an
+      errno code (like ETIMEDOUT and ECANCELED) ?
+    <youpi> braunr: that's what pthread_* function usually do, yes
+    <braunr> i thought they used their own code
+    <youpi> no
+    <braunr> thanks
+    <braunr> well, first, do you understand what hurd_condition_wait is ?
+    <braunr> it's similar to condition_wait or pthread_cond_wait with a subtle
+      difference
+    <braunr> it differs from the original cthreads version by handling
+      cancellation
+    <braunr> but it also differs from the second by how it handles cancellation
+    <braunr> instead of calling registered cleanup routines and leaving, it
+      returns an error code
+    <braunr> (well simply !0 in this case)
+    <braunr> so there are two ways
+    <braunr> first, change the call to pthread_cond_wait
+    <bddebian> Are you saying we could fix stuff to use pthread_cond_wait()
+      properly?
+    <braunr> it's possible but not easy
+    <braunr> because you'd have to rewrite the cancellation code
+    <braunr> probably writing cleanup routines
+    <braunr> this can be hard and error prone
+    <braunr> and is useless if the code already exists
+    <braunr> so it seems reasonable to keep this hurd extension
+    <braunr> but now, as it *is* a hurd extension noone else uses
+    <antrik> braunr: BTW, when trying to figure out a tricky problem with the
+      auth server, cfhammer digged into the RPC cancellation code quite a bit,
+      and it's really a horrible complex monstrosity... plus the whole concept
+      is actually broken in some regards I think -- though I don't remember the
+      details
+    <braunr> antrik: i had the same kind of thoughts
+    <braunr> antrik: the hurd or pthreads ones ?
+    <antrik> not sure what you mean. I mean the RPC cancellation code -- which
+      is involves thread management too
+    <braunr> ok
+    <antrik> I don't know how it is related to hurd_condition_wait though
+    <braunr> well i found two main entry points there
+    <braunr> hurd_thread_cancel and hurd_condition_wait
+    <braunr> and it didn't look that bad
+    <braunr> whereas in the pthreads code, there are many corner cases
+    <braunr> and even the standard itself looks insane
+    <antrik> well, perhaps the threading part is not that bad...
+    <antrik> it's not where we saw the problems at any rate :-)
+    <braunr> rpc interruption maybe ?
+    <antrik> oh, right... interruption is probably the right term
+    <braunr> yes that thing looks scary
+    <braunr> :))
+    <braunr> the migration thread paper mentions some things about the problems
+      concerning threads controllability
+    <antrik> I believe it's a very strong example for why building around
+      standard Mach features is a bad idea, instead of adapting the primitives
+      to our actual needs...
+    <braunr> i wouldn't be surprised if the "monstrosities" are work arounds
+    <braunr> right
+
+
+## IRC, freenode, #hurd, 2012-07-26
+
+    <bddebian> Uhm, where does /usr/include/hurd/signal.h come from?
+    <pinotree> head -n4 /usr/include/hurd/signal.
+    <pinotree> h
+    <bddebian> Ohh glibc?
+    <bddebian> That makes things a little more difficult :(
+    <braunr> why ?
+    <bddebian> Hurd includes it which brings in cthreads
+    <braunr> ?
+    <braunr> the hurd already brings in cthreads
+    <braunr> i don't see what you mean
+    <bddebian> Not anymore :)
+    <braunr> the system cthreads header ?
+    <braunr> well it's not that difficult to trick the compiler not to include
+      them
+    <bddebian> signal.h includes cthreads.h  I need to stop that
+    <braunr> just define the _CTHREADS_ macro before including anything
+    <braunr> remember that header files are normally enclosed in such macros to
+      avoid multiple inclusions
+    <braunr> this isn't specific to cthreads
+    <pinotree> converting hurd from cthreads to pthreads will make hurd and
+      glibc break source and binary compatibility
+    <bddebian> Of course
+    <braunr> reminds me of the similar issues of the late 90s
+    <bddebian> Ugh, why is he using _pthread_self()?
+    <pinotree> maybe because it accesses to the internals
+    <braunr> "he" ?
+    <bddebian> Thomas in his modified cancel-cond.c
+    <braunr> well, you need the internals to implement it
+    <braunr> hurd_condition_wait is similar to pthread_condition_wait, except
+      that instead of stopping the thread and calling cleanup routines, it
+      returns 1 if cancelled
+    <pinotree> not that i looked at it, but there's really no way to implement
+      it using public api?
+    <bddebian> Even if I am using glibc pthreads?
+    <braunr> unlikely
+    <bddebian> God I had all of this worked out before I dropped off for a
+      couple years.. :(
+    <braunr> this will come back :p
+    <pinotree> that makes you the perfect guy to work on it ;)
+    <bddebian> I can't find a pt-internal.h anywhere.. :(
+    <pinotree> clone the hurd/libpthread.git repo from savannah
+    <bddebian> Of course when I was doing this libpthread was still in hurd
+      sources...
+    <bddebian> So if I am using glibc pthread, why can't I use pthread_self()
+      instead?
+    <pinotree> that won't give you access to the internals
+    <bddebian> OK, dumb question time.  What internals?
+    <pinotree> the libpthread ones
+    <braunr> that's where you will find if your thread has been cancelled or
+      not
+    <bddebian> pinotree: But isn't that assuming that I am using hurd's
+      libpthread?
+    <pinotree> if you aren't inside libpthread, no
+    <braunr> pthread_self is normally not portable
+    <braunr> you can only use it with pthread_equal
+    <braunr> so unless you *know* the internals, you can't use it
+    <braunr> and you won't be able to do much
+    <braunr> so, as it was done with cthreads, hurd_condition_wait should be
+      close to the libpthread implementation
+    <braunr> inside, normally
+    <braunr> now, if it's too long for you (i assume you don't want to build
+      glibc)
+    <braunr> you can just implement it outside, grabbing the internal headers
+      for now
+    <pinotree> another "not that i looked at it" question: isn't there no way
+      to rewrite the code using that custom condwait stuff to use the standard
+      libpthread one?
+    <braunr> and once it works, it'll get integrated
+    <braunr> pinotree: it looks very hard
+    <bddebian> braunr: But the internal headers are assuming hurd libpthread
+      which isn't in the source anymore
+    <braunr> from what i could see while working on select, servers very often
+      call hurd_condition_wait
+    <braunr> and they return EINTR if canceleld
+    <braunr> so if you use the standard pthread_cond_wait function, your thread
+      won't be able to return anything, unless you push the reply in a
+      completely separate callback
+    <braunr> i'm not sure how well mig can cope with that
+    <braunr> i'd say it can't :)
+    <braunr> no really it looks ugly
+    <braunr> it's far better to have this hurd specific function and keep the
+      existing user code as it is
+    <braunr> bddebian: you don't need the implementation, only the headers
+    <braunr> the thread, cond, mutex structures mostly
+    <bddebian> I should turn <pt-internal.h> to "pt-internal.h" and just put it
+      in libshouldbelibc, no?
+    <pinotree> no, that header is not installed
+    <bddebian> Obviously not the "best" way
+    <bddebian> pinotree: ??
+    <braunr> pinotree: what does it change ?
+    <pinotree> braunr: it == ?
+    <braunr> bddebian: you could even copy it entirely in your new
+      cancel-cond.C and mention where it was copied from
+    <braunr> pinotree: it == pt-internal.H not being installed
+    <pinotree> that he cannot include it in libshouldbelibc sources?
+    <pinotree> ah, he wants to copy it?
+    <braunr> yes
+    <braunr> i want him to copy it actually :p
+    <braunr> it may be hard if there are a lot of macro options
+    <pinotree> the __pthread struct changes size and content depending on other
+      internal sysdeps headers
+    <braunr> well he needs to copy those too :p
+    <bddebian> Well even if this works we are going to have to do something
+      more "correct" about hurd_condition_wait.  Maybe even putting it in
+      glibc?
+    <braunr> sure
+    <braunr> but again, don't waste time on this for now
+    <braunr> make it *work*, then it'll get integrated
+    <bddebian> Like it has already?  This "patch" is only about 5 years old
+      now... ;-P
+    <braunr> but is it complete ?
+    <bddebian> Probably not :)
+    <bddebian> Hmm, I wonder how many undefined references I am going to get
+      though.. :(
+    <bddebian> Shit, 5
+    <bddebian> One of which is ___pthread_self.. :(
+    <bddebian> Does that mean I am actually going to have to build hurds
+      libpthreads in libshouldbeinlibc?
+    <bddebian> Seriously, do I really need ___pthread_self, __pthread_self,
+      _pthread_self and pthread_self???
+    <bddebian> I'm still unclear what to do with cancel-cond.c.  It seems to me
+      that if I leave it the way it is currently I am going to have to either
+      re-add libpthreads or still all of the libpthreads code under
+      libshouldbeinlibc.
+    <braunr> then add it in libc
+    <braunr> glib
+    <braunr> glibc
+    <braunr> maybe under the name __hurd_condition_wait
+    <bddebian> Shouldn't I be able to interrupt cancel-cond stuff to use glibc
+      pthreads?
+    <braunr> interrupt ?
+    <bddebian> Meaning interject like they are doing.  I may be missing the
+      point but they are just obfuscating libpthreads thread with some other
+      "namespace"?  (I know my terminology is wrong, sorry).
+    <braunr> they ?
+    <bddebian> Well Thomas in this case but even in the old cthreads code,
+      whoever wrote cancel-cond.c
+    <braunr> but they use internal thread structures ..
+    <bddebian> Understood but at some level they are still just getting to a
+      libpthread thread, no?
+    <braunr> absolutely not ..
+    <braunr> there is *no* pthread stuff in the hurd
+    <braunr> that's the problem :p
+    <bddebian> Bah damnit...
+    <braunr> cthreads are directly implement on top of mach threads
+    <braunr> implemeneted*
+    <braunr> implemented*
+    <bddebian> Sure but hurd_condition_wait wasn't
+    <braunr> of course it is
+    <braunr> it's almost the same as condition_wait
+    <braunr> but returns 1 if a cancelation request was made
+    <bddebian> Grr, maybe I am just confusing myself because I am looking at
+      the modified (pthreads) version instead of the original cthreads version
+      of cancel-cond.c
+    <braunr> well if the modified version is fine, why not directly use that ?
+    <braunr> normally, hurd_condition_wait should sit next to other pthread
+      internal stuff
+    <braunr> it could be renamed __hurd_condition_wait, i'm not sure
+    <braunr> that's irrelevant for your work anyway
+    <bddebian> I am using it but it relies on libpthread and I am trying to use
+      glibc pthreads
+    <braunr> hum
+    <braunr> what's the difference between libpthread and "glibc pthreads" ?
+    <braunr> aren't glibc pthreads the merged libpthread ?
+    <bddebian> quite possibly but then I am missing something obvious.  I'm
+      getting ___pthread_self in libshouldbeinlibc but it is *UND*
+    <braunr> bddebian: with unmodified binaries ?
+    <bddebian> braunr: No I added cancel-cond.c to libshouldbeinlibc
+    <bddebian> And some of the pt-xxx.h headers
+    <braunr> well it's normal then
+    <braunr> i suppose
+    <bddebian> braunr: So how do I get those defined without including
+      pthreads.c from libpthreads? :)
+    <antrik> pinotree: hm... I think we should try to make sure glibc works
+      both whith cthreads hurd and pthreads hurd. I hope that shoudn't be so
+      hard.
+    <antrik> breaking binary compatibility for the Hurd libs is not too
+      terrible I'd say -- as much as I'd like that, we do not exactly have a
+      lot of external stuff depending on them :-)
+    <braunr> bddebian: *sigh*
+    <braunr> bddebian: just add cancel-cond to glibc, near the pthread code :p
+    <bddebian> braunr: Wouldn't I still have the same issue?
+    <braunr> bddebian: what issue ?
+    <antrik> is hurd_condition_wait() the name of the original cthreads-based
+      function?
+    <braunr> antrik: the original is condition_wait
+    <antrik> I'm confused
+    <antrik> is condition_wait() a standard cthreads function, or a
+      Hurd-specific extension?
+    <braunr> antrik: as standard as you can get for something like cthreads
+    <bddebian> braunr: Where hurd_condition_wait is looking for "internals" as
+      you call them.  I.E. there is no __pthread_self() in glibc pthreads :)
+    <braunr> hurd_condition_wait is the hurd-specific addition for cancelation
+    <braunr> bddebian: who cares ?
+    <braunr> bddebian: there is a pthread structure, and conditions, and
+      mutexes
+    <braunr> you need those definitions
+    <braunr> so you either import them in the hurd
+    <antrik> braunr: so hurd_condition_wait() *is* also used in the original
+      cthread-based implementation?
+    <braunr> or you write your code directly where they're available
+    <braunr> antrik: what do you call "original" ?
+    <antrik> not transitioned to pthreads
+    <braunr> ok, let's simply call that cthreads
+    <braunr> yes, it's used by every hurd servers
+    <braunr> virtually
+    <braunr> if not really everyone of them
+    <bddebian> braunr: That is where you are losing me.  If I can just use
+      glibc pthreads structures, why can't I just use them in the new pthreads
+      version of cancel-cond.c which is what I was originally asking.. :)
+    <braunr> you *have* to do that
+    <braunr> but then, you have to build the whole glibc
+    * bddebian shoots himself
+    <braunr> and i was under the impression you wanted to avoid that
+    <antrik> do any standard pthread functions use identical names to any
+      standard cthread functions?
+    <braunr> what you *can't* do is use the standard pthreads interface
+    <braunr> no, not identical
+    <braunr> but very close
+    <braunr> bddebian: there is a difference between using pthreads, which
+      means using the standard posix interface, and using the glibc pthreads
+      structure, which means toying with the internale implementation
+    <braunr> you *cannot* implement hurd_condition_wait with the standard posix
+      interface, you need to use the internal structures
+    <braunr> hurd_condition_wait is actually a shurd specific addition to the
+      threading library
+    <braunr> hurd*
+    <antrik> well, in that case, the new pthread-based variant of
+      hurd_condition_wait() should also use a different name from the
+      cthread-based one
+    <braunr> so it's normal to put it in that threading library, like it was
+      done for cthreads
+    <braunr> 21:35 < braunr> it could be renamed __hurd_condition_wait, i'm not
+      sure
+    <bddebian> Except that I am trying to avoid using that threading library
+    <braunr> what ?
+    <bddebian> If I am understanding you correctly it is an extention to the
+      hurd specific libpthreads?
+    <braunr> to the threading library, whichever it is
+    <braunr> antrik: although, why not keeping the same name ?
+    <antrik> braunr: I don't think having hurd_condition_wait() for the cthread
+      variant and __hurd_condition_wait() would exactly help clarity...
+    <antrik> I was talking about a really new name. something like
+      pthread_hurd_condition_wait() or so
+    <antrik> braunr: to avoid confusion. to avoid accidentally pulling in the
+      wrong one at build and/or runtime.
+    <antrik> to avoid possible namespace conflicts
+    <braunr> ok
+    <braunr> well yes, makes sense
+    <bddebian> braunr: Let me state this as plainly as I hope I can.  If I want
+      to use glibc's pthreads, I have no choice but to add it to glibc?
+    <braunr> and pthread_hurd_condition_wait is a fine name
+    <braunr> bddebian: no
+    <braunr> bddebian: you either add it there
+    <braunr> bddebian: or you copy the headers defining the internal structures
+      somewhere else and implement it there
+    <braunr> but adding it to glibc is better
+    <braunr> it's just longer in the beginning, and now i'm working on it, i'm
+      really not sure
+    <braunr> add it to glibc directly :p
+    <bddebian> That's what I am trying to do but the headers use pthread
+      specific stuff would should be coming from glibc's pthreads
+    <braunr> yes
+    <braunr> well it's not the headers you need
+    <braunr> you need the internal structure definitions
+    <braunr> sometimes they're in c files for opacity
+    <bddebian> So ___pthread_self() should eventually be an obfuscation of
+      glibcs pthread_self(), no?
+    <braunr> i don't know what it is
+    <braunr> read the cthreads variant of hurd_condition_wait, understand it,
+      do the same for pthreads
+    <braunr> it's easy :p
+    <bddebian> For you bastards that have a clue!! ;-P
+    <antrik> I definitely vote for adding it to the hurd pthreads
+      implementation in glibc right away. trying to do it externally only adds
+      unnecessary complications
+    <antrik> and we seem to agree that this new pthread function should be
+      named pthread_hurd_condition_wait(), not just hurd_condition_wait() :-)
+
+
+## IRC, freenode, #hurd, 2012-07-27
+
+    <bddebian> OK this hurd_condition_wait stuff is getting ridiculous the way
+      I am trying to tackle it. :(  I think I need a new tactic.
+    <braunr> bddebian: what do you mean ?
+    <bddebian> braunr: I know I am thick headed but I still don't get why I
+      cannot implement it in libshouldbeinlibc for now but still use glibc
+      pthreads internals
+    <bddebian> I thought I was getting close last night by bringing in all of
+      the hurd pthread headers and .c files but it just keeps getting uglier
+      and uglier
+    <bddebian> youpi: Just to verify.  The /usr/lib/i386-gnu/libpthread.so that
+      ships with Debian now is from glibc, NOT libpthreads from Hurd right?
+      Everything I need should be available in glibc's libpthreads? (Except for
+      hurd_condition_wait obviously).
+    <braunr> 22:35 < antrik> I definitely vote for adding it to the hurd
+      pthreads implementation in glibc right away. trying to do it externally
+      only adds unnecessary complications
+    <youpi> bddebian: yes
+    <youpi> same as antrik
+    <bddebian> fuck
+    <youpi> libpthread *already* provides some odd symbols (cthread
+      compatibility), it can provide others
+    <braunr> bddebian: don't curse :p it will be easier in the long run
+    * bddebian breaks out glibc :(
+    <braunr> but you should tell thomas that too
+    <bddebian> braunr: I know it just adds a level of complexity that I may not
+      be able to deal with
+    <braunr> we wouldn't want him to waste too much time on the external
+      libpthread
+    <braunr> which one ?
+    <bddebian> glibc for one.  hurd_condition_wait() for another which I don't
+      have a great grasp on.  Remember my knowledge/skillsets are limited
+      currently.
+    <braunr> bddebian: tschwinge has good instructions to build glibc
+    <braunr> keep your tree around and it shouldn't be long to hack on it
+    <braunr> for hurd_condition_wait, i can help
+    <bddebian> Oh I was thinking about using Debian glibc for now.  You think I
+      should do it from git?
+    <braunr> no
+    <braunr> debian rules are even more reliable
+    <braunr> (just don't build all the variants)
+    <pinotree> `debian/rules build_libc` builds the plain i386 variant only
+    <bddebian> So put pthread_hurd_cond_wait in it's own .c file or just put it
+      in pt-cond-wait.c ?
+    <braunr> i'd put it in pt-cond-wait.C
+    <bddebian> youpi or braunr: OK, another dumb question.  What (if anything)
+      should I do about hurd/hurd/signal.h.  Should I stop it from including
+      cthreads?
+    <youpi> it's not a dumb question. it should probably stop, yes, but there
+      might be uncovered issues, which we'll have to take care of
+    <bddebian> Well I know antrik suggested trying to keep compatibility but I
+      don't see how you would do that
+    <braunr> compability between what ?
+    <braunr> and source and/or binary ?
+    <youpi> hurd/signal.h implicitly including cthreads.h
+    <braunr> ah
+    <braunr> well yes, it has to change obviously
+    <bddebian> Which will break all the cthreads stuff of course
+    <bddebian> So are we agreeing on pthread_hurd_cond_wait()?
+    <braunr> that's fine
+    <bddebian> Ugh, shit there is stuff in glibc using cthreads??
+    <braunr> like what ?
+    <bddebian> hurdsig, hurdsock, setauth, dtable, ...
+    <youpi> it's just using the compatibility stuff, that pthread does provide
+    <bddebian> but it includes cthreads.h implicitly
+    <bddebian> s/it/they in many cases
+    <youpi> not a problem, we provide the functions
+    <bddebian> Hmm, then what do I do about signal.h?  It includes chtreads.h
+      because it uses extern struct mutex ...
+    <youpi> ah, then keep the include
+    <youpi> the pthread mutexes are compatible with that
+    <youpi> we'll clean that afterwards
+    <bddebian> arf, OK
+    <youpi> that's what I meant by "uncover issues"
+
+
+## IRC, freenode, #hurd, 2012-07-28
+
+    <bddebian> Well crap, glibc built but I have no symbol for
+      pthread_hurd_cond_wait in libpthread.so :(
+    <bddebian> Hmm, I wonder if I have to add pthread_hurd_cond_wait to
+      forward.c and Versions? (Versions obviously eventually)
+    <pinotree> bddebian: most probably not about forward.c, but definitely you
+      have to export public stuff using Versions
+
+
+## IRC, freenode, #hurd, 2012-07-29
+
+    <bddebian> braunr: http://paste.debian.net/181078/
+    <braunr> ugh, inline functions :/
+    <braunr> "Tell hurd_thread_cancel how to unblock us"
+    <braunr> i think you need that one too :p
+    <bddebian> ??
+    <braunr> well, they work in pair
+    <braunr> one cancels, the other notices it
+    <braunr> hurd_thread_cancel is in the hurd though, iirc
+    <braunr> or uh wait
+    <braunr> no it's in glibc, hurd/thread-cancel.c
+    <braunr> otherwise it looks like a correct reuse of the original code, but
+      i need to understand the pthreads internals better to really say anything
+
+
+## IRC, freenode, #hurd, 2012-08-03
+
+    <braunr> pinotree: what do you think of
+      condition_implies/condition_unimplies ?
+    <braunr> the work on pthread will have to replace those
+
+
+## IRC, freenode, #hurd, 2012-08-06
+
+    <braunr> bddebian: so, where is the work being done ?
+    <bddebian> braunr: Right now I would just like to testing getting my glibc
+      with pthread_hurd_cond_wait installed on the clubber subhurd.  It is in
+      /home/bdefreese/glibc-debian2
+    <braunr> we need a git branch
+    <bddebian> braunr: Then I want to rebuild hurd with Thomas's pthread
+      patches against that new libc
+    <bddebian> Aye
+    <braunr> i don't remember, did thomas set a git repository somewhere for
+      that ?
+    <bddebian> He has one but I didn't have much luck with it since he is using
+      an external libpthreads
+    <braunr> i can manage the branches
+    <bddebian> I was actually patching debian/hurd then adding his patches on
+      top of that.  It is in /home/bdefreese/debian-hurd but he has updateds
+      some stuff since then
+    <bddebian> Well we need to agree on a strategy.  libpthreads only exists in
+      debian/glibc
+    <braunr> it would be better to have something upstream than to work on a
+      debian specific branch :/
+    <braunr> tschwinge: do you think it can be done 
+    <braunr> ?
+
+
+## IRC, freenode, #hurd, 2012-08-07
+
+    <tschwinge> braunr: You mean to create on Savannah branches for the
+      libpthread conversion?  Sure -- that's what I have been suggesting to
+      Barry and Thomas D. all the time.
+
+    <bddebian> braunr: OK, so I installed my glibc with
+      pthread_hurd_condition_wait in the subhurd and now I have built Debian
+      Hurd with Thomas D's pthread patches.
+    <braunr> bddebian: i'm not sure we're ready for tests yet :p
+    <bddebian> braunr: Why not? :)
+    <braunr> bddebian: a few important bits are missing
+    <bddebian> braunr: Like?
+    <braunr> like condition_implies
+    <braunr> i'm not sure they have been handled everywhere
+    <braunr> it's still interesting to try, but i bet your system won't finish
+      booting
+    <bddebian> Well I haven't "installed" the built hurd yet
+    <bddebian> I was trying to think of a way to test a little bit first, like
+      maybe ext2fs.static or something
+    <bddebian> Ohh, it actually mounted the partition
+    <bddebian> How would I actually "test" it?
+    <braunr> git clone :p
+    <braunr> building a debian package inside
+    <braunr> removing the whole content after
+    <braunr> that sort of things
+    <bddebian> Hmm, I think I killed clubber :(
+    <bddebian> Yep.. Crap! :(
+    <braunr> ?
+    <braunr> how did you do that ?
+    <bddebian> Mounted a new partition with the pthreads ext2fs.static then did
+      an apt-get source hurd to it..
+    <braunr> what partition, and what mount point ?
+    <bddebian> I added a new 2Gb partition on /dev/hd0s6 and set the translator
+      on /home/bdefreese/part6
+    <braunr> shouldn't kill your hurd
+    <bddebian> Well it might still be up but killed my ssh session at the very
+      least :)
+    <braunr> ouch
+    <bddebian> braunr: Do you have debugging enabled in that custom kernel you
+      installed?  Apparently it is sitting at the debug prompt.
+
+
+## IRC, freenode, #hurd, 2012-08-12
+
+    <braunr> hmm, it seems the hurd notion of cancellation is actually not the
+      pthread one at all
+    <braunr> pthread_cancel merely marks a thread as being cancelled, while
+      hurd_thread_cancel interrupts it
+    <braunr> ok, i have a pthread_hurd_cond_wait_np function in glibc
+
+
+## IRC, freenode, #hurd, 2012-08-13
+
+    <braunr> nice, i got ext2fs work with pthreads
+    <braunr> there are issues with the stack size strongly limiting the number
+      of concurrent threads, but that's easy to fix
+    <braunr> one problem with the hurd side is the condition implications
+    <braunr> i think it should be deal separately, and before doing anything
+      with pthreads
+    <braunr> but that's minor, the most complex part is, again, the term server
+    <braunr> other than that, it was pretty easy to do
+    <braunr> but, i shouldn't speak too soon, who knows what tricky bootstrap
+      issue i'm gonna face ;p
+    <braunr> tschwinge: i'd like to know how i should proceed if i want a
+      symbol in a library overriden by that of a main executable
+    <braunr> e.g. have libpthread define a default stack size, and let
+      executables define their own if they want to change it
+    <braunr> tschwinge: i suppose i should create a weak alias in the library
+      and a normal variable in the executable, right ?
+    <braunr> hm i'm making this too complicated
+    <braunr> don't mind that stupid question
+    <tschwinge> braunr: A simple variable definition would do, too, I think?
+    <tschwinge> braunr: Anyway, I'd first like to know why we can'T reduce the
+      size of libpthread threads from 2 MiB to 64 KiB as libthreads had.  Is
+      that a requirement of the pthread specification?
+    <braunr> tschwinge: it's a requirement yes
+    <braunr> the main reason i see is that hurd threadvars (which are still
+      present) rely on common stack sizes and alignment to work
+    <tschwinge> Mhm, I see.
+    <braunr> so for now, i'm using this approach as a hack only
+    <tschwinge> I'm working on phasing out threadvars, but we're not there yet.
+
+[[glibc/t/tls-threadvar]].
+
+    <tschwinge> Yes, that's fine for the moment.
+    <braunr> tschwinge: a simple definition wouldn't work
+    <braunr> tschwinge: i resorted to a weak symbol, and see how it goes
+    <braunr> tschwinge: i supposed i need to export my symbol as a global one,
+      otherwise making it weak makes no sense, right ?
+    <braunr> suppose*
+    <braunr> tschwinge: also, i'm not actually sure what you meant is a
+      requirement about the stack size, i shouldn't have answered right away
+    <braunr> no there is actually no requirement
+    <braunr> i misunderstood your question
+    <braunr> hm when adding this weak variable, starting a program segfaults :(
+    <braunr> apparently on ___pthread_self, a tls variable
+    <braunr> fighting black magic begins
+    <braunr> arg, i can't manage to use that weak symbol to reduce stack sizes
+      :(
+    <braunr> ah yes, finally
+    <braunr> git clone /path/to/glibc.git on a pthread-powered ext2fs server :>
+    <braunr> tschwinge: seems i have problems using __thread in hurd code
+    <braunr> tschwinge: they produce undefined symbols
+    <braunr> tschwinge: forget that, another mistake on my part
+    <braunr> so, current state: i just need to create another patch, for the
+      code that is included in the debian hurd package but not in the upstream
+      hurd repository (e.g. procfs, netdde), and i should be able to create
+      hurd packages taht completely use pthreads
+
+
+## IRC, freenode, #hurd, 2012-08-14
+
+    <braunr> tschwinge: i have weird bootstrap issues, as expected
+    <braunr> tschwinge: can you point me to important files involved during
+      bootstrap ?
+    <braunr> my ext2fs.static server refuses to start as a rootfs, whereas it
+      seems to work fine otherwise
+    <braunr> hm, it looks like it's related to global signal dispositions
+
+
+## IRC, freenode, #hurd, 2012-08-15
+
+    <braunr> ahah, a subhurd running pthreads-powered hurd servers only
+    <LarstiQ> braunr: \o/
+    <braunr> i can even long on ssh
+    <braunr> log
+    <braunr> pinotree: for reference, i uploaded my debian-specific changes
+      there :
+    <braunr> http://git.sceen.net/rbraun/debian_hurd.git/
+    <braunr> darnassus is now running a pthreads-enabled hurd system :)
+
+
+## IRC, freenode, #hurd, 2012-08-16
+
+    <braunr> my pthreads-enabled hurd systems can quickly die under load
+    <braunr> youpi: with hurd servers using pthreads, i occasionally see thread
+      storms apparently due to a deadlock
+    <braunr> youpi: it makes me think of the problem you sometimes have (and
+      had often with the page cache patch)
+    <braunr> in cthreads, mutex and condition operations are macros, and they
+      check the mutex/condition queue without holding the internal
+      mutex/condition lock
+    <braunr> i'm not sure where this can lead to, but it doesn't seem right
+    <pinotree> isn't that a bit dangerous?
+    <braunr> i believe it is
+    <braunr> i mean
+    <braunr> it looks dangerous
+    <braunr> but it may be perfectly safe
+    <pinotree> could it be?
+    <braunr> aiui, it's an optimization, e.g. "dont take the internal lock if
+      there are no thread to wake"
+    <braunr> but if there is a thread enqueuing itself at the same time, it
+      might not be waken
+    <pinotree> yeah
+    <braunr> pthreads don't have this issue
+    <braunr> and what i see looks like a deadlock
+    <pinotree> anything can happen between the unlocked checking and the
+      following instruction
+    <braunr> so i'm not sure how a situation working around a faulty
+      implementation would result in a deadlock with a correct one
+    <braunr> on the other hand, the error youpi reported
+      (http://lists.gnu.org/archive/html/bug-hurd/2012-07/msg00051.html) seems
+      to indicate something is deeply wrong with libports
+    <pinotree> it could also be the current code does not really "works around"
+      that, but simply implicitly relies on the so-generated behaviour
+    <braunr> luckily not often
+    <braunr> maybe
+    <braunr> i think we have to find and fix these issues before moving to
+      pthreads entirely
+    <braunr> (ofc, using pthreads to trigger those bugs is a good procedure)
+    <pinotree> indeed
+    <braunr> i wonder if tweaking the error checking mode of pthreads to abort
+      on EDEADLK is a good approach to detecting this problem
+    <braunr> let's try !
+    <braunr> youpi: eh, i think i've spotted the libports ref mistake
+    <youpi> ooo!
+    <youpi> .oOo.!!
+    <gnu_srs> Same problem but different patches
+    <braunr> look at libports/bucket-iterate.c
+    <braunr> in the HURD_IHASH_ITERATE loop, pi->refcnt is incremented without
+      a lock
+    <youpi> Mmm, the incrementation itself would probably be compiled into an
+      INC, which is safe in UP
+    <youpi> it's an add currently actually
+    <youpi>    0x00004343 <+163>:   addl   $0x1,0x4(%edi)
+    <braunr>     40c4:       83 47 04 01             addl   $0x1,0x4(%edi)
+    <youpi> that makes it SMP unsafe, but not UP unsafe
+    <braunr> right
+    <braunr> too bad
+    <youpi> that still deserves fixing :)
+    <braunr> the good side is my mind is already wired for smp
+    <youpi> well, it's actually not UP either
+    <youpi> in general
+    <youpi> when the processor is not able to do the add in one instruction
+    <braunr> sure
+    <braunr> youpi: looks like i'm wrong, refcnt is protected by the global
+      libports lock
+    <youpi> braunr: but aren't there pieces of code which manipulate the refcnt
+      while taking another lock than the global libports lock
+    <youpi> it'd not be scalable to use the global libports lock to protect
+      refcnt
+    <braunr> youpi: imo, the scalability issues are present because global
+      locks are taken all the time, indeed
+    <youpi> urgl
+    <braunr> yes ..
+    <braunr> when enabling mutex checks in libpthread, pfinet dies :/
+    <braunr> grmbl, when trying to start "ls" using my deadlock-detection
+      libpthread, the terminal gets unresponsive, and i can't even use ps .. :(
+    <pinotree> braunr: one could say your deadlock detection works too
+      good... :P
+    <braunr> pinotree: no, i made a mistake :p
+    <braunr> it works now :)
+    <braunr> well, works is a bit fast
+    <braunr> i can't attach gdb now :(
+    <braunr> *sigh*
+    <braunr> i guess i'd better revert to a cthreads hurd and debug from there
+    <braunr> eh, with my deadlock-detection changes, recursive mutexes are now
+      failing on _pthread_self(), which for some obscure reason generates this
+    <braunr> => 0x0107223b <+283>:   jmp    0x107223b
+      <__pthread_mutex_timedlock_internal+283>
+    <braunr> *sigh*
+
+
+## IRC, freenode, #hurd, 2012-08-17
+
+    <braunr> aw, the thread storm i see isn't a deadlock
+    <braunr> seems to be mere contention ....
+    <braunr> youpi: what do you think of the way
+      ports_manage_port_operations_multithread determines it needs to spawn a
+      new thread ?
+    <braunr> it grabs a lock protecting the number of threads to determine if
+      it needs a new thread
+    <braunr> then releases it, to retake it right after if a new thread must be
+      created
+    <braunr> aiui, it could lead to a situation where many threads could
+      determine they need to create threads
+    <youpi> braunr: there's no reason to release the spinlock before re-taking
+      it
+    <youpi> that can indeed lead to too much thread creations
+    <braunr> youpi: a harder question
+    <braunr> youpi: what if thread creation fails ? :/
+    <braunr> if i'm right, hurd servers simply never expect thread creation to
+      fail
+    <youpi> indeed
+    <braunr> and as some patterns have threads blocking until another produce
+      an event
+    <braunr> i'm not sure there is any point handling the failure at all :/
+    <youpi> well, at least produce some output
+    <braunr> i added a perror
+    <youpi> so we know that happened
+    <braunr> async messaging is quite evil actually
+    <braunr> the bug i sometimes have with pfinet is usually triggered by
+      fakeroot
+    <braunr> it seems to use select a lot
+    <braunr> and select often destroys ports when it has something to return to
+      the caller
+    <braunr> which creates dead name notifications
+    <braunr> and if done often enough, a lot of them
+    <youpi> uh
+    <braunr> and as pfinet is creating threads to service new messages, already
+      existing threads are starved and can't continue
+    <braunr> which leads to pfinet exhausting its address space with thread
+      stacks (at about 30k threads)
+    <braunr> i initially thought it was a deadlock, but my modified libpthread
+      didn't detect one, and indeed, after i killed fakeroot (the whole
+      dpkg-buildpackage process hierarchy), pfinet just "cooled down"
+    <braunr> with almost all 30k threads simply waiting for requests to
+      service, and the few expected select calls blocking (a few ssh sessions,
+      exim probably, possibly others)
+    <braunr> i wonder why this doesn't happen with cthreads
+    <youpi> there's a 4k guard between stacks, otherwise I don't see anything
+      obvious
+    <braunr> i'll test my pthreads package with the fixed
+      ports_manage_port_operations_multithread
+    <braunr> but even if this "fix" should reduce thread creation, it doesn't
+      prevent the starvation i observed
+    <braunr> evil concurrency :p
+
+    <braunr> youpi: hm i've just spotted an important difference actually
+    <braunr> youpi: glibc sched_yield is __swtch(), cthreads is
+      thread_switch(MACH_PORT_NULL, SWITCH_OPTION_DEPRESS, 10)
+    <braunr> i'll change the glibc implementation, see how it affects the whole
+      system
+
+    <braunr> youpi: do you think bootsting the priority or cancellation
+      requests is an acceptable workaround ?
+    <braunr> boosting
+    <braunr> of*
+    <youpi> workaround for what?
+    <braunr> youpi: the starvation i described earlier
+    <youpi> well, I guess I'm not into the thing enough to understand
+    <youpi> you meant the dead port notifications, right?
+    <braunr> yes
+    <braunr> they are the cancellation triggers
+    <youpi> cancelling whaT?
+    <braunr> a blocking select for example
+    <braunr> ports_do_mach_notify_dead_name -> ports_dead_name ->
+      ports_interrupt_notified_rpcs -> hurd_thread_cancel
+    <braunr> so it's important they are processed quickly, to allow blocking
+      threads to unblock, reply, and be recycled
+    <youpi> you mean the threads in pfinet?
+    <braunr> the issue applies to all servers, but yes
+    <youpi> k
+    <youpi> well, it can not not be useful :)
+    <braunr> whatever the choice, it seems to be there will be a security issue
+      (a denial of service of some kind)
+    <youpi> well, it's not only in that case
+    <youpi> you can always queue a lot of requests to a server
+    <braunr> sure, i'm just focusing on this particular problem
+    <braunr> hm
+    <braunr> max POLICY_TIMESHARE or min POLICY_FIXEDPRI ?
+    <braunr> i'd say POLICY_TIMESHARE just in case
+    <braunr> (and i'm not sure mach handles fixed priority threads first
+      actually :/)
+    <braunr> hm my current hack which consists of calling swtch_pri(0) from a
+      freshly created thread seems to do the job eh
+    <braunr> (it may be what cthreads unintentionally does by acquiring a spin
+      lock from the entry function)
+    <braunr> not a single issue any more with this hack
+    <bddebian> Nice
+    <braunr> bddebian: well it's a hack :p
+    <braunr> and the problem is that, in order to boost a thread's priority,
+      one would need to implement that in libpthread
+    <bddebian> there isn't thread priority in libpthread?
+    <braunr> it's not implemented
+    <bddebian> Interesting
+    <braunr> if you want to do it, be my guest :p
+    <braunr> mach should provide the basic stuff for a partial implementation
+    <braunr> but for now, i'll fall back on the hack, because that's what
+      cthreads "does", and it's "reliable enough"
+
+    <antrik> braunr: I don't think the locking approach in
+      ports_manage_port_operations_multithread() could cause issues. the worst
+      that can happen is that some other thread becomes idle between the check
+      and creating a new thread -- and I can't think of a situation where this
+      could have any impact...
+    <braunr> antrik: hm ?
+    <braunr> the worst case is that many threads will evalute spawn to 1 and
+      create threads, whereas only one of them should have
+    <antrik> braunr: I'm not sure perror() is a good way to handle the
+      situation where thread creation failed. this would usually happen because
+      of resource shortage, right? in that case, it should work in non-debug
+      builds too
+    <braunr> perror isn't specific to debug builds
+    <braunr> i'm building glibc packages with a pthreads-enabled hurd :>
+    <braunr> (which at one point run the test allocating and filling 2 GiB of
+      memory, which passed)
+    <braunr> (with a kernel using a 3/1 split of course, swap usage reached
+      something like 1.6 GiB)
+    <antrik> braunr: BTW, I think the observation that thread storms tend to
+      happen on destroying stuff more than on creating stuff has been made
+      before...
+    <braunr> ok
+    <antrik> braunr: you are right about perror() of course. brain fart -- was
+      thinking about assert_perror()
+    <antrik> (which is misused in some places in existing Hurd code...)
+    <antrik> braunr: I still don't see the issue with the "spawn"
+      locking... the only situation where this code can be executed
+      concurrently is when multiple threads are idle and handling incoming
+      request -- but in that case spawning does *not* happen anyways...
+    <antrik> unless you are talking about something else than what I'm thinking
+      of...
+    <braunr> well imagine you have idle threads, yes
+    <braunr> let's say a lot like a thousand
+    <braunr> and the server gets a thousand requests
+    <braunr> a one more :p
+    <braunr> normally only one thread should be created to handle it
+    <braunr> but here, the worst case is that all threads run internal_demuxer
+      roughly at the same time
+    <braunr> and they all determine they need to spawn a thread
+    <braunr> leading to another thousand
+    <braunr> (that's extreme and very unlikely in practice of course)
+    <antrik> oh, I see... you mean all the idle threads decide that no spawning
+      is necessary; but before they proceed, finally one comes in and decides
+      that it needs to spawn; and when the other ones are scheduled again they
+      all spawn unnecessarily?
+    <braunr> no, spawn is a local variable
+    <braunr> it's rather, all idle threads become busy, and right before
+      servicing their request, they all decide they must spawn a thread
+    <antrik> I don't think that's how it works. changing the status to busy (by
+      decrementing the idle counter) and checking that there are no idle
+      threads is atomic, isn't it?
+    <braunr> no
+    <antrik> oh
+    <antrik> I guess I should actually look at that code (again) before
+      commenting ;-)
+    <braunr> let me check
+    <braunr> no sorry you're right
+    <braunr> so right, you can't lead to that situation
+    <braunr> i don't even understand how i can't see that :/
+    <braunr> let's say it's the heat :p
+    <braunr> 22:08 < braunr> so right, you can't lead to that situation
+    <braunr> it can't lead to that situation
+
+
+## IRC, freenode, #hurd, 2012-08-18
+
+    <braunr> one more attempt at fixing netdde, hope i get it right this time
+    <braunr> some parts assume a ddekit thread is a cthread, because they share
+      the same address
+    <braunr> it's not as easy when using pthread_self :/
+    <braunr> good, i got netdde work with pthreads
+    <braunr> youpi: for reference, there are now glibc, hurd and netdde
+      packages on my repository
+    <braunr> youpi: the debian specific patches can be found at my git
+      repository (http://git.sceen.net/rbraun/debian_hurd.git/ and
+      http://git.sceen.net/rbraun/debian_netdde.git/)
+    <braunr> except a freeze during boot (between exec and init) which happens
+      rarely, and the starvation which still exists to some extent (fakeroot
+      can cause many threads to be created in pfinet and pflocal), the
+      glibc/hurd packages have been working fine for a few days now
+    <braunr> the threading issue in pfinet/pflocal is directly related to
+      select, which the io_select_timeout patches should fix once merged
+    <braunr> well, considerably reduce at least
+    <braunr> and maybe fix completely, i'm not sure
+
+
+## IRC, freenode, #hurd, 2012-08-27
+
+    <pinotree> braunr: wrt a78a95d in your pthread branch of hurd.git,
+      shouldn't that job theorically been done using pthread api (of course
+      after implementing it)?
+    <braunr> pinotree: sure, it could be done through pthreads
+    <braunr> pinotree: i simply restricted myself to moving the hurd to
+      pthreads, not augment libpthread
+    <braunr> (you need to remember that i work on hurd with pthreads because it
+      became a dependency of my work on fixing select :p)
+    <braunr> and even if it wasn't the reason, it is best to do these tasks
+      (replace cthreads and implement pthread scheduling api) separately
+    <pinotree> braunr: hm ok
+    <pinotree> implementing the pthread priority bits could be done
+      independently though
+
+    <braunr> youpi: there are more than 9000 threads for /hurd/streamio kmsg on
+      ironforge oO
+    <youpi> kmsg ?!
+    <youpi> it's only /dev/klog right?
+    <braunr> not sure but it seems so
+    <pinotree> which syslog daemon is running?
+    <youpi> inetutils
+    <youpi> I've restarted the klog translator, to see whether when it grows
+      again
+
+    <braunr> 6 hours and 21 minutes to build glibc on darnassus
+    <braunr> pfinet still runs only 24 threads
+    <braunr> the ext2 instance used for the build runs 2k threads, but that's
+      because of the pageouts
+    <braunr> so indeed, the priority patch helps a lot
+    <braunr> (pfinet used to have several hundreds, sometimes more than a
+      thousand threads after a glibc build, and potentially increasing with
+      each use of fakeroot)
+    <braunr> exec weights 164M eww, we definitely have to fix that leak
+    <braunr> the leaks are probably due to wrong mmap/munmap usage
+
+[[exec_memory_leaks]].
+
+
+### IRC, freenode, #hurd, 2012-08-29
+
+    <braunr> youpi: btw, after my glibc build, there were as little as between
+      20 and 30 threads for pflocal and pfinet
+    <braunr> with the priority patch
+    <braunr> ext2fs still had around 2k because of pageouts, but that's
+      expected
+    <youpi> ok
+    <braunr> overall the results seem very good and allow the switch to
+      pthreads
+    <youpi> yep, so it seems
+    <braunr> youpi: i think my first integration branch will include only a few
+      changes, such as this priority tuning, and the replacement of
+      condition_implies
+    <youpi> sure
+    <braunr> so we can push the move to pthreads after all its small
+      dependencies
+    <youpi> yep, that's the most readable way
+
+
+## IRC, freenode, #hurd, 2012-09-03
+
+    <gnu_srs> braunr: Compiling yodl-3.00.0-7:
+    <gnu_srs> pthreads: real    13m42.460s, user    0m0.000s, sys     0m0.030s
+    <gnu_srs> cthreads: real     9m 6.950s, user    0m0.000s, sys     0m0.020s   
+    <braunr> thanks
+    <braunr> i'm not exactly certain about what causes the problem though
+    <braunr> it could be due to libpthread using doubly-linked lists, but i
+      don't think the overhead would be so heavier because of that alone
+    <braunr> there is so much contention sometimes that it could
+    <braunr> the hurd would have been better off with single threaded servers
+      :/
+    <braunr> we should probably replace spin locks with mutexes everywhere
+    <braunr> on the other hand, i don't have any more starvation problem with
+      the current code
+
+
+### IRC, freenode, #hurd, 2012-09-06
+
+    <gnu_srs> braunr: Yes you are right, the new pthread-based Hurd is _much_
+      slower.
+    <gnu_srs> One annoying example is when compiling, the standard output is
+      written in bursts with _long_ periods of no output in between:-( 
+    <braunr> that's more probably because of the priority boost, not the
+      overhead
+    <braunr> that's one of the big issues with our mach-based model
+    <braunr> we either give high priorities to our servers, or we can suffer
+      from message floods
+    <braunr> that's in fact more a hurd problem than a mach one
+    <gnu_srs> braunr: any immediate ideas how to speed up responsiveness the
+      pthread-hurd. It is annoyingly slow (slow-witted)
+    <braunr> gnu_srs: i already answered that
+    <braunr> it doesn't look that slower on my machines though
+    <gnu_srs> you said you had some ideas, not which. except for mcsims work.
+    <braunr> i have ideas about what makes it slower
+    <braunr> it doesn't mean i have solutions for that
+    <braunr> if i had, don't you think i'd have applied them ? :)
+    <gnu_srs> ok, how to make it more responsive on the console? and printing
+      stdout more regularly, now several pages are stored and then flushed.
+    <braunr> give more details please
+    <gnu_srs> it behaves like a loaded linux desktop, with little memory
+      left...
+    <braunr> details about what you're doing
+    <gnu_srs> apt-get source any big package and: fakeroot debian/rules binary
+      2>&1 | tee ../binary.logg
+    <braunr> isee
+    <braunr> well no, we can't improve responsiveness
+    <braunr> without reintroducing the starvation problem
+    <braunr> they are linked
+    <braunr> and what you're doing involes a few buffers, so the laggy feel is
+      expected
+    <braunr> if we can fix that simply, we'll do so after it is merged upstream
+
+
+### IRC, freenode, #hurd, 2012-09-07
+
+    <braunr> gnu_srs: i really don't feel the sluggishness you described with
+      hurd+pthreads on my machines
+    <braunr> gnu_srs: what's your hardware ?
+    <braunr> and your VM configuration ?
+    <gnu_srs> Intel(R) Core(TM)2 Quad CPU    Q6600  @ 2.40GHz
+    <gnu_srs> kvm -m 1024 -net nic,model=rtl8139 -net
+      user,hostfwd=tcp::5562-:22 -drive
+      cache=writeback,index=0,media=disk,file=hurd-experimental.img -vnc :6
+      -cdrom isos/netinst_2012-07-15.iso
+    <braunr> what is the file system type where your disk image is stored ?
+    <gnu_srs> ext3
+    <braunr> and how much physical memory on the host ?
+    <braunr> (paste meminfo somewhere please)
+    <gnu_srs> 4G, and it's on the limit, 2 kvm instances+gnome,etc
+    <gnu_srs> 80% in use by programs, 14% in cache.
+    <braunr> ok, that's probably the reason then
+    <braunr> the writeback option doesn't help a lot if you don't have much
+      cache
+    <gnu_srs> well the other instance is cthreads based, and not so sluggish.
+    <braunr> we know hurd+pthreads is slower
+    <braunr> i just wondered why i didn't feel it that much
+    <gnu_srs> try to fire up more kvm instances, and do a heavy compile...
+    <braunr> i don't do that :)
+    <braunr> that's why i never had the problem
+    <braunr> most of the time i have like 2-3 GiB of cache
+    <braunr> and of course more on shattrath
+    <braunr> (the host of the sceen.net hurdboxes, which has 16 GiB of ram)
+
+
+### IRC, freenode, #hurd, 2012-09-11
+
+    <gnu_srs> Monitoring the cthreads and the pthreads load under Linux shows:  
+    <gnu_srs> cthread version: load can jump very high, less cpu usage than
+      pthread version
+    <gnu_srs> pthread version: less memory usage, background cpu usage higher
+      than for cthread version
+    <braunr> that's the expected behaviour
+    <braunr> gnu_srs: are you using the lifothreads gnumach kernel ?
+    <gnu_srs> for experimental, yes.
+    <gnu_srs> i.e. pthreads
+    <braunr> i mean, you're measuring on it right now, right ?
+    <gnu_srs> yes, one instance running cthreads, and one pthreads (with lifo
+      gnumach)
+    <braunr> ok
+    <gnu_srs> no swap used in either instance, will try a heavy compile later
+      on.
+    <braunr> what for ?
+    <gnu_srs> E.g. for memory when linking. I have swap available, but no swap
+      is used currently.
+    <braunr> yes but, what do you intend to measure ?
+    <gnu_srs> don't know, just to see if swap is used at all. it seems to be
+      used not very much.
+    <braunr> depends
+    <braunr> be warned that using the swap means there is pageout, which is one
+      of the triggers for global system freeze :p
+    <braunr> anonymous memory pageout
+    <gnu_srs> for linux swap is used constructively, why not on hurd?
+    <braunr> because of hard to squash bugs
+    <gnu_srs> aha, so it is bugs hindering swap usage:-/
+    <braunr> yup :/
+    <gnu_srs> Let's find them thenO:-), piece of cake
+    <braunr> remember my page cache branch in gnumach ? :)
+
+[[gnumach_page_cache_policy]].
+
+    <gnu_srs> not much
+    <braunr> i started it before fixing non blocking select
+    <braunr> anyway, as a side effect, it should solve this stability issue
+      too, but it'll probably take time
+    <gnu_srs> is that branch integrated? I only remember slab and the lifo
+      stuff.
+    <gnu_srs> and mcsims work
+    <braunr> no it's not
+    <braunr> it's unfinished
+    <gnu_srs> k!
+    <braunr> it correctly extends the page cache to all available physical
+      memory, but since the hurd doesn't scale well, it slows the system down
+
+
+## IRC, freenode, #hurd, 2012-09-14
+
+    <braunr> arg
+    <braunr> darnassus seems to eat 100% cpu and make top freeze after some
+      time
+    <braunr> seems like there is an important leak in the pthreads version
+    <braunr> could be the lifothreads patch :/
+    <cjbirk> there's a memory leak?
+    <cjbirk> in pthreads? 
+    <braunr> i don't think so, and it's not a memory leak
+    <braunr> it's a port leak
+    <braunr> probably in the kernel
+
+
+### IRC, freenode, #hurd, 2012-09-17
+
+    <braunr> nice, the port leak is actually caused by the exim4 loop bug
+
+
+### IRC, freenode, #hurd, 2012-09-23
+
+    <braunr> the port leak i observed a few days ago is because of exim4 (the
+      infamous loop eating the cpu we've been seeing regularly)
+
+[[fork_deadlock]]?
+
+    <youpi> oh
+    <braunr> next time it happens, and if i have the occasion, i'll examine the
+      problem
+    <braunr> tip: when you can't use top or ps -e, you can use ps -e -o
+      pid=,args=
+    <youpi> or -M ?
+    <braunr> haven't tested
+
+
+### IRC, freenode, #hurd, 2013-01-26
+
+    <braunr> ah great, one of the recent fixes (probably select-eintr or
+      setitimer) fixed exim4 :)
+
+
+## IRC, freenode, #hurd, 2012-09-23
+
+    <braunr> tschwinge: i committed the last hurd pthread change,
+      https://git.savannah.gnu.org/cgit/hurd/hurd.git/log/?h=master-pthreads
+    <braunr> tschwinge: please tell me if you consider it ok for merging
+
+
+### IRC, freenode, #hurd, 2012-11-27
+
+    <youpi> braunr: btw, I forgot to forward here, with the glibc patch it does
+      boot fine, I'll push all that and build some almost-official packages for
+      people to try out what will come when eglibc gets the change in unstable
+    <braunr> youpi: great :)
+    <youpi> thanks for managing the final bits of this
+    <youpi> (and thanks for everybody involved)
+    <braunr> sorry again for the non obvious parts
+    <braunr> if you need the debian specific parts refined (e.g. nice commits
+      for procfs & others), i can do that
+    <youpi> I'll do that, no pb
+    <braunr> ok
+    <braunr> after that (well, during also), we should focus more on bug
+      hunting
+
+
+## IRC, freenode, #hurd, 2012-10-26
+
+    <mcsim1> hello. What does following error message means? "unable to adjust
+      libports thread priority: Operation not permitted" It appears when I set
+      translators.
+    <mcsim1> Seems has some attitude to libpthread. Also following appeared
+      when I tried to remove translator: "pthread_create: Resource temporarily
+      unavailable"
+    <mcsim1> Oh, first message appears very often, when I use translator I set.
+    <braunr> mcsim1: it's related to a recent patch i sent
+    <braunr> mcsim1: hurd servers attempt to increase their priority on startup
+      (when a thread is created actually)
+    <braunr> to reduce message floods and thread storms (such sweet names :))
+    <braunr> but if you start them as an unprivileged user, it fails, which is
+      ok, it's just a warning
+    <braunr> the second way is weird
+    <braunr> it normally happens when you're out of available virtual space,
+      not when shutting a translator donw
+    <mcsim1> braunr: you mean this patch: libports: reduce thread starvation on
+      message floods?
+    <braunr> yes
+    <braunr> remember you're running on darnassus
+    <braunr> with a heavily modified hurd/glibc
+    <braunr> you can go back to the cthreads version if you wish
+    <mcsim1> it's better to check translators privileges, before attempting to
+      increase their priority, I think.
+    <braunr> no
+    <mcsim1> it's just a bit annoying
+    <braunr> privileges can be changed during execution
+    <braunr> well remove it
+    <mcsim1> But warning should not appear.
+    <braunr> what could be done is to limit the warning to one occurrence
+    <braunr> mcsim1: i prefer that it appears
+    <mcsim1> ok
+    <braunr> it's always better to be explicit and verbose
+    <braunr> well not always, but very often
+    <braunr> one of the reasons the hurd is so difficult to debug is the lack
+      of a "message server" à la dmesg
+
+[[translator_stdout_stderr]].
+
+
+### IRC, freenode, #hurd, 2012-12-10
+
+    <youpi> braunr: unable to adjust libports thread priority: (ipc/send)
+      invalid destination port
+    <youpi> I'll see what package brought that
+    <youpi> (that was on a buildd)
+    <braunr> wow
+    <youpi> mkvtoolnix_5.9.0-1:
+    <pinotree> shouldn't that code be done in pthreads and then using such
+      pthread api? :p
+    <braunr> pinotree: you've already asked that question :p
+    <pinotree> i know :p
+    <braunr> the semantics of pthreads are larger than what we need, so that
+      will be done "later"
+    <braunr> but this error shouldn't happen
+    <braunr> it looks more like a random mach bug
+    <braunr> youpi: anything else on the console ?
+    <youpi> nope
+    <braunr> i'll add traces to know which step causes the error
+
+
+#### IRC, freenode, #hurd, 2012-12-11
+
+    <youpi> braunr: mktoolnix seems like a reproducer for the libports thread
+      priority issue
+    <youpi> (3 times)
+    <braunr> youpi: thanks
+    <braunr> youpi: where is that tool packaged ?
+    <pinotree> he probably means the mkvtoolnix source
+    <braunr> seems so
+    <braunr> i don't find anything else
+    <youpi> that's it, yes
+
+
+#### IRC, freenode, #hurd, 2013-03-01
+
+    <youpi> braunr: btw, "unable to adjust libports thread priority: (ipc/send)
+      invalid destination port" is actually not a sign of fatality
+    <youpi> bach recovered from it
+    <braunr> youpi: well, it never was a sign of fatality
+    <braunr> but it means that, for some reason, a process looses a right for a
+      very obscure reason :/
+    <braunr> weird sentence, agreed :p
+
+
+#### IRC, freenode, #hurd, 2013-06-14
+
+    <gnu_srs> Hi, when running check for gccgo the following occurs (multiple
+      times) locking up the console
+    <gnu_srs> unable to adjust libports thread priority: (ipc/send) invalid
+      destination port
+    <gnu_srs> (not locking up the console, it was just completely filled with
+      messages))
+    <braunr> gnu_srs: are you running your translator as root ?
+    <braunr> or, do you have a translator running as an unprivileged user ?
+    <braunr> hm, invalid dest port
+    <braunr> that's a bug :p
+    <braunr> but i don't know why
+    <braunr> i'll have to take some time to track it down
+    <braunr> it might be a user ref overflow or something similarly tricky
+    <braunr> gnu_srs: does it happen everytime you run gccgo checks or only
+      after the system has been alive for some time ?
+    <braunr> (some time being at least a few hours, more probably days)
+
+
+#### IRC, freenode, #hurd, 2013-07-05
+
+    <braunr> ok, found the bug about invalid ports when adjusting priorities
+    <braunr> thhe hurd must be plagued with wrong deallocations :(
+    <braunr> i have so many problems when trying to cleanly destroy threads
+
+[[libpthread/fix_have_kernel_resources]].
+
+
+#### IRC, freenode, #hurd, 2013-11-25
+
+    <braunr> youpi: btw, my last commit on the hurd repo fixes the urefs
+      overflow we've sometimes seen in the past in the priority adjusting code
+      of libports
+
+
+#### IRC, freenode, #hurd, 2013-11-29
+
+See also [[open_issues/libpthread/fix_have_kernel_resources]].
+
+    <braunr> there still are some leak ports making servers spawn threads with
+      non-elevated priorities :/
+    <braunr> leaks*
+    <teythoon> issues with your thread destruction work ?
+    <teythoon> err, wait
+    <teythoon> why does a port leak cause that ?
+    <braunr> because it causes urefs overflows
+    <braunr> and the priority adjustment code does check errors :p
+    <teythoon> ^^
+    <teythoon> ah yes, urefs...
+    <braunr> apparently it only affects the root file system
+    <teythoon> hm
+    <braunr> i'll spend an hour looking for it, and whatever i find, i'll
+      install the upstream debian packages so you can build glibc without too
+      much trouble
+    <teythoon> we need a clean build chroot on darnassus for this situation
+    <braunr> ah yes
+    <braunr> i should have time to set things up this week end
+    <braunr>      1: send (refs: 65534)
+    <braunr> i wonder what the first right is in the root file system
+    <teythoon> hm
+    <braunr> search doesn't help so i'm pretty sure it's a kernel object
+    <braunr> perhaps the host priv port
+    <teythoon> could be the thread port or something ?
+    <braunr> no, not the thread port
+    <teythoon> why would it have so many refs ?
+    <braunr> the task port maybe but it's fine if it overflows
+    <teythoon> also, some urefs are clamped at max, so maybe this is fine ?
+    <braunr> it may be fine yes
+    <braunr> err = get_privileged_ports (&host_priv, NULL);
+    <braunr> iirc, this function should pass copies of the name, not increment
+      the urefs counter
+    <braunr> it may behave differently if built statically
+    <teythoon> o_O y would it ?
+    <braunr> no idea
+    <braunr> something doesn't behave as it should :)
+    <braunr> i'm not asking why, i'm asking where :)
+    <braunr> the proc server is also affected
+    <braunr> so it does look like it has something to do with bootstrap
+    <teythoon> I'm not surprised :/
+
+
+#### IRC, freenode, #hurd, 2013-11-30
+
+    <braunr> so yes, the host_priv port gets a reference when calling
+      get_privileged_ports
+    <braunr> but only in the rootfs and proc servers, probably because others
+      use the code path to fetch it from proc
+    <teythoon> ah
+    <teythoon> well, it shouldn't behave differently
+    <braunr> ?
+    <teythoon> get_privileged_ports
+    <braunr> get_privileged_ports is explictely described to cache references
+    <teythoon> i don't get it
+    <teythoon> you said it behaved differently for proc and the rootfs
+    <teythoon> that's undesireable, isn't it ?
+    <braunr> yes
+    <teythoon> ok
+    <braunr> so it should behave differently than it does
+    <teythoon> yes
+    <teythoon> right
+    <braunr> teythoon: during your work this summer, have you come across the
+      bootstrap port of a task ?
+    <braunr> i wonder what the bootstrap port of the root file system is
+    <braunr> maybe i got the description wrong since references on host or
+      master are deallocated where get_privileged_ports is used ..
+    <teythoon> no, I do not believe i did anything bootstrap port related
+    <braunr> ok
+    <braunr> i don't need that any more fortunately
+    <braunr> i just wonder how someone could write a description so error-prone
+      ..
+    <braunr> and apparently, this problem should affect all servers, but for
+      some reason i didn't see it
+    <braunr> there, problem fixed
+    <teythoon> ?
+    <braunr> last leak eliminated
+    <teythoon> cool :)
+    <teythoon> how ?
+    <braunr> i simply deallocate host_priv in addition to the others when
+      adjusting thread priority
+    <braunr> as simple as that ..
+    <teythoon> uh
+    <teythoon> sure ?
+    <braunr> so many system calls just for reference counting
+    <braunr> yes
+    <teythoon> i did that, and broke the rootfs
+    <braunr> well i'm using one right now
+    <teythoon> ok
+    <braunr> maybe i should let it run a bit :)
+    <teythoon> no, for me it failed on the first write
+    <braunr> teythoon: looks weird
+    <teythoon> so i figured it was wrong to deallocate that port
+    <braunr> i'll reboot it and see if there may be a race
+    <teythoon> thought i didn't get a reference after all or something
+    <teythoon> I believe there is a race in ext2fs
+    <braunr> teythoon: that's not good news for me
+    <teythoon> when doing fsysopts --update / (which remounts /)
+    <teythoon> sometimes, the system hangs
+    <braunr> :/
+    <teythoon> might be a deadlock, or the rootfs dies and noone notices
+    <teythoon> with my protected payload stuff, the system would reboot instead
+      of just hanging
+    <braunr> oh
+    <teythoon> which might point to a segfault in ext2fs
+    <teythoon> maybe the exception message carries a bad payload
+    <braunr> makes sense
+    <braunr> exception handling in ext2fs is messy ..
+    <teythoon> braunr: and, doing sleep 0.1 before remounting / makes the
+      problem less likely to appear
+    <braunr> ugh
+    <teythoon> and system load on my host system seems to affect this
+    <teythoon> but it is hard to tell
+    <teythoon> sometimes, this doesn't show up at all
+    <teythoon> sometimes several times in a row
+    <braunr> the system load might simply indicate very short lived processes
+    <braunr> (or threads)
+    <teythoon> system load on my host
+    <braunr> ah
+    <teythoon> this makes me believe that it is a race somewhere
+    <teythoon> all of this
+    <braunr> well, i can't get anything wrong with my patched rootfs
+    <teythoon> braunr: ok, maybe I messed up
+    <braunr> or maybe you were very unlucky
+    <braunr> and there is a rare race
+    <braunr> but i'll commit anyway
+    <teythoon> no, i never got it to work, always hung at the first write
+    <braunr> it won't be the first or last rare problem we'll have to live with
+    <braunr> hm
+    <braunr> then you probably did something wrong, yes
+    <braunr> that's reassuring
+
+
+### IRC, freenode, #hurd, 2013-03-11
+
+    <braunr> youpi: oh btw, i noticed a problem with the priority adjustement
+      code
+    <braunr> a thread created by a privileged server (e.g. an ext2fs
+      translator) can then spawn a server from a node owned by an unprivileged
+      user
+    <braunr> which inherits the priority
+    <braunr> easy to fix but worth saying to keep in mind
+    <youpi> uh
+    <youpi> indeed
+
+### IRC, freenode, #hurd, 2013-07-01
+
+    <youpi> braunr: it seems as if pfinet is not prioritized enough
+    <youpi> I'm getting network connectivity issues when the system is quite
+      loaded
+    <braunr> loaded with what ?
+    <braunr> it could be ext2fs having a lot more threads than other servers
+    <youpi> building packages
+    <youpi> I'm talking about the buildds
+    <braunr> ok
+    <braunr> ironforge or others ?
+    <youpi> they're having troubles uploading packages while building stuff
+    <youpi> ironforge and others
+    <youpi> that happened already in the past sometimes
+    <youpi> but at the moment it's really pronounced
+    <braunr> i don't think it's a priority issue
+    <braunr> i think it's swapping
+    <youpi> ah, that's not impossible indeed
+    <youpi> but why would it swap?
+    <youpi> there's a lot of available memory
+    <braunr> a big file is enough
+    <braunr> it pushes anonymous memory out
+    <youpi> to fill 900MiB memory ?
+    <braunr> i see 535M of swap on if
+    <braunr> yes
+    <youpi> ironforge is just building libc
+    <braunr> and for some reason, swapping is orders of magnitude slower than
+      anything else
+    <youpi> not linking it yet
+    <braunr> i also see 1G of free memory on it
+    <youpi> that's what I meant with 900MiB
+    <braunr> so at some point, it needed a lot of memory, caused swapping
+    <braunr> and from time to time it's probably swapping back
+    <youpi> well, pfinet had all the time to swap back already
+    <youpi> I don't see why it should be still suffering from it
+    <braunr> swapping is a kernel activity
+    <youpi> ok, but once you're back, you're back
+    <youpi> unless something else pushes you out
+    <braunr> if the kernel is busy waiting for the default pager, nothing makes
+      progress
+    <braunr> (eccept the default pager hopefully)
+    <youpi> sure but pfinet should be back already, since it does work
+    <youpi> so I don't see why it should wait for something
+    <braunr> the kernel is waiting
+    <braunr> and the kernel isn't preemptibl
+    <braunr> e
+    <braunr> although i'm not sure preemption is the problem here
+    <youpi> well
+    <youpi> what I don't understand is what we have changed that could have so
+      much impact
+    <youpi> the only culprit I can see is the priorities we have changed
+      recently
+    <braunr> do you mean it happens a lot more frequently than before ?
+    <youpi> yes
+    <youpi> way
+    <braunr> ok
+    <youpi> ironforge is almost unusable while building glibc
+    <youpi> I've never seen that
+    <braunr> that's weird, i don't have these problems on darnassus
+    <braunr> but i think i reboot it more often
+    <braunr> could be a scalability issue then
+    <braunr> combined with the increased priorities
+    <braunr> if is indeed running full time on the host, whereas swapping
+      issues show the cpu being almost idle
+    <braunr> loadavg is high too so i guess there are many threads
+    <braunr>    0   971     3 -20 -20 1553 305358625 866485906 523M 63M *   S<o
+      ?    13hrs /hurd/ext2fs.static -A /dev/hd0s2
+    <braunr>    0   972     3 -20 -20 1434 125237556 719443981 483M 5.85M * S<o
+      ?    13hrs /hurd/ext2fs.static -A /dev/hd0s3
+    <braunr> around 1k5 each
+    <youpi> that's quite usual
+    <braunr> could be the priorities then
+    <braunr> but i'm afraid that if we lower them, the number of threads will
+      grow out of control
+    <braunr> (good thing is i'm currently working on a way to make libpthread
+      actually remove kernel resources)
+    <youpi> but the priorities should be the same in ext2fs and pfinet,
+      shouldn't they?
+    <braunr> yes but ext2 has a lot more threads than pfinet
+    <braunr> the scheduler only sees threads, we don't have a grouping feature
+    <youpi> right
+    <braunr> we also should remove priority depressing in glibc
+    <braunr> (in sched_yield)
+    <braunr> it affects spin locks
+
+    <braunr> youpi: is it normal to see priorities of 26 ?
+    <youpi> braunr: we have changed the nice factor
+    <braunr> ah, factor
+    <youpi> Mm, I'm however realizing the gnumach kernel running these systems
+      hasn't been upgraded in a while
+    <youpi> it may not even have the needed priority levels
+    <braunr> ar euare you using top right now on if ?
+    <braunr> hm no i don't see it any more
+    <braunr> well yes, could be the priorities ..
+    <youpi> I've rebooted with an upgraded kernel
+    <youpi> no issue so far
+    <youpi> package uploads will tell me on the long run
+    <braunr> i bet it's also a scalability issue
+    <youpi> but why would it appear now only?
+    <braunr> until the cache and other data containers start to get filled,
+      processing is fast enough that we don't see it hapenning
+    <youpi> sure, but I haven't seen that in the past
+    <braunr> oh it's combined with the increased priorities
+    <youpi> even after a week building packages
+    <braunr> what i mean is, increased priorities don't affect much if threads
+      porcess things fast
+    <braunr> things get longer with more data, and then increased prioritis
+      give more time to these threads
+    <braunr> and that's when the problem appears
+    <youpi> but increased priorities give more time to the pfinet threads too,
+      don't they?
+    <braunr> yes
+    <youpi> so what is different ?
+    <braunr> but again, there are a lot more threads elsewhere
+    <braunr> with a lot more data to process
+    <youpi> sure, but that has alwasy been so
+    <braunr> hm
+    <youpi> really, 1k5 threads does not surprise me at all :)
+    <youpi> 10k would
+    <braunr> there aren't all active either
+    <youpi> yes
+    <braunr> but right, i don't know why pfinet would be given less time than
+      other threads ..
+    <braunr> compared to before
+    <youpi> particularly on xen-based buildds
+    <braunr> libpthread is slower than cthreads
+    <youpi> where it doesn't even have to wait for netdde
+    <braunr> threads need more quanta to achieve the same ting
+    <braunr> perhaps processing could usually be completed in one go before,
+      and not any more
+    <braunr> we had a discussion about this with antrik
+
+    <braunr> youpi: concerning the buildd issue, i don't think pfinet is
+      affected actually
+    <braunr> but the applications using the network may be
+    <youpi> why using the network would be a difference ?
+    <braunr> normal applications have a lower priority
+    <braunr> what i mean is, pfinet simply has nothing to do, because normal
+      applications don't have enough cpu time
+    <braunr> (what you said earlier seemed to imply pfinet had issues, i don't
+      think it has)
+    <braunr> it should be easy to test by pinging the machine while under load
+    <braunr> we should also check the priority of the special thread used to
+      handle packets, both in pfinet and netdde
+    <braunr> this one isn't spawned by libports and is likely to have a lower
+      priority as well
+
+    <braunr> youpi: you're right, something very recent slowed things down a
+      lot
+    <braunr> perhaps the new priority factor
+    <braunr> well not the factor but i suppose the priority range has been
+      increased
+
+[[nice_vs_mach_thread_priorities]].
+
+    <youpi> braunr: haven't had any upload issue so far
+    <youpi> over 20 uploads
+    <youpi> while it was usually 1 every 2 before...
+    <youpi> so it was very probably the kernel missing the priorities levels
+    <braunr> ok
+    <braunr> i think i've had the same problem on another virtual machine
+    <braunr> with a custom kernel i built a few weeks ago
+    <braunr> same kind of issue i guess
+    <braunr> it's fine now, and always was on darnassus
+
+
+## IRC, freenode, #hurd, 2012-12-05
+
+    <braunr> tschwinge: i'm currently working on a few easy bugs and i have
+      planned improvements for libpthreads soon
+    <pinotree> wotwot, which ones?
+    <braunr> pinotree: first, fixing pthread_cond_timedwait (and everything
+      timedsomething actually)
+    <braunr> pinotree: then, fixing cancellation
+    <braunr> pinotree: and last but not least, optimizing thread wakeup
+    <braunr> i also want to try replacing spin locks and see if it does what i
+      expect
+    <pinotree> which fixes do you plan applying to cond_timedwait?
+    <braunr> see sysdeps/generic/pt-cond-timedwait.c
+    <braunr> the FIXME comment
+    <pinotree> ah that
+    <braunr> well that's important :)
+    <braunr> did you have something else in mind ?
+    <pinotree> hm, __pthread_timedblock... do you plan fixing directly there? i
+      remember having seem something related to that (but not on conditions),
+      but wasn't able to see further
+    <braunr> it has the same issue
+    <braunr> i don't remember the details, but i wrote a cthreads version that
+      does it right
+    <braunr> in the io_select_timeout branch
+    <braunr> see
+      https://git.savannah.gnu.org/cgit/hurd/hurd.git/tree/libthreads/cancel-cond.c?h=rbraun/select_timeout
+      for example
+    * pinotree looks
+    <braunr> what matters is the msg_delivered member used to synchronize
+      sleeper and waker
+    <braunr> the waker code is in
+      https://git.savannah.gnu.org/cgit/hurd/hurd.git/tree/libthreads/cprocs.c?h=rbraun/select_timeout
+    <pinotree> never seen cthreads' code before :)
+    <braunr> soon you shouldn't have any more reason to :p
+    <pinotree> ah, so basically the cthread version of the pthread cleanup
+      stack + cancelation (ie the cancel hook) broadcasts the condition
+    <braunr> yes
+    <pinotree> so a similar fix would be needed in all the places using
+      __pthread_timedblock, that is conditions and mutexes
+    <braunr> and that's what's missing in glibc that prevents deploying a
+      pthreads based hurd currently
+    <braunr> no that's unrelated
+    <pinotree> ok
+    <braunr> the problem is how __pthread_block/__pthread_timedblock is
+      synchronized with __pthread_wakeup
+    <braunr> libpthreads does exactly the same thing as cthreads for that,
+      i.e. use messages
+    <braunr> but the message alone isn't enough, since, as explained in the
+      FIXME comment, it can arrive too late
+    <braunr> it's not a problem for __pthread_block because this function can
+      only resume after receiving a message
+    <braunr> but it's a problem for __pthread_timedblock which can resume
+      because of a timeout
+    <braunr> my solution is to add a flag that says whether a message was
+      actually sent, and lock around sending the message, so that the thread
+      resume can accurately tell in which state it is
+    <braunr> and drain the message queue if needed
+    <pinotree> i see, race between the "i stop blocking because of timeout" and
+      "i stop because i got a message" with the actual check for the real cause
+    <braunr> locking around mach_msg may seem overkill but it's not in
+      practice, since there can only be one message at most in the message
+      queue
+    <braunr> and i checked that in practice by limiting the message queue size
+      and check for such errors
+    <braunr> but again, it would be far better with mutexes only, and no spin
+      locks
+    <braunr> i wondered for a long time why the load average was so high on the
+      hurd under even "light" loads
+    <braunr> now i know :)
+
+
+## IRC, freenode, #hurd, 2012-12-27
+
+    <youpi> btw, good news: the installer works with libpthread
+    <youpi> (well, at least boots, I haven't tested the  installation)
+    <braunr> i can do that if the image is available publically
+    <braunr> youpi: the one thing i suspect won't work right is the hurd
+      console :/
+    <braunr> so we might need to not enable it by default
+    <youpi> braunr: you mean the mode setting?
+    <braunr> youpi: i don't know what's wrong with the hurd console, but it
+      seems to deadlock with pthreads
+    <youpi> ah?
+    <youpi> I don't have such issue
+    <braunr> ah ? i need to retest that then
+
+Same issue as [[term_blocking]] perhaps?
+
+
+## IRC, freenode, #hurd, 2013-01-06
+
+    <youpi> it seems fakeroot has become slow as hell
+
+[[pfinet_timers]].
+
+    <braunr> fakeroot is the main source of dead name notifications
+    <braunr> well, a very heavy one
+    <braunr> with pthreads hurd servers, their priority is raised, precisely to
+      give them time to handle those dead name notifications
+    <braunr> which slows everything else down, but strongly reduces the rate at
+      which additional threads are created to handle dn notifications
+    <braunr> so this is expected
+    <youpi> ok :/
+    <braunr> which is why i mentioned a rewrite of io_select into a completely
+      synchronous io_poll
+    <braunr> so that the client themselves remove their requests, instead of
+      the servers doing it asynchronously when notified
+    <youpi> by "slows everything else down", you mean, if the servers do take
+      cpu time?
+    <braunr> but considering the amount of messaging it requires, it will be
+      slow on moderate to large fd sets with frequent calls (non blocking or
+      low timeout)
+    <braunr> yes
+    <youpi> well here the problem is not really it gets slowed down
+    <youpi> but that e.g. for gtk+2.0 build, it took 5h cpu time
+    <youpi> (and counting)
+    <braunr> ah, the hurd with pthreads is noticeably slower too
+    <braunr> i'm not sure why, but i suspect the amount of internal function
+      calls could account for some of the overhead
+    <youpi> I mean the fakeroot process
+    <youpi> not the server process
+    <braunr> hum
+    <braunr> that's not normal :)
+    <youpi> that's what I meant
+    <braunr> well, i should try to build gtk+20 some day
+    <braunr> i've been building glibc today and it's going fine for now
+    <youpi> it's the install stage which poses problem
+    <youpi> I've noticed it with the hurd package too
+    <braunr> the hurd is easier to build
+    <braunr> that's a good test case
+    <braunr> there are many times when fakeroot just doesn't use cpu, and it
+      doesn't look like a select timeout issue (it still behaved that way with
+      my fixed branch)
+    <youpi> in general, pfinet is taking really a lot of cpu time
+    <youpi> that's surprising
+    <braunr> why ?
+    <braunr> fakeroot uses it a lot
+    <youpi> I know
+    <youpi> but still
+    <youpi> 40% cpu time is not normal
+    <youpi> I don't see why it would need so much cpu time
+    <braunr> 17:57 < braunr> but considering the amount of messaging it
+      requires, it will be slow on moderate to large fd sets with frequent
+      calls (non blocking or low timeout)
+    <youpi> by "it", what did you mean?
+    <youpi> I thought you meant the synchronous select implementation
+    <braunr> something irrelevant here
+    <braunr> yes
+    <braunr> what matters here is the second part of my sentence, which is what
+      i think happens now
+    <youpi> you mean it's the IPC overhead which is taking so much time?
+    <braunr> i mean, it doesn't matter if io_select synchronously removes
+      requests, or does it by destroying ports and relying on notifications,
+      there are lots of messages in this case anyway
+    <braunr> yes
+    <youpi> why "a lot" ?
+    <youpi> more than one per select call?
+    <braunr> yes
+    <youpi> why ?
+    <braunr> one per fd
+    <braunr> then one to wait
+    <youpi> there are two in faked
+    <braunr> hum :)
+    <braunr> i remember the timeout is low
+    <braunr> but i don't remember its value
+    <youpi> the timeout is NULL in faked
+    <braunr> the client then
+    <youpi> the client doesn't use select
+    <braunr> i must be confused
+    <braunr> i thought it did through the fakeroot library
+    <braunr> but yes, i see the same behaviour, 30 times more cpu for pfinet
+      than faked-tcp
+    <braunr> or let's say between 10 to 30
+    <braunr> and during my tests, these were the moments the kernel would
+      create lots of threads in servers and fail because of lack of memory,
+      either kernel memory, or virtual in the client space (filled with thread
+      stacks)
+    <braunr> it could be due to threads spinning too much
+    <braunr> (inside pfinet)
+    <youpi> attaching a gdb shows it mostly inside __pthread_block
+    <youpi> uh, how awful pfinet's select is
+    <youpi> a big global lock
+    <youpi> whenever something happens all threads get woken up
+    <pinotree> BKL!
+    * pinotree runs
+    <braunr> we have many big hurd locks :p
+    <youpi> it's rather a big translator lock
+    <braunr> more than a global lock it seems, a global condvar too, isn't it ?
+    <youpi> sure
+    <braunr> we have a similar problem with the hurd-specific cancellation
+      code, it's in my todo list with io_select
+    <youpi> ah, no, the condvar is not global
+
+
+## IRC, freenode, #hurd, 2013-01-14
+
+    <braunr> *sigh* thread cancellable is totally broken :(
+    <braunr> cancellation*
+    <braunr> it looks like playing with thread cancellability can make some
+      functions completely restart
+    <braunr> (e.g. one call to printf to write twice its output)
+
+[[git_duplicated_content]], [[git-core-2]].
+
+    * braunr is cooking a patch to fix pthread cancellation in
+        pthread_cond_{,timed}wait, smells good
+    <braunr> youpi: ever heard of something that would make libc functions
+      "restart" ?
+    <youpi> you mean as a feature, or as a bug ?
+    <braunr> when changing the pthread cancellation state of a thread, i
+      sometimes see printf print its output twice
+    <youpi> or perhaps after a signal dispatch?
+    <braunr> i'll post my test code
+    <youpi> that could be a duplicate write
+    <youpi> due to restarting after signal
+    <braunr> http://www.sceen.net/~rbraun/pthreads_test_cancel.c
+    #include <stdio.h>
+    #include <stdarg.h>
+    #include <stdlib.h>
+    #include <pthread.h>
+    #include <unistd.h>
+    
+    static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    static int predicate;
+    static int ready;
+    static int cancelled;
+    
+    static void
+    uncancellable_printf(const char *format, ...)
+    {
+        int oldstate;
+        va_list ap;
+    
+        va_start(ap, format);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+        vprintf(format, ap);
+        pthread_setcancelstate(oldstate, &oldstate);
+        va_end(ap);
+    }
+    
+    static void *
+    run(void *arg)
+    {
+        uncancellable_printf("thread: setting ready\n");
+        ready = 1;
+        uncancellable_printf("thread: spin until cancellation is sent\n");
+    
+        while (!cancelled)
+            sched_yield();
+    
+        uncancellable_printf("thread: locking mutex\n");
+        pthread_mutex_lock(&mutex);
+        uncancellable_printf("thread: waiting for predicate\n");
+    
+        while (!predicate)
+            pthread_cond_wait(&cond, &mutex);
+    
+        uncancellable_printf("thread: unlocking mutex\n");
+        pthread_mutex_unlock(&mutex);
+        uncancellable_printf("thread: exit\n");
+        return NULL;
+    }
+    
+    int
+    main(int argc, char *argv[])
+    {
+        pthread_t thread;
+    
+        uncancellable_printf("main: create thread\n");
+        pthread_create(&thread, NULL, run, NULL);
+        uncancellable_printf("main: spin until thread is ready\n");
+    
+        while (!ready)
+            sched_yield();
+    
+        uncancellable_printf("main: sending cancellation\n");
+        pthread_cancel(thread);
+        uncancellable_printf("main: setting cancelled\n");
+        cancelled = 1;
+        uncancellable_printf("main: joining thread\n");
+        pthread_join(thread, NULL);
+        uncancellable_printf("main: exit\n");
+        return EXIT_SUCCESS;
+    }
+    <braunr> youpi: i'd see two calls to write, the second because of a signal,
+      as normal, as long as the second call resumes, but not restarts after
+      finishing :/
+    <braunr> or restarts because nothing was done (or everything was entirely
+      rolled back)
+    <youpi> well, with an RPC you may not be sure whether it's finished or not
+    <braunr> ah
+    <youpi> we don't really have rollback
+    <braunr> i don't really see the difference with a syscall there
+    <youpi> the kernel controls the interruption in the case of the syscall
+    <braunr> except that write is normally atomic if i'm right
+    <youpi> it can't happen on the way back to userland
+    <braunr> but that could be exactly the same with RPCs
+    <youpi> while perhaps it can happen on the mach_msg back to userland
+    <braunr> back to userland ok, back to the application, no
+    <braunr> anyway, that's a side issue
+    <braunr> i'm fixing a few bugs in libpthread
+    <braunr> and noticed that
+    <braunr> (i should soon have patches to fix - at least partially - thread
+      cancellation and timed blocking)
+    <braunr> i was just wondering how cancellation how handled in glibc wrt
+      libpthread
+    <youpi> I don't know
+    <braunr> (because the non standard hurd cancellation has nothing to do with
+      pthread cancellation)à
+    <braunr> ok
+    <braunr> s/how h/is h/
+
+
+### IRC, freenode, #hurd, 2013-01-15
+
+    <tschwinge> braunr: Re »one call to printf to write twice its output«:
+      sounds familiar:
+      http://www.gnu.org/software/hurd/open_issues/git_duplicated_content.html
+      and http://www.gnu.org/software/hurd/open_issues/git-core-2.html
+    <braunr> tschwinge: what i find strange with the duplicated operations i've
+      seen is that i merely use pthreads and printf, nothing else
+    <braunr> no setitimer, no alarm, no select
+    <braunr> so i wonder how cancellation/syscall restart is actually handled
+      in our glibc
+    <braunr> but i agree with you on the analysis
+
+
+### IRC, freenode, #hurd, 2013-01-16
+
+    <braunr> neal: do you (by any chance) remember if there could possibly be
+      spurious wakeups in your libpthread implementation ?
+    <neal> braunr: There probably are.
+    <neal> but I don't recall
+
+    <braunr> i think the duplicated content issue is due to the libmach/glibc
+      mach_msg wrapper
+    <braunr> which restarts a message send if interrupted
+    <tschwinge> Hrm, depending on which point it has been interrupted you mean?
+    <braunr> yes
+    <braunr> not sure yet and i could be wrong
+    <braunr> but i suspect that if interrupted after send and during receive,
+      the restart might be wrongfully done
+    <braunr> i'm currently reworking the timed* pthreads functions, doing the
+      same kind of changes i did last summer when working on select (since
+      implement the timeout at the server side requires pthread_cond_timedwait)
+    <braunr> and i limit the message queue size of the port used to wake up
+      threads to 1
+    <braunr> and it seems i have the same kind of problems, i.e. blocking
+      because of a second, unexpected send
+    <braunr> i'll try using __mach_msg_trap directly and see how it goes
+    <tschwinge> Hrm, mach/msg.c:__mach_msg does look correct to me, but yeah,
+      won't hurd to confirm this by looking what direct usage of
+      __mach_msg_trap is doing.
+    <braunr> tschwinge: can i ask if you still have a cthreads based hurd
+      around ?
+    <braunr> tschwinge: and if so, to send me libthreads.so.0.3 ... :)
+    <tschwinge> braunr: darnassus:~tschwinge/libthreads.so.0.3
+    <braunr> call   19c0 <mach_msg@plt>
+    <braunr> so, cthreads were also using the glibc wrapper
+    <braunr> and i never had a single MACH_SEND_INTERRUPTED
+    <braunr> or a busy queue :/
+    <braunr> (IOW, no duplicated messages, and the wrapper indeed looks
+      correct, so it's something else)
+    <tschwinge> (Assuming Mach is doing the correct thing re interruptions, of
+      course...)
+    <braunr> mach doesn't implement it
+    <braunr> it's explicitely meant to be done in userspace
+    <braunr> mach merely reports the error
+    <braunr> i checked the osfmach code of libmach, it's almost exactly the
+      same as ours
+    <tschwinge> Yeah, I meant Mach returns the interurption code but anyway
+      completed the RPC.
+    <braunr> ok
+    <braunr> i don't expect mach wouldn't do it right
+    <braunr> the only difference in osf libmach is that, when retrying,
+      MACH_SEND_INTERRUPT|MACH_RCV_INTERRUPT are both masked (for both the
+      send/send+receive and receive cases)
+    <tschwinge> Hrm.
+    <braunr> but they say it's for performance, i.e. mach won't take the slow
+      path because of unexpected bits in the options
+    <braunr> we probably should do the same anyway
+
+
+### IRC, freenode, #hurd, 2013-01-17
+
+    <braunr> tschwinge: i think our duplicated RPCs come from
+      hurd/intr-msg.c:148 (err == MACH_SEND_INTERRUPTED but !(option &
+      MACH_SEND_MSG))
+    <braunr> a thread is interrupted by a signal meant for a different thread
+    <braunr> hum no, still not that ..
+    <braunr> or maybe .. :)
+    <tschwinge> Hrm.  Why would it matter for for the current thread for which
+      reason (different thread) mach_msg_trap returns *_INTERRUPTED?
+    <braunr> mach_msg wouldn't return it, as explained in the comment
+    <braunr> the signal thread would, to indicate the send was completed but
+      the receive must be retried
+    <braunr> however, when retrying, the original user_options are used again,
+      which contain MACH_SEND_MSG
+    <braunr> i'll test with a modified version that masks it
+    <braunr> tschwinge: hm no, doesn't fix anything :(
+
+
+### IRC, freenode, #hurd, 2013-01-18
+
+    <braunr> the duplicated rpc calls is one i find very very frustrating :/
+    <youpi> you mean the dup writes we've seen lately?
+    <braunr> yes
+    <youpi> k
+
+
+### IRC, freenode, #hurd, 2013-01-19
+
+    <braunr> all right, i think the duplicated message sends are due to thread
+      creation
+    <braunr> the duplicated message seems to be sent by the newly created
+      thread
+    <braunr> arg no, misread
+
+
+### IRC, freenode, #hurd, 2013-01-20
+
+    <braunr> tschwinge: youpi: about the diplucated messages issue, it seems to
+      be caused by two threads (with pthreads) doing an rpc concurrently
+    <braunr> duplicated*
+
+
+### IRC, freenode, #hurd, 2013-01-21
+
+    <braunr> ah, found something interesting
+    <braunr> tschwinge: there seems to be a race on our file descriptors
+    <braunr> the content written by one thread seems to be retained somewhere
+      and another thread writing data to the file descriptor will resend what
+      the first already did
+    <braunr> it could be a FILE race instead of fd one though
+    <braunr> yes, it's not at the fd level, it's above
+    <braunr> so good news, seems like the low level message/signalling code
+      isn't faulty here
+    <braunr> all right, simple explanation: our IO_lockfile functions are
+      no-ops
+    <pinotree> braunr: i found that out days ago, and samuel said they were
+      okay
+
+[[glibc]], `flockfile`/`ftrylockfile`/`funlockfile`.
+
+
+## IRC, freenode, #hurd, 2013-01-15
+
+    <braunr> hmm, looks like subhurds have been broken by the pthreads patch :/
+    <braunr> arg, we really do have broken subhurds :((
+    <braunr> time for an immersion in the early hurd bootstrapping stuff
+    <tschwinge> Hrm.  Narrowed down to cthreads -> pthread you say.
+    <braunr> i think so
+    <braunr> but i think the problem is only exposed
+    <braunr> it was already present before
+    <braunr> even for the main hurd, i sometimes have systems blocking on exec
+    <braunr> there must be a race there that showed far less frequently with
+      cthreads
+    <braunr> youpi: we broke subhurds :/
+    <youpi> ?
+    <braunr> i can't start one
+    <braunr> exec seems to die and prevent the root file system from
+      progressing
+    <braunr> there must be a race, exposed by the switch to pthreads
+    <braunr> arg, looks like exec doesn't even reach main :(
+    <braunr> now, i'm wondering if it could be the tls support that stops exec
+    <braunr> although i wonder why exec would start correctly on a main hurd,
+      and not on a subhurd :(
+    <braunr> i even wonder how much progress ld.so.1 is able to make, and don't
+      have much idea on how to debug that
+
+
+### IRC, freenode, #hurd, 2013-01-22
+
+    <braunr> hm, subhurds seem to be broken because of select
+    <braunr> damn select !
+    <braunr> hm i see, we can't boot a subhurd that still uses libthreads from
+      a main hurd that doesn't
+    <braunr> the linker can't find it and doesn't start exec
+    <braunr> pinotree: do you understand what the fmh function does in
+      sysdeps/mach/hurd/dl-sysdep.c ?
+    <braunr> i think we broke subhurds by fixing vm_map with size 0
+    <pinotree> braunr: no idea, but i remember thomas talking about this code
+
+[[vm_map_kernel_bug]]
+
+    <braunr> it checks for KERN_INVALID_ADDRESS and KERN_NO_SPACE
+    <braunr> and calls assert_perror(err); to make sure it's one of them
+    <braunr> but now, KERN_INVALID_ARGUMENT can be returned
+    <braunr> ok i understand what it does
+    <braunr> and youpi has changed the code, so he does too
+    <braunr> (now i'm wondering why he didn't think of it when we fixed vm_map
+      size with 0 but his head must already be filled with other things so ..)
+    <braunr> anyway, once this is dealt with, we get subhurds back :)
+    <braunr> yes, with a slight change, my subhurd starts again \o/
+    <braunr> youpi: i found the bug that prevents subhurds from booting
+    <braunr> it's caused by our fixing of vm_map with size 0
+    <braunr> when ld.so.1 starts exec, the code in
+      sysdeps/mach/hurd/dl-sysdep.c fails because it doesn't expect the new
+      error code we introduced
+    <braunr> (the fmh functions)
+    <youpi> ah :)
+    <youpi> good :)
+    <braunr> adding KERN_INVALID_ARGUMENT to the list should do the job, but if
+      i understand the code correctly, checking if fmhs isn't 0 before calling
+      vm_map should do the work too
+    <braunr> s/do the work/work/
+    <braunr> i'm not sure which is the preferred way
+    <youpi> otherwise I believe fmh could be just fixed to avoid calling vm_map
+      in the !fmhs case
+    <braunr> yes that's what i currently do
+    <braunr> at the start of the loop, just after computing it
+    <braunr> seems to work so far
+
+
+## IRC, freenode, #hurd, 2013-01-22
+
+    <braunr> i have almost completed fixing both cancellation and timeout
+      handling, but there are still a few bugs remaining
+    <braunr> fyi, the related discussion was
+      https://lists.gnu.org/archive/html/bug-hurd/2012-08/msg00057.html
+
+
+## IRC, freenode, #hurd, 2014-01-01
+
+    <youpi> braunr: I have an issue with  tls_thread_leak
+    <youpi> int main(void) {
+    <youpi> pthread_create(&t, NULL, foo, NULL);
+    <youpi> pthread_exit(0);
+    <youpi> }
+    <youpi> this fails at least with the libpthread without your libpthread
+      thread termination patch
+    <youpi> because for the main thread, tcb->self doesn't contain thread_self
+    <youpi> where is tcb->self supposed to be initialized for the main thread?
+    <youpi> there's also the case of fork()ing from main(), then calling
+      pthread_exit()
+    <youpi> (calling pthread_exit() from the child)
+    <youpi> the child would inherit the tcb->self value from the parent, and
+      thus pthread_exit() would try to kill the father
+    <youpi> can't we still do tcb->self = self, even if we don't keep a
+      reference over the name?
+    <youpi> (the pthread_exit() issue above should be fixed by your thread
+      termination patch actually)
+    <youpi> Mmm, it seems the thread_t port that the child inherits actually
+      properly references the thread of the child, and not the thread of the
+      father?
+    <youpi> “For the name we use for our own thread port, we will insert the
+      thread port for the child main user thread after we create it.” Oh, good
+      :)
+    <youpi> and, “Skip the name we use for any of our own thread ports.”, good
+      too :)
+    <braunr> youpi: reading
+    <braunr> youpi: if we do tcb->self = self, we have to keep the reference
+    <braunr> this is strange though, i had tests that did exactlt what you're
+      talking about, and they didn't fail
+    <youpi> why?
+    <braunr> if you don't keep the reference, it means you deallocate self
+    <youpi> with the thread termination patch, tcb->self is not used for
+      destruction
+    <braunr> hum
+    <braunr> no it isn't
+    <braunr> but it must be deallocated at some point if it's not temporary
+    <braunr> normally, libpthread should set it for the main thread too, i
+      don't understand
+    <youpi> I don't see which code is supposed to do it
+    <youpi> sure it needs to be deallocated at some point
+    <youpi> but does tcb->self has to wear the reference?
+    <braunr> init_routine should do it
+    <braunr> it calls __pthread_create_internal
+    <braunr> which allocates the tcb
+    <braunr> i think at some point, __pthread_setup should be called for it too
+    <youpi> but what makes pthread->kernel_thread contain the port for the
+      thread?
+    <braunr> but i have to check that
+    <braunr> __pthread_thread_alloc does that
+    <braunr> so normally it should work
+    <braunr> is your libpthread up to date as well ?
+    <youpi> no, as I said it doesn't contain the thread destruction patch
+    <braunr> ah
+    <braunr> that may explain
+    <youpi> but the tcb->self uninitialized issue happens on darnassus too
+    <youpi> it just doesn't happen to crash because it's not used
+    <braunr> that's weird :/
+    <youpi> see ~youpi/test.c there for instance
+    <braunr> humpf
+    <braunr> i don't see why :/
+    <braunr> i'll debug that later
+    <braunr> youpi: did you find the problem ?
+    <youpi> no
+    <youpi> I'm working on fixing the libpthread hell in the glibc debian
+      package :)
+    <youpi> i.e. replace a dozen patches with a git snapshot
+    <braunr> ah you reverted commit
+    <braunr> +a
+    <braunr> i imagine it's hairy :)
+    <youpi> not too much actually
+    <braunr> wow :)
+    <youpi> with the latest commits, things have converged
+    <youpi> it's now about small build details
+    <youpi> I just take time to make sure I'm getting the same source code in
+      the end :)
+    <braunr> :)
+    <braunr> i hope i can determine what's going wrong tonight
+    <braunr> youpi: avec mach_print, je vois bien self setté par la libpthread
+      ..
+    <youpi> mais à autre chose que 0 ?
+    <braunr> oui
+    <braunr> bizarrement, l'autre thread n'as pas la même valeur
+    <braunr> tu es bien sûr que c'est self que tu affiches avec l'assembleur ?
+    <braunr> oops, english
+    <youpi> see test2
+    <youpi> so I'm positive
+    <braunr> well, there obviously is a bug
+    <braunr> but are you certain your assembly code displays the thread port
+      name ?
+    <youpi> I'm certain it displays tcb->self
+    <braunr> oh wait, hexadecimal, ok
+    <youpi> and the value happens to be what mach_thread_self returns
+    <braunr> ah right
+    <youpi> ah, right, names are usually decimals :)
+    <braunr> hm
+    <braunr> what's the problem with test2 ?
+    <youpi> none
+    <braunr> ok
+    <youpi> I was just checking what happens on fork from another thread
+    <braunr> ok i do have 0x68 now
+    <braunr> so the self field gets erased somehow
+    <braunr> 15:34 < youpi> this fails at least with the libpthread without
+      your libpthread thread termination patch
+    <braunr> how does it fail ?
+    <youpi> ../libpthread/sysdeps/mach/pt-thread-halt.c:44:
+      __pthread_thread_halt: Unexpected error: (ipc/send) invalid destination
+      port.
+    <braunr> hm
+    <braunr> i don't have that problem on darnassus
+    <youpi> with the new libc?
+    <braunr> the pthread destruction patch actually doesn't use the tcb->self
+      name if i'm right
+    <braunr> yes
+    <braunr> what is tcb->self used for ?
+    <youpi> it used to be used by pt-thread-halt
+    <youpi> but is darnassus using your thread destruction patch?
+    <youpi> as I said, since your thread destruction pathc doesn't use
+      tcb->self, it doesn't have the issue
+    <braunr> the patched libpthread merely uses the sysdeps kernel_thread
+      member
+    <braunr> ok
+    <youpi> it's the old libpthread against the new libc which has issues
+    <braunr> yes it is
+    <braunr> so for me, the only thing to do is make sure tcb->self remains
+      valid
+    <braunr> we could simply add a third user ref but i don't like the idea
+    <youpi> well, as you said the issue is rather that tcb->self gets
+      overwritten
+    <youpi> there is no reason why it should
+    <braunr> the value is still valid when init_routine exits, so it must be in
+      libc
+    <youpi> or perhaps for some reason tls gets initialized twice
+    <braunr> maybe
+    <youpi> and thus what libpthread's init writes to is not what's used later
+    <braunr> i've add a print in pthread_create, to see if self actually got
+      overwritten
+    <braunr> and it doesn't
+    <braunr> there is a disrepancy between the tcb member in libpthread and
+      what libc uses for tls
+    <braunr> added*
+    <braunr> (the print is at the very start of pthread_create, and displays
+      the thread name of the caller only)
+    <youpi> well, yes, for the main thread libpthread shouldn't be allocating a
+      new tcb
+    <youpi> and just use the existing one
+    <braunr> ?
+    <youpi> the main thread's tcb is initialized before the threading library
+      iirc
+    <braunr> hmm
+    <braunr> it would make sense if we actually had non-threaded programs :)
+    <youpi> at any rate, the address of the tcb allocated by libpthread is not
+      put into registers
+    <braunr> how does it get there for the other threads ?
+    <youpi> __pthread_setup does it
+    <braunr> so
+    <braunr> looks like dl_main is called after init_routine
+    <braunr> and it then calls init_tls
+    <braunr> init_tls returns the tcb for the main thread, and that's what
+      overrides the libpthread one
+    <youpi> yes, _hurd_tls_init is called very early, before init_routine
+    <youpi> __pthread_create_internal could fetch the tcb pointer from gs:0
+      when it's the main thread
+    <braunr> so there is something i didn't get right
+    <braunr> i thought _hurd_tls_init was called as part of dl_main
+    <youpi> well, it's not a bug of yours, it has always been bug :)
+    <braunr> which is called *after* init_routine
+    <braunr> and that explains why the libpthread tcb isn't the one installed
+      in the thread register
+    <braunr> i can actually check that quite easily
+    <youpi> where do you see dl_main called after init_routine?
+    <braunr> well no i got that wrong somehow
+    <braunr> or i'm unable to find it again
+    <braunr> let's see
+    <braunr> init_routine is called by init which is called by _dl_init_first
+    <braunr> which i can only find in the macro RTLD_START_SPECIAL_INIT
+    <braunr> with print traces, i see dl_main called before init_routine
+    <braunr> so yes, libpthread should reuse it
+    <braunr> the tcb isn't overriden, it's just never installed
+    <braunr> i'm not sure how to achieve that cleanly
+    <youpi> well, it is installed, by _hurd_tls_init
+    <youpi> it's the linker which creates the main thread's tcb
+    <youpi> and calls _hurd_tls_init to install it
+    <youpi> before the thread library enters into action
+    <braunr> agreed
+
+
+### IRC, freenode, #hurd, 2014-01-14
+
+    <braunr> btw, are you planning to do something with regard to the main
+      thread tcb initialization issue ?
+    <youpi> well, I thought you were working on it
+    <braunr> ok
+    <braunr> i wasn't sure
+
+
+### IRC, freenode, #hurd, 2014-01-19
+
+    <braunr> i have some fixup code for the main thread tcb
+    <braunr> but it sometimes crashes on tcb deallocation
+    <braunr> is there anything particular that you would know about the tcb of
+      the main thread ?
+    <braunr> (that could help explaining this)
+    <youpi> Mmmm, I don't think there is anything particular
+    <braunr> doesn't look like the first tcb can be reused safely
+    <braunr> i think we should instead update the thread register to point to
+      the pthread tcb
+    <youpi> what do you mean by "the first tcb" exactly?
+
+
+## IRC, freenode, #hurd, 2014-01-03
+
+    <gg0> braunr: hurd from your repo can't boot. restored debian one
+    <braunr> gg0: it does boot
+    <braunr> gg0: but you need everything (gnumach and glibc) in order to make
+      it work
+    <braunr> i think youpi did take care of compatibility with older kernels
+    <teythoon> braunr: so do we need a rebuilt libc for the latest hurd from
+      git ?
+    <braunr> teythoon: no, the hurd isn't the problem
+    <teythoon> ok
+    <teythoon> good
+    <braunr> the problem is the libports_stability patch
+    <teythoon> what about it ?
+    <braunr> the hurd can't work correctly without it since the switch to
+      pthreads
+    <braunr> because of subtle bugs concerning resource recycling
+    <teythoon> ok
+    <braunr> these have been fixed recently by youpi and me (youpi fixed them
+      exactly as i did, which made my life very easy when merging :))
+    <braunr> there is also the problem of the stack sizes, which means the hurd
+      servers could use 2M stacks with an older glibc
+    <braunr> or perhaps it chokes on an error when attempting to set the stack
+      size because it was unsupported
+    <braunr> i don't know
+    <braunr> that may be what gg0 suffered from
+    <gg0> yes, both gnumach and eglibc were from debian. seems i didn't
+      manually upgrade eglibc from yours
+    <gg0> i'll reinstall them now. let's screw it up once again
+    <braunr> :)
+    <braunr> bbl
+    <gg0> ok it boots
+    <gg0> # apt-get install
+      {hurd,hurd-dev,hurd-libs0.3}=1:0.5.git20131101-1+rbraun.7
+      {libc0.3,libc0.3-dev,libc0.3-dbg,libc-dev-bin}=2.17-97+hurd.0+rbraun.1+threadterm.1
+    <gg0> there must a simpler way
+    <gg0> besides apt-pinning
+    <gg0> making it a real "experimental" release might help with -t option for
+      instance
+    <gg0> btw locales still segfaults
+    <gg0> rpctrace from teythoon gets stuck at
+      http://paste.debian.net/plain/74072/
+    <gg0> ("rpctrace locale-gen", last 300 lines)

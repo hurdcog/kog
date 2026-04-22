@@ -1,0 +1,173 @@
+AUTOGNOSIS: 
+THE THEORY OF HIERARCHICAL SELF-IMAGE BUILDING 
+SYSTEMS 
+Peter Winiwarter 
+Bordalier Institute 
+41270 Boursay, France winiwarter@bordalierinstitute.com www.bordalierinstitute.com 
+ABSTRACT 
+What is the metaphysical paradigm of General Systems Theory? Analyzing the major works in GST we find that a common feature is the type of questions asked. Applying concepts to themselves, or asking self-referential recursive questions distinguishes systems thinking from the classical scientific Approach. Based on the concept of self-referential recursion we propose a proto-world hypothesis serving as conceptual framework for the construction of "reality". This ultimate principle is metaphysical, in the sense that it can't be verified nor falsified. Any "reality" is an autognostic process which can be described as a hierarchical selfimage building system consisting in the co-evolution of local and global nested hierarchies: On each hierarchical level the local phenomena map or compute (put together) local "images" of the global phenomena in which they take place. Global phenomena on the other hand map the ensemble of local phenomena into a global "field"- or global "image", which differentiates itself under the influence of the contained local phenomena. The organizational categories of the local bottom-up integration and the global top-down differentiation are isomorph on each hierarchical level. Language and formal systems are special cases of hierarchical self-image building systems based on the same organizational categories as all other natural selforganizing systems. This organizational isomorphism explains the epistemological puzzle, why we can describe natural phenomena in terms of language and formal systems. 
+1. INTRODUCTION 
+Kant said about metaphysics that it was like a dark ocean without shore and without lighthouse (a good reason for not talking about it!). On the other hand the solitary thinker of Koenigsberg also said that if you drive metaphysics out of the front door, it immediately enters through the back door. 
+Most scientists today pretend to be unaware of this fact: science is their business; philosophy and especially metaphysics are reserved to a few professional "logographs" (as Plato, called them). Natural scientists write about philosophical questions, only after their retirement or after having been awarded a Nobel prize (e.g. Einstein, Heisenberg, Monod, Eigen, Prigogine to cite only a few). What they generally discover a posteriori can be resumed in a single phrase:  any scientific research is based on an implicit world-view, some sort of conceptual framework, in which one believes, and within which one constructs all further edifices of mental architecture. This conceptual framework is more than the hundred-fold cited Kuhnian paradigm, it is a vague hypothesis about "reality", a sort of proto-world hypothesis (Gaines, 1985) which can't be verified nor falsified, in short, a metaphysical paradigm. 
+2. WHAT IS THE METAPHYSICAL PARADIGM OF GENERAL SYSTEMS THEORY? 
+Despite the affirmative title of Ludwig von Bertalanffy's (1968) book "General Systems Theory", we pretend that no coherent General Systems Theory exists. GST can be considered as an agglomerate of diverse bodies of knowledge elaborated by scientists who share a common belief: which? 
+Since there exists no such thing as a coherent GST as a con-sequence there exists no single body of knowledge which could be called a coherent Systems Philosophy. Today's systems philosophical landscape can be described as a savanna with single trees standing out here and there and some inevitable botanists wandering round, re-drawing summary pictures of the trees in their papers and classifying the trees into species like Emergentism, Structuralism, and Organicism (Bahms, 1984a, 1984b, 1985). Others ask questions of the type: "Systems of philosophy or Philosophy of Systems?" (Sadovsky, 1985). 
+Let us have a closer look at the structure of this question: 
+System of Philosophies (or) Philosophy of Systems? 
+A self-referential recursive loop! What is of what? Is X the object of subject Y, or is Y the object of subject X? Maybe the answer to our question on the metaphysical paradigm of GST is a question? What is the common belief of GST researchers? Von Bertalanffy (1968) would say the unity off science, Battista (1977) speaks of a "Holistic paradigm".We think that the concept of unity of all phenomena describes only partly the common underlying GST paradigm. The concept of "holon" (Bahm , 1984a) comprises also a certain type of relations between "holons" of discrete hierarchical levels. 
+Proposition 1: The common metaphysical paradigm of GST is to formulate questions in  terms-of self-referential recursive loops. 
+Let us analyze a sample of research works which have significantly influenced General Systems Thinking under this aspect of recursive self-application of concepts: 
+Mathematical thought always seems to be a precursor of concepts, which find their way into the disciplines after a certain time-lag. 
+The provability of proofs? Metasystems, (Gödel, 1931). 
+The computability of computation? Abstract automata, (Turing, 1936). 	` 
+Cybernetics introduce self-referential recursive thought into the natural sciences: The control of control? Cybernetics, (Wiener, 1948). 
+Recursive hierarchical levels are introduced by Koestler. The hierarchy of hierarchies? Holons, (Koestler, 1967). 
+In the seventies self-referential thought emerges in nearly all scientific disciplines. 
+The distinction of distinctions? Form, (Brown, 1969). The cycle of cycles? Hypercycles, (Eigen, 1971). 
+The formation of forms? Catastrophes, (Thom, 1972). 
+The perception of perception? Eigenbehaviour, (von Foerster, 1973). The ordering of order? Spontaneous Social Orders, (von Hayek,1975) The reality of reality? Communication, (Watzlawick, 1976). 
+The structuring of structures? Dissipative Structures, (Nicolis and Prigogine, 1977). 
+The organization of organization? Synergetics, (Haken, 1977). 
+The nature of nature? Complexity, (Morin, 1977). 
+The boundary of boundaries? Fractals, (Mandelbrot, 1977). 
+The dimension of dimensions? Fractal dimensions, (Mandelbrot, 1977). 
+The system of systems? Living Systems, (Miller, 1978). 
+The production of production? Autopoiesis, (Varela, 1979) The loop of loops? Tangled Hierarchies, (Hofstadter, 1979). 
+In the eighties emerge the first tentatives to synthesize a co-herent self-referential recursive world-view: 
+The life of life? "La Methode” for thinking complexity, (Morin,1980). 	. 
+The evolution of evolution? The self-organizing Universe, (Jantsch, 1980). Summarizing this kaleidoscope of self-referential thought we put forward a general proposition. 
+Proposition 2: The application of a concept to itself opens a new conceptual dimension. 
+Abbot's (1952) novel "Flatland" written more than a century ago illustrates our proposition. Living in one-dimensional Lineland the concept of a "line of lines" opens the access to a twodimensional Flatland of a plane. Living in Flatland the concept of a "circle of circles" opens the access to a three-dimensional Sphereland. In any of our cited examples the application of a concept to itself "creates" or generates a new dimension of concepts. 
+3. THE CREATION OF CREATION? 
+The core problem of any metaphysical system is to find an answer to the question: how do things and thoughts arise? 
+3.1. Static proto-world hypothesis 
+Platon's answer could be translated into modern terminology in the following way: ndimensional timeless objects (ideas) are mapped into an (n-1) - dimensional space (the mind). Kant's answer could be resumed as follows: an indescribable (in-finite dimensional?) "Ding an Sich" is mapped into a five-dimensional mental space. The mental categories (threedimensional space, time, and causality) exist a priori and cannot be reduced to anything else. Both approaches can be labeled "static" in the sense that they presume an unchanged axiomatic structure of either "ideas" or "categories" and questions about the creation of this axiomatic structure are taboo. 
+3.2. Evolutionary proto-world hypothesis 
+Wronski, a Polish mathematician and philosopher, can be considered as a precursor of modern systems philosophy. Known by all mathematicians through his work on differential equations, Wronski's metaphysical work has never found its way into the textbooks of philosophy due to very peculiar circumstances in Wronski's life (d'Arcy, 1970). The core of Wronski's metaphysics is his general law of creation. Breaking with the dogma of a static concept of the "absolute" he postulates a self-generative concept as underlying principle of every reality. 
+"The generation of the constitutive parts of the Absolute can be done only by the Absolute  itself. Further, this generation can only take place within the Absolute, and consequently in  a single determined way conform with-the essence of the Absolute in which it operates. Thus the development of the constitutive parts produces itself in a process of proper creation  called auto-genesis, and follows a process of its proper setting up called auto-thesis." (Wronski, 1850). 
+The concepts of boot-strapping (self-creation), self-organization and autopoiesis or selfproduction have been thought more than a hundredfifty years ago! 
+Without retracing the history of metaphysical thought, let us jump immediately to the proposed answers of systems philosophers. According to our analysis of section 2, the systemic thought process can be characterized as self-referential recursion. Self-referenceimplies process and recursion implies directed process. As Prigogine has put it, the accent of our questioning has been shifted from "being" to "becoming". The central metaphysical question today is the question of evolution and creation. Following Bahm (1984a), three types of answers are proposed. 
+1. The proto-world hypothesis of Emergentism can be resumed as a process of bottomup integration during which a nested hierarchy of holons "emerges". 
+2. The proto-world hypothesis of Structuralism can-be resumed as a process of top-down differentiation during which a nested hierarchy of holons "demerges" or differentiate. Both types of answers struggle with the problem of an "ultimate" hierarchical level (truly elementary particles at the bottom or universe at the top). 
+3. Organicism  pretends to resolve the problem in proposing a synthesis of Emergentism and Structuralism, but no clear indications are given of how to conceive an evolutionary or creative process in terms of "organic wholeness". 
+To our knowledge Jantsch (1980) can be considered as the first systems thinker who clearly pointed out the parallels of macroscopic and microscopic evolutionary processes on all levels of today's description (ranging from astrophysical over bio-chemical, biological up to sociocultural and scientific evolution). He speaks of a co-evolution of Macro-evolution and Micro-evolution, identifying three stages on each hierarchical macro and micro level: re-ligio, auto-poiesis, and auto-catalysis. However, no clear conceptual description is given for the mutual interdependence of Macro-and Micro-evolution during the process of selforganization. 
+3.3 Recursive proto-world hypothesis 
+Based on an initial speculative intuition of a universal algorithm for a bootstrapping or selforganizational process (Winiwarter, 1983) we have shown in an empirical study (Winiwarter, 1985), that practically all autonomous or quasi-autonomous systems reveal an isomorphic statistical structure if analyzed simultaneously on three hierarchical levels (system, subsystems, elementary elements). 
+This isomorphic structure of population-size distributions of subsystems is found for the universe, for clusters of galaxies, for galaxies, for stars, for planets, for the earth crust, the ocean and the atmosphere, for ecosystems, for biological families, for biological species, for local clusters of individuals of any biological species including homo sapiens, for the political world, for nations, for enterprises, for cities, for individual incomes, for speeches and texts in all languages of all times and for scientific production in any discipline. 
+Isomorphic statistical structure does not necessarily imply isomorphic generative processes. However, the fact that this similarity of subsystem-size distribution is observed on practically all levels of description suggests an underlying common dynamic process (iso-dynamics). Based on the hypothesis of the iso-dynamics of all self-organizing or evolutionary processes (including language and formal systems) we have looked for the most simple and best understood phenomenon which could serve as a case study of self-organization. 
+The detailed results of this case study are presented in a separate paper (Winiwarter, 1986). Based on this case study we have attempted to “de-anthropomorphize” major concepts like memory, learning, and intelligence in order to arrive at truly trans-disciplinary concepts which apply to systems in general. Using the term gnostic for a generalized goal-oriented learning process, we propose the following self-referential recursive proto-world hypothesis: 
+1. The unitary concept of the "Absolute", "Universe","Nature", "Ultimate Reality", 
+"God", "Tao", "Ding an Sich" or whatever traditional term you prefer can be best approximated in systems terminology by something called Autognostic or Self-Image Building Process. 
+2. Within the unitary concept of Autognosis or Self-Image Building we can distinguish between two complementary concepts: 
+a) local bottom-up integration of parts or elements 
+b) top-down differentiation of a whole or universe. 
+Both processes are complementary in the sense of quantum mechanics (light can appear as wave; light can appear as particle; but light is neither wave nor particle.) 
+3. Both complementary concepts of local bottom-up integration and global top-down differentiation can be viewed in terms of spatial concepts or structure, in terms of temporal concepts or process and in terms of causal concepts or regulation. 
+4. Spatial, temporal, and causal concepts "emerge" locally in a process of bottom-up integration and "demerge" globally in a process of top-down differentiation following simultaneously the directed sequence of organizational categories: 
+e.g. spatial concepts Local bottom-up integration Global top-down differentiation | UNITY element space | DISJUNCTION complementary elements polarized space | CONJUNCTION linked couple boundary | SEQUENTIAL BRANCHING or TREE Branching chain, 
+tree Opening, compartments | MODULAR CLOSURE Ring, annular structure Enclosed space, core 
+or cell | MODULAR RECURSION Ring level n equals element level n+1 Core level n equals space level n+1 The process is selfreferential and recursive The self-image building process consists in the recursive co-evolution of nested local and  global hierarchies. Within a given global hierarchical level local phenomena are com-puted  (put together) in a process of bottom-up integration under the constraint of the global  phenomenon (environment). In mathematical terms one could call this process mapping or  Image-building. 
+The global phenomena on the other hand are the co-operative result of the ensemble of local  phenomena and map or constitute a global "image"  or field which differentiates itself as a  function of the ensemble of local phenomena. Above a critical threshold density the ensemble  of integrated local phenomena form the next nested global hierarchical level in the form of  an environment (within an environment). Within this newly "demerged" global level a  process of bottom-up integration "emerges" using the closed modules of the previous level as  elementary building blocks. (See nucleosynthesis in a massive star as example). 
+5. Since both organizational processes are complementary, every local hierarchical level has a corresponding global hierarchical level. Any coherent model of an evolutionary process must therefore comprise an equal number of local and global hierarchical levels. 
+This aspect is neglected by the reductionist approach; e.g., a biological individual at level n is decomposed at level n-1 (organs), level n-2 (cells), level n-3 (genes) etc., while the global levels are put altogether into one black box called "environment". Applied to astrophysical concepts, our hypothesis would mean that the discovery of subphotonic "particles" implies the existence of a "hyper-universe". 
+   (Let's wait and -see how long the big bang centered world-view will hold.) 6. The proposed proto-world hypothesis pretends to model the generation of any reality. Therefore it must apply not only to "physical" phenomena, but also to "mental" phenomena like the evolution of language, philosophical thought, and formal systems. Parmenides, a Presocratian philosopher, already postulated an isomorphism of physical and mental processes; "things arise in space as thoughts arise in mind" (Lebeck, 1985). 
+Wronski (1854) has put forward the hypothesis of structural and process isomorphism in all evolutionary and creative processes. He explicitly states that "the law for the creation of the Universe must be the law for the creation of objects of philosophical knowledge". 
+In our case study we have demonstrated a surprising isomorphism of organizational categories occurring in natural nuclear reactions com-pared with the organizational categories of human logic formalized in propositional calculus. Einstein wrote once to one of his friends that the most miraculous thing about nature is the fact that we can describe it. Why are natural numbers such a powerful descriptive tool? Why do mathematicians discover theorems and formalism years before they find a surprising application in a scientific model? A common underlying self-organizational process of all. phenomena -- a  universal hierarchy generator (Voorhees, 1965a) - would be an explanation of this epistemological puzzle. (Gödel's proof and Hofstadter's (1979) refreshing book point into similar directions.) 
+4. TYPES OF LOGIC AND WORLD-VIEWS 
+Following the arguments of Voorhees (1985b), we can identify three fundamental types of logic. 
+4.1. Aristotelian Logic 
+The axioms of this type of logic can be expressed with the organizational categories unity and complementarity. 
+The corresponding world-views could be called static. 
+4.2. Dialectical Logic 
+The axioms of this type of logic can be expressed with the organizational categories conjunction, disjunction, and sequential branching 
+The corresponding world-views could be called evolutionary. 
+4.3. Trialectic Logic 
+The axioms of this type of logic can be expressed with the organizational categories modular closure and modular recursion. Spencer Brown, Oscar Ichazo, and Francisco Varela could be cited as representative of this new type of logic. The corresponding world-views could be called self-referential recursive. 
+Note that the historical evolution of logic axiomatics follows the sequence: (unity - complementarity) --> (conjunction - disjunction - sequential branching) --> (modular closure - modular recursion). Is this correspondence of the historical sequence of world-views and the general organizational sequence postulated in this article a pure coincidence? An answer cannot be proven nor falsified and we re-enter the domain of metaphysics. 
+We agree with Voorhees on the point that the three types of logic have only a limited domain of application and a complete self-description of the "world" needs all three types of thought. The autognostic model attempts such a synthesis. 
+5. CONCLUSION 
+Any scientific activity is based on a metaphysical paradigm or proto-world hypothesis. We propose such an hypothesis consistent with the systemic thought process. "Reality" can be described as an autognostic or self-image building process. 
+1. Any autognostic process can be described in two directional categories: local bottomup integration and top-down differentiation. 
+2. Both directional categories can be described in three dimensional categories: spatial, temporal, and causal. 
+3. Any dimensional category can be described, in seven organizational categories: unity, complementarity, disjunction, conjunction, sequential branching, modular closure and modular recursion. 
+Directional, dimensional, and organizational categories are called gnostic categories. The evolution or self-organization of gnostic categories follows a self-referential recursive algorithm. 
+REFERENCES 
+Abbot, E.A. 
+1952 Flatland: A Romance in Many Dimensions. New York: Dover. 
+d'Arcy, P. 
+1970 	Hoene Wronski: Une philosophie de la creation. Paris: Seghers. 
+Bahm, A.J. 
+1984a "Holons: Three Conceptions", Systems Research 1(2):145-150. 
+1984b "Five Systems Concepts of Society", General Systems KVIII:43-57 
+1985 "Stages in the Development of Systems Philosophy". Pp. 253-256 in B. Banathy (ed.), Systems Inquiring: Theory, Philosophy, Methodology. Seaside, Calif.: Intersystems. 
+Battista, J.R. 
+1977 	"The Holistic Paradigm and.'General Systems Theory", General Systems XXII:65--71. 
+von Bertalaaffy, L. 
+1968 	General Systems Theory, New York: Braziller. 
+Brown, G.S. 
+1979 	Laws of Form. London: George Allen and Unwin. 
+Eigen, M. 
+1971 	"Self-organization of Matter and the Evolution of Biological Macromolecules". Naturwissenschaften 58:465-523. 
+von Foerster, H. 
+1973 	"On constructing a Reality". Pp. 35-46 in F.E. Preiser (ed.), Environmental Design Research. Dowden: Hutchinson Rose. 
+Gaines, B.R. and Shaw, M.L.G.-
+1985 	"Three World Views and Systems Philosophies." Pp. 244-252 in B. Banathy (ed.), Systems Inquiring: Theory, Philosophy, Methodology. Seaside, Calif.: Intersystems. 
+Gödel, K. 
+1931 	"Über formal unentscheidbare Sätze der Principia Mathematics and verwandter Systeme, I." Monatshefte fur Mathematik and Physik 38:173-198. 
+Haken, H. 
+1977 Synergetics. Berlin: Springer. 
+von Hayek, F.A. 
+1975 	"Kinds of Order in Society". Studies in Social Theory, No. 5, Institute for Humane Studies, Menlo Park, Calif. 
+Hofstadter, D.R. 
+1979 Godel, Escher, Bach: An eternal golden braid. New York: Vintage Books. A-29 
+Jantsch, E. 
+1980 The Self-Organizing Universe, Scientific and Human Implications of the Emerging Paradigm of Evolution. New York: Pargamon. 
+Koestler, A. 
+1967 	The Ghost in the Machine., London: Hutchinson. 
+Lebeck, M. 
+1985 	"Before Dualism: The Emergence of Logical Explanations of Unity". Pp. 138-143 in 
+B. Banathy (ed.), Systems Inquiring: Theory, Philosophy, Methodology. Seaside, Calif.: Intersystems. 
+Mandelbrot, B. 
+1977 Fractals: Form, Chance, and Dimension. San Francisco: Freeman 
+Miller, J.G. 
+1978 Living Systems. New York: McGraw Hill. 
+Morin, E. 
+1977 	La Methode 1:, La Nature de la Nature. Paris: Seuil. 1980 	La Methode 2: La Vie de la Vie. Paris: Seuil. 
+Nicolis, G. and Prigogine, I. 
+1977 	Self-Organization in Non-equilibrium Systems, From Dissipative Structures to Order through Fluctuation. New York: Wiley. 
+Sadovsky, V.N. 
+1985 	"Systems Philosophy or Philosophy of Systems?" Pp. 
+257-.271 in _B.-Banathy (ed.), Systems Inquiring: Theory, Philosophy, Methodology.—- Seaside, Calif.: Intersystems. 
+Thom, R. 
+1972 Stabilité Structurelle et Morphogenese. New York: Benjamin. 
+Turing, A.M. 
+1936 	"On computable numbers, with an application to the Entscheidungsproblem." Proc. London Math. Soc. Seer. 2, 43:230262. 
+Varela, F. 
+1979 	Principles of Biological Autonomy. New York: Elsevier. 
+Voorhees, B. 
+1985a "Is there a Universal Hierarchy Generator?" Pp. 54--57 in B. Banathy (ed.), Systems Inquiring: Theory, Philosophy, Methodology. Seaside, Calif.: Intersystems. 
+1985b "Philosophical. Issues in Trialectic Logic." Pp. 288-293 in B. Banathy (ed.)-; Systems Inquiring,: Theory, Philosophy, Methodology. Seaside, Calif.: Intersystems. 
+Watzlawick, P. 
+1976 	How real is real? Communication, Disinformation, Confusion. New York: Random House. 
+Wiener, N. 
+1948 	Cybernetics, or Control and Communication in the Animal and the Machine. New York: John Wiley. 
+Winiwarter, P. 
+1983 	"The Genesis Model. Part I: Complexity, a Measure for the Evolution of Selforganized Systems". Spec. Science and Technology 6:11-20. 
+1985 "Iso-dynamics of Population-size Distributions in hierarchical Systems." Pp. 103-112 in B.H. Banathy (ed.), Systems Inquiring: Theory,.Philosophy, Methodology. 
+Seaside, Calif.: Intersystems. 
+1986 "Concepts of Self-Organization 
+'Self-Organization of Concepts." Session on Hierarchy Theory, this volume. 
+Wronski, H. 
+1850 	Les cent pages decisives. Metz: Alean. 
+Winiwarter, P. , AUTOGNOSIS: the theory of hierarchical self-image building systems 
+
+Winiwarter, P. , AUTOGNOSIS: the theory of hierarchical self-image building systems 
+
+1/11 
+
+1/11 
+
+Winiwarter, P. , AUTOGNOSIS: the theory of hierarchical self-image building systems 
+
+1/11 
+

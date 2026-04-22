@@ -1,0 +1,203 @@
+[[!meta copyright="Copyright © 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta date="2024-04-05 11:07 UTC"]]
+
+Hello!  Welcome to a new qoth.  This qoth covers new and interesting GNU/Hurd
+developments in Q1 of 2024!
+[[!if test="included()" then="""[[!toggle id=full_news
+text="Details."]][[!toggleable id=full_news text="[[!paste id=full_news]]"]]"""
+else="
+[[!paste id=full_news]]"]]
+
+[[!cut id="full_news" text="""
+
+Etienne Brateau modified console-client to use [xkbcommon instead of x11 for xkb
+extended
+support](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00060.html),
+which improves keyboard layout coverage a lot!
+
+Flavio Cruz also worked on [porting GDB to the 64-bit
+Hurd](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00147.html),
+implemented `setcontext/getcontext/makecontext/swapcontex ()` in
+[glibc](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00106.html), and [implemented child process resource
+accounting](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00098.html).
+The latter implements`getrusage(RUSAGE_CHILDREN, )` and populates child related
+data in `times()`.
+
+He fixed the [perl testsuite for the
+Hurd](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00021.html), and he
+also posted a [RFC to enhance tracing
+utilities](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00034.html),
+which he used to port the RPC format to 64 bit.
+
+Flavio also had a smattering of fixes
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00219.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00091.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00151.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00008.html), and
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00068.html).
+
+Damien Zammit had some fixes including [fixing the console with APIC
+enabled](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00277.html),
+[patching GNU Mach to support ACPI
+v2](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00278.html), [fixing
+baud rate on com
+ports](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00176.html),
+[porting the Hurd to some AMD
+CPUs](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00220.html) (WIP),
+[adding HPET (high precision
+timers)](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00039.html). He
+also worked on making `ext2fs` [use xattr by default to store
+translators](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00012.html).
+
+Damien also worked on more SMP fixes
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00016.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00021.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00051.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00063.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00079.html), and
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00124.html). 
+Hurd currently boots in SMP mode on the BSP. Damien wrote a test program that lets you run a [task on the APs](https://lists.gnu.org/archive/html/bug-hurd/2024-02/msg00088.html).
+
+Sergey Bugaev [patched binutils to support the GNU/Hurd on
+AArch64](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00000.html), and
+he wrote some patches to make the Hurd easier to port
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00002.html),
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00063.html), and
+[here](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00100.html),
+
+Sergey also posted a fairly large [RFC patch series for his AArch64
+port](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00022.html). He
+writes:
+
+    MIG seems to just work (thanks to all of Flávio's work!). I'm using
+     the same message ABI as on x86_64, and haven't seen any issues so far
+     — neither compiler errors / failed static assertions (about struct
+     sizes and such), nor hardware errors from misaligned accesses.
+
+
+He also mentions that "the hardware hardening features (BTI, MTE, PAC) are
+currently 'not really supported', but I do want to support them in the future."
+Samuel merged
+[many](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00050.html)
+[of](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00051.html)
+[the](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00052.html)
+[patches](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00062.html).
+
+In Sergey's later glibc patch series, he wrote about the [AArch64 port
+progress](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00114.html). He
+wrote:
+
+    Last time, there was no AArch64 port of GNU Mach, and so the only testing
+     I have done was running a simple statically-linked executable on Linux under
+     GDB, which, nevertheless, helped me identify and fix a number of issues.
+
+     Since then, however, I have been (some may say, relentlessly) working on
+     filling in the missing piece, namely porting GNU Mach (with important help &
+     contributions by Luca D.). I am happy to report that we now have an
+     experimental port of GNU Mach that builds and works on AArch64! While that may
+     sound impressive, note that various things about it are in an extremely basic,
+     proof-of-concept state rather than being seriously production-ready; and also
+     that Mach is a small kernel (indeed, a microkernel), and it was designed from
+     the start (back in the 80s) to be portable, so most of the "buisness logic"
+     functionality (virtual memory, IPC, tasks/threads/scheduler) is explicitly
+     arch-independent.
+
+     Despite the scary "WIP proof-of-concept" status, there is enough
+     functionality in Mach to run userland code, handle exceptions and
+     syscalls, interact with the MMU to implement all the expected virtual
+     memory semantics, schedule/switch tasks and threads, and so on.
+     Moreover, all of GNU Mach's userspace self-tests pass!
+
+     This meant there was enough things in place for me to try running
+     glibc on it, and the amazing thing is my simple test executable, the
+     same one I previously tested on Linux with GDB, just worked on real
+     Mach without me having to make any additional changes to the glibc
+     side, or even recompile it.
+
+     But I did not stop there, and I got several of the core Hurd servers
+     working!  Namely, these are ext2fs, exec, startup, auth, and proc
+     servers. All of them but ext2fs are dynamically linked; ld
+     aarch64.so.1 sucessfully locates and maps the programs themselves
+     and their required dependencies, and Mach pages in code and data
+     pages from ext2fs as they are accessed, transparently to the
+     program, just as one would expect it to.
+
+
+Be sure to read more from his announcement
+[email](https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00114.html).
+
+Sergey also announced [a new Alpine distro based on Hurd](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00180.html) (it
+currently does not have a name). His goal is to add another Hurd distribution,
+which will force the Hurd to work with different software and hopefully fix more
+bugs. Alpine Linux also usually runs the latest software, so this new Hurd
+distribution will be for those who like living on the bleeding edge. He writes:
+
+
+    I have ported many Alpine packages to build with (i386, for now) GNU
+     Mach, the Hurd, and glibc, replacing Linux and musl. If you want a
+     specific number: as of yesterday, I have 299 installable packages; the
+     number of source packages is of course several times less than that.
+     Still, this includes things like curl, ncurses, nano, native binutils
+     & gcc & mig, libffi, openrc, openssl, util-linux, busybox, apk-tools,
+     ... and of course gnumach, hurd (with dependencies like libdaemon,
+     parted, ...), and glibc. Importantly, all this cleanly bootstraps
+     using the scripts/bootstrap.sh script that they provide; this is too
+     somewhat like Flávio's scripts, but it uses the real full Alpine
+     package definitions for e.g. GCC (patched by me for glibc / Hurd
+     support).
+
+     Above the kernel and libc, things remain much as they were in upstream
+     Alpine: the system boots (will boot — I haven't tried it yet) with
+     busybox init & OpenRC, and uses busybox as its basic userland. GNU
+     software such as Bash is installable, too.
+
+
+This new Hurd distribution currently does not have a mailing list, irc room, or
+website. If you are interesting
+in helping Sergei to develop it further, then please email bug-hurd@gnu.org.
+
+Luca Dariz added [userspace
+tests](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00125.html), which
+work with qemu. We currently test the Hurd in qemu on a GNU/Linux host. He also described how [he currently uses the 64-bit
+Hurd](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00047.html).
+Perhaps you should follow that advice if you want to try running a 64-bit Hurd
+on qemu.
+
+Manolo de Medici made a WIP patch series that gets [qemu
+to run on the
+Hurd](https://lists.gnu.org/archive/html/bug-hurd/2024-01/msg00153.html).
+
+I organized a belated GNU/Hurd Christmas party. We had 6 or 7
+attenders, which was pretty awesome! I was not able to record the event, so
+perhaps we should try for another meet perhaps at the end of Q2. If you would
+like to help me plan/organize/join such a party, then please email
+bug-hurd@gnu.org.
+
+If you want to test if your favorite packages work on the Hurd and
+contribute towards making the full GNU system usable for a wider range
+of people, please [[check the contributing page|contributing]].
+
+---
+
+The **GNU Hurd** is the GNU project's replacement for the Unix kernel.  It is a
+collection of servers that run on the Mach microkernel to implement file
+systems, network protocols, file access control, and other features that are
+implemented by the Unix kernel or similar kernels (such as Linux).  [[More
+detailed|hurd/documentation]].
+
+**GNU Mach** is the microkernel upon which a GNU Hurd system is based.  It
+provides an Inter Process Communication (IPC) mechanism that the Hurd uses to
+define interfaces for implementing in a distributed multi-server fashion the
+services a traditional operating system kernel provides.  [[More
+detailed|microkernel/mach/gnumach]].
+
+"""]]

@@ -1,0 +1,43 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Cognumach is built for i686 (32-bit x86)
+export DEB_HOST_ARCH=i386
+export CC=gcc -m32
+export LD=ld -melf_i386
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	autoreconf -fi
+	./configure \
+		--host=i686-gnu \
+		--prefix=/usr \
+		--enable-kdb \
+		--enable-kmsg \
+		CC="$(CC)" \
+		LD="$(LD)"
+
+override_dh_auto_build:
+	$(MAKE) -j$(shell nproc)
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/cognumach
+	# Install development headers
+	mkdir -p $(CURDIR)/debian/cognumach-dev/usr/include
+	cp -r include/mach $(CURDIR)/debian/cognumach-dev/usr/include/
+	# Install kernel image
+	mkdir -p $(CURDIR)/debian/cognumach/boot
+	cp gnumach $(CURDIR)/debian/cognumach/boot/gnumach-cognumach
+
+override_dh_auto_test:
+	# Skip tests for kernel package
+	@echo "Skipping tests for kernel package"
+
+override_dh_strip:
+	# Don't strip kernel binary
+	dh_strip -Xcognumach

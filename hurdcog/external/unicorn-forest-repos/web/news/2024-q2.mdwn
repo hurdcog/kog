@@ -1,0 +1,116 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta date="2024-06-27 06:07 UTC"]]
+
+Hello!  Welcome to a new qoth.  This qoth covers new and interesting GNU/Hurd
+developments in Q2 of 2024!
+[[!if test="included()" then="""[[!toggle id=full_news
+text="Details."]][[!toggleable id=full_news text="[[!paste id=full_news]]"]]"""
+else="
+[[!paste id=full_news]]"]]
+
+[[!cut id="full_news" text="""
+
+Sergey Bugaev [committed public
+headers](https://lists.gnu.org/archive/html/bug-hurd/2024-04/msg00023.html) for
+the GNU Mach AArch64 port. He writes that
+
+> ``` ...there is now a real port of GNU Mach to AArch64, using these headers as
+> its actual API/ABI. We got the Mach port to run glibc, several Hurd servers,
+> and simple Unix programs, including things like fork/exec and signal delivery
+> & handling working, which exercises these architecture-specific definitions
+> (thread state & exceptions). We have also managed to do some testing on real
+> hardware; although not everything is working yet, we have seen thread state
+> manipulation & Mach handling an unaligned SP fault work as expected. ```
+
+His email also mentions that the GCC patches that enable GCC to compile GNU/Hurd
+programs on AArch64 have been merged! This apparently will make it easier to
+merge his AArch64 specific glibc patches.
+
+He also added new tests to check that [threads handle signals
+well](https://lists.gnu.org/archive/html/bug-hurd/2024-04/msg00031.html), and he
+also fixed a [use-after-free in
+vm_map_pageable_scan()](https://lists.gnu.org/archive/html/bug-hurd/2024-04/msg00005.html).
+He also hosted a [lengthy Hurd code
+jam](https://www.youtube.com/watch?v=lQ7bWzsL7Ps) (apologies for the poor audio
+quality).
+
+He also very notably added support to [copy a send once
+right](https://lists.gnu.org/archive/html/bug-hurd/2024-04/msg00001.html) to
+Mach and MIG.
+
+Some time ago, Sergey also wrote the
+[terrible-mdns-responder](https://darnassus.sceen.net/~hurd-web/hurd/terrible-mdns-responder/),
+and if you would like to be able to type in `ssh HOSTNAME.local` and connect to
+a locally running Hurd, then you may want to try it!
+
+Flávio Cruz fixed some issues with the Hurd compiling
+[on](https://lists.gnu.org/archive/html/bug-hurd/2024-06/msg00023.html)
+[GCC](https://lists.gnu.org/archive/html/bug-hurd/2024-06/msg00028.html)
+[14](https://lists.gnu.org/archive/html/bug-hurd/2024-06/msg00024.html).
+
+Luca Dariz fixed message sizes, where the size was [not set by
+userspace](https://lists.gnu.org/archive/html/bug-hurd/2024-06/msg00015.html),
+and he added another test to [check message sizes on various code
+paths](https://lists.gnu.org/archive/html/bug-hurd/2024-06/msg00014.html).
+
+Debian GNU/Hurd now offers an experimental [SMP GNU Mach
+kernel](https://lists.debian.org/debian-hurd/2024/04/msg00006.html) (32-bit
+only) and the [official rustc
+compiler](https://lists.debian.org/debian-hurd/2024/05/msg00016.html)! Now that
+we have ported rustc to Debian GNU/Hurd, we can compile important packages like
+librsvg. Debian GNU/Hurd now can compile [71% of the packages from the Debian
+archive](https://logs.guix.gnu.org/hurd/2024-06-25.log).
+
+Now for something trivial but fun! I updated the guide on the Hurd wiki that
+shows how one can run their own [personal ext2fs
+translator](https://darnassus.sceen.net/~hurd-web/hurd/translator/ext2fs/).
+
+You could go crazy even! Why not make something like this:
+
+     ~/silly <--> silly.fs
+        |   \
+        |    \
+        |     \
+        |      \
+        |       \
+       \|/       \/
+      silly1 <-> silly1.fs
+            ...
+     
+     /hurd/joshua/silly/silly1/silly2/silly3/silly4
+
+Each sillyN is another ext2fs filesystem! Make sure that as N gets bigger
+sillyN.fs gets smaller. Let us know in the #hurd irc channel how "silly"
+you are. :)
+
+The current record is `~/silly1/silly2` where each `sillyN` is a different
+ext2fs. Does anyone want to volunteer to beat the current record?
+
+So if you want to test if your favorite packages work on the Hurd and
+contribute towards making the full GNU system usable for a wider range
+of people, please [[check the contributing page|contributing]].
+
+---
+
+The **GNU Hurd** is the GNU project's replacement for the Unix kernel.  It is a
+collection of servers that run on the Mach microkernel to implement file
+systems, network protocols, file access control, and other features that are
+implemented by the Unix kernel or similar kernels (such as Linux).  [[More
+detailed|hurd/documentation]].
+
+**GNU Mach** is the microkernel upon which a GNU Hurd system is based.  It
+provides an Inter Process Communication (IPC) mechanism that the Hurd uses to
+define interfaces for implementing in a distributed multi-server fashion the
+services a traditional operating system kernel provides.  [[More
+detailed|microkernel/mach/gnumach]].
+
+"""]]

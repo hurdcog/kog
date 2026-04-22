@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  blender_api:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/blender_api
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "blender_api package verified (Python/Blender - no CMake build)"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - blender_api

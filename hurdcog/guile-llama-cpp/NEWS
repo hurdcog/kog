@@ -1,0 +1,12 @@
+   version 0.2      20240629
+      * introduction of chat.scm, with more control over char parameters
+      * chat scripts now output long replies from LLM
+
+   version 0.1.2    20240604
+      * further fixes for license consistency
+
+   Version 0.1.1    20240603
+      * fixing packaging issues, license notices and typos
+
+   Version 0.1      20240602
+      * initial release

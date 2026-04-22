@@ -1,0 +1,6 @@
+cogutil (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian package release
+  * Core utility library for OpenCog cognitive architecture
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2025 14:00:00 +0000

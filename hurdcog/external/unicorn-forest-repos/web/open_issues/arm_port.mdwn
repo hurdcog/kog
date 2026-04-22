@@ -1,0 +1,654 @@
+[[!meta copyright="Copyright © 2012, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+An experimental AArch64 port of GNU Mach, the Hurd servers, and glibc
+is underway.  In late September of 2024 the Hurd developers were able
+to run a minimal Hurd environment in qemu.  It still needs lots of
+work before we reccommend it to the casual user.
+
+Typically when one ports the Hurd to a different CPU architecture, one
+needs to first port GNU Mach.  But Sergey actually did it backward.
+He ported the Hurd first!  He did some hacking on glibc, binutils,
+GCC, and added some headers to GNU Mach.  Then He was able to build
+the core Hurd servers: ext2fs, proc, exec, and auth.
+
+One would think that he would need to port GNU Mach to run the
+binaries, but Sergey ran a statically linked hello world executable on
+GNU/Linux, under GDB, being careful to skip over and emulate syscalls
+and RPCs.  The glibc port has the TLS setup, hwcaps / cpu-features,
+and ifuncs.  Then he went and ported GNU Mach with help from Luca.
+Once Sergey's glibc patches are merged, then we can start cross
+compiling debian packages for aarch64-gnu.
+
+azert on irc can run a minimal GNU Mach userspace on the Olimex A64
+OLinuXino board, which supports a max 2GB of RAM.  As of September of
+2024, the easiest way to develop on the AArch64 port, is with qemu.
+Keep reading and you will see the guide that somes you how to
+cross-build a AArch64 Hurd.
+
+Now to some of the more technical things.
+
+- The TLS implementation is basically complete and working. We're
+using `tpidr_el0` for the thread pointer (as can be seen in the listing
+above), like GNU/Linux and unlike Windows (which uses x18, apparently)
+and macOS (which uses `tpidrro_el0`). We're using "Variant I" layout, as
+described in "ELF Handling for Thread-Local Storage", again same as
+GNU/Linux, and unlike what we do on both x86 targets. This actually
+ends up being simpler than what we had for x86! The other cool thing
+is that we can do `msr tpidr_el0, x0` from userspace without any
+gnumach involvement, so that part of the implementation is quite a bit
+simpler too.
+
+- Conversely, while on x86 it is possible to perform "cpuid" and
+identify CPU features entirely in user space, on AArch64 this requires
+access to some EL1-only registers. On Linux and the BSDs, the kernel
+exposes info about the CPU features via `AT_HWCAP` (and more recently,
+`AT_HWCAP2`) auxval entries. Moreover, Linux allows userland to read
+some otherwise EL1-only registers (notably for us, `midr_el1`) by
+catching the trap that results from the EL0 code trying to do that,
+and emulating its effect.  Also, Linux exposes `midr_el1` and
+`revidr_el1` values through procfs.
+
+- The Hurd does not use `auxval`, nor is gnumach involved in `execve` anyway.
+So I thought the natural way to expose this info would be with an RPC,
+and so in `mach_aarch64.defs` I have an `aarch64_get_hwcaps` routine that
+returns the two hwcaps values (using the same bits as `AT_HWCAP{,2}`) and
+the values of `midr_el1`/`revidr_el1`. This is hooked to `init_cpu_features`
+in glibc, and used to initialize `GLRO(dl_hwcap)` / `GLRO(dl_hwcap2)` and
+eventually to pick the appropriate ifunc implementations.
+
+- The page size (or rather, paging granularity) is notoriously not
+necessarily 4096 on ARM, and the best practice is for userland not to
+assume any specific page size and always query it dynamically. GNU
+Mach will (probably) have to be built support for some specific page
+size, but I've cleaned up a few places in glibc where things were
+relying on a statically defined page size.
+
+- There are a number of hardware hardening features available on AArch64
+(PAC, BTI, MTE — why do people keep adding more and more workarounds,
+including hardware ones, instead of rewriting software in a properly
+memory-safe language...). Those are not really supported right now; all
+of them would require some support form gnumach side; we'll probably
+need new protection flags (`VM_PROT_BTI`, `VM_PROT_MTE`), for one thing.
+
+We would need to come up with a design for how we want these to work
+Hurd-wide. For example I imagine it's the userland that will be
+generating PAC keys (and settings them for a newly exec'ed task),
+since gnumach does not contain the functionality to generate random
+values (nor should it); but this leaves an open question of what
+should happen to the early bootstrap tasks and whether they can start
+using PAC after initial startup.
+
+- Unlike on x86, I believe it is not possible to fully restore
+execution context (the values of all registers, including `pc` and
+`cpsr`) purely in userland; one of the reasons for that being that we
+can apparently no longer do a load from memory straight into `pc`,
+like it was possible in previous ARM revisions. So the way `sigreturn
+()` works on Linux is of course they have it as a syscall that takes a
+`struct sigcontext`, and writes it over the saved thread state, which
+is similiar to `thread_set_state ()` in Mach-speak.  The difference
+being that `thread_set_state ()` explicitly disallows you to set the
+calling thread's state, which makes it impossible to use for
+implementing `sigreturn ()`. So I'm thinking we should lift that
+restriction; there's no reason why `thread_set_state ()` cannot be
+made to work on the calling thread; it only requires some careful
+coding to make sure the return register (`%eax`/`%rax`/`x0`) is *not*
+rewritten with `mach_msg_trap`'s return code, unlike normally.
+
+- We need an interrupt handling framework with interupt controller
+  support.  Jessica Clark apparently did some of this for FreeBSD.
+  Perhaps Jessica could give us some pointers.
+
+But other than that, I do have an AArch64 versions of `trampoline.c`
+and `intr-msg.h` (complete with `SYSCALL_EXAMINE` &
+`MSG_EXAMINE`). Whether they work, we'll only learn once we have
+enough of the Hurd running to have the proc server.
+
+MIG seems to just work (thanks to all the Flávio's work!). We are
+using the `x86_64` ABI, and I have not seen any issues so far —
+neither compiler errors / failed static assertions (about struct sizes
+and such), nor hardware errors from misaligned accesses.
+
+To bootstrap gnumach someone must fix the console, set up the virtual
+memory, thread states, context switches, irqs and userspace entry
+points, etc.
+
+Also, there is a bunch of design work to do.
+
+Will/can AArch64 use the same mechanism for letting userland handle
+interrupts? Do we have all the mechanisms required for userland to
+poke at specific addresses in memory (to replace I/O ports)? — I
+believe we do, but I haven't looked closely.
+
+AFAIK there are no I/O ports in ARM, the usual way to configure things
+is with memory-mapped registers, so this might be easy. About IRQs,
+probably it needs to be arch-specific anyway.
+
+What should the API for manipulating PAC keys look like? Perhaps it
+should be another flavor of thread state, but then it is really
+supposed to be per-task, not per-thread. Alternatively, we could add a
+few aarch64-specific RPCs in `mach_arrch64.defs` to read and write the
+PAC keys. But also AFAICS Mach currently has no notion of per-task
+arch-specific data (unlike for threads, and other than the VM map), so
+it'd be interesting to add one. Could it be useful for something
+else?
+
+What are the debugging facilities available on ARM / AArch64? Should
+we expose them as more flavors of thread state, or something else?
+What would GDB need?
+
+Should gnumach accept tagged addresses (like `PR_SET_TAGGED_ADDR_CTRL`
+on Linux)?
+
+Can we make Linux code (in-Mach drivers, pfinet, netdde, ...) work on
+AArch64?
+
+One can trivially port pfinet to AArch64. Eventually, we should fix
+any remaining issues with lwip.  That way we can stop spending time
+maintaining pfinet, which is Linux's old abandoned networking stack.
+
+Developers will have a difficult time porting the in-Mach drivers
+(arm64 was probably not even a thing at the time).  We can perhaps
+port Netdde, but we should instead get our userspace drivers from a
+rumpkernel.
+
+Starting the kernel itself should be easy, thanks to GRUB, but it
+shouldn't be too hard to add support for U-Boot either if needed.
+
+I think more issues might come out setting up the various pieces of
+the system. For example, some chips have heterogeneous cores,
+(e.g. mine has two A72 cores and four A53 cores) so SMP will be more
+complicated.
+
+Also, about the serial console, it might be useful at some point to
+use a driver from userspace, if we can reuse some drivers from netbsd
+or linux, to avoid embedding all of them in gnumach.
+
+# Setting up a AArch64 development environment (in qemu)
+
+Before you follow the below guide, take a look at Flavio's
+[[cross-hurd|https://github.com/flavioc/cross-hurd]] project, which
+should give you some ideas about how to [[cross
+build|toolchain/cross-gnu]] the AArch64 GNU Mach and the Hurd via a
+GNU/Linux device.  You can also read Sergey's
+[[guide|https://mail.gnu.org/archive/html/bug-hurd/2023-01/msg00132.html]]
+on how to cross build a X86 Hurd (but you will need a more recent
+binutils and gcc).
+
+## Build gnumach
+
+Prepare the crosscompiler environment
+
+	$ PREFIX=~/src/crosshurd-aarch64
+	$ mkdir $PREFIX
+	$ mkdir $PREFIX/{src,include,aarch64-gnu}; ln -s ../include
+	$ $PREFIX/aarch64-gnu/sys-include; ln -s ../lib $PREFIX/aarch64-gnu/lib
+
+Compile binutils
+
+	$ cd $PREFIX/src
+	$ git clone https://sourceware.org/git/binutils-gdb.git
+	$ mv binutils-gdb/ binutils
+	$ cd binutils
+	$ mkdir build
+	$ cd build
+	$ ../configure --disable-werror --target=aarch64-gnu --prefix=$PREFIX --with-lib-path=$PREFIX/lib
+	$ make
+	$ make install
+
+Verify that e.g. `$PREFIX/bin/i686-gnu-nm -v` works.
+
+Compile gcc
+
+	$ cd $PREFIX/src
+	$ git clone https://gcc.gnu.org/git/gcc.git
+	$ cd gcc
+	$ mkdir build
+	$ cd build
+	$ ../configure --prefix=$PREFIX --target=aarch64-gnu \
+	--with-lib-path=$PREFIX/lib --disable-multilib --enable-languages=c
+	$ make -j2 all-gcc
+	$ make install-gcc
+
+Note that at this step we're only building GCC itself, not libgcc.
+We can build libgcc after we have installed glibc headers.
+
+Next, we want to build MIG. MIG needs Mach headers, but we can't build
+GNU Mach without MIG. So what we do is we 'make' GNU Mach twice, once
+to install the headers, and later on once more to actually build it.
+
+You might need this
+[[patch|https://lists.gnu.org/archive/html/bug-hurd/2024-03/msg00110.html]].
+
+Compile gnumach and install headers, Sergey branch
+
+	cd $PREFIX/src
+	git clone https://git.savannah.gnu.org/git/hurd/gnumach.git
+	cd gnumach
+	git remote add bugaevc https://github.com/bugaevc/gnumach.git
+	git fetch bugaevc
+	git switch -c wip-aarch64 bugaevc/wip-aarch64
+	autoreconf -i && mkdir build && cd build && CC=gcc ../configure
+	--prefix=$PREFIX --host=aarch64-gnu && make install-data
+
+Set PATH variable:
+
+	PATH=$PATH:$PREFIX/bin
+
+Install mig
+
+	$ cd $PREFIX/src
+	$ git clone https://git.savannah.gnu.org/git/hurd/mig.git
+	$ cd mig
+	$ autoreconf -i
+	$ mkdir build
+	$ cd build
+	$ ../configure --target=aarch64-gnu --prefix=$PREFIX
+	$ make
+	$ make install
+
+Install hurd headers
+
+	$ cd $PREFIX/src
+	$ git clone https://git.savannah.gnu.org/git/hurd/hurd.git
+	$ cd hurd
+	$ git remote add bugaevc https://github.com/bugaevc/hurd.git
+	$ git fetch bugaevc
+	$ git switch -c aarch64 bugaevc/aarch64
+	autoreconf -i && mkdir build && cd build
+	$ CC=gcc ../configure --host=aarch64-gnu --without-parted \
+	  --without-libcrypt--without-libbz2 --without-libz       \
+	  --without-rump
+	$ make no_deps=t prefix=$PREFIX install-headers
+
+Install glibc headers
+
+	$ cd $PREFIX/src
+	$ git clone https://sourceware.org/git/glibc.git
+	$ cd glibc/
+	$ git remote add bugaevc https://github.com/bugaevc/glibc.git
+	$ git fetch bugaevc
+	$ git switch -c aarch64-gnu bugaevc/aarch64-gnu
+	$ mkdir build
+	$ cd build
+	$ ../configure --disable-mathvec --host=aarch64-gnu --prefix= \
+	$ make install-headers DESTDIR=$PREFIX
+	$ touch $PREFIX/include/gnu/stubs.h $PREFIX/lib/libc.so
+	$ make csu/subdir_lib install csu/crt1.o csu/crti.o csu/crtn.o $PREFIX/lib
+
+Make libgcc
+
+	$ cd $PREFIX/src
+	$ cd gcc/build
+	$ make configure-target-libgcc
+	$ make all-target-libgcc
+	$ make install-target-libgcc
+
+Make gnumach for real now
+
+	$ cd $PREFIX/src
+	$ cd gnumach
+	$ rm -r build
+	$ mkdir build
+	$ cd build
+	$ ../configure --prefix=$PREFIX --host=aarch64-gnu
+	$ make
+
+Check booting notes in `aarch64/BOOTING`.
+
+Test gnumach:
+
+	$ cd $PREFIX/src
+	$ cd gnumach/build
+	$ make tests/module-{hello,gsync,mach_host,machmsg,mach_port,syscalls,task,threads,vm,thread-state}
+	$ qemu-system-aarch64 -m 1G -machine virt -cpu max -kernel gnumach \
+	  -nographic -append "foo=bar" -device
+	guest-loader,kernel=tests/module-hello,bootargs="module-hello"'${host-port}
+	${device-port} $(task-create) $(task-resume)',addr=0x4000
+	for test in gsync hello mach_host machmsg mach_port syscalls task
+	threads vm; do qemu-system-aarch64 -m 1G -machine virt -cpu max
+	-kernel gnumach -nographic -append "foo=bar" -device
+	guest-loader,kernel=tests/module-$test,bootargs="module-$test
+	"'${host-port} ${device-port} $(task-create)
+	$(task-resume)',addr=0x4000; done
+
+## Debug gnumach:
+
+	$ qemu-system-aarch64 -m 1G -machine virt -cpu max -kernel gnumach \
+	-nographic -append "foo=bar" -device
+	guest-loader,kernel=tests/module-hello,bootargs="module-hello
+	"'${host-port} ${device-port} $(task-create) $(task-resume)',addr=0x4000
+
+in another terminal (tab), run gdb, enter tar ext :1234, then p
+$pc. $pc is in 0x40000000. Enter si 6 times, $pc should jump to
+0x0000000040200000. symbol-file gnumach.elf -o $pc.
+
+## Build Das U-Boot
+
+Make Arm Trusted Firmware:
+
+	$ cd $PREFIX/src
+	$ git clone https://github.com/ARM-software/arm-trusted-firmware.git
+	$ cd arm-trusted-firmware
+	$ export CROSS_COMPILE=aarch64-gnu-
+	$ export ARCH=arm64
+	$ make PLAT=sun50i_a64 bl31
+
+Make crust:
+
+	$ cd $PREFIX/src
+	$ git clone https://github.com/crust-firmware/crust
+	$ cd crust
+	$ export CROSS_COMPILE=or1k-elf-
+	$ make a64-olinuxino_defconfig
+	$ make scp
+
+Download Das U-boot:
+
+	$ cd $PREFIX/src
+	$ git clone https://github.com/u-boot/u-boot.git
+
+Make Das U-boot:
+
+	$ cd $PREFIX/src
+	$ cd u-boot
+	$ export CROSS_COMPILE=aarch64-gnu-
+	$ export BL31=$PREFIX/src/arm-trusted-firmware/build/sun50i_a64/release/bl31.bin
+	$ export ARCH=arm64
+	$ export SCP=$PREFIX/src/crust/build/scp/scp.bin
+	$ make distclean
+	$ make a64-olinuxino_defconfig
+	$ make all
+
+Install u-boot:
+
+	# dd if=u-boot-sunxi-with-spl.bin of=/dev/[CHANGE THIS] bs=1024 seek=8
+
+## Boot gnumach with Das U-boot
+
+### Boot from serial
+
+After copying dt.dtb from u-boot, gnumach and tests/module-hello from
+gnumach in a local directory. Boot the system in u-boot. Then from a
+serial terminal run:
+
+
+	loady 0x42000000
+		<== load gnumach size:0x00069c58
+
+	loady 0x60000000
+		<== load module-hello size:0x000779e0
+
+	loady 0x42200000
+		<== load dt.dtb size:0x0000a018
+
+	fdt addr 0x42200000
+	fdt resize
+	fdt set /chosen bootargs "foo=bar"
+	fdt set /chosen \#address-cells <0x2>
+	fdt set /chosen \#size-cells <0x2>
+	fdt mknod /chosen module@0x60000000
+	fdt set /chosen/module@0x60000000 compatible "multiboot,kernel" "multiboot,module"
+	fdt set /chosen/module@0x60000000 reg <0x0 0x60000000 0x0 0x000779e0>
+	fdt set /chosen/module@0x60000000 bootargs "module-hello
+	"'${host-port} ${device-port} $(task-create) $(task-resume)'
+
+	fdt print /chosen
+
+	booti 0x42000000 - 0x42200000
+
+Where <== load commands are terminal-emulator dependent.
+
+### Boot from smartcard
+
+Copy dt.dtb, gnumach, gnumach-tracing and all modules on the sd
+card. The tracing version of gnumach is obtained by cherrypicking the
+relative commit in a gnumach tree and rebuilding gnumach:
+
+    git cherry-pick ee177f52680116538192b2c0c5d9a08e174c007f
+
+Create the file boot.cmd on the smartcard:
+
+    if itest $trace != 0; then load mmc 0:1 0x42000000 gnumach-tracing; else load mmc 0:1 0x42000000 gnumach; fi
+    load mmc 0:1 0x60000000 $module
+    load mmc 0:1 0x42200000 dt.dtb
+
+    fdt addr 0x42200000
+    fdt resize
+    fdt set /chosen bootargs "foo=bar"
+    fdt set /chosen \#address-cells <0x2>
+    fdt set /chosen \#size-cells <0x2>
+    fdt mknod /chosen module@0x60000000
+    fdt set /chosen/module@0x60000000 compatible "multiboot,kernel" "multiboot,module"
+    fdt set /chosen/module@0x60000000 reg <0x0 0x60000000 0x0 0x04000000>
+    fdt set /chosen/module@0x60000000 bootargs "$module "'${host-port}
+    ${device-port} $(task-create) $(task-resume)'
+
+    booti 0x42000000 - 0x42200000
+
+Compile it with:
+
+    mkimage -C none -A arm -T script -d boot.cmd boot.scr
+
+Boot into Das u-boot, interrupt automatic booting to set the variables
+before:
+
+    trace=0
+    module=module-hello
+    boot
+
+modify trace to a different number to start the version of gnumach
+compiled with tracing.
+
+# IRC, freenode, #hurd, 2012-11-15
+
+    <matty3269> Well, I have a big interest in the ARM architecture, I worked
+      at ARM for a bit too, and I've written my own little OS that runs on
+      qemu. Is there an interest in getting hurd running on ARM?
+    <braunr> matty3269: not really currently
+    <braunr> but if that's what you want to do, sure
+    <tschwinge> matty3269: Well, interest -- sure!, but we don't really have
+      people savvy in low-level kernel implementation on ARM.  I do know some
+      bits about it, but more about the instruction set than about its memory
+      architecture, for example.
+    <tschwinge> matty3269: But if you're feeling adventurous, by all means work
+      on it, and we'll try to help as we can.
+    <tschwinge> matty3269: There has been one previous attempt for an ARM port,
+      but that person never published his code, and apparently moved to a
+      different project.
+    <tschwinge> matty3269: I can help with toolchains (GCC, etc.) things for
+      ARM, if there's need.
+    <matty3269> tschwinge: That sounds great, thanks! Where would you recommend
+      I start (at the moment I've got Mach checked out and am trying to get it
+      compiled for i386)
+    <matty3269> I'm guessing that the Mach micro-kernel is all that would need
+      to be ported or are there arch-dependant bits of code in the server
+      processes?
+    <tschwinge> matty3269:
+      http://www.gnu.org/software/hurd/faq/system_port.html has some
+      information.  Mach is the biggest part, yes.  Then some bits in glibc and
+      libpthread, and even less in the Hurd libraries and servers.
+    <tschwinge> matty3269: Basically, you'd need equivalents for the i386 (and
+      similar) directories, yep.
+    <tschwinge> Though, you may be able to avoid some cruft in there.
+    <tschwinge> Does building for x86 have any issues?
+    <tschwinge> matty3269: How is generally your understanding of the Hurd on
+      Mach system architecture, and on microkernel-based systems generally, and
+      on Mach in particular?
+    <matty3269> tschwinge: yes, it seems to be progressing... I've got mig
+      installed and it's just compiling now
+    <matty3269> hmm, not too great if I'm honest, I've done mostly monolithic
+      kernel development so having such low-level processes, such as
+      scheduling, done in user-space seems a little strinage
+    <tschwinge> Ah, yes, MIG will need a little bit of porting, too.  I can
+      help with that, but that's not a priority -- first you have to get Mach
+      to boot at all; MIG will only be needed once you need to deal with RPCs,
+      so user-land/kernel interaction, basically.  Before, you can hack around
+      it.
+    <matty3269> tschwinge: I have been running a GNU/Hurd system for a while
+      now though
+    <tschwinge> I'm happy to tell you that the schedules is still in the
+      kernel.  ;-)
+    <tschwinge> OK, good, so you know about the basic ideas.
+    <braunr> matty3269: there has to be machine specific stuff in user space
+    <braunr> for initial thread contexts for example
+    <matty3269> tschwinge: Ok, just got gnumach built
+    <braunr> but there isn't much and you can easily base your work from the
+      x86 implementation
+    <tschwinge> Yes.  Mach itself is the more difficult one.
+    <matty3269> braunr: Yeah, looking around at things, it doesn't seem that
+      there will be too much work involoved in the user-space stuff
+    <tschwinge> braunr: Do you know off-hand whether there are some old Mach
+      research papers describing architecture ports?
+    <tschwinge> I know there are some describing the memory system (obviously),
+      and I/O system -- which may help matty3269 to understand the general
+      design/structure.
+    <tschwinge> We might want to identify some documents, and make a list.
+    <braunr> all mach related documentation i have is available here:
+      ftp://ftp.sceen.net/mach/
+    <braunr> (also through http://)
+    <tschwinge> matty3269: Oh, definitely I'd suggest the Mach 3 Kernel
+      Principles book.  That gives a good description of the Mach architecture.
+    <matty3269> Great, that's my weekends reading then!
+    <braunr> you don't need all that for a port
+    <matty3269> Is it possible to run the gnumach binary standalone with qemu?
+    <braunr> you won't go far with it
+    <braunr> you really need at least one program
+    <braunr> but sure, for a port development, it can easily be done
+    <braunr> i'd suggest writing a basic static application for your tests once
+      you reach an advanced state
+    <braunr> the critical parts of a port are memory and interrupts
+    <braunr> and memory can be particularly difficult to implement correctly
+    <tschwinge> matty3269: I once used QEMU's
+      virtual-FAT-filesystem-from-a-directory-on-the-host, and configured GRUB
+      to boot from that one, so it was easy to quickly reboot for kernel
+      development.
+    <braunr> but the good news is that almost every bsd system still uses a
+      similar interface
+    <tschwinge> matty3269: And, you may want to become familiar with QEMU's
+      built-in gdbserver, and how to connect to and use that.
+    <braunr> so, for example, you could base your work from the netbsd/arm pmap
+      module
+    <tschwinge> matty3269: I think that's better than starting on real
+      hardware.
+    <braunr> tschwinge: you can use -kernel with a multiboot binary now
+
+[[hurd/running/qemu#multiboot]].
+
+    <braunr> tschwinge: and even creating iso images is so fast it's not any
+      slower
+
+    <braunr> ah, the gnumach executable is a correct elf image
+    <matty3269> Is there particular reason that mach is linked at 0xc0100000?
+    <matty3269> or is that where it is expected to be in VM>
+    <tschwinge> That's my understanding.
+    <braunr> kernels commmonly sti at high addresses
+    <braunr> that's the "standard" 3G/1G split for user/kernel space
+    <matty3269> I think Linux sits at a similar VA for 32-bit
+    <braunr> no
+    <matty3269> Oh, I thought it did, I know it does on ARM, the kernel is
+      mapped to 0xc000000 
+    <braunr> i don't know arm, but are you sure about this number ?
+    <braunr> seems to lack a 0
+    <matty3269> Ah, yes sorry
+    <matty3269> so 0xC0000000
+    <braunr> 0xc0100000 is just 1 MiB above it
+    <braunr> the .text section of linux on x86 actually starts at c1000000
+      (above 16 MiB, certainly to preserve as much dma-able memory since modern
+      machines now have a lot more)
+    <matty3269> so with gnumach, does the boot-up sequence use PIC until VM is
+      active and the kernel mapped to the linking address?
+    <braunr> no
+    <braunr> actually i'm not certain of the details
+    <braunr> but there is no PIC
+    <braunr> either special sections are linked at physical addresses
+    <braunr> or it relies on the fact that all executable code uses near jumps
+    <braunr> and uses offsets when accessing data
+    <braunr> (which is why the kernel text is at 3 GiB + 1 MiB, and not 3 GiB)
+    <matty3269> hmm,
+    <braunr> but you shouldn't worry about that i suppose, as the protocol
+      between the boot loader and an arm kernel will certainly not be the saem
+    <braunr> same*
+    <matty3269> indeed, ARM is tricky because memory maps are vastly differnt
+      on every platform
+
+
+## IRC, freenode, #hurd, 2012-11-21
+
+    <matty3269> Well, I have a ARM gnumach kernel compiled. It just doesn't
+      run! :)
+    <braunr> matty3269: good luck :)
+
+
+# IRC, freenode, #hurd, 2013-01-30
+
+    <slpz> Hi, i've read there's an ongoing effort to port GNU Mach to ARM. How
+      is it going?
+    <braunr> not sure where you read that
+    <braunr> but i'm pretty sure it's not started if it exists
+    <slpz> braunr: http://www.gnu.org/software/hurd/open_issues/arm_port.html
+    <braunr> i confirm what i said
+    <slpz> braunr: OK, thanks. I'm interested on it, and didn't want to
+      duplicate efforts.
+    <braunr> little addition: it may have started, but we don't know about it
+
+
+# IRC, freenode, #hurd, 2013-09-18
+
+    <Hooligan0> as i understand ; on startup, vm_resident.c functions configure
+      the whole available memory ; but at this point the system does not split
+      space for kernel and space for future apps
+    <Hooligan0> when pages are tagged to be used by userspace ?
+    <braunr> Hooligan0: at page fault time
+    <braunr> the split is completely virtual, vm_resident deals with physical
+      memory only
+    <Hooligan0> braunr: do you think it's possible to change (at least)
+      pmap_steal_memory to mark somes pages as kernel-reserved ?
+    <braunr> why do you want to reserve memory ?
+    <braunr> and which memory ?
+    <Hooligan0> braunr: first because on my mmu i have two entry points ; so i
+      want to set kernel pages into a dedicated space that never change on
+      context switch (for best cache performance)
+    <Hooligan0> braunr: and second, because i want to use larger pages into
+      kernel (1MB) to reduce mmu work
+    <braunr> vm_resident isn't well suited for large pages :(
+    <braunr> i don't see the effect of context switch on kernel pages
+    <Hooligan0> at many times, context switch flush caches
+    <braunr> ah you want something like global pages on x86 ?
+    <Hooligan0> yes, something like
+    <braunr> how is it done on arm ?
+    <Hooligan0> virtual memory is split into two parts depending on msb bits
+    <Hooligan0> for example 3G/1G
+    <Hooligan0> MMU will use two pages tables depending on vaddr (hi-side or
+      low-side)
+    <braunr> hi is kernel, low is user ?
+    <Hooligan0> so, for the moment i've put mach at 0xC0000000 -> 0xFFFFFFFF  ;
+      and want to use 0x00000000 -> 0xBFFFFFFF for userspace
+    <Hooligan0> yes
+    <braunr> ok, that's what is done for x86 too
+    <Hooligan0> 1MB pages for kernel ; and 4kB (or 64kB) pages for apps
+    <braunr> i suggest you give up the large page stuff
+    <braunr> well, you can use them for the direct physical mapping, but for
+      kernel objects, it's a waste
+    <braunr> or you can rewrite vm_resident to use something like a buddy
+      allocator but it's additional work
+    <Hooligan0> for the moment it's waste ; but with some littles changes this
+      allow only one level of allocation mapping ;  -i think- it's better for
+      performances
+    <braunr> Hooligan0: it is, but not worth it
+    <Hooligan0> will you allow changes into vm_resident if i update i386 too ?
+    <braunr> Hooligan0: sure, as long as these are relevant and don't introduce
+      regressions
+    <Hooligan0> ok
+    <braunr> Hooligan0: i suggest you look at x15, since you may want to use it
+      as a template for your own changes
+    <braunr> as it was done for the slab allocator for example
+    <braunr> e.g. x15 already uses a buddy allocator for physical memory

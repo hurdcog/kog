@@ -1,0 +1,577 @@
+--------------------------------------------------------------------------------
+-- OpenCog Collection - Data Layer Formal Specification (Z++)
+-- 
+-- This specification formalizes the data models and invariants of the core
+-- AtomSpace hypergraph database and related data structures.
+--
+-- Author: Formal Methods Agent
+-- Date: 2025-11-06
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- SECTION 1: Basic Types and Constants
+--------------------------------------------------------------------------------
+
+-- Basic integer type for identifiers
+UUID ::= ℕ
+
+-- Bounded natural numbers for counts
+AtomCount ::= {n: ℕ | n ≥ 0 ∧ n ≤ 1000000000}
+ShardCount ::= {n: ℕ | n ≥ 0 ∧ n ≤ 1000}
+
+-- String representation (sequences of characters)
+String ::= seq Char
+
+-- Atom type identifiers (enumeration represented as naturals)
+AtomType ::= ℕ
+
+-- Truth value components
+TruthValueStrength ::= {r: ℝ | 0 ≤ r ≤ 1}
+TruthValueConfidence ::= {r: ℝ | 0 ≤ r ≤ 1}
+
+-- Attention values
+STI ::= ℤ  -- Short-term importance
+LTI ::= ℤ  -- Long-term importance
+VLTI ::= {b: 𝔹}  -- Very long-term importance (boolean)
+
+-- Network connection identifiers
+ConnectionID ::= ℕ
+SessionID ::= ℕ
+PortNumber ::= {n: ℕ | 1024 ≤ n ≤ 65535}
+
+-- Timestamps (Unix epoch milliseconds)
+Timestamp ::= ℕ
+
+-- Message priorities
+MessagePriority ::= {LOW, NORMAL, HIGH, URGENT}
+
+-- Message types
+MessageType ::= {DATA_TRANSFER, CONTROL, QUERY, RESPONSE, EVENT}
+
+--------------------------------------------------------------------------------
+-- SECTION 2: AtomSpace Core Data Model
+--------------------------------------------------------------------------------
+
+-- Basic Atom structure
+-- An Atom is the fundamental unit in the hypergraph database
+schema Atom
+  uuid: UUID
+  atomType: AtomType
+  name: String
+  truthValue: TruthValue
+  attentionValue: AttentionValue
+  incomingSet: ℙ UUID  -- Set of Atoms that reference this Atom
+  values: KeyValueStore  -- Mutable key-value storage
+where
+  -- UUID must be unique (enforced at AtomSpace level)
+  -- atomType must be a valid registered type
+  -- name is used for Node atoms, empty for Link atoms
+  atomType ∈ ValidAtomTypes
+end
+
+-- Link extends Atom with outgoing set
+schema Link extends Atom
+  outgoingSet: seq UUID  -- Ordered list of target Atoms
+where
+  -- Link must have at least one outgoing atom
+  #outgoingSet > 0
+  -- All outgoing atoms must exist (referential integrity)
+  ∀ targetUUID: UUID | targetUUID ∈ outgoingSet ⇒ 
+    targetUUID ∈ atomSpaceUUIDs
+end
+
+-- Node extends Atom (no outgoing set, identified by name)
+schema Node extends Atom
+where
+  -- Nodes are identified by (type, name) tuple
+  -- Empty outgoing set (implicit)
+  name ≠ ""
+end
+
+-- Truth Value representation (Simple/Confidence model)
+schema TruthValue
+  strength: TruthValueStrength
+  confidence: TruthValueConfidence
+  count: ℕ  -- Evidence count
+where
+  -- Basic probability constraints
+  0 ≤ strength ≤ 1
+  0 ≤ confidence ≤ 1
+  count ≥ 0
+end
+
+-- Attention Value for Economic Attention Networks (ECAN)
+schema AttentionValue
+  sti: STI  -- Short-term importance
+  lti: LTI  -- Long-term importance
+  vlti: VLTI  -- Very long-term importance flag
+where
+  -- Attention values can be negative (debt) or positive (credit)
+  true  -- No specific invariants beyond type constraints
+end
+
+-- Key-Value store for mutable data attached to Atoms
+schema KeyValueStore
+  entries: Key ⇸ Value  -- Partial function from keys to values
+where
+  -- Keys must be valid Atoms (typically Nodes)
+  dom entries ⊆ atomSpaceUUIDs
+end
+
+schema Key
+  keyAtom: UUID
+where
+  keyAtom ∈ atomSpaceUUIDs
+end
+
+schema Value
+  valueType: ValueType
+  data: ValueData
+end
+
+ValueType ::= {FLOAT_VALUE, STRING_VALUE, LINK_VALUE, BOOL_VALUE}
+
+ValueData ::= FloatVector | String | seq UUID | 𝔹
+
+FloatVector ::= seq ℝ
+
+-- Type system for Atoms
+schema AtomTypeNode
+  typeID: AtomType
+  typeName: String
+  parent: AtomType  -- Inheritance hierarchy
+  isLink: 𝔹  -- True if this is a Link type
+where
+  -- Root type has no parent (represented as self-reference)
+  typeID = parent ∨ parent ∈ ValidAtomTypes
+  -- Type names must be unique
+  typeName ≠ ""
+end
+
+ValidAtomTypes: ℙ AtomType
+
+--------------------------------------------------------------------------------
+-- SECTION 3: AtomSpace State Model
+--------------------------------------------------------------------------------
+
+-- AtomSpace: The central hypergraph database
+schema AtomSpace
+  atoms: UUID ⇸ Atom  -- Map from UUID to Atom
+  typeIndex: AtomType ⇸ ℙ UUID  -- Index atoms by type
+  nameIndex: (AtomType × String) ⇸ UUID  -- Index nodes by (type, name)
+  incomingIndex: UUID ⇸ ℙ UUID  -- Reverse index for links
+  typeSystem: AtomType ⇸ AtomTypeNode  -- Type hierarchy
+  readOnly: 𝔹  -- Read-only mode flag
+  refCount: UUID ⇸ ℕ  -- Reference counts for garbage collection
+where
+  -- All atoms in indices must exist in main atom table
+  ∀ t: AtomType; uuids: ℙ UUID | (t, uuids) ∈ typeIndex ⇒ uuids ⊆ dom atoms
+  
+  -- Name index integrity: all indexed UUIDs must exist
+  ∀ key: (AtomType × String); uuid: UUID | (key, uuid) ∈ nameIndex ⇒ 
+    uuid ∈ dom atoms
+  
+  -- Incoming index integrity
+  ∀ uuid: UUID; incoming: ℙ UUID | (uuid, incoming) ∈ incomingIndex ⇒
+    uuid ∈ dom atoms ∧ incoming ⊆ dom atoms
+  
+  -- Every atom must have a valid type
+  ∀ uuid: UUID; atom: Atom | (uuid, atom) ∈ atoms ⇒
+    atom.atomType ∈ dom typeSystem
+  
+  -- Reference count invariant: atoms with refCount > 0 must exist
+  dom refCount ⊆ dom atoms
+  
+  -- Bidirectional incoming set consistency
+  ∀ linkUUID: UUID; link: Link | (linkUUID, link) ∈ atoms ⇒
+    ∀ targetUUID: UUID | targetUUID ∈ link.outgoingSet ⇒
+      linkUUID ∈ atoms(targetUUID).incomingSet
+end
+
+-- AtomTable: Low-level storage mechanism
+schema AtomTable
+  uuidCounter: UUID  -- Next available UUID
+  storage: UUID ⇸ Atom
+  size: AtomCount
+where
+  -- UUID counter must be greater than all assigned UUIDs
+  ∀ uuid: UUID | uuid ∈ dom storage ⇒ uuid < uuidCounter
+  
+  -- Size must match actual storage
+  size = #(dom storage)
+  
+  -- No duplicate UUIDs (ensured by map structure)
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 4: CogServer Network State Model
+--------------------------------------------------------------------------------
+
+-- Network connection state
+schema Connection
+  connectionID: ConnectionID
+  sessionID: SessionID
+  clientAddress: String  -- IP:Port
+  protocol: Protocol
+  state: ConnectionState
+  authenticatedUser: String  -- Empty if not authenticated
+  createdAt: Timestamp
+  lastActivityAt: Timestamp
+where
+  -- Last activity must be after or equal to creation
+  lastActivityAt ≥ createdAt
+  
+  -- Authenticated connections must have non-empty user
+  state = AUTHENTICATED ⇒ authenticatedUser ≠ ""
+end
+
+Protocol ::= {TCP_BINARY, WEBSOCKET, HTTP}
+
+ConnectionState ::= {CONNECTING, AUTHENTICATING, AUTHENTICATED, 
+                     EXECUTING, ERROR, DISCONNECTING}
+
+-- Session state for interactive shells
+schema Session
+  sessionID: SessionID
+  connectionID: ConnectionID
+  shellType: ShellType
+  environment: Environment  -- Scheme/Python interpreter state
+  commandHistory: seq String
+  currentAtomSpace: UUID  -- Reference to AtomSpace instance
+where
+  -- Session must have valid connection
+  connectionID ∈ activeConnections
+  
+  -- Command history is append-only
+  #commandHistory ≥ 0
+end
+
+ShellType ::= {SCHEME_SHELL, PYTHON_SHELL, JSON_API, SEXPR_API}
+
+-- Environment: Interpreter state (simplified abstraction)
+schema Environment
+  variables: String ⇸ Value
+  modules: ℙ String  -- Loaded modules
+where
+  -- Module names must be non-empty
+  ∀ m: String | m ∈ modules ⇒ m ≠ ""
+end
+
+-- CogServer overall state
+schema CogServer
+  connections: ConnectionID ⇸ Connection
+  sessions: SessionID ⇸ Session
+  listenPorts: ℙ PortNumber
+  atomSpaces: UUID ⇸ AtomSpace  -- Multiple AtomSpace instances
+  defaultAtomSpace: UUID
+  serverState: ServerState
+where
+  -- Default AtomSpace must exist
+  defaultAtomSpace ∈ dom atomSpaces
+  
+  -- All sessions must reference existing connections
+  ∀ sid: SessionID; sess: Session | (sid, sess) ∈ sessions ⇒
+    sess.connectionID ∈ dom connections
+  
+  -- All session AtomSpaces must exist
+  ∀ sid: SessionID; sess: Session | (sid, sess) ∈ sessions ⇒
+    sess.currentAtomSpace ∈ dom atomSpaces
+  
+  -- Server must be listening if running
+  serverState = RUNNING ⇒ listenPorts ≠ ∅
+end
+
+ServerState ::= {STOPPED, STARTING, RUNNING, STOPPING, ERROR}
+
+activeConnections: ℙ ConnectionID
+
+--------------------------------------------------------------------------------
+-- SECTION 5: CogGML Microkernel Data Model
+--------------------------------------------------------------------------------
+
+-- Cognitive Shard: Self-aware processing unit
+schema CognitiveShard
+  shardID: UUID
+  name: String
+  purpose: String
+  state: ShardState
+  selfAwarenessMetrics: SelfAwarenessMetrics
+  messageQueue: seq ShardMessage
+  processCallback: ProcessCallback  -- Function reference
+  activatedAt: Timestamp
+  deactivatedAt: Timestamp  -- 0 if currently active
+where
+  -- Name and purpose must be non-empty
+  name ≠ "" ∧ purpose ≠ ""
+  
+  -- Temporal consistency
+  state = ACTIVE ⇒ deactivatedAt = 0
+  state = INACTIVE ⇒ activatedAt ≤ deactivatedAt
+  
+  -- Active shards must have at least been activated once
+  state = ACTIVE ⇒ activatedAt > 0
+end
+
+ShardState ::= {INACTIVE, ACTIVATING, ACTIVE, PROCESSING, 
+                SELF_MONITORING, DEACTIVATING}
+
+-- Self-awareness metrics for cognitive shards
+schema SelfAwarenessMetrics
+  taskCompletionRate: {r: ℝ | 0 ≤ r ≤ 1}
+  averageResponseTime: ℝ  -- milliseconds
+  errorRate: {r: ℝ | 0 ≤ r ≤ 1}
+  selfAssessmentScore: {r: ℝ | 0 ≤ r ≤ 1}
+  lastReflectionTime: Timestamp
+where
+  -- Response time must be non-negative
+  averageResponseTime ≥ 0
+  
+  -- All metrics are bounded
+  0 ≤ taskCompletionRate ≤ 1
+  0 ≤ errorRate ≤ 1
+  0 ≤ selfAssessmentScore ≤ 1
+end
+
+ProcessCallback ::= Function  -- Abstract function type
+
+-- Inter-shard messages
+schema ShardMessage
+  messageID: UUID
+  senderID: UUID
+  receiverID: UUID
+  messageType: MessageType
+  priority: MessagePriority
+  payload: String
+  sentAt: Timestamp
+  deliveredAt: Timestamp  -- 0 if not delivered
+where
+  -- Sender and receiver must be different (no self-messages)
+  senderID ≠ receiverID
+  
+  -- Delivered timestamp must be after sent timestamp
+  deliveredAt = 0 ∨ deliveredAt ≥ sentAt
+  
+  -- Sender and receiver must be valid shards
+  senderID ∈ registeredShards
+  receiverID ∈ registeredShards
+end
+
+registeredShards: ℙ UUID
+
+-- Shard Coordinator state
+schema ShardCoordinator
+  shards: UUID ⇸ CognitiveShard
+  activeShards: ℙ UUID
+  messageRouter: MessageRouter
+  synergyLevel: {r: ℝ | 0 ≤ r ≤ 1}
+  coordinationMetrics: CoordinationMetrics
+where
+  -- Active shards must be registered
+  activeShards ⊆ dom shards
+  
+  -- Active shards must have ACTIVE state
+  ∀ sid: UUID | sid ∈ activeShards ⇒ shards(sid).state = ACTIVE
+  
+  -- Synergy level is calculated from active interactions
+  activeShards ≠ ∅ ⇒ synergyLevel > 0
+end
+
+-- Message routing state
+schema MessageRouter
+  routingTable: UUID ⇸ UUID  -- Receiver to current handler mapping
+  messageQueue: seq ShardMessage  -- Pending messages
+  deliveryMetrics: DeliveryMetrics
+where
+  -- All receivers in routing table must be registered shards
+  ran routingTable ⊆ registeredShards
+end
+
+-- Coordination performance metrics
+schema CoordinationMetrics
+  totalMessagesSent: ℕ
+  totalMessagesDelivered: ℕ
+  averageDeliveryTime: ℝ  -- milliseconds
+  coordinationCycles: ℕ
+where
+  -- Delivered messages cannot exceed sent messages
+  totalMessagesDelivered ≤ totalMessagesSent
+  
+  -- Average delivery time is non-negative
+  averageDeliveryTime ≥ 0
+  
+  -- Coordination cycles must be non-negative
+  coordinationCycles ≥ 0
+end
+
+schema DeliveryMetrics
+  successfulDeliveries: ℕ
+  failedDeliveries: ℕ
+  averageLatency: ℝ  -- milliseconds
+where
+  averageLatency ≥ 0
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 6: CogSelf AGI Framework Data Model
+--------------------------------------------------------------------------------
+
+-- AGI Goal representation
+schema AGIGoal
+  goalID: UUID
+  name: String
+  description: String
+  progress: {r: ℝ | 0 ≤ r ≤ 1}  -- 0 to 1
+  priority: {p: ℕ | 1 ≤ p ≤ 10}
+  milestones: seq Milestone
+where
+  -- Goal must have a name and description
+  name ≠ "" ∧ description ≠ ""
+  
+  -- Progress must be consistent with milestones
+  #milestones > 0 ⇒ 
+    progress = (# {m: Milestone | m ∈ milestones ∧ m.completed}) / #milestones
+end
+
+schema Milestone
+  milestoneID: UUID
+  description: String
+  completed: 𝔹
+  completedAt: Timestamp  -- 0 if not completed
+where
+  completed = true ⇒ completedAt > 0
+  completed = false ⇒ completedAt = 0
+end
+
+-- Synergy Manager state
+schema SynergyManager
+  components: ℙ ComponentID
+  interactionMatrix: ComponentID × ComponentID ⇸ ℝ  -- Synergy scores
+  overallSynergyLevel: {r: ℝ | 0 ≤ r ≤ 1}
+  lastOptimization: Timestamp
+where
+  -- Interaction matrix must be symmetric
+  ∀ c1, c2: ComponentID | (c1, c2) ∈ dom interactionMatrix ⇒
+    (c2, c1) ∈ dom interactionMatrix ∧
+    interactionMatrix(c1, c2) = interactionMatrix(c2, c1)
+  
+  -- All components in matrix must be registered
+  dom interactionMatrix ⊆ components × components
+  
+  -- Overall synergy is aggregate of interactions
+  #components > 1 ⇒ overallSynergyLevel > 0
+end
+
+ComponentID ::= {COGGML, ACCELERATOR, AGENTIC, PLN, URE, MOSES}
+
+-- CogSelf main framework state
+schema CogSelf
+  goals: UUID ⇸ AGIGoal
+  synergyManager: SynergyManager
+  shardCoordinator: ShardCoordinator
+  improvementPlans: seq ImprovementPlan
+  overallAGIProgress: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- At least one AGI goal must be defined
+  #goals > 0
+  
+  -- Overall progress is weighted average of goal progress
+  overallAGIProgress = 
+    (Σ {g: AGIGoal | g ∈ ran goals} · g.progress * g.priority) /
+    (Σ {g: AGIGoal | g ∈ ran goals} · g.priority)
+  
+  -- Synergy level influences AGI progress
+  synergyManager.overallSynergyLevel > 0
+end
+
+-- Improvement plan for autonomous self-improvement
+schema ImprovementPlan
+  planID: UUID
+  targetComponent: ComponentID
+  description: String
+  expectedImprovement: {r: ℝ | 0 ≤ r ≤ 1}
+  status: PlanStatus
+  createdAt: Timestamp
+  implementedAt: Timestamp  -- 0 if not implemented
+where
+  status = IMPLEMENTED ⇒ implementedAt > createdAt
+  status ≠ IMPLEMENTED ⇒ implementedAt = 0
+end
+
+PlanStatus ::= {PROPOSED, APPROVED, IMPLEMENTING, IMPLEMENTED, REJECTED}
+
+--------------------------------------------------------------------------------
+-- SECTION 7: Storage Backend Data Model
+--------------------------------------------------------------------------------
+
+-- Storage Node abstraction
+schema StorageNode
+  storageID: UUID
+  backendType: BackendType
+  connectionString: String
+  connected: 𝔹
+  readOnly: 𝔹
+  statistics: StorageStatistics
+where
+  -- Connected storage must have valid connection string
+  connected = true ⇒ connectionString ≠ ""
+end
+
+BackendType ::= {ROCKSDB, POSTGRESQL, COG_DISTRIBUTED, IN_MEMORY}
+
+-- Storage operation statistics
+schema StorageStatistics
+  atomsStored: ℕ
+  atomsFetched: ℕ
+  atomsDeleted: ℕ
+  totalReads: ℕ
+  totalWrites: ℕ
+  averageReadLatency: ℝ  -- milliseconds
+  averageWriteLatency: ℝ  -- milliseconds
+where
+  -- Fetched atoms must be non-zero if storage is used
+  totalReads ≥ atomsFetched
+  
+  -- Latencies must be non-negative
+  averageReadLatency ≥ 0
+  averageWriteLatency ≥ 0
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 8: Global Invariants
+--------------------------------------------------------------------------------
+
+-- Global system invariant: AtomSpace UUID uniqueness across all instances
+invariant GlobalUUIDUniqueness
+  ∀ as1, as2: AtomSpace | as1 ≠ as2 ⇒
+    dom as1.atoms ∩ dom as2.atoms = ∅
+
+-- Global invariant: All atom references must resolve
+invariant ReferentialIntegrity
+  ∀ as: AtomSpace; link: Link | link ∈ ran as.atoms ⇒
+    ∀ uuid: UUID | uuid ∈ link.outgoingSet ⇒ uuid ∈ dom as.atoms
+
+-- Global invariant: Type system must be acyclic (no circular inheritance)
+invariant TypeHierarchyAcyclic
+  ∀ as: AtomSpace; t: AtomType | t ∈ dom as.typeSystem ⇒
+    ¬ (∃ chain: seq AtomType | 
+       chain₀ = t ∧ 
+       (∀ i: ℕ | i < #chain - 1 ⇒ 
+         as.typeSystem(chainᵢ).parent = chainᵢ₊₁) ∧
+       chain₍#chain-1₎ = t)
+
+-- Global invariant: Shard messages must be deliverable
+invariant MessageDeliverability
+  ∀ coord: ShardCoordinator; msg: ShardMessage | 
+    msg ∈ coord.messageRouter.messageQueue ⇒
+    msg.receiverID ∈ dom coord.shards
+
+-- Global invariant: Active connections must have valid sessions
+invariant ConnectionSessionConsistency
+  ∀ cs: CogServer; conn: Connection | 
+    conn ∈ ran cs.connections ∧ conn.state = AUTHENTICATED ⇒
+    (∃ sess: Session | sess ∈ ran cs.sessions ∧ 
+                       sess.connectionID = conn.connectionID)
+
+--------------------------------------------------------------------------------
+-- End of Data Model Specification
+--------------------------------------------------------------------------------

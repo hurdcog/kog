@@ -1,0 +1,1427 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013, 2014, 2016 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!taglink open_issue_documentation]]
+
+A bunch of this should also be covered in other (introductionary) material,
+like Bushnell's Hurd paper.  All this should be unfied and streamlined.
+
+[[!toc]]
+
+
+# Introduction to the Hurd System
+
+The lowest base of the GNU/Hurd system is GNU Mach.  GNU Mach is a microkernel,
+which provides interprocess communication (IPC), memory management, and a scheduler.
+The Hurd servers runs on top of GNU Mach to implement various userspace servers that
+would ordinarily reside in the kernel, including the filesystem, device drivers,
+TCP/IP stack, and others.  The GNU/Hurd system implements POSIX with glibc.  Almost all
+POSIX calls to glibc are re-routed to the Hurd servers.  Some of the Hurd servers
+depend on GNU Mach, while other Hurd servers depend on other Hurd servers.
+
+[[!img images/overview.svg]]
+
+
+# Bootstrap
+
+Take a look at the [[hurd/bootstrap]] page.  There is an alternative
+proposal for an [[different bootstrap|open_issues/serverbootv2]].
+
+## [[hurd_init]]
+
+## Hurd Booting Process
+
+When grub starts running, it loads the root filesystem, the exec server, and
+starts GNU Mach.  GNU Mach then starts the servers in turn according to the
+multiboot information grub gave it.  Additionally the rootfs server
+does some bootstrapping work to bring the start the other servers.
+
+### IRC, freenode, #hurd booting process, 2011-03-12
+
+    <dEhiN> when mach first starts up, does it have some basic i/o or fs
+      functionality built into it to start up the initial hurd translators?
+    <antrik> I/O is presently completely in Mach
+    <antrik> filesystems are in userspace
+    <antrik> the root filesystem and exec server are loaded by grub
+    <dEhiN> o I see
+    <dEhiN> so in order to start hurd, you would have to start mach and
+      simultaneously start the root filesystem and exec server?
+    <antrik> not exactly
+    <antrik> GRUB loads all three, and then starts Mach. Mach in turn starts
+      the servers according to the multiboot information passed from GRUB
+    <dEhiN> ok, so does GRUB load them into ram?
+    <dEhiN> I'm trying to figure out in my mind how hurd is initially started
+      up from a low-level pov
+    <antrik> yes, as I said, GRUB loads them
+    <dEhiN> ok, thanks antrik...I'm new to the idea of microkernels, but a
+      veteran of monolithic kernels
+    <dEhiN> although I just learned that windows nt is a hybrid kernel which I
+      never knew!
+    <rm> note there's a /hurd/ext2fs.static
+    <rm> I belive that's what is used initially... right?
+    <antrik> yes
+    <antrik> loading the shared libraries in addition to the actual server
+      would be unweildy
+    <antrik> so the root FS server is linked statically instead
+    <dEhiN> what does the root FS server do?
+    <antrik> well, it serves the root FS ;-)
+    <antrik> it also does some bootstrapping work during startup, to bring the
+      rest of the system up
+
+
+## IRC, freenode, #hurd, 2014-01-03
+
+    <teythoon> hmpf, the hurd bootstrapping process is complicated and fragile,
+      maybe to the point that it is to be considered broken
+    <teythoon> aiui the hurd uses the filesystem for service lookup
+    <teythoon> older mach documentation suggests that there once existed a name
+      server instead for this purpose
+    <teythoon> the hurd approach is elegant and plan9ish
+    <teythoon> the problem is in the early bootstrapping
+    <teythoon> what if the root filesystem is r/o and there is no /servers or
+      /servers/exec ?
+    <teythoon> e. g. rm /servers/exec && reboot -> the rootfs dies early in the
+      hurd server bootstrap :/
+    <braunr> well yes
+    <braunr> it's normal to have such constraints
+    <teythoon> uh no
+    <braunr> at the same time, the boot protocol must be improved, if only to
+      support userspace disk drivers
+    <teythoon> totally unacceptable
+    <braunr> why not ?
+    <teythoon> b/c my box just died and lost it's exec node
+    <braunr> so ?
+    <braunr> loosing the exec node is unacceptable
+    <youpi> well, linux dies too if you don't have /dev populated at least a
+      bit
+    <braunr> not being able to boot without the "exec" service is pretty normal
+    <braunr> the hurd turns the vfs into a service directory
+    <teythoon> the exec service is there, only the lookup mechanism is broken
+    <braunr> replacing the name server you mentioned earlier
+    <teythoon> yes
+    <braunr> if you don't have services, you don't have them
+    <braunr> i don't see the problem
+    <braunr> the problem is the lookup mechanism getting broken
+    <teythoon> ... that easily
+    <braunr> imagine a boot protocol based on a ramfs filled from a cpio
+    <teythoon> i do actually ;)
+    <braunr> there would be no reason at all the lookup mechanism would break
+    <teythoon> yes
+    <teythoon> but the current situation is not acceptable
+    <braunr> i agree
+    <teythoon> ^^
+    <braunr> ext2fs is too unreliable for that
+    <braunr> but using the VFS as a directory is more than acceptable
+    <braunr> it's probably the main hurd feature
+    <teythoon> yes
+    <braunr> i see it rather as a circular dependency problem
+    <braunr> and if you have good ideas, i'm all ear for propel ... :>
+    <braunr> antrik already talked about some of them for the bootstrap
+      protocol
+    <braunr> we should sum them up somewhere if not done already
+    <teythoon> i've been pondering how to install a tmpfs translator as root
+      translator
+    <teythoon> braunr: we could create a special translator for /servers
+    <braunr> maybe
+    <teythoon> very much like fakeroot, it just proxies messages to a real
+      translator
+    <teythoon> but if operations like settrans fail, we handle them
+      transparently, like an overlay
+    <braunr> i consider /servers to be very close to /dev
+    <teythoon> yes
+    <braunr> so something like devfs seems obvious yes
+    <braunr> i don't even think there needs to be an overlay
+    <teythoon> y not ?
+    <braunr> why does /servers need real nodes ?
+    <teythoon> for persistence
+    <braunr> what for ?
+    <teythoon> e.g. crash server selection
+    <braunr> hm ok
+    <teythoon> network configuration
+    <braunr> i personally wouldn't make that persistent
+    <braunr> it can be configured in files and installed at boot time
+    <teythoon> me neither, but that's how it's currently done
+    <braunr> are you planning to actually work on that soon ?
+    <teythoon> if we need no persistence, we can just use tmpfs
+    <braunr> it wouldn't be a mere tmpfs
+    <teythoon> it could
+    <braunr> it's a tmpfs that performs automatic discovery and registration of
+      system services
+    <teythoon> with some special wrapper that preserves e.g. /servers/exec
+    <teythoon> oh
+    <braunr> so rather, devtmpfs
+    <teythoon> it is o_O :p
+    <braunr> ?
+    <braunr> what is what ?
+    <teythoon> well, it could be a tmpfs and some utility creating the nodes
+    <braunr> whether the node management is merged in or separate doesn't
+      matter that much i guess
+    <braunr> i'd personally imagine it merged, and tmpfs available as a
+      library, so that stuff like sysfs or netstatfs can easily be written
+
+
+## IRC, freenode, #hurd, 2014-02-12
+
+    <teythoon> braunr: i fixed all fsys-related receiver lookups in libdiskfs
+      and surely enough the bootstrap hangs with no indication whats wrong
+    <braunr> teythoon: use mach_print :/
+    <teythoon> braunr: the hurd bootstrap is both fragile and hard to tweak in
+      interesting ways :/
+    <braunr> teythoon: i agree with that
+    <braunr> teythoon: maybe this will help :
+      http://wiki.hurdfr.org/upload/graphviz/dot9b65733655309d059dca236f940ef37a.png
+    <braunr> although i guess you probably already know that
+    <teythoon> heh, unicode for the win >,<
+    <braunr> :/
+
+
+# Source Code Documentation
+
+Provide a cross-linked sources documentation, including generated files, like
+RPC stubs.
+
+  * <http://www.gnu.org/software/global/>
+
+
+# [[Hurd_101]]
+
+
+# [[hurd/IO_path]]
+
+Need more stuff like that.
+
+
+# IRC, freenode, #hurd, 2011-10-18
+
+    <frhodes> what happens @ boot. and which translators are started in what
+      order?
+    <antrik> short version: grub loads mach, ext2, and ld.so/exec; mach starts
+      ext2; ext2 starts exec; ext2 execs a few other servers; ext2 execs
+      init. from there on, it's just standard UNIX stuff
+
+
+# IRC, OFTC, #debian-hurd, 2011-11-02
+
+    <sekon_> is __dir_lookup a RPC ??
+    <sekon_> where can i find the source of __dir_lookup ??
+    <sekon_> grepping most gives out rvalue assignments 
+    <sekon_> -assignments 
+    <sekon_> but in hurs/fs.h it is used as a function ??
+    <pinotree> it should be the mig-generated function for that rpc
+    <sekon_> how do i know how its implemented ??
+    <sekon_> is there any way to delve deeprer into mig-generated functions 
+    <tschwinge> sekon_: The MIG-generated stuff will either be found in the
+      package's build directory (if it's building it for themselves), or in the
+      glibc build directory (libhurduser, libmachuser; which are all the
+      available user RPC stubs).
+    <tschwinge> sekon_: The implementation can be found in the various Hurd
+      servers/libraries.
+    <tschwinge> sekon_: For example, [hurd]/libdiskfs/dir-lookup.c.
+    <tschwinge> sekon_: What MIG does is provide a function call interface for
+      these ``functions'', and the Mach microkernel then dispatches the
+      invocation to the corresponding server, for example a /hurd/ext2fs file
+      system (via libdiskfs).
+    <tschwinge> sekon_: This may help a bit:
+      http://www.gnu.org/software/hurd/hurd/hurd_hacking_guide.html
+
+
+# IRC, freenode, #hurd, 2012-01-08
+
+    <abique> can you tell me how is done in hurd:  "ls | grep x" ?
+    <abique> in bash
+    <youpi> ls's standard output is a port to the pflocal server, and grep x's
+      standard input is a port to the pflocal server
+    <youpi> the connexion between both ports inside the pflocal server being
+      done by bash when it calls pipe()
+    <abique> youpi, so STDOUT_FILENO, STDIN_FILENO, STDERR_FILENO still exists
+      ?
+    <youpi> sure, hurd is compatible with posix
+    <abique> so bash 1) creates T1 (ls) and T2 (grep), then create a pipe at
+      the pflocal server, then connects both ends to T1 and T2, then start(T1),
+      start(T2) ?
+    <youpi> not exactly
+    <youpi> it's like on usual unix, bash creates the pipe before creating the
+      tasks
+    <youpi> then forks to create both of them, handling them each side of the
+      pipe
+    <abique> ok I see
+    <youpi> s/handling/handing/
+    <abique> but when you do pipe() on linux, it creates a kernel object, this
+      time it's 2 port on the pflocal ?
+    <youpi> yes
+    <abique> how are spawned tasks ?
+    <abique> with fork() ?
+    <youpi> yes
+    <youpi> which is just task_create() and duplicating the ports into the new
+      task
+    <abique> ok
+    <abique> so it's easy to rewrite fork() with a good control of duplicated
+      fd
+    <abique> about threading, mutexes, conditions, etc.. are kernel objects or
+      just userland objects ?
+    <youpi> just ports
+    <youpi> (only threads are kernel objects)
+    <abique> so, about efficiency, are pipes and mutexes efficient ?
+    <youpi> depends what you call "efficient"
+    <youpi> it's less efficient than on linux, for sure
+    <youpi> but enough for a workable system
+    <abique> maybe hurd is the right place for a userland thread library like
+      pth or any fiber library
+    <abique> ?
+    <youpi> hurd already uses a userland thread library
+    <youpi> libcthreads
+    <abique> is it M:N ?
+    <youpi> libthreads, actually
+    <youpi> yes
+
+Actually, the Hurd has never used an M:N model. Both libthreads (cthreads) and libpthread use an 1:1 model.
+
+    <abique> nice
+    <abique> is the task scheduler in the kernel ?
+    <youpi> the kernel thread scheduler, yes, of course
+    <youpi> there has to be one
+    <abique> are the posix open()/readdir()/etc... the direct vfs or wraps an
+      hurd layer libvfs ?
+    <youpi> they wrap RPCs to the filesystem servers
+    <antrik> the Bushnell paper is probably the closest we have to a high-level
+      documentation of these concepts...
+    <antrik> the Hurd does not have a central VFS component at all. name
+      lookups are performed directly on the individual FS servers
+    <antrik> that's probably the most fundamental design feature of the Hurd
+    <antrik> (all filesystem operations actually, not only lookups)
+
+
+## IRC, freenode, #hurd, 2012-01-09
+
+    <braunr> youpi: are you sure cthreads are M:N ? i'm almost sure they're 1:1
+    <braunr> and no modern OS is a right place for any thread userspace
+      library, as they wouldn't have support to run threads on different
+      processors (unless processors can be handled by userspace servers, but
+      still, it requires intimate cooperation between the threading library and
+      the kernel/userspace server in any case
+    <youpi> braunr: in libthreads, they are M:N
+    <youpi> you can run threads on different processors by using several kernel
+      threads, there's no problem in there, a lot of projects do this
+    <braunr> a pure userspace library can't use kernel threads
+    <braunr> at least pth was explacitely used on systems like bsd at a time
+      when they didn't have kernel threads exactly for that reason
+    <braunr> explicitely*
+    <braunr> and i'm actually quite surprised to learn that we have an M:N
+      threading model :/
+    <youpi> why do you say "can't" ?
+    <braunr> but i wanted to reply to abique and he's not around
+    <youpi> of course you need kernel threads
+    <youpi> but all you need is to bind them
+    <braunr> well, what i call a userspace threading library is a library that
+      completely implement threads without the support of the kernel
+    <braunr> or only limited support, like signals
+    <youpi> errr, you can't implement anything with absolutely no support of
+      the kernel
+    <braunr> pth used only SIGALRM iirc
+    <youpi> asking for more kernel threads to use more processors doesn't seem
+      much
+    <braunr> it's not
+    <braunr> but i'm refering to what abique said
+    <braunr> 01:32 < abique> maybe hurd is the right place for a userland
+      thread library like pth or any fiber library
+    <youpi> well, it's indeed more, because the glibc lets external libraries
+      provide their mutex
+    <youpi> while on linux, glibc doesn't
+    <braunr> i believe he meant removing thread support from the kernel :p
+    <youpi> ah
+    <braunr> and replying "nice" to an M:N threading model is also suspicious,
+      since experience seems to show 1:1 models are better
+    <youpi> "better" ????
+    <braunr> yes
+    <youpi> well
+    <youpi> I don't have any time to argue  about that
+    <youpi> because that'd be extremely long
+    <braunr> simpler, so far less bugs, and also less headache concerning posix
+      conformance
+    <youpi> but there's no absolute "better" here
+    <youpi> but less performant
+    <youpi> less flexible
+    <braunr> that's why i mention experience :)
+    <youpi> I mean experience too
+    <braunr> why less performant ?
+    <youpi> because you pay kernel transition
+    <youpi> because you don't know anything about the application threads
+    <youpi> etc.
+    <braunr> really ?
+    <youpi> yes
+    <braunr> i fail to see where the overhead is
+    <youpi> I'm not saying m:n is generally better than 1:1 either
+    <youpi> thread switch, thread creation, etc.
+    <braunr> creation is slower, i agree, but i'm not sure it's used frequently
+      enough to really matter
+    <youpi> it is sometimes used frequently enough
+    <youpi> and in those cases it would be a headache to avoid it
+    <braunr> ok
+    <braunr> i thought thread pools were used in those cases
+    <youpi> synchronized with kernel mutexes ?
+    <youpi> that's still slow
+    <braunr> it reduces to the thread switch overhead
+    <braunr> which, i agree is slightly slower
+    <braunr> ok, i's a bit less performant :)
+    <braunr> well don't futexes exist just for that too ?
+    <youpi> yes and no
+    <youpi> in that case they don't help
+    <youpi> because they do sleep
+    <youpi> they help only when the threads are living
+    <braunr> ok
+    <youpi> now as I said I don't have to talk much more, I have to leave :)
+
+
+# IRC, freenode, #hurd, 2012-12-06
+
+    <braunr> spiderweb: have you read
+      http://www.gnu.org/software/hurd/hurd-paper.html ?
+    <spiderweb> I'll have a look.
+    <braunr> and also the beginning of
+      http://ftp.sceen.net/mach/mach_a_new_kernel_foundation_for_unix_development.pdf
+    <braunr> these two should provide a good look at the big picture the hurd
+      attemtps to achieve
+    <Tekk_> I can't help but wonder though, what advantages were really
+      achieved with early mach?
+    <Tekk_> weren't they just running a monolithic unix server like osx does?
+    <braunr> most mach-based systems were
+    <braunr> but thanks to that, they could provide advanced features over
+      other well established unix systems
+    <braunr> while also being compatible
+    <Tekk_> so basically it was just an ease of development thing
+    <braunr> well that's what mach aimed at being
+    <braunr> same for the hurd
+    <braunr> making things easy
+    <Tekk_> but as a side effect hurd actually delivers on the advantages of
+      microkernels aside from that, but the older systems wouldn't, correct?
+    <braunr> that's how there could be network file systems in very short time
+      and very scarce resources (i.e. developers working on it), while on other
+      systems it required a lot more to accomplish that
+    <braunr> no, it's not a side effect of the microkernel
+    <braunr> the hurd retains and extends the concept of flexibility introduced
+      by mach
+    <Tekk_> the improved stability, etc. isn't a side effect of being able to
+      restart generally thought of as system-critical processes?
+    <braunr> no
+    <braunr> you can't restart system critical processes on the hurd either
+    <braunr> that's one feature of minix, and they worked hard on it
+    <Tekk_> ah, okay. so that's currently just the domain of minix
+    <Tekk_> okay
+    <Tekk_> spiderweb: well, there's 1 advantage of minix for you :P
+    <braunr> the main idea of mach is to make it easy to extend unix
+    <braunr> without having hundreds of system calls
+
+[[/system_call]].
+
+    <braunr> the hurd keeps that and extends it by making many operations
+      unprivileged
+    <braunr> you don't need special code for kernel modules any more
+    <braunr> it's easy
+    <braunr> you don't need special code to handle suid bits and other ugly
+      similar hacks,
+    <braunr> it's easy
+    <braunr> you don't need fuse
+    <braunr> easy
+    <braunr> etc..
+
+
+# Service Directory
+
+## IRC, freenode, #hurd, 2012-12-06
+
+    <spiderweb> what is the #1 feature that distinguished hurd from other
+      operating systems. the concept of translators. (will read more when I get
+      more time).
+    <braunr> yes, translators
+    <braunr> using the VFS as a service directory
+    <braunr> and the VFS permissions to control access to those services
+
+
+## IRC, freenode, #hurd, 2013-05-23
+
+    <gnu_srs> Hi, is there any efficient way to control which backed
+      translators are called via RPC with a user space program?
+    <gnu_srs> Take for example io_stat: S_io_stat is defined in boot/boot.c,
+      pfinet/io-ops.c and pflocal/io.c
+    <gnu_srs> And the we have libdiskfs/io-stat.c:diskfs_S_io_stat,
+      libnetfs/io-stat.c:netfs_S_io_stat, libtreefs/s-io.c:treefs_S_io_stat,
+      libtrivfs/io-stat.c:trivfs_S_io_stat
+    <gnu_srs> How are they related?
+    <braunr> gnu_srs: it depends on the server (translator) managing the files
+      (nodes) you're accessing
+    <braunr> so use fsysopts to know the server, and see what this server uses
+    <gnu_srs> fsysopts /hurd/pfinet and fsysopts /hurd/pflocal gives the same
+      answer: ext2fs --writable --no-inherit-dir-group --store-type=typed
+      device:hd0s1
+    <braunr> of course
+    <braunr> the binaries are regular files
+    <braunr> see /servers/socket/1 and /servers/socket/2 instead
+    <braunr> which are the nodes representing the *service*
+    <braunr> again, the hurd uses the file system as a service directory
+    <braunr> this usage of the file system is at the core of the hurd design
+    <braunr> files are not mere files, they're service names
+    <braunr> it happens that, for most files, the service behind them is the
+      same as for regular files
+    <braunr> gnu_srs: this *must* be obvious for you to do any tricky work on
+      the hurd
+
+    <gnu_srs> Anyway, if I create a test program calling io_stat I assume
+      S_io_stat in pflocal is called.
+    <gnu_srs> How to make the program call S_io_stat in pfinet instead? 
+    <braunr> create a socket managed by pfinet
+    <braunr> i.e. an inet or inet6 socket
+    <braunr> you can't assume io_stat is serviced by pflocal
+    <braunr> only stats on unix sockets of pipes will be
+    <braunr> or*
+    <gnu_srs> thanks, what about the *_S_io_stat functions?
+    <braunr> what about them ?
+    <gnu_srs> How they fit into the picture, e.g. diskfs_io_stat?
+    <gnu_srs> *diskfs_S_io_stat
+    <braunr> gnu_srs: if you open a file managed by a server using libdiskfs,
+      e.g. ext2fs, that one will be called
+    <gnu_srs> Using the same user space call: io_stat, right?
+    <braunr> it's all userspace
+    <braunr> say rather, client-side
+    <braunr> the client calls the posix stat() function, which is implemented
+      by glibc, which converts it into a call to io_stat, and sends it to the
+      server managing the open file
+    <braunr> the io_stat can change depending on the server
+    <braunr> the remote io_stat implementation, i mean
+    <braunr> identify the server, and you will identify the actual
+      implementation
+
+
+## IRC, freenode, #hurd, 2013-06-30
+
+    <hacklu> hi, what is the replacer of netname_check_in? 
+
+    <hacklu> I want to ask another question. in my opinion, the rpc is the
+      mach's way, and the translator is the hurd's way. so somebody want to
+      lookup a service, it should not need to ask the mach kernel know about
+      this query. the hurd will take the control. 
+    <hacklu> am I right?
+    <braunr> no
+    <braunr> that's nonsense
+    <braunr> service lookups has never been in mach
+    <braunr> first mach based systems used a service directory, whereas the
+      hurd uses the file system for that
+    <braunr> you still need mach to communicate with either of those
+    <hacklu> how to understand the term of service directory here?
+    <braunr> a server everyone knows
+    <braunr> which gives references to other servers
+    <braunr> usually, depending on the name
+    <braunr> e.g. name_lookup("net") -> port right to network server
+    <hacklu> is that people use netname_check_in to register service in the
+      past? now used libtrivfs?
+    <braunr> i don't know about netname_check_in
+    <braunr> old mach (not gnumach) documentation might mention this service
+      directory
+    <braunr> libtrivfs doesn't have much to do with that
+    <braunr> on the hurd, the equivalent is the file system
+    <hacklu> maybe that is outdate, I just found that exist old doc, and old
+      code which can't be build.
+    <braunr> every process knows /
+    <braunr> the file system is the service directory
+    <braunr> nodes refer to services
+    <hacklu> so the file system is the nameserver, any new service should
+      register in it before other can use
+    <braunr> and the file system is distributed, so looking up a service may
+      require several queries
+    <braunr> setting a translator is exactly that, registering a program to
+      service requests on a node
+    <braunr> the file system isn't one server though
+    <braunr> programs all know about /, but then, lookups are recursive
+    <braunr> e.g. if you have / and /home, and are looking for
+      /home/hacklu/.profile, you ask / which tells you about /home, and /home
+      will give you a right to /home/hacklu/.profile
+    <hacklu> even in the past, the mach don't provide name register service,
+      there must be an other server to provide this service?
+    <braunr> yes
+    <braunr> what's nonsense in your sentence is comparing RPCs and translators
+    <braunr> translators are merely servers attached to the file system, using
+      RPCs to communicate with the rest of the system
+    <hacklu> I know yet, the two just one thing.
+    <braunr> no
+    <braunr> two things :p
+    <braunr> completely different and unrelated except for one using the other
+    <hacklu> ah, just one used aonther one.
+    <hacklu> is exist anyway to anounce service except settrans with file node?
+    <braunr> more or less
+    <braunr> tasks can have special ports
+    <braunr> that's how one task knows about / for example
+    <braunr> at task creation, a right to / is inserted in the new task
+    <hacklu> I think this is also a file node way.
+    <braunr> no
+    <braunr> if i'm right, auth is referenced the same way
+    <braunr> and there is no node for auth
+    <hacklu> how the user get the port of auth with node?
+    <braunr> it's given when a task is created
+    <hacklu> pre-set in the creation of one task?
+    <braunr> i'm unconfortable with "pre-set"
+    <braunr> inserted at creation time
+    <braunr> auth is started very early
+    <braunr> then tasks are given a reference to it
+
+
+# IRC, freenode, #hurd, 2012-12-10
+
+    <spiderweb> I want to work on hurd, but I think I'm going to start with
+      minix, I own the minix book 3rd ed. it seems like a good intro to
+      operating systems in general. like I don't even know what a semaphore is
+      yet.
+    <braunr> well, enjoy learning :)
+    <spiderweb> once I finish that book, what reading do you guys recommend?
+    <spiderweb> other than the wiki
+    <braunr> i wouldn't recommend starting with a book that focuses on one
+      operating system anyway
+    <braunr> you tend to think in terms of what is done in that specific
+      implementation and compare everything else to that
+    <braunr> tannenbaum is not only the main author or minix, but also the one
+      of the book http://en.wikipedia.org/wiki/Modern_Operating_Systems
+    <braunr>
+      http://en.wikipedia.org/wiki/List_of_important_publications_in_computer_science#Operating_systems
+      should be a pretty good list :)
+
+
+# IRC, freenode, #hurd, 2013-03-12
+
+    <mjjc> i have a question regarding ipc in hurd. if a task is created, does
+      it contain any default port rights in its space? i am trying to deduce
+      how one calls dir_lookup() on the root translator in glibc's open().
+    <kilobug> mjjc: yes, there are some default port rights, but I don't
+      remember the details :/
+    <mjjc> kilobug: do you know where i should search for details?
+    <kilobug> mjjc: hum either in the Hurd's hacking guide
+      https://www.gnu.org/software/hurd/hacking-guide/ or directly in the
+      source code of exec server/libc I would say, or just ask again the
+      question here later on to see if someone else has more information
+    <mjjc> ok, thanks
+    <pinotree> there's also rpctrace to, as the name says, trace all the rpc's
+      executed
+    <braunr> some ports are introduced in new tasks, yes
+    <braunr> see
+      http://www.gnu.org/software/hurd/hacking-guide/hhg.html#The-main-function
+    <braunr> and
+    <braunr>
+      http://www.gnu.org/software/hurd/gnumach-doc/Task-Special-Ports.html#Task-Special-Ports
+    <mjjc> yes, the second link was just what i was looking for, thanks
+    <braunr> the second is very general
+    <braunr> also, the first applies to translators only
+    <braunr> if you're looking for how to do it for a non-translator
+      application, the answer is probably somewhere in glibc
+    <braunr> _hurd_startup i'd guess
+
+
+# IRC, freenode, #hurd, 2013-06-15
+
+    <damo22> ive been reading a little about exokernels or unikernels, and i
+      was wondering if it might be relevant to the GNU/hurd design.  I'm not
+      too familiar with hurd terminology so forgive me.  what if every
+      privileged service was compiled as its own mini "kernel" that handled (a)
+      any hardware related to that service (b) any device nodes exposed by that
+      service etc...
+    <braunr> yes but not really that way
+    <damo22> under the current hurd model of the operating system, how would
+      you talk to hardware that required specific timings like sound hardware?
+    <braunr> through mapped memory
+    <damo22> is there such a thing as an interrupt request in hurd?
+    <braunr> obviously
+    <damo22> ok
+    <damo22> is there any documentation i can read that involves a driver that
+      uses irqs for hurd?
+    <braunr> you can read the netdde code
+    <braunr> dde being another project, there may be documentation about it
+    <braunr> somewhere else
+    <braunr> i don't know where
+    <damo22> thanks
+    <damo22> i read a little about dde, apparently it reuses existing code from
+      linux or bsd by reimplementing parts of the old kernel like an api or
+      something
+    <braunr> yes
+    <damo22> it must translate these system calls into ipc or something
+    <damo22> then mach handles it?
+    <braunr> exactly
+
+[[/system_call]].
+
+    <braunr> that's why i say it's not the exokernel way of doing things
+    <damo22> ok
+    <damo22> so does every low level hardware access go through mach?'
+    <braunr> yes
+    <braunr> well no
+    <braunr> interrupts do
+    <braunr> ports (on x86)
+    <braunr> everything else should be doable through mapped memory
+    <damo22> seems surprising that the code for it is so small
+    <braunr> 1/ why surprising ? and 2/ "so small" ?
+    <damo22> its like the core of the OS, and yet its tiny compared to say the
+      linux kernel
+    <braunr> it's a microkenrel
+    <braunr> well, rather an hybrid
+    <braunr> the size of the equivalent code in linux is about the same
+    <damo22> ok
+    <damo22> with the model that privileged instructions get moved to
+      userspace, how does one draw the line between what is OS and what is user
+      code
+    <braunr> privileged instructions remain in the kernel
+    <braunr> that's one of the few responsibilities of the kernel
+    <damo22> i see, so it is an illusion that the user has privilege in a sense
+    <braunr> hum no
+    <braunr> or, define "illusion"
+    <damo22> well the user can suddenly do things never imaginable in linux
+    <damo22> that would have required sudo
+    <braunr> yes
+    <braunr> well, they're not unimaginable on linux
+    <braunr> it's just not how it's meant to work
+    <damo22> :)
+    <braunr> and why things like fuse are so slow
+    <braunr> i still don't get "i see, so it is an illusion that the user has
+      privilege in a sense"
+    <damo22> because the user doesnt actually have the elevated privilege its
+      the server thing (translator)?
+    <braunr> it does
+    <braunr> not at the hardware level, but at the system level
+    <braunr> not being able to do it directly doesn't mean you can't do it
+    <damo22> right
+    <braunr> it means you need indirections
+    <braunr> that's what the kernel provides
+    <damo22> so the user cant do stuff like outb 0x13, 0x1
+    <braunr> he can
+    <braunr> he also can on linux
+    <damo22> oh
+    <braunr> that's an x86 specifity though
+    <damo22> but the user would need hardware privilege to do that
+    <braunr> no
+    <damo22> or some kind of privilege
+    <braunr> there is a permission bitmap in the TSS that allows userspace to
+      directly access some ports
+    <braunr> but that's really x86 specific, again
+    <damo22> i was using it as an example
+    <damo22> i mean you wouldnt want userspace to directly access everything
+    <braunr> yes
+    <braunr> the only problem with that is dma reall
+    <braunr> y
+    <braunr> because dma usually access physical memory directly
+    <damo22> are you saying its good to let userspace access everything minus
+      dma?
+    <braunr> otherwise you can just centralize permissions in one place (the
+      kernel or an I/O server for example)
+    <braunr> no
+    <braunr> you don't let userspace access everything
+    <damo22> ah
+    <damo22> yes
+    <braunr> userspace asks for permission to access one specific part (a
+      memory range through mapping)
+    <braunr> and can't access the rest (except through dma)
+    <damo22> except through dma??  doesnt that pose a large security threat?
+    <braunr> no
+    <braunr> you don't give away dma access to anyone
+    <braunr> only drivers
+    <damo22> ahh
+    <braunr> and drivers are normally privileged applications anyway
+    <damo22> so a driver runs in userspace?
+    <braunr> so the only effect is that bugs can affect other address spaces
+      indirectly
+    <braunr> netdde does
+    <damo22> interesting
+    <braunr> and they all should but that's not the case for historical reasons
+    <damo22> i want to port ALSA to hurd userspace :D
+    <braunr> that's not so simple unfortunately
+    <braunr> one of the reasons it's hard is that pci access needs arbitration
+    <braunr> and we don't have that yet
+    <damo22> i imagine that would be difficult
+    <braunr> yes
+    <braunr> also we're not sure we want alsa
+    <braunr> alsa drivers, maybe, but probably not the interface itself
+    <damo22> its tangled spaghetti
+    <damo22> but the guy who wrote JACK for audio hates OSS, and believes it is
+      rubbish due to the fact it tries to read and write to a pcm device node
+      like a filesystem with no care for timing
+    <braunr> i don't know audio well enough to tell you anything about that
+    <braunr> was that about oss3 or oss4 ?
+    <braunr> also, the hurd isn't a real time system
+    <braunr> so we don't really care about timings
+    <braunr> but with "good enough" latencies, it shouldn't be a problem
+    <damo22> but if the audio doesnt reach the sound card in time, you will get
+      a crackle or a pop or a pause in the signal
+    <braunr> yep
+    <braunr> it happens on linux too when the system gets some load
+    <damo22> some users find this unnacceptable
+    <braunr> some users want real time systems
+    <braunr> using soft real time is usually plenty enough to "solve" this kind
+      of problems
+    <damo22> will hurd ever be a real time system?
+    <braunr> no idea
+    <youpi> if somebody works on it why not
+    <youpi> it's the same as linux
+    <braunr> it should certainly be simpler than on linux though
+    <damo22> hmm
+    <braunr> microkernels are well suited for real time because of the well
+      defined interfaces they provide and the small amount of code running in
+      kernel
+    <damo22> that sounds promising
+    <braunr> you usually need to add priority inheritance and take care of just
+      a few corner cases and that's all
+    <braunr> but as youpi said, it still requires work
+    <braunr> and nobody's working on it
+    <braunr> you may want to check l4 fiasco.oc though
+
+
+# System Personality
+
+## IRC, freenode, #hurd, 2013-07-29
+
+    <teythoon> over the past few days I gained a new understanding of the Hurd
+    <braunr> teythoon: really ? :)
+    <tschwinge> teythoon: That it's a complex and distributed system?  ;-)
+    <tschwinge> And at the same time a really simple one?
+    <tschwinge> ;-D
+    <teythoon> it's just a bunch of mach programs and some do communicate and
+      behave in a way a posix system would, but that is more a convention than
+      anything else
+    <teythoon> tschwinge: yes, kind of simple and complex :)
+    <braunr> the right terminology is "system personality"
+    <braunr> 11:03 < teythoon> over the past few days I gained a new
+      understanding of the Hurd
+    <braunr> teythoon: still no answer on that :)
+    <teythoon> braunr: ah, I spent lot's of time with the core servers and
+      early bootstrapping and now I gained the feeling that I've seen the Hurd
+      for what it really is for the first time
+
+
+# RPC Interfaces
+
+## IRC, freenode, #hurd, 2013-09-03
+
+    <rekado> I'm a little confused by the hurd and incubator git repos.
+    <rekado> DDE is only found in the dde branch in incubator, but not in the
+      hurd repo.
+    <rekado> Does this mean that DDE is not ready for master yet?
+    <braunr> yes
+    <rekado> If DDE is not yet used in the hurd (except in the dde branch in
+      the incubator repo), does pfinet use some custom glue code to use the
+      Linux drivers?
+    <braunr> this has nothing to do with pfinet
+    <braunr> pfinet is the networking stack, netdde are the networking drivers
+    <braunr> the interface between them doesn't change, whether drivers are in
+      kernel or not
+    <rekado> I see
+
+
+# IRC, freenode, #hurd, 2013-09-20
+
+    <giuscri> HI there, I have no previous knowledge about OS's. I'm trying to
+      undestand the structure of the Hurd and the comparison between, say,
+      Linux way of managing stuff ...
+    <giuscri> for instance, I read: "Unlike other popular kernel software, the
+      Hurd has an object-oriented structure that allows it to evolve without
+      compromising its design."
+    <giuscri> that means that while for adding feature to the Linux-kernel you
+      have to add some stuff `inside` a procedure, whilst in the Hurd kernel
+      you can just, in principle at least, add an object and making the kernel
+      using it?...
+    <giuscri> Am I making stuff too simple?
+    <giuscri> Thanks
+    <braunr> not exactly
+    <braunr> unix historically has a "file-oriented" structure
+    <braunr> the hurd allows servers to implement whatever type they want,
+      through the ability to create custom interfaces
+    <braunr> custom interfaces means custom calls, custom semantics, custom
+      methods on objects
+    <braunr> you're not restricted to the set of file interfaces (open, seek,
+      read, write, select, close, etc..) that unix normally provides
+    <giuscri> braunr: uhm ...some example?
+    <braunr> see processes for example
+    <braunr> see
+      https://git.sceen.net/hurd/hurd.git/tree/hurd
+    <braunr> this is the collection of interfaces the hurd provides
+    <braunr> most of them map to unix calls, because gnu aims at posix
+      compatibility too
+    <braunr> some are internal, like processes
+    <braunr> or authentication
+    <braunr> but most importantly, you're not restricted to that, you can add
+      your own interfaces
+    <braunr> on a unix, you'd need new system calls
+    <braunr> or worse, extending through the catch-all ioctl call
+    <giuscri> braunr: mhn ...sorry, not getting that.
+    <braunr> what part ?
+    <kilobug> ioctl has become such a mess :s
+    <giuscri> braunr: when you say that Unix is `file-oriented` you're
+      referring to the fact that sending/receiving data to/from the kernel is
+      designed like sending/receiving data to/from a file ...?
+    <braunr> not merely sending/receiving
+    <braunr> note how formatted your way of thinking is
+    <braunr> you directly think in terms of sending/receiving (i.e. read and
+      write)
+    <giuscri> braunr: (yes)
+    <braunr> that's why unix is file oriented, access to objects is done that
+      way
+    <braunr> on the hurd, the file interface is one interface
+    <braunr> there is nothing preventing you from implementing services with a
+      different interface
+    <braunr> as a real world example, people interested in low latency
+      profesionnal audio usually dislike send/recv
+    <braunr> see
+      http://lac.linuxaudio.org/2003/zkm/slides/paul_davis-jack/unix.html for
+      example
+    <kilobug> braunr: how big and messy ioctl has become is a good proof that
+      the Unix way, while powerful, does have its limits
+    <braunr> giuscri: keep in mind the main goal of the hurd is extensibility
+      without special privileges
+    <giuscri> braunr: privileges?
+    <braunr> root
+    <giuscri> braunr: what's wrong with privileges?
+    <braunr> they allow malicious/buggy stuff to happne
+    <braunr> and have dramatic effects
+    <giuscri> braunr: you're obviously *not* referring to the fact that once
+      one have the root privileges could change some critical-data
+    <giuscri> ?
+    <braunr> i'm referring to why privilege separation exists in the first
+      place
+    <braunr> if you have unprivileged users, that's because you don't want them
+      to mess things up
+    <braunr> on unix, extending the system requires privileges, giving those
+      who do it the ability to destroy everything
+    <giuscri> braunr: yes, I think the same
+    <braunr> the hurd is designed to allow unprivileged users to extend their
+      part of the system, and to some extent share that with other users
+    <braunr> although work still remains to completely achieve that
+    <giuscri> braunr: mhn ...that's the `server`-layer between the
+      single-application and kernel ?
+    <braunr> the multi-server based approach not only allows that, but
+      mitigates damage even when privileged servers misbehave
+    <braunr> one aspect of it yes
+    <braunr> but as i was just saying, even root servers can't mess things too
+      much
+    <braunr> for example, our old (sometimes buggy) networking stack can be
+      restarted when it behaves wrong
+    <braunr> the only side effect being some applications (ssh and exim come to
+      mind) which need to be restarted too because they don't expect the
+      network stack to be restarted
+    <giuscri> braunr: ...instead?
+    <braunr> ?
+    <kilobug> giuscri: on Linux, if the network stack crash/freezes, you don't
+      have any other option than rebooting the system - usually with a nice
+      "kernel pani"
+    <kilobug> giuscri: and you may even get filesystem corruption "for free" in
+      the bundle
+    <braunr> and hoping it didn't corrupt something important like file system
+      caches before being flushed
+    <giuscri> kilobug, braunr : mhn, ook
+
+
+# IRC, freenode, #hurd, 2013-10-13
+
+    <ahungry> ahh, ^c isn't working to cancel a ping - is there alternative?
+    <braunr> ahungry: ctrl-c does work, you just missed something somewhere and
+      are running a shell directly on a console, without a terminal to handle
+      signals
+
+
+# IRC, freenode, #hurd, 2013-11-04
+
+    <braunr> nalaginrut: you can't use the hurd for real embedded stuff without
+      a lot of work on it
+    <braunr> but the hurd design applies very well to embedded environments
+    <braunr> the fact that we're able to dynamically link practically all hurd
+      servers against the c library can visibly reduce the system code size 
+    <braunr> it also reduces the TCB
+    <nalaginrut> what about the memory occupation? 
+    <braunr> code size is about memory occupation
+    <teythoon> also, the system is composable like lego, don't need tcp - don't
+      include pfinet then
+    <braunr> the memory overheald of a capability based system like the hurd
+      are, well, capabilities
+    <braunr> teythoon: that's not an argument compared to modular kernels like
+      linux
+    <teythoon> yes it is
+    <braunr> why ?
+    <braunr> if you don't need tcp in linux, you just don't load it
+    <braunr> same thing
+    <teythoon> ok, right
+    <braunr> on the other hand, a traditional unix kernel can never be linked
+      against the c library
+    <braunr> much less dynamically
+    <teythoon> right
+    <nalaginrut> I think the point is that it's easy to cut, since it has
+      better modularity than monolithic, and could be done in userland relative
+      easier
+    <braunr> modularity isn't better
+    <braunr> that's a big misconception
+    <teythoon> also, restarting components is easier on a distributed system
+    <braunr> on the hurd, this is a side effect
+    <braunr> and it doesn't apply well
+    <nalaginrut> braunr:  oops, misconception
+    <braunr> many core servers such as proc, auth, exec, the root fs server
+      can't be restarted at all
+    <teythoon> not yet
+    <braunr> and servers like pfinet can be restarted, but at the cost of posix
+      servers not expecting that
+    <braunr> looping on errors such as EBADF because the target socket doesn't
+      exist any more
+    <teythoon> I've been working on a restartable exec server during some of my
+      gsoc weekends
+    <braunr> ah right
+    <braunr> linux has kexec
+    <braunr> and can be patched at run time
+    <nalaginrut> sounds like Hurd needs something similar to generalizable
+      continuation
+    <braunr> so again, it's not a real advantage
+    <braunr> no
+    <nalaginrut> sorry serilizable
+    <braunr> that would persistence
+    <braunr> personally, i don't want it at all
+    <teythoon> yes it is a real advantage, b/c the means of communication
+      (ports) is common to every IPC method on Hurd, and ports are first class
+      objects
+    <teythoon> so preserving the state is much easier on Hurd
+    <braunr> if a monolithic kernel can do it too, it's not a real advantage
+    <teythoon> yes, but it is more work
+    <braunr> that is one true advantage of the hurd
+    <braunr> but don't reuse it each time
+    <nalaginrut> oh, that's nice for the ports
+    <teythoon> why not?
+    <braunr> what we're talking about here is resilience
+    <braunr> the fact that it's easier to implement doesn't mean the hurd is
+      better because it has resilience
+    <braunr> it simply means the hurd is better because it's easier to
+      implement things on it
+    <braunr> same for development in general
+    <braunr> debugging
+    <braunr> virtualization
+    <braunr> etc..
+    <nalaginrut> yes, but why we stick to compare it to monolithic
+    <braunr> but it's still *one* property
+    <teythoon> well, minix advertises this feature a lot, even if minix can
+      only restart very simple things like printer servers
+    <braunr> minix sucks
+    <braunr> let them advertise what they can
+    <teythoon> ^^
+    <nalaginrut> it has cool features, that's enough, no need to find a feature
+      that monolithic can never done
+    <braunr> no it's not enough
+    <braunr> minix isn't a general purpose system
+    <braunr> let's just not compare it to general purpose systems
+
+
+# IRC, freenode, #hurd, 2013-11-08
+
+    <teythoon> and, provided you have suitable language bindings, you can
+      replace almost any hurd server with your own implementation in any
+      language
+    <crocket> teythoon: language bindings?
+    <crocket> Do you mean language bindings against C libraries?
+    <teythoon> either that or for the low level mach primitives
+    <crocket> For your information, IPC is independent of languages.
+    <teythoon> sure, that's the beauty
+    <crocket> Why is hurd best for replacing parts written in C with other
+      languages?
+    <teythoon> because Hurd consists of many servers, each server managing one
+      kind of resource
+    <teythoon> so you have /hurd/proc managing posix processes
+    <teythoon> you could reimplement /hurd/proc in say python or go, and
+      replace just that component of the Hurd system
+    <teythoon> you cannot do this with any other (general purpose) operating
+      system that I know of
+    <teythoon> you could incrementally replace the Hurd with your own
+      Hurd-compatible set of servers written in X
+    <teythoon> use a language that you can verify, i.e. prove that a certain
+      specification is fulfilled, and you end up with an awesome stable and
+      secure operating system
+    <crocket> Any microkernel OS fits the description.
+    <crocket> teythoon, Does hurd have formal protocols for IPC communications?
+    <teythoon> sure, name some other general purpose and somewhat
+      posix-compatible microkernel based operating system please
+    <teythoon> what do you mean by formal protocols ?
+    <crocket> IPC communications need to be defined in documents.
+    <teythoon> the "wire" format is specified of course, the semantic not so
+      much
+    <crocket> network protocols exist.
+    <crocket> HTTP is a transport protocol.
+    <crocket> Without formal protocols, IPC communications suffer from
+      debugging difficulties.
+    <crocket> Formal protocols make it possible to develop and test each module
+      independently.
+    <teythoon> as I said, the wire format is specified, the semantics only in
+      written form in the source
+    <teythoon> this is an example of the ipc specification for the proc server
+      https://git.savannah.gnu.org/cgit/hurd/hurd.git/tree/hurd/process.defs
+    <crocket> teythoon, how file server interacts with file clients should be
+      defined as a formal protocol, too.
+    <teythoon> do you consider the ipc description a kind of formal protocol ?
+    <crocket>
+      https://git.savannah.gnu.org/cgit/hurd/hurd.git/tree/hurd/process.defs can
+      be considered as a formal protocol.
+    <crocket> However, the file server protocol should be defined on top of IPC
+      protocol.
+    <teythoon> the file server protocol is in fs.defs
+    <teythoon> every protocol spoken is defined in that ipc description
+      language
+    <teythoon> it is used to derive code from
+    <braunr> crocket: not any system can be used to implement system services
+      in any language
+    <braunr> in theory, they do, but in theory only
+    <braunr> the main reason they don't is because most aren't posix compliant
+      from the ground up
+    <braunr> posix compliance is achieved through virtualization
+    <braunr> which isolates services too much for them to get useful,
+      notwithstanding the impacts on performance, memory, etc..
+    <crocket> braunr, Do you mean it's difficult to achieve POSIX compliance
+      with haskell?
+    <braunr> crocket: i mean most l4 based systems aren't posix
+    <braunr> genode isn't posix
+    <braunr> helenos is by design not posix
+    <braunr> the hurd is the only multi server system providing such a good
+      level of posix conformance
+    <braunr> and with tls on the way, we'll support even more non-posix
+      applications that are nonetheless very common on unices because of
+      historical interfaces still present, such as mcontext
+    <braunr> and modern ones
+    <braunr> e.g. ruby is now working, go should be there after tls
+    * teythoon drools over the perspective of having go on the Hurd...
+    <crocket> braunr, Is posix relevant now?
+    <braunr> it's hugely relevant
+    <braunr> conforming to posix and some native unix interfaces is the only
+      way to reuse a lot of existing production applications
+    <braunr> and for the matter at hand (system services not written in c), it
+      means almost readily getting runtimes for other languages than c
+    <braunr> something other microkernel based system will not have
+    <braunr> imagine this
+    <braunr> one day, one of us could create a company for a hurd-like system,
+      presenting this idea as the killer feature
+    <braunr> by supporting posix, customers could port their software with very
+      little effort
+    <braunr> *very little effort* is what makes software attractive
+    <crocket>
+      http://stackoverflow.com/questions/1806585/why-is-linux-called-a-monolithic-kernel/1806597#1806597
+      says "The disadvantage to a microkernel is that asynchronous IPC
+      messaging can become very difficult to debug, especially if fibrils are
+      implemented."
+    <crocket> " GNU Hurd suffers from these debugging problems (reference)."
+    <braunr> stackoverflow is usually a nice place
+    <braunr> but concerning microkernel stuff, you'll read a lot of crap
+      anywhere
+    <braunr> whether it's sync or async, tracking references is a hard task
+    <braunr> it's a bit more difficult in distributed systems, but not that
+      much if the proper debugging features are provided
+    <braunr> we actually don't suffer from that too much
+    <braunr> many of us have been able to debug reference leaks in the past,
+      without too much trouble
+    <braunr> we lack some tools that would give us a better view of the system
+      state
+    <crocket> braunr, But is it more difficult with microkernel?
+    <braunr> crocket: it's more difficult with distributed systems
+    <crocket> How much more difficult?
+    <braunr> i don't know
+    <crocket> distributed systems
+    <braunr> not much
+    <crocket> braunr, How do you define distributed systems?
+    <braunr> crocket: not monolithic
+    <crocket> braunr, Hurd is distributed, then.
+    <braunr> multiserver if you prefer
+    <braunr> yes it is
+    <crocket> braunr, So it is more difficult with hurd.
+    <crocket> How much more difficult? How do you debug?
+    <braunr> just keep in mind that a monolithic system can run on a
+      microkenrel
+    <braunr> we use tools that show us references
+    <crocket> braunr, like?
+    <braunr> like portinfo
+    <crocket> braunr, Does hurd use unix-socket to implement IPC?
+    <braunr> no
+    <braunr> unix-socket use mach ipc
+    <crocket> I'm confused
+    <braunr> ipc is provided by the microkernel, gnumach (a variant of mach)
+    <braunr> unix sockets are provided by one of the hurd servers (pflocal)
+    <braunr> servers and clients communicate through mach ipc
+    <crocket> braunr, Do you think it's feasible to build servers in haskell?
+    <braunr> why not ?
+    <crocket> ok
+    <teythoon> I've been thinking about that
+    <teythoon> in go, with cgo, you can call go functions from c code
+    <teythoon> so it should be possible to create bindings for say libtrivfs
+    <crocket> I'd like to write an OS in clojure or haskell.
+    <braunr> crocket: what for ?
+    <crocket> braunr, I want to see a better system programming language than
+      C.
+    <braunr> i don't see how clojure or haskell would be "better system
+      programming languages" than c
+    <braunr> and even assuming that, what for ?
+    <crocket> braunr, It's better for programmers.
+    <crocket> haskell
+    <crocket> haskell is expressive.
+    <braunr> personally i disagree
+    <braunr> it's better for some things
+    <braunr> not for system programming
+    <gnufreex> For system programming, Google Go is trying to replace C.  But I
+      doubt it will.
+    <braunr> we may not be referring to the same thing here when we say "system
+      programming"
+    <crocket> braunr, What do you think is a better one?
+    <braunr> crocket: i don't think there is a better one currently
+    <crocket> braunr, Even Rust and D?
+    <braunr> i don't know them well enough
+    <braunr> certainly not D if it's what i think it is
+    <crocket> C is too slow.
+    <crocket> C is too slow to develop.
+    <braunr> depends
+    <braunr> again, i disagree
+    <braunr> rust looks good but i don't know it well to comment
+    <crocket> C is a tank, and clojure is an airplane.
+    <crocket> A tank is reliable but slow.
+    <crocket> Clojure is fast but lacks some accuracy.
+    <braunr> c is as reliable as the developer is skilled with it
+    <braunr> it's clearly not a tank
+    <braunr> there are many traps
+    <gnufreex> crocket: are you suggesting to rewrite Hurd in Clojure?
+    <crocket> no
+    <crocket> Why rewrite hud?
+    <crocket> hurd
+    <crocket> I'd rather start from scratch.
+    <braunr> which is what a rewrite is
+    <gnufreex> I am not expert on Clojure, but I don't think it is made for
+      system programming.
+    <gnufreex> If you want alternate language, I thing Go is only  serious
+      candidate other than C
+    <crocket> Or Rust
+    <crocket> However, some people wrote OSes in haskell.
+    <braunr> again, why ?
+    <braunr> if it's only for the sake of using another language, i think it's
+      bad reason
+    <crocket> Because haskell provides a high level of abstraction that helps
+      programmers.
+    <crocket> It is more secure with monads.
+    <gnufreex> If you want your OS to become successful Free Software project,
+      you have to use popular language. Haskell is not. 
+    <gnufreex> Most Haskell programmers are not into kernels
+    <gnufreex> They do high level stuff.
+    <gnufreex> So little contributors.
+    <braunr> crocket: so you aim at security ?
+    <gnufreex> I mean, candidats for contribution
+    <crocket> braunr, security and higher abstraction.
+    <braunr> i don't understand higher abstraction
+    <crocket> braunr, FP can be useful to systems.
+    <braunr> FP ?
+    <neal> functional programming
+    <braunr> right
+    <braunr> but you can abstract a lot with c too, with more efforts
+    <crocket> braunr, like that's easy.
+    <braunr> it's not that hard
+    <braunr> i'm just questioning the goals and the solution of using a
+      particular language
+    <braunr> the reason c is still the preferred language for system
+      programming is because it provides control over how the hardware does
+      stuff
+    <braunr> which is very important for performance
+    <braunr> the hurd never took off because of bad performance
+    <braunr> performance doesn't mean doing things faster, it means being able
+      to do things or not, or doing things a new way
+    <braunr> so ok, great, you have your amazing file system written in
+      haskell, and you find out it doesn't scale at all beyond some threshold
+      of processors or memory
+    <crocket> braunr, L4 is fast.
+    <braunr> l4 is merely an architecture abstraction
+    <braunr> and it's not written in haskell :p
+    <braunr> don't assume anything running on top of something fast will be
+      fast
+    <crocket> Hurd is slow and written in C.
+    <braunr> yes
+    <braunr> not because of c though
+    <crocket> Becuase it's microkernel?
+    <braunr> because c wasn't used well enough to make the most of the hardware
+      in many places
+    <braunr> far too many places
+    <crocket> A microkernel can be as fast as a monolithic kernel according to
+      L4.
+    <braunr> no
+    <braunr> it can't
+    <braunr> it can for very specific cases
+    <braunr> almost none of which are real world
+    <braunr> but that's not the problem
+    <braunr> again, i'm questioning your choice of another language in relation
+      to your goals, that's all
+    <braunr> c can do things you really can't do easily in other languages
+    <braunr> be aware of that
+    <crocket> braunr, "Monolithic kernel are faster than microkernel . while
+      The first microkernel Mach is 50% slower than Monolithic kernel while
+      later version like L4 only 2% or 4% slower than the Monolithic kernel ."
+    <braunr> 14:05 < braunr> but concerning microkernel stuff, you'll read a
+      lot of crap anywhere
+    <braunr> simple counterexample :
+    <braunr> the measurements you're giving consider a bare l4 kernel with
+      nothing on top of it
+    <braunr> doing thread-to-thread ipc
+    <braunr> this model of communication is hardly used in any real world
+      application
+    <braunr> one of the huge features people look for with microkernels are
+      capabilities
+    <braunr> and that alone will bump your 4% up
+    <braunr> since capabilities will be used for practically every ipc
+    <crocket> ok
+
+
+# Hurd From Scratch
+
+## IRC, freenode, #hurd, 2013-11-30
+
+    <hurdmaster> because I think there is no way to understand the whole pile,
+      you need to go step by step
+    <hurdmaster> for example, I'm starting with mach only, then adding one
+      server, then another and on each step I have working system
+    <hurdmaster> that's how I want to understand it
+    <teythoon> you are interested in the early bootstrapping of the hurd system
+      ?
+    <hurdmaster> now I'm starting debian gnu/mach, it hungs, show me black
+      screen and I have no idea how to fix it
+    <teythoon> if you are unable to fix this, why do you think you can build a
+      hurd system from scratch ?
+    <hurdmaster> not gnu/mach, gnu/hurd I mean
+    <teythoon> or, you could describe your problem in more detail and one of
+      the nice people around here might help you ;)
+    <hurdmaster> as I said, it will be easier to understand and fix bugs, if I
+      will go step by step, and I will be able to see where bugs appears
+    <hurdmaster> so you should help me with that 
+    <teythoon> and I tend to disagree
+    <teythoon> but you could always read my blog. you'll learn lots of things
+      about bootstrapping a hurd system
+    <teythoon> but it's complicated
+    <hurdmaster> http://www.linuxfromscratch.org/
+    <teythoon> also, you'll need at least four hurd servers before you'll
+      actually see much
+    <teythoon> five
+    <teythoon> yeah, i know lfs
+    <hurdmaster> if somebody is interested in creating such a project, let me
+      know
+    <teythoon> you seem to be interested
+    <hurdmaster> yes, but I need the a real hurd master to help me
+    <teythoon> become one. fix your system and get to know it
+    <hurdmaster> I need knowledge, somebody built the system but didn't write
+      documentation about it, I have to extract it from your heads
+    <teythoon> hurdmaster: extract something from here
+      http://teythoon.cryptobitch.de
+    <teythoon> I need my head ;)
+    <hurdmaster> thanks
+    <hurdmaster> okay, what's the smallest thing I can run?
+    <teythoon> life of a Hurd system starts with the root filesystem, and the
+      exec server is loaded but not started
+    <teythoon> you could get rid of the exec server and replace the root
+      filesystem with your own program
+    <teythoon> statically linked, uses no unix stuff, only mach stuff
+    <hurdmaster> can I get 'hello world' on pure mach?
+    <teythoon> you could
+    <teythoon> hurdmaster: actually, here it is:
+      http://darnassus.sceen.net/cgit/rbraun/mach_print.git/
+    <teythoon> compile it statically, put it somewhere in /boot
+    <teythoon> make sure you're running a debug kernel
+    <teythoon> load it from grub instead of /hurd/ext2fs.static
+    <teythoon> look at the grub config for how this is done
+    <teythoon> let me know if it worked ;)
+
+
+# IRC, freenode, #hurd, 2014-03-04
+
+    <bwright> Can I run a single instance of hurd on multiple computers
+    <bwright> With them acting as different servers?
+    <braunr> no
+    <bwright> Like the fs server on one pc etc.
+    <bwright> Which os could I do this with?
+    <bwright> I assumed Mach RPC would support that.
+    <braunr> it can
+    <braunr> but we don't use it that way
+    <braunr> plan9 is probably better suited to what you want
+    <braunr> inferno too
+    <braunr> maybe dragonflybsd
+    <bwright> Yep.
+    <bwright> irAwesome.
+    <bwright> Plan9 is exactly it.
+    <braunr> enjoy
+
+
+# IRC, freenode, #hurd, 2014-03-11
+
+    <ltx> Does anyone have a distributed OS over GNU/hurd project running?
+    <ltx> (GNU/hurd has many of the utilities to make this easy, but it still
+      requires some more utilities for transparent computation)
+    <braunr> not at the moment, no
+    <braunr> and i consider our ipc inappropriate if you want system able to
+      run over heterogeneous hardware
+    <braunr> or rather, our RPCs
+    <ltx> I haven't spent the time, this is speculative (in the worse "let's do
+      everything magically!" way.)
+    <ltx> Just wondering if this exists outside of plan9 (which is limited in
+      some ways.)
+    <braunr> dragonflybsd had plans for a SSI
+    <braunr> there are ancient research systems that actually did the job
+    <braunr> such as amoeba
+    <braunr> here at the hurd, we just don't have the manpower, and the people
+      spending time on the project have other interests
+    <ltx> Yeah, that seems like a large problem.
+    <ltx> GNU/hurd is self hosting (in the "I like working on it" way), yes?
+    <ltx> I've done some work on it, but don't really know how nice it is.
+    <braunr> yes it is
+    <ltx> Working from a microkernel to add pseudo-SSI features to a bunch of
+      servers seems like a much more trivial task than, say, modifying TLK.
+    <braunr> posix conformance and stability are good enough that more than 70%
+      of debian packages build and most of them work fine
+    <braunr> tlk the linux kernel ?
+    <ltx> Yes.
+    <braunr> first time i see this acronym :)
+    <braunr> and yes i agree, a microkernel is much much more suited for that
+    <braunr> but then, i consider a microkernel better suited for practically
+      everything ... :)
+    <ltx> :)
+    <ltx> I'm wondering how to mix SSI with network-awareness.
+    <braunr> mach used to have a network server
+    <braunr> which would merely act as a proxy for capabilities
+    <braunr> network drivers were in kernel though
+    <ltx> That's the simple way of sharing the sources.
+    <ltx> I'm wondering how we can make a software stack that's network aware;
+      completely transparent SSI can lead to inefficiencies in userspace, as it
+      may do things the kernels won't expect. Having to deal with the network
+      through a network server is a headache.
+    <braunr> what kind of problems do you have in mind ?
+    <ltx> Still working on defining the problem. I think that's half the
+      problem.
+    <ltx> (For any problem.)
+    <ltx> Beyond that, it's just some coding ;)
+    <braunr> ok
+    <braunr> sounds interesting :)
+    <braunr> i'd love to see a modern SSI in action
+    <braunr> but that's really a secondary goal for me so glad to see someone
+      making this his primary goal
+    <braunr> doctoral thesis ?
+    <ltx> ... Undergrad who's been hacking away since grade school.
+    <braunr> heh :)
+    <ltx> 18 y/o sophomore at a respected technical college, dealing with
+      boredom :)
+    <braunr> well throroughly thinking about "defining the problem" is an
+      excellent reflex
+    <teythoon> :) stick around, the hurd is fun
+    <braunr> it does help fight boredom a lot indeed ...... )
+    <braunr> :)
+    <cluck> maybe it'd be possible to port the relevant features from plan9 now
+      that there is a gpl'ed version
+    <teythoon> either way, we'd need network-transparent mach messaging
+    <teythoon> which mach messaging could do, but gnumach does not implement
+      this currently
+    <cluck> teythoon: afaiui if there was a proper 9fs2000 hurd server the rest
+      could be hidden behind the curtains 
+    <teythoon> ah, well, that sounds like a 9p network filesystem translator
+    <cluck> teythoon: also iirc plan9 uses libmach for some things so i suppose
+      a port wouldn't be completely impossible
+    <teythoon> given that in plan9 everything is a file, that might be enough
+      to use plan9 services
+    <cluck> teythoon: yes, it'd be the easiest route (at least initially) i
+      believe
+    <teythoon> careful, lots of stuff is named mach-something
+    <cluck> bloody ernest mach and his damned famous-ness-ish
+    <cluck> =)
+    <teythoon> :D

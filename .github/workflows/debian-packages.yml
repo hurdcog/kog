@@ -1,0 +1,1257 @@
+name: Build Debian Packages
+
+# This workflow builds Debian packages for OpenCog components
+# Following the dependency order and using dpkg-buildpackage
+# 
+# The workflow uses helper scripts from .github/scripts/:
+#   - parse-package-info.sh: Extracts package metadata from opencog-debian update scripts
+#   - prepare-package-build.sh: Prepares package directories with debian/ files
+#
+# These scripts read information from opencog-debian/*/update-*.sh scripts which contain:
+#   - REPO_NAME: The source repository/directory name
+#   - DEB_NAME: The Debian package name
+#   - VERSION: The package version number
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version override (e.g., 1.0.0)'
+        required: false
+        default: ''
+
+concurrency:
+  group: debian-packages-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  # Stage 1: Build cogutil (Foundation)
+  build-cogutil:
+    runs-on: ubuntu-latest
+    name: Build cogutil Debian Package
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Fix File Permissions
+      run: |
+        echo "=== Fixing File Permissions ==="
+        # Ensure all files are readable and directories are accessible
+        chmod -R a+rX .
+        echo "Permissions fixed successfully"
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          doxygen \
+          graphviz \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Install Sparsehash
+      run: |
+        chmod +x .github/scripts/install-sparsehash.sh
+        .github/scripts/install-sparsehash.sh
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh cogutil
+    
+    - name: Build cogutil Package
+      continue-on-error: true
+      run: |
+        cd cogutil
+        dpkg-buildpackage -us -uc -b
+    
+    - name: List Generated Packages
+      if: always()
+      run: |
+        echo "📦 Generated Debian packages:"
+        ls -lh *.deb 2>/dev/null || echo "No .deb files found in root"
+    
+    - name: Upload cogutil Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: cogutil-debian-packages
+        path: "*.deb"
+        retention-days: 7
+    
+    - name: Install cogutil for next stages
+      if: success()
+      run: |
+        sudo dpkg -i *.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+
+  # Stage 2: Build atomspace (requires cogutil)
+  build-atomspace:
+    runs-on: ubuntu-latest
+    name: Build atomspace Debian Package
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          libgmp-dev \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          python3-pip \
+          valgrind \
+          doxygen \
+          graphviz \
+          patchelf \
+          libopenmpi-dev \
+          ghc \
+          haskell-stack \
+          libgearman-dev \
+          libpq-dev \
+          libprotobuf-dev \
+          libzmq3-dev \
+          odbc-postgresql \
+          postgresql \
+          postgresql-client \
+          protobuf-compiler \
+          unixodbc-dev
+    
+    - name: Download cogutil Packages
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-debian-packages
+    
+    - name: Install cogutil
+      run: |
+        sudo dpkg -i *.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh atomspace
+    
+    - name: Install Cython3 Build Dependency
+      run: |
+        echo "=== Installing Cython3 for Python bindings ==="
+        sudo apt-get install -y cython3
+        cython3 --version
+        echo "Cython3 installation complete"
+    
+    - name: Build atomspace Package
+      continue-on-error: true
+      run: |
+        cd atomspace
+        dpkg-buildpackage -us -uc -b
+    
+    - name: List Generated Packages
+      if: always()
+      run: |
+        echo "📦 Generated Debian packages:"
+        ls -lh *.deb 2>/dev/null || echo "No .deb files found in root"
+    
+    - name: Upload atomspace Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: atomspace-debian-packages
+        path: "*.deb"
+        retention-days: 7
+    
+    - name: Install atomspace for next stages
+      if: success()
+      run: |
+        sudo dpkg -i *.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+
+  # Stage 3: Build atomspace-storage (requires atomspace)
+  build-atomspace-storage:
+    runs-on: ubuntu-latest
+    name: Build atomspace-storage Debian Package
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh atomspace-storage
+    
+    - name: Build atomspace-storage Package
+      continue-on-error: true
+      run: |
+        cd atomspace-storage
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload atomspace-storage Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: atomspace-storage-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 3b: Build atomspace-rocks (requires atomspace-storage)
+  build-atomspace-rocks:
+    runs-on: ubuntu-latest
+    name: Build atomspace-rocks Debian Package
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          librocksdb-dev \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh atomspace-rocks
+    
+    - name: Build atomspace-rocks Package
+      continue-on-error: true
+      run: |
+        cd atomspace-rocks
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload atomspace-rocks Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: atomspace-rocks-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 4: Build unify (requires cogutil, atomspace)
+  build-unify:
+    runs-on: ubuntu-latest
+    name: Build unify Debian Package
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download cogutil Packages
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-debian-packages
+        path: ./deps/cogutil
+    
+    - name: Download atomspace Packages
+      uses: actions/download-artifact@v4
+      with:
+        name: atomspace-debian-packages
+        path: ./deps/atomspace
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/cogutil/*.deb || echo "Some packages failed to install"
+        sudo dpkg -i ./deps/atomspace/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh unify
+    
+    - name: Build unify Package
+      continue-on-error: true
+      run: |
+        cd unify
+        dpkg-buildpackage -us -uc -b
+    
+    - name: List Generated Packages
+      if: always()
+      run: |
+        echo "📦 Generated Debian packages:"
+        ls -lh *.deb 2>/dev/null || echo "No .deb files found"
+    
+    - name: Upload unify Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: unify-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 5: Build ure (requires cogutil, atomspace, unify)
+  build-ure:
+    runs-on: ubuntu-latest
+    name: Build ure Debian Package
+    needs: build-unify
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh ure
+    
+    - name: Build ure Package
+      continue-on-error: true
+      run: |
+        cd ure
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload ure Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: ure-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 6: Build cogserver (requires atomspace-storage)
+  build-cogserver:
+    runs-on: ubuntu-latest
+    name: Build cogserver Debian Package
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          libasio-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Verify Asio Installation
+      run: |
+        echo "Checking for Asio installation..."
+        ls -la /usr/include/asio.hpp || echo "WARNING: asio.hpp not found in /usr/include"
+        pkg-config --modversion asio || echo "WARNING: Asio not found via pkg-config"
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh cogserver
+    
+    - name: Build cogserver Package
+      continue-on-error: true
+      run: |
+        cd cogserver
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload cogserver Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: cogserver-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 6b: Build atomspace-cog (requires cogserver)
+  build-atomspace-cog:
+    runs-on: ubuntu-latest
+    name: Build atomspace-cog Debian Package
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          libasio-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Verify Asio Installation
+      run: |
+        echo "Checking for Asio installation..."
+        ls -la /usr/include/asio.hpp || echo "WARNING: asio.hpp not found in /usr/include"
+        pkg-config --modversion asio || echo "WARNING: Asio not found via pkg-config"
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh atomspace-cog
+    
+    - name: Build atomspace-cog Package
+      continue-on-error: true
+      run: |
+        cd atomspace-cog
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload atomspace-cog Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: atomspace-cog-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 7: Build attention (requires cogutil, atomspace, cogserver)
+  build-attention:
+    runs-on: ubuntu-latest
+    name: Build attention Debian Package
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          libasio-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Verify Asio Installation
+      run: |
+        echo "Checking for Asio installation..."
+        ls -la /usr/include/asio.hpp || echo "WARNING: asio.hpp not found in /usr/include"
+        pkg-config --modversion asio || echo "WARNING: Asio not found via pkg-config"
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh attention
+    
+    - name: Build attention Package
+      continue-on-error: true
+      run: |
+        cd attention
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload attention Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: attention-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 8: Build spacetime (requires cogserver)
+  build-spacetime:
+    runs-on: ubuntu-latest
+    name: Build spacetime Debian Package
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          libasio-dev \
+          liboctomap-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh spacetime
+    
+    - name: Build spacetime Package
+      continue-on-error: true
+      run: |
+        cd spacetime
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload spacetime Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: spacetime-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 9: Build learn (requires cogserver)
+  build-learn:
+    runs-on: ubuntu-latest
+    name: Build learn Debian Package
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          libasio-dev \
+          cxxtest \
+          cython3 \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh learn
+    
+    - name: Build learn Package
+      continue-on-error: true
+      run: |
+        cd learn
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload learn Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: learn-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 10: Build moses (foundation component)
+  build-moses:
+    runs-on: ubuntu-latest
+    name: Build moses Debian Package
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-math-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download cogutil Packages
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-debian-packages
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i *.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh moses
+    
+    - name: Build moses Package
+      continue-on-error: true
+      run: |
+        cd moses
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload moses Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: moses-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 11: Build asmoses (requires moses, atomspace)
+  build-asmoses:
+    runs-on: ubuntu-latest
+    name: Build asmoses Debian Package
+    needs: [build-moses, build-atomspace]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-math-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh asmoses
+    
+    - name: Build asmoses Package
+      continue-on-error: true
+      run: |
+        cd asmoses
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload asmoses Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: asmoses-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 12: Build miner (requires cogutil, atomspace, ure)
+  build-miner:
+    runs-on: ubuntu-latest
+    name: Build miner Debian Package
+    needs: build-ure
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh miner
+    
+    - name: Build miner Package
+      continue-on-error: true
+      run: |
+        cd miner
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload miner Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: miner-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Stage 13: Build pln (requires cogutil, atomspace, ure, spacetime)
+  build-pln:
+    runs-on: ubuntu-latest
+    name: Build pln Debian Package
+    needs: [build-ure, build-spacetime]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          dpkg-dev \
+          cmake \
+          g++ \
+          guile-3.0-dev \
+          libboost-dev \
+          libboost-date-time-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          binutils-dev \
+          libiberty-dev \
+          cxxtest \
+          python3-dev \
+          python3-nose \
+          valgrind \
+          patchelf
+    
+    - name: Download Previous Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./deps
+        merge-multiple: true
+    
+    - name: Install Dependencies
+      run: |
+        sudo dpkg -i ./deps/*.deb || echo "Some packages failed to install"
+        sudo apt-get install -f -y
+    
+    - name: Prepare Debian packaging files
+      run: |
+        chmod +x .github/scripts/prepare-package-build.sh
+        .github/scripts/prepare-package-build.sh pln
+    
+    - name: Build pln Package
+      continue-on-error: true
+      run: |
+        cd pln
+        dpkg-buildpackage -us -uc -b
+    
+    - name: Upload pln Packages
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: pln-debian-packages
+        path: "*.deb"
+        retention-days: 7
+
+  # Final Stage: Generate Build Summary
+  generate-summary:
+    runs-on: ubuntu-latest
+    name: Generate Build Summary
+    needs: [build-cogutil, build-atomspace, build-atomspace-storage, build-atomspace-rocks, build-unify, build-ure, build-cogserver, build-atomspace-cog, build-attention, build-spacetime, build-learn, build-moses, build-asmoses, build-miner, build-pln]
+    if: always()
+    
+    steps:
+    - name: Download All Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./all-packages
+    
+    - name: Generate Summary
+      run: |
+        echo "# 📦 Debian Package Build Summary" > $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Built Packages" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count packages (check if directory exists first)
+        if [ -d "./all-packages" ]; then
+          total_debs=$(find ./all-packages -name "*.deb" 2>/dev/null | wc -l)
+        else
+          total_debs=0
+        fi
+        echo "**Total packages built:** $total_debs" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # List all packages
+        echo "### Package List" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Package | Size |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|---------|------|" >> $GITHUB_STEP_SUMMARY
+        
+        for component_dir in ./all-packages/*; do
+          if [ -d "$component_dir" ]; then
+            component=$(basename "$component_dir" | sed 's/-debian-packages//')
+            for deb in "$component_dir"/*.deb; do
+              if [ -f "$deb" ]; then
+                package=$(basename "$deb")
+                size=$(du -h "$deb" | cut -f1)
+                echo "| $component | $package | $size |" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          fi
+        done
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Installation Instructions" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "# Download artifacts from GitHub Actions" >> $GITHUB_STEP_SUMMARY
+        echo "# Then install in dependency order:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 1. Install cogutil" >> $GITHUB_STEP_SUMMARY
+        echo "sudo dpkg -i *cogutil*.deb" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 2. Install atomspace" >> $GITHUB_STEP_SUMMARY
+        echo "sudo dpkg -i *atomspace*.deb" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 3. Install atomspace-storage" >> $GITHUB_STEP_SUMMARY
+        echo "sudo dpkg -i *atomspace-storage*.deb" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 4. Install cogserver and related" >> $GITHUB_STEP_SUMMARY
+        echo "sudo dpkg -i *cogserver*.deb *atomspace-rocks*.deb *atomspace-cog*.deb" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 5. Install remaining packages" >> $GITHUB_STEP_SUMMARY
+        echo "sudo dpkg -i *.deb" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 6. Fix any dependency issues" >> $GITHUB_STEP_SUMMARY
+        echo "sudo apt-get install -f -y" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*Generated by debian-packages.yml workflow*" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Upload All Packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: all-debian-packages
+        path: ./all-packages/**/*.deb
+        retention-days: 30

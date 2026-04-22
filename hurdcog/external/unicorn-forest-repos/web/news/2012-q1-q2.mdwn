@@ -1,0 +1,165 @@
+[[!meta copyright="Copyright © 2012, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta date="2013-01-08 21:30 UTC"]]
+
+Two quarters of the Hurd, Q1 and Q2 of 2012: *Google Summer of Code*, *Barrier
+of Entry*, *Core*, *Porting*.
+[[!if test="included()" then="""[[!toggle id=full_news
+text="Details."]][[!toggleable id=full_news text="[[!paste id=full_news]]"]]"""
+else="
+[[!paste id=full_news]]"]]
+
+[[!cut id="full_news" text="""
+
+**Google Summer of Code**
+
+Jérémie Koenig released the final [[user/jkoenig/java/report]] on his Google
+Summer of Code project *Java on Hurd* along with a summary of his changes and
+the
+[challenges](http://lists.gnu.org/archive/html/bug-hurd/2012-01/msg00062.html)
+he faced.  In a similar track, Samuel Thibault
+[merged the slab branch](http://lists.gnu.org/archive/html/bug-hurd/2012-02/msg00010.html),
+concluding Maksym Planeta's Goggle Summer of Code project on an improved memory
+allocator.
+
+Pino Toscano improved the Hurd implementations of
+[nanosleep](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00130.html),
+[ptsname_r](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00122.html),
+[getlogin_r](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00121.html),
+[getgroups](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00120.html),
+and
+[sendto](http://lists.gnu.org/archive/html/bug-hurd/2012-06/msg00009.html),
+for POSIX compliance.
+
+**Barrier of Entry**
+
+Samuel Thibault, Ludovic Courtès and Thomas Schwinge reduced the
+barrier of entry into hacking the Hurd.
+
+As part of this, Samuel prepared
+[DDE in incubator](http://lists.gnu.org/archive/html/bug-hurd/2012-02/msg00037.html),
+making about half the Linux kernel 2.6.29.6's network drivers compile on the
+Hurd, together with a
+[netdde debian package and testing notes](http://lists.gnu.org/archive/html/bug-hurd/2012-02/msg00038.html).
+
+Ludovic contributed
+[a continuous testing framework](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00019.html)
+using a Nix-based GNU QEMU image. Thanks to his work, we now have
+[automatic tests](http://hydra.nixos.org/jobset/gnu/hurd-master)
+([background](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00104.html)).
+
+Thomas on the other hand
+[moved](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00063.html)
+the translators
+[cvsfs](https://git.savannah.gnu.org/cgit/hurd/incubator.git/log/?h=cvsfs/master)
+and
+[smbfs](https://git.savannah.gnu.org/cgit/hurd/incubator.git/log/?h=smbfs/master)
+into the [[incubator Git repository|source_repositories/incubator]], as well as
+[libfuse](https://git.savannah.gnu.org/cgit/hurd/incubator.git/log/?h=libfuse/master),
+reducing the barrier of entry to improving them, so integrating cvs
+and samba in the filesystem and using FUSE translators can be
+stabilized more easily. Also he
+[improved the Hurd build system](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00087.html),
+removing automatically generated files from the source repository, as now
+*running autoreconf is all you need* to create them.
+
+Roland McGrath
+[merged many glibc changes](http://lists.gnu.org/archive/html/bug-hurd/2012-05/msg00033.html)
+for upstream inclusion, reducing the maintenance load for our regular glibc
+development work.
+
+**The Core of the Hurd**
+
+Ludovic Courtès, Maksym Planeta, Samuel Thibault and Richard Braun
+took a dive into the core of the Hurd. Ludovic
+[fixed invalid port deallocation in `symlink'](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00013.html)
+and
+[made console-run resilient against missing /dev/console](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00002.html). Maksym
+[tested the performance of tmpfs](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00040.html),
+showing a speedup for apt calls from 22 seconds with
+[[hurd/libstore/examples/ramdisk]] and 32 seconds with
+[[hurd/translator/ext2fs]] to 16 seconds with [[hurd/translator/tmpfs]] for
+apt invocations, showing the possible wins due to going deep. An obvious
+use case for tmpfs are
+[faster Hurd LiveCDs](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00050.html). Samuel
+made it easier to dive in by
+[improving debugging in GNU Mach](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00032.html). The
+debugger is now aware of the difference between kernel space and user
+space. This should substantially reduce the development time for
+features in Mach by giving
+[nicer stack traces](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00047.html). And
+in the deepest core of the Mach, Richard improved memory mapping
+[with a red-black tree](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00109.html),
+which should speed up memory access.
+
+**Porting**
+
+As in the previous quarters, we also saw lots of ported packages,
+including Richard's work on
+[libpcap](http://lists.gnu.org/archive/html/bug-hurd/2012-01/msg00059.html)
+which brought wireshark and
+[pcap_inject](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00000.html)
+for easier network testing,
+[libtool](http://lists.gnu.org/archive/html/bug-hurd/2012-02/msg00023.html)
+thanks to Samuel Thibault and Peter O'Gorman,
+[gnat](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00060.html)
+by Svante Signell for Ada support (a language used in many
+mission-critical applications such as automotive and aerospace,
+offering features like strong typing, modularity, run-time checking
+and parallel processing), and
+[iconx](http://lists.gnu.org/archive/html/bug-hurd/2012-06/msg00004.html)
+thanks to Samuel Thibault, which fulfills a requirement of tests for
+many packages, among them glib - and allowed Svante Signell to port
+the literate programming language noweb and ifupdown. Also Thomas
+DiModica
+[merged](http://lists.gnu.org/archive/html/bug-hurd/2012-06/msg00018.html)
+the cthreads to pthreads patch and
+[added a branch for it](http://lists.gnu.org/archive/html/bug-hurd/2012-07/msg00087.html)
+to make it easier to work on getting Hurd to use the more current
+pthreads.
+
+With his [[Debian GNU/Hurd|hurd/running/debian]] maintainer hat on, Samuel
+Thibault posted some new [bits from the Debian GNU/Hurd
+porters](http://lists.debian.org/debian-devel-announce/2012/02/msg00002.html).
+
+And now, as a final note, we want to share a story about real-life
+debugging on a Hurd system; IRC, freenode, #hurd, 2012-03-02:
+
+    <youpi> yay GNU/Hurd  
+    <youpi> I have added i_translator check in e2fsck, it was missing  
+    <youpi> I had a volume that was keeping making ext2fs crash  
+    <youpi> with a reproductible scenario  
+    <youpi> could easily work out it was i_translator, then add a
+      check to e2fsck, run it, which indeed fixed, them, and voilà,
+      ext2fs was working again
+    <youpi> all that on the same machine with *no* system reboot  
+    <youpi> just ext2fs restart :)
+
+
+So if you want to experience enjoyable debugging of code deep in the core of your system,
+please [[get in contact|contact_us]] -- and maybe already grab the [[source
+code|source_repositories]].
+
+---
+
+The **GNU Hurd** is the GNU project's replacement for the Unix kernel.  It is a
+collection of servers that run on the Mach microkernel to implement file
+systems, network protocols, file access control, and other features that are
+implemented by the Unix kernel or similar kernels (such as Linux).  [[More
+detailed|hurd/documentation]].
+
+**GNU Mach** is the microkernel upon which a GNU Hurd system is based.  It
+provides an Inter Process Communication (IPC) mechanism that the Hurd uses to
+define interfaces for implementing in a distributed multi-server fashion the
+services a traditional operating system kernel provides.  [[More
+detailed|microkernel/mach/gnumach]].
+
+"""]]

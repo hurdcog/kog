@@ -1,0 +1,49 @@
+# Makefile for Cross-Modal Cognitive Fusion Kernel Tests
+#
+# Usage:
+#   make test_fusion  - Build the fusion test executable
+#   make test         - Build and run tests
+#   make clean        - Clean build artifacts
+
+CC = gcc
+CFLAGS = -Wall -Wextra -O2 -I. -std=c11
+LDFLAGS = -lm -lpthread
+
+# Source files
+SOURCES = cross_modal_fusion.c \
+          cognitive_tensor_ops.c \
+          symbolic_reasoning.c \
+          attention_kernels.c \
+          atomspace_bridge.c \
+          hypergraph_ops.c
+
+# Object files
+OBJECTS = $(SOURCES:.c=.o)
+
+# Test executable
+TEST_FUSION = test_cross_modal_fusion
+
+# Default target
+all: $(TEST_FUSION)
+
+# Build test executable
+$(TEST_FUSION): test_cross_modal_fusion.o $(OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+# Compile object files
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Run tests
+test: $(TEST_FUSION)
+	@echo "Running Cross-Modal Fusion Tests..."
+	@./$(TEST_FUSION)
+
+# Clean build artifacts
+clean:
+	rm -f $(OBJECTS) test_cross_modal_fusion.o $(TEST_FUSION)
+
+# Rebuild everything
+rebuild: clean all
+
+.PHONY: all test clean rebuild

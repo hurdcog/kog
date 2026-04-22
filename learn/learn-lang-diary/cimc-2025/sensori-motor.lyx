@@ -1,0 +1,667 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass llncs
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style splncs04
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\branch long-version
+\selected 0
+\filename_suffix 0
+\color #faf0e6
+\end_branch
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 11page%
+\topmargin 8pheight%
+\rightmargin 11page%
+\bottommargin 10pheight%
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Agency and Sensorimotor Systems
+\end_layout
+
+\begin_layout Subtitle
+Response to a Call for Research Proposals, California Institute for Machine
+ Consciousness (CIMC)
+\end_layout
+
+\begin_layout Author
+Linas Vepštas 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+orcidID{ORCID
+\backslash
+hspace{0.75em} 0000-0002-2557-740X}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Institute
+BrainyBlaze Dynamics, OpenCog Foundation 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+email{<linasvepstas@gmail.com>}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+The core idea of consciousness as a form of embodied cognition is popular
+ and widespread.
+ Yet an abstract mathematical description of how this might work, anchored
+ to first principles in physics, is absent.
+ A sensory system 
+\begin_inset Quotes eld
+\end_inset
+
+perceives
+\begin_inset Quotes erd
+\end_inset
+
+ the world: but what is it that is perceived? It can't just be some 
+\begin_inset Quotes eld
+\end_inset
+
+data
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+message
+\begin_inset Quotes erd
+\end_inset
+
+, as that seems to require a data–definition format and some homunculus
+ to define it.
+ Perhaps sensation is movement of structural relationships across a barrier
+ or boundary between the agent's finite and limited self/inside and the
+ unbounded outside of the external world.
+ This requires the barrier only to limit what gets across.
+ What is the mathematical description of such a barrier? Perhaps the 
+\begin_inset Quotes eld
+\end_inset
+
+self
+\begin_inset Quotes erd
+\end_inset
+
+ is an accretion of structure inside an agent.
+ How can this accretion be formally described? Jellyfish seem to be aware
+ of 
+\begin_inset Quotes eld
+\end_inset
+
+self
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+other
+\begin_inset Quotes erd
+\end_inset
+
+; discussions of consciousness often presume such awareness.
+ Is there an algebraic formulation for such (self-)awareness? Suppose such
+ a formulation can be created; is there anything within it that has the
+ form of 
+\begin_inset Quotes eld
+\end_inset
+
+qualia
+\begin_inset Quotes erd
+\end_inset
+
+, or is it mechanical and dead inside?
+\end_layout
+
+\begin_layout Section*
+Research Objectives
+\end_layout
+
+\begin_layout Standard
+Computation requires the articulation of a system using algorithmic language.
+ Algorithms require precise structural definitions.
+ Structural definitions are generically algebraic.
+ Foundations for algebra include set theory, category theory and topoi.
+ Thus, a 
+\begin_inset Quotes eld
+\end_inset
+
+computational perspective on consciousness
+\begin_inset Quotes erd
+\end_inset
+
+ fundamentally requires (seems to require) a reductionist description of
+ the structure of the exterior world, the barrier that separates it from
+ the interior world, and how that interior interacts and moves through the
+ external world.
+ The interior itself may have hierarchical structure: the inside of a biological
+ creature is not a uniform puree of pancake batter, but also contains substructu
+res.
+ It seems this recursive structuring continues 
+\begin_inset Quotes eld
+\end_inset
+
+all the way down
+\begin_inset Quotes erd
+\end_inset
+
+, at least as far as biochemistry,
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See the review article: 
+\begin_inset Quotes eld
+\end_inset
+
+All intelligence is collective intelligence
+\begin_inset Quotes erd
+\end_inset
+
+, Falandays 
+\emph on
+etal
+\emph default
+.
+ Journal of Multiscale Neuroscience Vol 2 no 1 169-191 (2023) https://researchpo
+rtal.helsinki.fi/en/publications/all-intelligence-is-collective-intelligence
+\end_layout
+
+\end_inset
+
+ and perhaps much farther.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See 
+\begin_inset Quotes eld
+\end_inset
+
+Ingressing Minds: Causal Patterns Beyond Genetics and Environment in Natural,
+ Synthetic, and Hybrid Embodiments
+\begin_inset Quotes erd
+\end_inset
+
+, Michael Levin https://osf.io/preprints/psyarxiv/5g2xj_v1 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The goal of the research is to articulate what it means for there to be
+ an inside, an outside, and a permeable boundary between the two.
+ Does this boundary resemble a domain wall in a ferromagnetic system (
+\emph on
+a la
+\emph default
+ Ising model)? Just as petroleum does not flow through rock, until there
+ are enough holes/fractures in the rock allowing it to flow, exhibiting
+ a phase transition at a critical fracture–ratio, then perhaps intelligence
+ is similar: absent, until there is a critical level of organization? Many
+ systems in nature exhibit self–organized criticality, and recent neuroscience
+ results provide some indication that human intelligence operates at the
+ point of self–organized criticality, with long neurons modulating the avalanchi
+ng behavior that is characteristic of self–organized systems.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See 
+\begin_inset Quotes eld
+\end_inset
+
+Complex harmonics reveal low–dimensional manifolds of critical brain dynamics.
+\begin_inset Quotes erd
+\end_inset
+
+ Deco, 
+\emph on
+etal.
+
+\emph default
+ https://journals.aps.org/pre/abstract/10.1103/PhysRevE.111.014410
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One can imagine that it is easy to write a mathematical description of inside,
+ outside and a barrier between them.
+ It is hardly clear how to take such a system, and have it drive itself
+ into a self–organized critical point, exhibiting any of the basic phenomena
+ associated with intelligence.
+ 
+\end_layout
+
+\begin_layout Section*
+Methodology
+\end_layout
+
+\begin_layout Standard
+My personal predilection is for a rather conventional laboratory experimental
+ approach.
+ Forward progress is achieved thorough a mixture of theoretical articulations
+ and experimental realizations.
+ Try to build a system that 
+\begin_inset Quotes eld
+\end_inset
+
+works
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Collect the data.
+ Analyze the data.
+ Try to understand 
+\begin_inset Quotes eld
+\end_inset
+
+what happened
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+lab
+\begin_inset Quotes erd
+\end_inset
+
+ here is software.
+ Software is commonly distinguished into imperative vs.
+ functional programming styles.
+ Off in a neglected corner is the descriptive or declarative style.
+ The declarative style splits computation into two pieces: a description
+ of 
+\begin_inset Quotes eld
+\end_inset
+
+what is
+\begin_inset Quotes erd
+\end_inset
+
+, and a distinct component of 
+\begin_inset Quotes eld
+\end_inset
+
+how it interacts
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The description of 
+\begin_inset Quotes eld
+\end_inset
+
+what is
+\begin_inset Quotes erd
+\end_inset
+
+ can be understood as a description of structure, of network relationships,
+ of graphical vertexes and edges (or dots and arrows, for category theory/topoi.)
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+how it interacts
+\begin_inset Quotes erd
+\end_inset
+
+ portion is a dynamical system or driver that mutates structures and relationshi
+ps over time.
+ The driver is more–or–less structure agnostic; the driver rearranges the
+ descriptive/declarative program through combinatoric forces, e.g.
+ free energy principles, maximum entropy principles, and/or related non-equilibr
+ium thermodynamical principles, including conventional ideas formulated
+ 
+\emph on
+a la
+\emph default
+ Gibbs and Boltzmann, Markov/Bayesian blankets, 
+\emph on
+etc.
+
+\emph default
+ That is, the driver is presumed to accord well with generally–accepted
+ conventional concepts.
+\end_layout
+
+\begin_layout Standard
+Accepting this split between declarative expressions of structure and drivers
+ of dynamical change requires a framework 
+\emph on
+aka
+\emph default
+ language for declarations.
+ The framework to be used is Atomese
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See https://wiki.opencog.org/w/Atomese
+\end_layout
+
+\end_inset
+
+ Note that there are two distinct versions of Atomese; one that is an evolution
+ of 
+\begin_inset Quotes eld
+\end_inset
+
+classical Atomese
+\begin_inset Quotes erd
+\end_inset
+
+, and another, developed from scratch, in Ben Goertzel's Hyperion system,
+ which is sometimes called 
+\begin_inset Quotes eld
+\end_inset
+
+Atomese 2.0
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For practical and technical reasons (including stability, debugability,
+ scalability and performance), the original formulation of Atomese will
+ be used.
+ 
+\end_layout
+
+\begin_layout Section*
+Expected Outcomes
+\end_layout
+
+\begin_layout Standard
+An experimental approach generally precludes fireworks and stymies hyperbolic
+ claims of grand achievements.
+ There's a certain rhythmic daily grind involved in constructing, running
+ and analyzing.
+\end_layout
+
+\begin_layout Standard
+One of the simplest sensori–motor systems is that of walking through a file–syst
+em, and 
+\begin_inset Quotes eld
+\end_inset
+
+observing
+\begin_inset Quotes erd
+\end_inset
+
+ what is there.
+ This is a very different domain than the conventional 3D abstraction of
+ Minecraft, virtual worlds or robotics.
+ It is also distinct from the 2D pixelated ARC Prize ARC-AGI-2 challenge.
+ Nor is it one–dimensional, in the way that streams of words/text are treated
+ in LLM's and transformers.
+ The hierarchical structure of a file system seems closer to the structure
+ of 
+\begin_inset Quotes eld
+\end_inset
+
+knowledge in the abstract
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+information in the abstract
+\begin_inset Quotes erd
+\end_inset
+
+, and thus may provide a better experimental domain for how a knowledge–processi
+ng system ingests, manipulates, excretes, reorganizes and retains structural
+ relationships.
+ (Atomese is itself hierarchical tree–structured.)
+\end_layout
+
+\begin_layout Standard
+The expected object of study is a self–organized collection of structures
+ that exhibit navigation and movement through its environment (for example,
+ a file system), together with interaction with and mutation (manipulation)
+ of the environment.
+\end_layout
+
+\begin_layout Standard
+The expected outcome is the formal (algebraic, mathematical, algorithmic)
+ description of such a system and a characterization of its behavior in
+ statistical and observational terms.
+ This includes scaling behaviors, measures of turbulence, observation of
+ avalanching behavior, movement, localization, 
+\emph on
+etc.
+\end_layout
+
+\begin_layout Section*
+Timeline
+\end_layout
+
+\begin_layout Standard
+This project is already ongoing, with bits and pieces scattered across four
+ or five distinct github sites.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+These include:
+\end_layout
+
+\begin_layout Itemize
+https://github.com/opencog/sensory
+\end_layout
+
+\begin_layout Itemize
+https://github.com/opencog/motor
+\end_layout
+
+\begin_layout Itemize
+https://github.com/opencog/evidence
+\end_layout
+
+\begin_layout Plain Layout
+The content at these sites is tagged 
+\begin_inset Quotes eld
+\end_inset
+
+version 0.1
+\begin_inset Quotes erd
+\end_inset
+
+ and consists primarily of design documents and a smattering of code, demos,
+ unit tests and examples.
+\end_layout
+
+\end_inset
+
+ Much of the effort so far has been an articulation of 
+\begin_inset Quotes eld
+\end_inset
+
+what the problem is
+\begin_inset Quotes erd
+\end_inset
+
+, and attempts to formulate it in functional code.
+ The build–test–retry cycle is short, on the scale of weeks.
+ This is a small project; there is no plan to create a plan, with project
+ planning time–lines or Gantt charts.
+ The goal is to just 
+\begin_inset Quotes eld
+\end_inset
+
+move forward
+\begin_inset Quotes erd
+\end_inset
+
+, as best as can be done.
+ 
+\end_layout
+
+\begin_layout Section*
+Budget Justification
+\end_layout
+
+\begin_layout Standard
+Hardware compute resources have already been procured, and so hardware expenditu
+res of less than $10K are expected.
+ The nature of this research does not seem to require the use of, or interaction
+ with LLMs, GPT, or any of the deep–learning neural net systems; thus a
+ budget of zero for LLMs is anticipated.
+\end_layout
+
+\begin_layout Standard
+Some of the contemplated theoretical models might run much faster if ported
+ to GPU's.
+ Perhaps the theory may indicate that the descriptive, declarative systems
+ resemble TensorFlow.
+ If so, then a contingency must be set aside for rental of cloud–compute
+ resources.
+ However, the need for this, and the nature of this need is entirely unclear.
+ There's a shadow of a hint at the edges; how it comes into play remains
+ unknown.
+ The current work is a low–level exploration of theory, and has not reached
+ the stage of being compute–hungry.
+\end_layout
+
+\begin_layout Standard
+The budget is primarily that of the salary for the lead researcher.
+\end_layout
+
+\begin_layout Section*
+Team and collaborators
+\end_layout
+
+\begin_layout Standard
+Team of one: myself: Linas Vepstas.
+ The research above is sufficiently arcane, and the description of it is
+ sufficiently obtuse that I have not been able to attract interested parties
+ or collaborators.
+ I seem to be operating in a corner of the noosphere that gets no visitors.
+ So it goes.
+\end_layout
+
+\end_body
+\end_document

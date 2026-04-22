@@ -1,0 +1,1503 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* lock.h (ss_mutex_trace_add) [! USE_L4]: Set SS_LOCK_TRACE[I].TID
+	to zero.
+	* thread.h (hurd_myself) [USE_L4]: Return l4_myself.
+	* trace.h (trace_buffer_add) [! USE_L4 && ! RM_INTERN]: Use
+	hurd_myself, not l4_myself.
+	[! USE_L4 && RM_INTERN]: Don't print a tid.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (AF_REGS_FMT): New macro.
+	(AF_REGS_PRINTF): Likewise.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (hurd_myself): Assume UTCB->TID is set correctly.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* RPC: Move to ../libviengoos.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h: Merge contents of this file...
+	* thread.h: ... into this one.  Update users.
+	* headers.m4: Don't link hurd/exceptions.h.
+	* Makefile.am (includehurd_HEADERS): Remove exceptions.h.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* rmutex.h (__need_vg_thread_id_t): Don't include <l4/thread.h>.
+	Define __need_vg_thread_id_t and include <viengoos/thread.h>.
+	(struct ss_rmutex): Change owner to a vg_thread_id_t.
+	(SS_RMUTEX_INIT): Use vg_niltid instead of vg_niltid.
+	(ss_rmutex_lock): Use hurd_myself instead of l4_myself.  Use
+	vg_niltid instead of l4_nilthread.
+	(ss_rmutex_unlock): Likewise.
+	(ss_rmutex_trylock): Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h: Don't include <viengoos/cap.h> or <l4/space.h>.
+	Include <viengoos/addr.h>.
+	(ACTIVATION_fault, activation_method_id_string)
+	(struct activation_fault_info, ACTIVATION_FAULT_INFO_FMT)
+	(ACTIVATION_FAULT_INFO_PRINTF, fault): Move from here...
+	* ../libviengoos/viengoos/thread.h: ... to here.
+	
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h: Include <hurd/exceptions.h>.
+	(struct hurd_utcb): Add field tid.
+	(hurd_myself): New function.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* math.h: Move to ../libviengoos/viengoos.  Update users.
+	* bits/ia32/math.h: Remove file.
+	* headers.m4: Don't link hurd/math.h or hurd/bits/math.h.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h: Move to ../libviengoos/viengoos.  Update references.
+	* addr-trans.h: Likewise.
+	* addr.h: Likewise.
+	* cap.h: Likewise.
+	* folio.h: Likewise.
+	* futex.h: Likewise.
+	* ipc.h: Likewise.
+	* message.h: Likewise.
+	* messenger.h: Likewise.
+	* rpc.h: Likewise.
+	* thread.h: Move viengoos specific bits...
+	* ../libviengoos/viengoos/thread.h: ... to this new file.
+	* thread.h (struct hurd_utcb): New structure.
+	* exceptions.h (hurd_utcb): Use a struct hurd_utcb *, not a
+	struct vg_utcb *.  Update users.
+	(hurd_activation_state_alloc): Likewise.
+	(hurd_activation_state_free): Likewise.
+	(hurd_activation_handler_activated): Likewise.
+	(hurd_activation_handler_normal): Likewise.
+	* t-addr-trans.c: Move to ../libviengoos.
+	* t-addr.c: Likewise.
+	* t-rpc.c: Likewise.
+	* Makefile.am (TESTS, check_PROGRAMS, t_addr_CPPFLAGS)
+	(t_addr_SOURCES, t_addr_trans_CPPFLAGS, t_addr_trans_SOURCES)
+	(t_rpc_CPPFLAGS, t_rpc_SOURCES): Move from this file...
+	* ../libviengoos/Makefile.am.
+	* Makefile.am (includehurd_HEADERS): Don't mention activity.h,
+	addr-trans.h, addr.h, cap.h, folio.h, futex.h, ipc.h, message.h or
+	messenger.h.
+	* headers.m4: Don't create a link to hurd/addr.h,
+	hurd/addr-trans.h, hurd/cap.h, hurd/folio.h, hurd/rpc.h,
+	hurd/activity.h, hurd/futex.h, hurd/message.h, hurd/messenger.h or
+	hurd/ipc.h.
+	
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct vg_utcb): Remove field saved_thread_state.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* addr-trans.h: Don't include <l4/types.h>.  Include <stdint.h>
+	and <hurd/math.h>.
+	(struct cap_addr_trans): Replace l4 types with standard types.
+	(CAP_ADDR_TRANS_GUARD): Likewise.
+	(CAP_ADDR_TRANS_SET_GUARD_SUBPAGE): Use vg_msb, not l4_msb.
+	(CAP_ADDR_TRANS_VALID): Replace l4 types with standard types.  Use
+	vg_msb, not l4_msb.
+	* t-addr.c (main): Replace use of l4_msb64 with vg_msg64 and
+	l4_lsb64 with vg_lsg64.
+
+	* types.h: Don't include <l4/types.h>.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	Adapt RPC interfaces according to changes in IPC semantics.
+	
+	* messenger.h: New file.
+	* message.h: New file.
+	* ipc.h: New file.
+	* headers.m4: Link sysroot/include/hurd/message.h to
+	hurd/message.h, sysroot/include/hurd/messenger.h to
+	hurd/messenger.h, and sysroot/include/hurd/ipc.h to hurd/ipc.h.
+	* cap.h: Include <hurd/addr.h> and <stdbool.h>.
+	(enum cap_type): Define cap_messenger, cap_rmessenger and
+	cap_type_count.
+	(cap_type_string): Handle cap_messenger and cap_rmessenger.
+	(cap_types_compatible): Likewise.
+	(cap_type_weak_p): Likewise.
+	(cap_type_weaken): Likewise.
+	(cap_type_strengthen): Likewise.
+	(oid_t): Replace L4 type with standard type.
+	(CAP_VOID): Define.
+
+	* rpc.h [! RPC_TARGET]: Don't error out if not defined.
+	[RPC_TARGET_ARG_]: Don't define or undefine.
+	[RPC_TARGET_]: Likewise.
+	[RPC_TARGET_NEED_ARG]: Ignore.
+	Don't include <l4/ipc.h> or <l4/space.h>.  Include
+	<hurd/message.h> and <hurd/ipc.h>.
+	(reply_buffer) [RM_INTERN]: Declare.
+	(messenger_message_load) [RM_INTERN]: Likewise.
+	[! RM_INTERN] Include <hurd/message-buffer.h>.
+	(cap_t): Define.
+	(CPP_FOREACH): Define.
+	(CPP_SAFE_DEREF): Likewise.
+	(RPC_ARGUMENTS): Take additional argument prefix.  Use it.  Update
+	users.
+	(RPC_CHOP): Rename from this...
+	(RPC_CHOP2): ... to this.  Update users.
+	(RPC_TYPE_SHIFT): New define.
+	(RPCLOADARG): Rewrite according to new marshalling semantics.
+	(RPCSTOREARG): Likewise.
+	(RPC_SEND_MARSHAL): Likewise.
+	(RPC_SEND_UNMARSHAL): Likewise.
+	(RPC_REPLY_MARSHAL): Likewise.
+	(RPC_REPLY_UNMARSHAL): Likewise.
+	(RPC_RECEIVE_MARSHAL): New define.
+	(RPC_MARSHAL_GEN_): Break this into...
+	(RPC_SEND_MARSHAL_GEN_): ... this...
+	(RPC_RECEIVE_MARSHAL_GEN_): ... this...
+	(RPC_REPLY_MARSHAL_GEN_): ... and this.  Update users.
+	(RPC_MARSHAL_GEN_): Redefine in terms of the new macros.
+	(RPC_SEND_): Rewrite according to new marshalling and IPC
+	semantics.
+	(RPC_SEND_NONBLOCKING_): Define.
+	(RPC_): Rewrite according to new marshalling and IPC
+	semantics.
+	(RPC_REPLY_): Likewise.
+	(RPC_SIMPLE_): Don't define.
+	(RPC_SIMPLE): Don't define.
+	(RPC): Take additional argument ret_cap_count.  Update users.
+	(rpc_error_reply_marshal): Rewrite according to new marshalling
+	and IPC semantics.
+	(rpc_error_reply): Likewise.
+	* t-rpc.c (RPC_TARGET_NEED_ARG): Don't define.
+	(RPC_TARGET): Define.
+	(RPC_noargs): Set to a large interger.
+	(RPC_caps): New define.
+	(noargs): Update interface specification according to new IDL
+	interface.  Update users.
+	(onein): Likewise.
+	(oneout): Likewise.
+	(onlyin): Likewise.
+	(onlyout): Likewise.
+	(mix): Likewise.
+	(noargs): Likewise.
+	(onein): Likewise.
+	(oneout): Likewise.
+	(onlyin): Likewise.
+	(onlyout): Likewise.
+	(mix): New interface.
+	(RPC_TARGET): Don't undefine.
+	(main): Update to use the new RPC marshalling interface.  Write a
+	test using the new `mix' interface.
+	* activity.h (RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(activity_policy): Update interface specification according to new
+	IDL interface.  Update users.
+	(activity_info): Likewise.
+	* cap.h: (RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(RM_object_slot_copy_out): Don't define.
+	(RM_object_slot_copy_in): Likewise.
+	(RM_object_slot_read): Likewise.
+	(RM_object_reply_on_destruction): Define.
+	(cap_copy): Update interface specification according to new
+	IDL interface.  Update users.
+	(cap_rubout): Likewise.
+	(cap_read): Likewise.
+	(object_discarded_clear): Likewise.
+	(object_discard): Likewise.
+	(object_status): Likewise.
+	(object_name): Likewise.
+	(object_reply_on_destruction): New interface replacing
+	thread_wait_destroy.
+	(object_slot_copy_out): Remove interface.
+	(object_slot_copy_in): Likewise.
+	(object_slot_read): Likewise.
+	(RPC_TARGET): Don't undefine.
+	* exceptions.h: Don't include <l4/thread.h>.  Include
+	<l4/space.h>.
+	(RPC_STUB_PREFIX): Redefine to `activation'.
+	(RPC_ID_PREFIX EXCEPTION): Redefine to `ACTIVATION'.
+	(RPC_TARGET_NEED_ARG): Don't define.
+	(RPC_TARGET_ARG_TYPE): Likewise.
+	(RPC_TARGET): Likewise.
+	(EXCEPTION_fault): Rename from this...
+	(ACTIVATION_fault): ... to this.  Update users.
+	(exception_method_id_string): Rename from this...
+	(activation_method_id_string): ... to this.
+	(struct exception_info): Rename from this...
+	(struct activation_fault_info): ... to this.  Update users.
+	(EXCEPTION_INFO_FMT): Rename from this...
+	(ACTIVATION_FAULT_INFO_FMT): ... to this.  Update users.
+	(EXCEPTION_INFO_PRINTF): Rename from this...
+	(ACTIVATION_FAULT_INFO_PRINTF): ... to this.  Update users.
+	(fault): Update interface specification according to new IDL
+	interface.  Update users.
+	* folio.h (RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(folio_alloc): Update interface specification according to new IDL
+	interface.  Update users.
+	(folio_free): Likewise.
+	(folio_object_alloc): Likewise.
+	(folio_policy): Likewise.
+	(RPC_TARGET): Don't undefine.
+	* futex.h (RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(futex): Update interface specification according to new IDL
+	interface.  Update users.
+	(RPC_TARGET): Don't undefine.
+	(futex_using): New function.
+	(futex): Implement in terms of it.
+	(futex_wait_using): New function.
+	(futex_wait): Implement in terms of it.
+	(futex_wake_using): New function.
+	(futex_wake): Implement in terms of it.
+	* thread.h (RM_thread_wait_object_destroyed): Don't define.
+	(RM_thread_raise_exception): Rename from this...
+	(RM_thread_activation_collect): ... to this.
+	(RM_thread_id): Define.
+	(RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(struct hurd_thread_exregs_in): Remove fields aspace, activity,
+	exception_page, aspace_out, activity_out and exception_page_out.
+	(thread_exregs): Update interface specification according to new
+	IDL interface.  Add additional parameters exception_messenger and
+	exception_messenger_out.  Update users.
+	(thread_wait_object_destroyed): Remove interface.
+	(struct exception_buffer): Don't define.
+	(thread_raise_exception): Remove interface.
+	(thread_id): New interface.
+	(thread_activation_collect): Likewise.
+	(RPC_TARGET): Don't undefine.
+	* RPC: Update.
+
+	* exceptions.h (hurd_activation_handler_init_early): New
+	declaration.
+	(hurd_activation_handler_init): Likewise.
+	(hurd_utcb): Likewise.
+	(EXCEPTION_STACK_SIZE_LOG2): Don't define.
+	(EXCEPTION_STACK_SIZE): Likewise.
+	(hurd_activation_state_alloc): New declaration.
+	(exception_page_cleanup): Rename from this...
+	(hurd_activation_state_free): ... to this.  Update users.
+	(exception_handler_activated): Rename from this...
+	(hurd_activation_handler_activated): ... to this.
+	(exception_handler_normal): Rename from this...
+	(hurd_activation_handler_normal): ... to this.  Update users.
+	Take additional parameter utcb.
+	(exception_handler_entry): Rename from this...
+	(hurd_activation_handler_entry): ... to this.
+	(exception_handler_end): Rename from this...
+	(hurd_activation_handler_end): ... to this.
+	(hurd_activation_message_register): New declaration.
+	(hurd_activation_message_unregister): Likewise.
+	(hurd_activation_stack_dump): Likewise.
+	* thread.h [! __have_vg_thread_id_t] (__have_vg_thread_id_t):
+	Define.
+	[! __have_vg_thread_id_t && USE_L4]: Include <l4.h>.
+	[! __have_vg_thread_id_t && !USE_L4]: Include <stdint.h>.
+	[! __have_vg_thread_id_t] (vg_thread_id_t): Define.
+	[! __have_vg_thread_id_t] (vg_niltid): Define.
+	[! __have_vg_thread_id_t] (VG_THREAD_ID_FMT): Define.
+	[! __have_activation_frame] (__have_activation_frame): Define.
+	[! __have_activation_frame && USE_L4]: Include <l4/ipc.h>.
+	[! __have_activation_frame] (struct hurd_message_buffer): Declare.
+	[! __have_activation_frame] (struct activation_frame): Define in
+	this case.  Add fields normal_mode_stack and canary.
+	[! __have_activation_frame && i386] (struct activation_frame):
+	Change regs to have 10 elements.  Add fields eax, ecx, edx,
+	eflags, eip, ebx, edi, esi, ebp and esp.
+	[! __have_activation_frame && !USE_L4] (struct activation_frame):
+	Remove fields saved_sender, saved_receiver, saved_timeout,
+	saved_error_code, saved_flags, and saved_br0 in this case.
+	[__need_vg_thread_id_t || __need_activation_frame]
+	(__need_vg_thread_id_t): Undefine.
+	[__need_vg_thread_id_t || __need_activation_frame]
+	(__need_activation_frame): Likewise.
+	[!__need_vg_thread_id_t && !__need_activation_frame]: Include the
+	rest of the file in this case.  Include <stdint.h>,
+	<hurd/types.h>, <hurd/addr.h>, <hurd/addr-trans.h>, <hurd/cap.h>,
+	<hurd/messenger.h> and <setjmp.h>.
+	(hurd_activation_frame_longjmp): New declaration.
+	(struct hurd_fault_catcher): New definition.
+	(hurd_fault_catcher_register): New declaration.
+	(hurd_fault_catcher_unregister): Likewise.
+	(struct exception_page): Rename from this...
+	(struct vg_utcb): ... to this.  Update users.  Remove field
+	exception.  Add fields protected_payload, messenger_id,
+	inline_words, inline_caps, inline_word_count, inline_cap_count,
+	inline_data, exception_buffer, extant_messages, catchers,
+	alternate_stack, alternate_stack_inuse, canary0, canary1.
+	(UTCB_CANARY0): Define.
+	(UTCB_CANARY1): Likewise.
+	(THREAD_EXCEPTION_PAGE_SLOT): Rename from this...
+	(THREAD_UTCB): ... to this.
+	(THREAD_EXCEPTION_MESSENGER): Define.
+	(THREAD_SLOTS): Likewise.
+	(THREAD_SLOTS_LOG2): Likewise.
+	(HURD_EXREGS_SET_EXCEPTION_PAGE): Rename from this...
+	(HURD_EXREGS_SET_UTCB): ... to this.  Update users.
+	(HURD_EXREGS_SET_EXCEPTION_MESSENGER): Define.
+	(HURD_EXREGS_SET_REGS): Add HURD_EXREGS_SET_EXCEPTION_MESSENGER.
+	(vg_myself): New function.
+
+	* startup.h (struct hurd_startup_data): Add field messengers.
+
+2008-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h: When checking if compiling for i386, check if i386 is
+	defined, not if it is true.
+
+2008-12-05  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h (PTR_TO_PAGE): Define.
+
+2008-12-05  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h: Don't include <l4/math.h>.  Include <math.h>.
+	(addr_depth): Use vg_lsb64, not l4_lsb64.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* t-addr-trans.c: Don't include <l4/math.h> or <l4/types.h>.
+	Include <stdint.h>.
+	(main): Don't use L4_WORDSIZE.  Just take the size of a uintptr_t.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* lock.h: Don't include <atomic.h>.
+	(ss_lock_trace_dump): Set FUNC to 0, not NULL.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* bits/ia32/math.h: New file.
+	* math.h: New file.
+	* headers.m4: Link sysroot/include/hurd/math.h to hurd/math.h and
+	sysroot/include/hurd/bits/math.h to hurd/bits/${arch}/math.h.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h: Don't include <atomic.h>.
+	(ss_mutex_lock): Rewrite to use gcc's __sync functions.  Add
+	asserts.
+	(ss_mutex_unlock): Likewise.
+	(ss_mutex_trylock): Likewise.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy_x): Correctly detect type mismatches.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h: Include <l4/space.h>.
+	(RPC_): When receiving a message, accept any mapping.
+
+2008-11-12  Neal H. Walfield  <neal@gnu.org>
+
+	* trace.h (trace_buffer_dump): Take additional arguments func and
+	line.  Print them.
+	(trace_buffer_dump): Also define as a macro.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (struct cap): Make priority signed.
+
+2008-11-04  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (OBJECT_PRIORITY_BITS): Change to 7.
+	(OBJECT_PRIORITY_LEVELS): Define.
+	(OBJECT_PRIORITY_LRU): Don't define.  Update users.
+	(struct object_policy): Remove field pad0.  Change to a uint8_t.
+	(OBJECT_POLICY): Update.
+
+2008-08-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (thread_start_sp_ip): New function.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (ss_mutex_lock): Only complain about a possible deadlock
+	if ERRNO is EDEADLK.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy_x): Also call cap_shootdown if the version field
+	changes.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (ACTIVITY_MEMORY_POLICY): Reverse argument order.
+	(struct activity_memory_policy): Reverse order of fields.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (RM_activity_stats): Don't define.
+	(RM_activity_info): Replace with this.
+	(struct activity_stats): Add field pressure_local.  Make field
+	pressure an 8 bit integer.
+	(struct activity_stats_buffer): Remove structure.
+	(struct activity_info): Replace with this structure.
+	(activity_info_stats): Define.
+	(activity_info_pressure): Likewise.
+	(activity_stats): Remove method.
+	(activity_info): Replace with this.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (do_debug): If DEBUG_ELIDE is defined to an integer,
+	statically exclude those debug statements that have a level
+	greater than or equal to it.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (RM_object_name): Define.
+	(struct object_name): New struct.
+	(object_name): New method.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (RM_object_discard): New define.
+	(object_discard): New method.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity_stats): New fields available_local,
+	pending_eviction and discarded.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (panic_): Use gcc's format attribute.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (OBJECT_PRIORITY_DEFAULT): Define.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h (EXCEPTION_INFO_PRINTF): Clean up output.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* futex.h [! RM_INTERN]: Include <errno.h>.
+	(futex_wait): On error, set ERRNO and return -1.
+	(futex_timed_wait): Likewise.
+	(futex_wake): Likewise.
+	* mutex.h (ss_mutex_lock): If FUTEX_WAIT returns failure, print
+	some debugging information.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* lock.h (SS_MUTEX_LOCK, SS_MUTEX_LOCK_WAIT, SS_MUTEX_UNLOCK,
+	SS_MUTEX_TRYLOCK, SS_MUTEX_TRYLOCK_BLOCKED, SS_RMUTEX_LOCK,
+	SS_RMUTEX_LOCK_INC, SS_RMUTEX_LOCK_WAIT, SS_RMUTEX_UNLOCK,
+	SS_RMUTEX_UNLOCK_DEC, SS_RMUTEX_TRYLOCK, SS_RMUTEX_TRYLOCK_INC,
+	SS_RMUTEX_TRYLOCK_BLOCKED) [NDEBUG]: Also define in this case.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct exception_frame): Make regs elements large.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (RM_cap_rubout): Define.
+	(cap_rubout): New method.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (folio_object_type): Correctly bound-check OBJECT.
+	(folio_object_type_set): Likewise.
+	(folio_object_policy): Likewise.
+	(folio_object_policy_set): Likewise.
+	(folio_object_wait_queue_p): Likewise.
+	(folio_object_wait_queue_p_set): Likewise.
+	(folio_object_wait_queue): Likewise.
+	(folio_object_wait_queue_set): Likewise.
+	(folio_object_version): Likewise.
+	(folio_object_version_set): Likewise.
+	(folio_object_content): Likewise.
+	(folio_object_content_set): Likewise.
+	(folio_object_discarded): Likewise.
+	(folio_object_discarded_set): Likewise.
+	(folio_object_referenced): Likewise.
+	(folio_object_referenced_set): Likewise.
+	(folio_object_dirty): Likewise.
+	(folio_object_dirty_set): Likewise.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h (EXCEPTION_INFO_FMT): New define.
+	(EXCEPTION_INFO_PRINTF): Likewise.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (as_dump_from): Remove declaration.
+
+2008-06-16  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h (addr_add): New function.
+	(addr_sub): Likewise.
+
+2008-06-11  Neal H. Walfield  <neal@gnu.org>
+
+	* trace.h: Include <s-printf.h>.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h: Don't include <pthread.h>.
+	(as_lock): Remove declaration.
+	(cap_lookup_rel): Likewise.
+	(object_lookup_rel): Likewise.
+	(slot_lookup_rel): Likewise.
+
+2008-06-03  Neal H. Walfield  <neal@gnu.org>
+
+	* trace.h (struct trace_buffer): New fields nobacktrace, notid,
+	and nolock.
+	(TRACE_BUFFER_INIT): New macro.
+	(trace_buffer_add): Only lock if BUFFER->NOLOCK is not set.  Only
+	print the caller's tid if BUFFER->NOTID is not set.  Only print a
+	backtrack if BUFFER->NOBACKTRACE is not set.
+	(trace_buffer_dump): Only lock if BUFFER->NOLOCK is not set.  Loop
+	while PROCESSED, not OFFSET, is less than BUFFER->WRITTEN.
+
+2008-05-31  Neal H. Walfield  <neal@gnu.org>
+
+	* trace.h [RM_INTERN]: Don't include <hurd/mutex.h>, include
+	"../viengoos/mutex.h".
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* trace.h: New file.
+	* Makefile.am (includehurd_HEADERS): Add trace.c.
+	* headers.m4: Link sysroot/include/hurd/trace.h to trace.h.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* stddef.h (S_PRINTF, S_PUTCHAR): Also consider [_ENABLE_TESTS].
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+
+	* Makefile.am (t_addr_CPPFLAGS, t_addr_trans_CPPFLAGS, t_rpc_CPPFLAGS):
+	Remove special `printf' handling.
+
+	* stddef.h (S_PUTCHAR): Define analogously to `S_PRINTF'.
+
+2008-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h: Include <hurd/stddef.h>.
+	[ASM]: Only define relevant macros.
+	(EXCEPTION_STACK_SIZE_LOG2): Define.
+	(EXCEPTION_STACK_SIZE): Define.
+	* stddef.h [ASM]: Only define relevant macros.
+	(PAGESIZE): Don't append C type specifier.
+	(PAGESIZE_LOG2): Likewise.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (slot_lookup_rel): Remove parameter type.  Update users.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy): Copy SOURCE's discardability predicate and
+	priority.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_stats): Take additional parameter,
+	until_period.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (RM_object_status): Define.
+	(object_dirty): Likewise.
+	(object_referenced): Likewise.
+	(object_status): New method.
+
+	* folio.h (struct folio): Add fields dirty and referenced.
+	(folio_object_referenced): New function.
+	(folio_object_referenced_set): Likewise.
+	(folio_object_dirty): Likewise.
+	(folio_object_dirty_set): Likewise.
+
+2008-05-21  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity_stats): Add field period.
+
+2008-05-21  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (THREAD_EXCEPTION_PAGE_SLOT): Correctly define to 2.
+
+2008-03-01  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPC_SIMPLE_): If the send is interrupted, retry.
+	(RPC_): If the call is interrupted, retry.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Remove variable.
+	(t_addr_CPPFLAGS): Replace use of $(COMMON_CPPFLAGS)
+	with use of $(CHECK_CPPFLAGS).
+	(t_addr_trans_CPPFLAGS): Likewise.
+	(t_rpc_CPPFLAGS): Likewise.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (RM_object_discarded_clear): Define.
+	(object_discarded_clear): New method.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h: Include <stdint.h>.
+	(struct exception_info): Add field discarded.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (DEBUG_BOLD): New macro.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity_stats): Add field active_local.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (struct folio): Add field discarded.
+	(folio_object_discarded): New function.
+	(folio_object_discarded_set): Likewise.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (struct folio): Correctly calculate the size of
+	the wait_queues_p array.
+	(folio_object_wait_queue_p): Test the correct bit.
+	(folio_object_wait_queue_p_set): Set the correct bit.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (RM_activity_stats): New definition.
+	(ACTIVITY_STATS_PERIODS): Change to 2.
+	(struct activity_stats_buffer): New structure.
+	(activity_stats): New RPC.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (CAP_POLICY_GET): New define.
+	(CAP_POLICY_SET): Likewise.
+	(CAP_PROPERTIES_GET): Change implementation to use the above
+	macros.
+	(CAP_PROPERTIES_SET): Likewise.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (debug): Change program_name's type to char *.
+	* t-addr-trans.c (program_name): Change type to char *.
+	* t-addr.c (program_name): Likewise.
+	* t-rpc.c (program_name): Likewise.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_type_strengthen): New function.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (folio_t): New definition.
+	* thread.h (thread_t): Likewise.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (thread_start): New function.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* futex.h (__need_timespec): Define before including <time.h>.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (folio_object_cap): Remove reference to field weak_p.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (folio_object_cap): New function.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (struct folio) [RM_INTERN]: Remove field dhazard,
+	mhazard.  Add field checksums.  Rearrange data structure.
+	(folio_object_type): New function.
+	(folio_object_type_set): Likewise.
+	(folio_object_policy): Likewise.
+	(folio_object_policy_set): Likewise.
+	[RM_INTERN]: Include <bit-array.h>.
+	(folio_object_wait_queue_p) [RM_INTERN]:New function.
+	(folio_object_wait_queue_p_set) [RM_INTERN]:Likewise.
+	(folio_object_wait_queue) [RM_INTERN]:Likewise.
+	(folio_object_wait_queue_set) [RM_INTERN]:Likewise.
+	(folio_object_version) [RM_INTERN]:Likewise.
+	(folio_object_version_set) [RM_INTERN]:Likewise.
+	(folio_object_content) [RM_INTERN]:Likewise.
+	(folio_object_content_set) [RM_INTERN]:Likewise.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* error.h: New file.
+	* Makefile.am (includehurd_HEADERS): Add error.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/error.h to error.h.
+	* cap.h: Don't include <errno.h>.  Include <hurd/error.h>.
+	* exceptions.h: Likewise.
+	* futex.h: Likewise.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity_stats): New structure.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* addr-trans.h (CAP_ADDR_TRANS_GUARD_SUBPAGE_BITS): Change to 22.
+	(CAP_ADDR_TRANS_GDEPTH_BITS): Change to 6.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy): Rename ADDRESS_SPACE argument to
+	TARGET_ADDRESS_SPACE.  Take additional argument
+	SOURCE_ADDRESS_SPACE.  Update users.
+	(cap_copy_x): Likewise.
+	(cap_copy): Likewise.
+	(object_slot_copy_out): Rename ADDRESS_SPACE argument to
+	OBJECT_ADDRESS_SPACE.  Take additional argument
+	TARGET_ADDRESS_SPACE.  Update users.
+	(object_slot_copy_out): Rename ADDRESS_SPACE argument to
+	OBJECT_ADDRESS_SPACE.  Take additional argument
+	SOURCE_ADDRESS_SPACE.  Update users.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy): Take additional argument ADDRESS_SPACE.
+	Update users.
+	(cap_read): Likewise.
+	(object_slot_copy_out): Likewise.
+	(object_slot_copy_in): Likewise.
+	(object_slot_read): Likewise.
+	(cap_copy_x): Likewise.
+	(cap_copy): Likewise.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* lock.h (ss_lock_trace_dump): Use S_PRINTF rather than printf.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (S_PRINTF): New macro.
+	(debug): Use S_PRINTF rather than printf.
+	* Makefile.am (t_addr_CPPFLAGS): Add -DS_PRINTF=printf.
+	(t_addr_trans_CPPFLAGS): Likewise.
+	(t_rpc_CPPFLAGS): Likewise.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (ss_mutex_unlock): Correctly test whether there are
+	waiters.
+	* rmutex.h (ss_rmutex_lock): Save the value of LOCKP->COUNT before
+	unlocking the LOCKP->LOCK.  After unlocking, use the cached value.
+	(ss_rmutex_unlock): Improve assert.  Only clear LOCKP->OWNER and
+	wake a waiter if LOCKP->COUNT drops to 0.
+	(ss_rmutex_trylock): Correctly test whether we got LOCKP->LOCK.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* rmutex.h (ss_rmutex_lock): Don't use __lock_acquire or
+	__lock_release to lock or unlock LOCKP->LOCK, but ss_mutex_lock
+	and ss_mutex_unlock.
+	(ss_rmutex_unlock): Likewise.
+	(ss_rmutex_trylock): Don't use __lock_try_acquire to try and
+	obtain LOCKP->LOCK but ss_mutex_trylock.
+
+2008-01-22  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h: Don't include <l4/types.h>.  Include <stdint.h>.
+	(struct addr): Change field raw from a l4_uint64_t to a uint64_t.
+	(ADDR): Change p_ and d_ to uint64_t.
+	(addr_extend): Likewise.
+	(addr_prefix): Return a uint64_t.
+	(addr_extract): Likewise.
+	(addr_extend): Change prefix to a uint64_t.
+
+	* stddef.h (debug): Add declaration for printf.
+
+	* rpc.h (RPCLOADARG): Don't use c99 loop initializers.
+	(RPCSTOREARG): Likewise.
+
+2008-01-22  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h [RM_INTERN]: Raise an error.
+	[! __hurd_mutex_have_type]: Only define ss_mutex_t in this case.
+	Define __hurd_mutex_have_type.  Change ss_mutex_t to an int.
+	[__need_ss_mutex_t]: Undefine __need_ss_mutex_t.  Don't make the
+	rest of the file available.
+	[! __need_ss_mutex_t]: Include <hurd/futex.h>.
+	(_MUTEX_UNLOCKED): New define.
+	(_MUTEX_LOCKED): Likewise.
+	(_MUTEX_WAITERS): Likewise.
+	(ss_mutex_lock): Implement in terms of futexes.
+	(ss_mutex_unlock): Likewise.
+	(ss_mutex_trylock): Likewise.
+
+	* lock.h (SS_RMUTEX_LOCK): Define.
+	(SS_RMUTEX_LOCK_INC): Likewise.
+	(SS_RMUTEX_LOCK_WAIT): Likewise.
+	(SS_RMUTEX_UNLOCK): Likewise.
+	(SS_RMUTEX_UNLOCK_DEC): Likewise.
+	(SS_RMUTEX_TRYLOCK): Likewise.
+	(SS_RMUTEX_TRYLOCK_INC): Likewise.
+	(SS_RMUTEX_TRYLOCK_BLOCKED): Likewise.
+	(ss_lock_trace_dump): Handle the above new cases.
+	* rmutex.h: New file.
+	* Makefile.am (includehurd_HEADERS): Add rmutex.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/rmutex.h to rmutex.h.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (rpc_error_reply_marshal): New function.
+	(rpc_error_reply): Likewise.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (RM_thread_wait_object_destroyed): New define.
+	(thread_wait_object_destroyed): New method.
+
+	* folio.h (folio_object_alloc): Take additional parameter
+	return_code.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* futex.h: Include <hurd/startup.h>.
+	(FUTEX_OP_CLEAR_WAKE_IF_GT_ONE): New marcro.
+	(struct futex_return): New structure.
+	(futex): Return a struct futex_return.  Don't panic, return the
+	error code.  Update users.
+	(futex_timed_wait): New function.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (PAGE_SIZE): New macro.
+	(PAGE_SHIFT): Likewise.
+	(PAGE_MASK): Likewise.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (ADD): Rename...
+	(CPP_ADD): ... to this.  Update users.
+
+2008-01-15  Neal H. Walfield  <neal@gnu.org>
+
+	* futex.h (futex_wait): New file.
+	* Makefile.am (includehurd_HEADERS): Add futex.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/futex.h to futex.h.
+	* RPC: Add futex message id assignment.
+
+	* folio.h (struct folio): Add field wait_queue.  Remove field
+	checksum (for now).
+
+2008-01-15  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPC_REPLY_): New macro.
+	(RPC_SIMPLE): Generate reply stubs.
+	(RPC): Likewise.
+
+2008-01-04  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (OID_FMT): Prefix OID value with 0x.
+
+2008-01-03  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h: Don't include <l4/ipc.h>.  Include <hurd/lock.h>.
+	(struct ss_lock_trace): Move from here..
+	* lock.h: ... to this new file.
+	* mutex.h (SS_LOCK_TRACE_COUNT): Likewise.
+	(ss_mutex_lock): Likewise.
+	(ss_mutex_lock): Likewise.
+	(SS_MUTEX_LOCK): Likewise.
+	(SS_MUTEX_LOCK_WAIT): Likewise.
+	(SS_MUTEX_UNLOCK): Likewise.
+	(SS_MUTEX_TRYLOCK): Likewise.
+	(SS_MUTEX_TRYLOCK_BLOCKED): Likewise.
+	(ss_lock_trace_dump): Likewise.
+	(ss_mutex_trace_add): Likewise.
+	(ss_mutex_lock): To wait, call __ss_lock_wait.
+	(ss_mutex_unlock): To wakeup a thread, use __ss_lock_wakeup.
+	(ss_mutex_lock): New define.
+	(ss_mutex_unlock): Likewise.
+	(ss_mutex_trylock): Likewise.
+	* Makefile.am (includehurd_HEADERS): Add lock.h.
+	* headers.m4: Create link from ../include/hurd/lock.h to
+	hurd/lock.h.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct exception_page): Make mode bits a union thereby
+	providing straightforward access to the raw bits.  Add field crc.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h (do_debug) [DEBUG_ELIDE]: Make a proper conditional.
+	(debug): Don't change definition depending on DEBUG_ELIDE, always
+	use the full definition relying on do_debug to do the right thing.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (RM_activity_properties): Rename...
+	(RM_activity_policy): ... to this.  Update users.
+	(struct activity_memory_policy): New structure.
+	(ACTIVITY_MEMORY_POLICY): New definition.
+	(ACTIVITY_MEMORY_POLICY_VOID): Likewise.
+	(struct activity_policy): New structure.
+	(ACTIVITY_POLICY): New definition.
+	(ACTIVITY_POLICY_VOID): Likewise.
+	(ACTIVITY_PROPERTIES_PRIORITY_SET): Rename...
+	(ACTIVITY_POLICY_SIBLING_REL_PRIORITY_SET): ... to this.  Update
+	users.
+	(ACTIVITY_PROPERTIES_WEIGHT_SET): Rename...
+	(ACTIVITY_POLICY_SIBLING_REL_WEIGHT_SET): ... to this.  Update
+	users.
+	(ACTIVITY_PROPERTIES_STORAGE_QUOTA_SET): Rename...
+	(ACTIVITY_POLICY_STORAGE_SET): ... to this.  Update users.
+	(ACTIVITY_PROPERTIES_ALL_SET): Rename...
+	(ACTIVITY_POLICY_SIBLING_REL_SET): ... to this.
+	(ACTIVITY_POLICY_CHILD_REL_PRIORITY_SET): New definition.
+	(ACTIVITY_POLICY_CHILD_REL_WEIGHT_SET): Likewise.
+	(ACTIVITY_POLICY_CHILD_REL_SET): Likewise.
+	(activity_properties): Rename...
+	(activity_policy): ... to this.  Accept a structure rather than
+	individual variables.  Update callers.
+
+2007-12-30  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (OBJECT_PRIORITY): Make a high numeric priority reflect a
+	high priority, not vice-versa.
+	(FOLIO_PRIORITY): Likewise.
+	
+	(cap_copy_x): Remove redundant code.
+
+2007-12-25  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h: Include <stdint.h>.
+	(OBJECT_PRIORITY_BITS): Define.
+	(OBJECT_PRIORITY_MAX): Likewise.
+	(OBJECT_PRIORITY_LRU): Likewise.
+	(OBJECT_PRIORITY_MIN): Likewise.
+	(struct object_policy): New structure.
+	(OBJECT_POLICY_INIT): Define.
+	(OBJECT_POLICY): Likewise.
+	(OBJECT_POLICY_VOID): Likewise.
+	(OBJECT_POLICY_DEFAULT): Likewise.
+	(struct cap_properties): New structure.
+	(CAP_PROPERTIES_INIT): Define.
+	(CAP_PROPERTIES): Likewise.
+	(CAP_PROPERTIES_VOID): Likewise.
+	(CAP_PROPERTIES_DEFAULT): Likewise.
+	(struct cap): Add fields discardable and priority.
+	[RM_INTERN]: Reduce OID to 54 bits.
+	[! RM_INTERN]: Allow the shadow field an entire word.
+	(CAP_PROPERTIES_GET): Define.
+	(CAP_PROPERTIES_SET): Likewise.
+	(CAP_COPY_DISCARDABLE_SET): Likewise.
+	(CAP_COPY_PRIORITY_SET): Likewise.
+	(cap_copy): Remove the stuct cap_addr_trans parameter and replace
+	with a struct cap_properties.  Update callers.
+	(cap_read): Likewise.
+	(object_slot_copy_out): Likewise.
+	(object_slot_copy_in): Likewise.
+	(object_slot_read): Likewise.
+	(cap_copy_x): Likewise.  Save the object policies in the shadow
+	capability.
+	(cap_get_shadow): Don't munge the address.
+	(cap_set_shadow): Likewise.
+	* thread.h: Include <hurd/cap.h>.
+	(struct hurd_thread_exregs_in): Remove field aspace_addr_trans.
+	Add field aspace_cap_properties.  Rename field
+	aspace_addr_trans_flags to aspace_cap_properties_flags.
+	* folio.h (struct folio): Remove field discardable.  Add field
+	policy.
+	(folio_object_alloc): Take an additional argument, a struct
+	object_policy.  Update users.
+
+	* cap.h (cap_is_a): Remove dead code.
+	(cap_is_a_page): Remove dead code.
+
+2007-12-24  Neal H. Walfield  <neal@gnu.org>
+
+	* addr-trans.h (CAP_ADDR_TRANS_INIT): Define.
+
+2007-12-24  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (OID_FMT) [RM_INTERN]: Define.
+	(OID_PRINTF) [RM_INTERN]: Likewise.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (as_dump_from): New declaration.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (struct ss_lock_trace): Replace const with __const.
+	(ss_lock_trace_dump): Likewise.
+	(ss_mutex_trace_add): Likewise.
+	(ss_mutex_lock): Likewise.
+	(ss_mutex_unlock): Likewise.
+	(ss_mutex_trylock): Likewise.
+
+2007-12-22  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h (FOLIO_PRIORITY_BITS): Define.
+	(FOLIO_PRIORITY_MIN): Likewise.
+	(FOLIO_PRIORITY_LRU): Likewise.
+	(FOLIO_PRIORITY_MAX): Likewise.
+	(FOLIO_GROUP_BITS): Likewise.
+	(FOLIO_GROUP_NONE): Likewise.
+	(FOLIO_GROUP_MIN): Likewise.
+	(FOLIO_GROUP_MAX): Likewise.
+	(struct folio_policy): New structure.
+	(FOLIO_POLICY_INIT): Define.
+	(FOLIO_POLICY_VOID): Likewise.
+	(FOLIO_POLICY_DEFAULT): Likewise.
+	(struct folio): Add field policy.
+	(RM_folio_policy): Define.
+	(folio_alloc): Take additional parameter policy.
+	(FOLIO_POLICY_DELIVER): Define.
+	(FOLIO_POLICY_DISCARDABLE_SET): Likewise.
+	(FOLIO_POLICY_GROUP_SET): Likewise.
+	(FOLIO_POLICY_PRIORITY_SET): Likewise.
+	(FOLIO_POLICY_SET): Likewise.
+	(folio_policy): New method.
+
+2007-12-22  Neal H. Walfield  <neal@gnu.org>
+
+	* RPC: New file.
+
+2007-12-21  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h: Include <hurd/stddef.h>.  Don't include <string.h>.
+
+	(RPCLOADARG): Don't require that the argument be a multiple of the
+	machine word size.
+	(RPCSTOREARG): Likewise.
+
+	(RPC_COMMA, RPC_NOCOMMA, RPC_IF_COMMA): New macros.
+	(RPC_SEND_MARSHAL): Use it here.
+	(RPC_SEND_UNMARSHAL): Likewise.
+	(RPC_REPLY_MARSHAL): Likewise.
+	(RPC_REPLY_UNMARSHAL): Likewise.
+	(RPC_): Likewise.
+	
+	(RPCLOAD): Change argument names to avoid inadvertent expansion.
+	(RPCSTORE): Likewise.
+	(RPC_ARGUMENTS): Likewise.
+	(RPC_CHOP): Likewise.
+	(RPC_GRAB2): Likewise.
+	(RPC_GRAB): Likewise.
+	(RPC_SEND_UNMARSHAL): Change variable names to avoid inadvertent
+	expansion.
+	(RPC_REPLY_UNMARSHAL): Likewise.
+
+	* t-rpc.c: New file.
+	* Makefile.am (TESTS): Add t-rpc.
+	(t_rpc_CPPFLAGS): New variable.
+	(t_rpc_SOURCES): Likewise.
+
+2007-12-21  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h: Include <hurd/cap.h>.
+
+2007-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* folio.h: Include <hurd/addr.h>, <hurd/startup.h> and <stdint.h>.
+	(RM_folio_alloc, RM_folio_free, RM_folio_object_alloc,
+	folio_alloc, folio_free, folio_object_alloc): Move here...
+	* ../viengoos/rm.h: ... from this file.
+	* cap.h: Don't include <hurd/rm.h>.  Include <hurd/startup.h>.
+	(RM_cap_copy, RM_cap_read, RM_object_slot_copy_out,
+	RM_object_slot_copy_in, RM_object_slot_read, cap_copy, cap_read,
+	object_slot_copy_out, object_slot_copy_in, object_slot_read,
+	CAP_COPY_COPY_ADDR_TRANS_SUBPAGE, CAP_COPY_COPY_ADDR_TRANS_GUARD,
+	CAP_COPY_COPY_SOURCE_GUARD, CAP_COPY_WEAKEN): Move here...
+	* ../viengoos/rm.h: ... from this file.
+	* exceptions.h: Include <hurd/thread.h>.
+	(RM_exception_collect, exception_collect): Move here...
+	* ../viengoos/rm.h: ... from here.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_type_weak_p): New function.
+	(cap_type_weaken): Likewise.
+	(cap_copy_x): If CAP_COPY_WEAKEN is set in FLAGS, weaken the
+	capability stored in TARGET.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPC_MARSHAL_GEN_): New macro.
+	(RPC_SIMPLE_): Likewise.
+	(RPC_): Likewise.
+	(RPC_SIMPLE): Likewise.
+	(RPC): Also generate asynchronous stubs ala MIG's simple RPCs.
+
+	(RPC_SEND_MARSHAL): Correctly invoke RPCLOAD.
+	(RPC_REPLY_MARSHAL): Likewise.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPCSTOREARG): Remove type_suffix argument.  Update
+	callers.
+	(RPCSTOREARG): Make a__ a TYPE *, not a TYPE.
+	(RPCLOAD): Remove deref argument.  Update callers.
+	(RPCLOADARG): Remove deref argument, don't apply it to ARG.
+	Update callers.
+	(RPC_GRAB): Rename from this...
+	(RPC_GRAB2): ... to this.  Update callers.
+	(RPC_GRAB): New macro.
+	(RPC): Require that the formal out arguments take values not
+	references.  Change the reply marshal function arguments to take
+	values, not references.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* exceptions.h (exception_page_cleanup): New declaration.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h (addr_extend): Use assertx instead of assert.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h [! NDEBUG]: Include <hurd/stddef.h>.
+	(struct ss_lock_trace) [! NDEBUG]: New structure.
+	(SS_LOCK_TRACE_COUNT) [! NDEBUG]: New define.
+	(ss_lock_trace) [! NDEBUG]: New declaration.
+	(ss_lock_trace_count) [! NDEBUG]: Likewise.
+	(SS_MUTEX_LOCK) [! NDEBUG]: New macro.
+	(SS_MUTEX_LOCK_WAIT) [! NDEBUG]: Likewise.
+	(SS_MUTEX_UNLOCK) [! NDEBUG]: Likewise.
+	(SS_MUTEX_TRYLOCK) [! NDEBUG]: Likewise.
+	(SS_MUTEX_TRYLOCK_BLOCKED) [! NDEBUG]: Likewise.
+	(ss_lock_trace_dump): New function.
+	(ss_mutex_trace_add): Likewise.
+	(ss_mutex_lock): Call tracing functions.  Check for IPC failure.
+	(ss_mutex_unlock): Call tracing functions.  Use l4_send instead of
+	l4_wait.  Load an empty message.
+	(ss_mutex_trylock): Call tracing functions.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* stddef.h [! DEBUG_ELIDE]: Include <l4/thread.h>.
+	[! DEBUG_ELIDE] (debug): Also print the caller's thread id.
+	
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (ss_mutex_trylock): Don't assert that the owner is not
+	the caller.
+	
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h: New file.
+	* Makefile.am (includehurd_HEADERS): Add mutex.h.
+	* headers.m4: Create link from ../include/hurd/mutex.h to
+	hurd/mutex.h.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (RM_activity_create): Don't define.
+	(activity_create): Remove method.
+
+2007-12-06  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct exception_frame): Add fields saved_sender,
+	saved_receiver, saved_timeout, saved_error_code, saved_flags,
+	saved_br0 and saved_message.
+
+2007-12-05  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct exception_page): Add fields exception_stack and
+	exception_stack_bottom.
+	(hurd_exception_handler_t): Don't define.
+	* exceptions.h (fault): Add argument, sp.
+	(exception_handler): Remove declaration.
+	(exception_handler_activated): New declaration.
+	(exception_handler_normal): Likewise.
+
+2007-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	Remove exception threads.  Replace with support for activations.
+	* thread.h: Include <l4/ipc.h>.
+	(struct exception_page): New structure.
+	(THREAD_EXCEPTION_PAGE_SLOT): Define.
+	(HURD_EXREGS_EXCEPTION_THREAD): Don't define.
+	(HURD_EXREGS_SET_EXCEPTION_PAGE): Define.
+	(HURD_EXREGS_SET_REGS): Update.
+	(hurd_exception_handler_t): New definition.
+	(struct hurd_thread_exregs_in): New structure.
+	(struct hurd_thread_exregs_out): New structure.
+	(thread_exregs): Replace the bulk of the arguments with struct
+	hurd_thread_exregs_in and struct hurd_thread_exregs_out.  Update
+	users.
+	* exceptions.h (HURD_THREAD_MAIN_VERSION): Remove macro.
+	(HURD_THREAD_EXCEPTION_VERSION): Likewise.
+	(hurd_thread_is_exception_thread): Remove function.
+	(hurd_thread_is_main_thread): Likewise.
+	(hurd_exception_thread): Likewise.
+	(hurd_main_thread): Likewise.
+	(exception_handler_loop): Remove declaration.
+	(exception_handler): New declaration.
+	(exception_handler_entry): Likewise.
+	(exception_handler_end): Likewise.
+
+2007-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h: Include <string.h>.
+	(RPCLOAD): Take additional argument, deref.  Pass to RPCLOADARG.
+	(RPCLOADARG): Take additional argument, deref.  Apply to ARG when
+	copying data.
+	(RPCSTORE): Take additional argument, typesuffix.  Pass to
+	RPCSTOREARG.
+	(RPCSTOREARG): Take additional argument, typesuffix.  Apply to
+	TYPE.
+	(RPC_GRAB): Take additional argument sep.  Use SEP as the
+	separator between argument pairs.  Update users.
+	(RPC_SEND_UNMARSHAL): New macro.
+	(RPC_REPLY_MARSHAL): New macro.
+	(RPC): Generate send unmarshalling stubs and reply marshalling
+	stubs.
+
+	(RPC_ARGUMENTS): Don't apply ## to __VA_ARGS__.
+	(RPC_CHOP): Likewise.
+
+	(RPC_REPLY_UNMARSHAL): Don't assert that the format is correct,
+	just return EINVAL if it isn't.
+
+2007-12-01  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h: Rewrite to more elegantly generate stubs.
+	* activity.h: Update to use new RPC stub generation interface.
+	* exceptions.h: Likewise.
+	* thread.h: Likewise.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h [! RM_INTERN]: Include <pthread.h>.
+	(as_lock) [! RM_INTERN]: New declaration.
+	(cap_lookup_rel): Add comment about locking.
+	(object_lookup_rel): Likewise.
+	(slot_lookup_rel): Likewise.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPC_MARSHAL): Rename from this...
+	(RPC_SEND_MARSHAL): ... to this.  Update users.
+	(RPC_UNMARSHAL): Rename from this...
+	(RPC_REPLY_UNMARSHAL): ... to this.  Update users.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h: Include <hurd/addr.h>.
+	Add method id RM_activity_properties.
+	(ACTIVITY_PROPERTIES_PRIORITY_SET): Define.
+	(ACTIVITY_PROPERTIES_WEIGHT_SET): Likewise.
+	(ACTIVITY_PROPERTIES_STORAGE_QUOTA_SET): Likewise.
+	(ACTIVITY_PROPERTIES_ALL_SET): Likewise.
+	(activity_properties): New declaration.
+	* rpc.h (RPC53): New macro.
+
+2007-11-28  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (includehurd_HEADERS): Add activity.h.
+	* headers.m4: Create link from ../include/hurd/activity.h to
+	activity.h.
+	* activity.h: New file.
+
+2007-11-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_types_compatible): New function.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h: Include <hurd/addr-trans.h>.
+	(HURD_EXREGS_EXCEPTION_THREAD): New definition.
+	(trans_exregs): Take two additional arguments for determining how
+	to copy the aspace address translation bits.  Update callers.
+	(thread_stop): New function.
+	* rpc.h (RPC12_4): New macro.
+	(RPC13_4): Likewise.
+
+	* exceptions.h (exception_handler_init): New declaration.
+	(exception_handler_loop): Likewise.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (includehurd_HEADERS): Add thread.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/thread.h to thread.h.
+	* thread.h: New file.
+	* rpc.h: Include <errno.h>.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_copy_x): Use CAP_COPY_COPY_ADDR_TRANS_GUARD, not
+	CAP_COPY_COPY_GUARD.  Use CAP_COPY_COPY_ADDR_TRANS_SUBPAGE, not
+	Use CAP_COPY_COPY_SUBPAGE.  Support CAP_COPY_COPY_SOURCE_GUARD.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* rpc.h (RPC_UNMARSHAL): Only assert that IDX is equal to the
+	number of untyped words if the error code is 0.
+
+	(RPC63): New macro.
+	(RPC74): Likewise.
+	(RPC11_4): Likewise.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (includehurd_HEADERS): Add exceptions.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/exceptions.h to
+	exceptions.h.
+	* exceptions.h: New file.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* addr.h (ADDR_TO_PTR): Assert that the address corresponds to a
+	pointer, not the root of a mapped page.  Update callers.
+	(PTR_TO_ADDR): Return an address corresponding to a pointer, not
+	the root of a mapped page.  Update callers.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (includehurd_HEADERS): Add rpc.h.
+	* headers.m4: Link $(BUILDIR)/include/hurd/rpc.h to rpc.h.
+	* rpc.h: New file.  Moved and generalized definitions RPC template
+	definitions here from ../viengoos/rm.h.
+	(RPC_CONCAT2): New macro.
+	(RPC_CONCAT): Likewise.
+	(RPC_STUB_PREFIX): Likewise.  Use it to generate the stub names.
+	(RPC_STUB_PREFIX_): New macro.
+	(RPC_ID_PREFIX): Likewise.  Use it to generate method ids.
+	(RPC_ID_PREFIX_): New macro.
+	(RPC_TARGET): Make sure this macro is defined.
+	(RPC_TARGET_ARG_): Define.
+	(RPC_TARGET_): Define.
+	(RPC_MARSHAL): New macro.
+	(RPC_UNMARSHAL): New macro.
+	(RPCX): Use the above macros.  Take four additional arguments, the
+	list of in and out parameters with and without types.  Update
+	users.  General marshal and unmarshal stubs.
+	(RPCLOAD): Append argument to *MSG.
+	(RPCSTORE): Store from *MSG, not registers.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* addr-trans.h: New file.
+	* addr.h: Likewise.
+	* cap.h: Likewise.
+	* folio.h: Likewise.
+	* stddef.h: Likewise.
+	* startup.h: Include <hurd/addr.h> and <stddef.h>.  Don't include
+	<sys/types.h>.
+	(HURD_STARTUP_ADDR): Don't define.
+	(HURD_STARTUP_SIZE_LOG2): Likewise.
+	(HURD_STARTUP_SIZE): Likewise.
+	(struct hurd_startup_cap): Remove definition.
+	(struct hurd_startup_map): Likewise.
+	(HURD_STARTUP_FLAG_SECURE): Don't define.
+	(HURD_STARTUP_FLAG_BOOTSTRAP): Likewise.
+	(struct hurd_object_desc): New definition.
+	(struct hurd_startup_data): Remove fields wortel, task, image,
+	mapc, mapv, entry_point, startup, physmem_master, task_master,
+	deva_master and deva_console.  Add fields rm, activity, thread,
+	descs and desc_count.
+	* types.h: Rewrite.
+	* t-addr-trans.c: New file.
+	* t-addr.c: New file.
+	* Makefile.am (COMMON_CPPFLAGS): New variable.
+	(includehurd_HEADERS): Add stddef.h, addr.h, addr-trans.h, cap.h
+	and folio.h.
+	(TESTS): New variable.
+	(check_PROGRAMS): Likewise.
+	(t_addr_CPPFLAGS): Likewise.
+	(t_addr_SOURCES): Likewise.
+	(t_addr_trans_CPPFLAGS): Likewise.
+	(t_addr_trans_SOURCES): Likewise.
+	* headers.m4: Link $(BUILDIR)/include/hurd/stddef.h to stddef.h,
+	link $(BUILDIR)/include/hurd/addr.h to addr.h, link
+	$(BUILDIR)/include/hurd/addr-trans.h to addr-trans.h, link
+	$(BUILDIR)/include/hurd/cap.h to cap.h, and link
+	$(BUILDIR)/include/hurd/folio.h to hurd/folio.h.
+
+2005-01-30  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h (struct hurd_startup_data): New members
+	PHYSMEM_MASTER, TASK_MASTER, DEVA_MASTER, DEVA_CONSOLE.
+
+2005-01-27  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h (HURD_STARTUP_FLAG_SECURE): New macro.
+	(struct hurd_startup_data): New member FLAGS.
+
+2005-01-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h (struct hurd_startup_data): New members envz and
+	envz_len.
+
+	* Makefile.am (includehurd_HEADERS): Add startup.h.
+
+2004-12-01  Neal H. Walfield  <neal@gnu.org>
+
+	* types.h (HURD_CAP_CLIENT_ID_BITS): Move to
+	../libhurd-cap-server/cap-server-internal.h.  Prepend
+	underscore.
+	(HURD_CAP_ID_BITS): Likewise.
+	(_HURD_CAP_CLIENT_ID_MASK): Likewise.
+	(_HURD_CAP_ID_MASK): Likewise.
+	(hurd_cap_id_t): Likewise.
+	(hurd_cap_client_id_t): Likewise.
+	(hurd_cap_client_id): Likewise.
+	(hurd_cap_id): Likewise.
+	(hurd_cap_handle_make): Likewise.
+
+2004-11-02  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h (struct hurd_startup_data): Add new member task.
+
+2004-10-27  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h (struct hurd_startup_data): New member UTCB_AREA.
+	(struct hurd_startup_cap): Rename member cap_id to cap_handle, and
+	change its type accordingly.
+
+2004-10-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* startup.h: New file.
+	* headers.m4: Add hurd/startup.h.
+
+2004-04-09  Marcus Brinkmann  <marcus@gnu.org>
+
+	* types.h (hurd_cap_t): Rename to ...
+	(hurd_cap_handle_t): ... this.  Likewise for all users.
+
+	* types.h (hurd_cap_make): Use bit-wise OR, not logical OR.
+
+2004-04-07  Marcus Brinkmann  <marcus@gnu.org>
+
+	* types.h (hurd_cap_make): New function.
+	(_HURD_CAP_CLIENT_ID_MASK, _HURD_CAP_ID_MASK): New macros.
+
+2004-04-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* types.h: Include <l4/thread.h>.
+
+2004-03-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* types.h: Protect inclusion with _HURD_TYPES_H.
+
+2004-03-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am: New file.
+	* headers.m4: New file.
+	* types.h: New file.	

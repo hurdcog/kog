@@ -1,0 +1,215 @@
+name: Guix Build CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  guix-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Guix installation
+        uses: actions/cache@v4
+        id: guix-cache
+        with:
+          path: |
+            /gnu
+            /var/guix
+            ~/.config/guix
+          key: guix-${{ runner.os }}-${{ hashFiles('guix.scm') }}
+          restore-keys: |
+            guix-${{ runner.os }}-
+
+      - name: Install GNU Guix non-interactively (SSR safe)
+        if: steps.guix-cache.outputs.cache-hit != 'true'
+        run: |
+          # Download the Guix install script with retry logic and multiple sources
+          # Uses both curl's internal retry mechanism and an outer retry loop
+          # for maximum reliability against transient network issues
+          max_attempts=5
+          curl_retries=3
+          retry_delay=15
+          connect_timeout=60
+          max_time=180
+          attempt=0
+          
+          # Array of mirror URLs to try
+          MIRRORS=(
+            "https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh"
+            "https://raw.githubusercontent.com/guix-mirror/guix/master/etc/guix-install.sh"
+            "https://ftp.gnu.org/gnu/guix/guix-install.sh"
+          )
+          
+          download_success=false
+          
+          for mirror in "${MIRRORS[@]}"; do
+            echo "Trying mirror: $mirror"
+            attempt=0
+            
+            until curl \
+              --retry "$curl_retries" \
+              --retry-delay "$retry_delay" \
+              --retry-all-errors \
+              --connect-timeout "$connect_timeout" \
+              --max-time "$max_time" \
+              -fsSL "$mirror" \
+              -o /tmp/guix-install.sh; do
+              ((attempt++))
+              if [ $attempt -ge $max_attempts ]; then
+                echo "Failed to fetch from $mirror after $max_attempts attempts."
+                break
+              fi
+              echo "Retrying download from $mirror (attempt $attempt/$max_attempts)..."
+              sleep "$retry_delay"
+            done
+            
+            # Check if download succeeded
+            if [ -f /tmp/guix-install.sh ] && [ -s /tmp/guix-install.sh ]; then
+              echo "Successfully downloaded guix-install.sh from $mirror"
+              download_success=true
+              break
+            fi
+          done
+          
+          if [ "$download_success" = false ]; then
+            echo "ERROR: Failed to download guix-install.sh from all mirrors"
+            echo "Attempted mirrors:"
+            printf '%s\n' "${MIRRORS[@]}"
+            exit 1
+          fi
+          
+          # Verify the script looks valid
+          if ! grep -q "GNU Guix" /tmp/guix-install.sh; then
+            echo "ERROR: Downloaded file doesn't appear to be a valid Guix install script"
+            head -20 /tmp/guix-install.sh
+            exit 1
+          fi
+          
+          echo "Successfully downloaded and verified guix-install.sh"
+          # Execute the script as root, non-interactively
+          printf '\n' | sudo bash /tmp/guix-install.sh
+          
+      - name: Setup Guix environment
+        run: |
+          # Use $(whoami) for reliable user detection instead of $USER
+          export PATH="/var/guix/profiles/per-user/$(whoami)/current-guix/bin:$PATH"
+          
+          # Set up Guix environment variables
+          export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+          export GUIX_PACKAGE_PATH="$GITHUB_WORKSPACE"
+          
+          # Ensure guix daemon is running
+          echo "Starting guix daemon..."
+          sudo systemctl start guix-daemon || {
+            echo "systemctl failed, trying manual daemon start..."
+            sudo /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon \
+              --build-users-group=guixbuild &
+            sleep 5
+          }
+          
+          # Verify daemon is accessible and pull latest guix if needed
+          echo "Verifying guix daemon..."
+          if ! guix describe; then
+            echo "Pulling latest guix..."
+            guix pull --fallback
+          fi
+          
+      - name: Verify Guix files
+        run: |
+          export PATH="/var/guix/profiles/per-user/$(whoami)/current-guix/bin:$PATH"
+          
+          # Set up Guix environment variables
+          export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+          export GUIX_PACKAGE_PATH="$GITHUB_WORKSPACE"
+          
+          # Source Guix profile to ensure modules are available
+          export GUIX_PROFILE="/var/guix/profiles/per-user/$(whoami)/current-guix"
+          source $GUIX_PROFILE/etc/profile || true
+          source /etc/profile || true
+          
+          # Set GUILE_LOAD_PATH and GUILE_LOAD_COMPILED_PATH for Guile to find Guix modules
+          export GUILE_LOAD_PATH="$GUIX_PROFILE/share/guile/site/3.0"
+          export GUILE_LOAD_COMPILED_PATH="$GUIX_PROFILE/lib/guile/3.0/site-ccache"
+          
+          # Use guix repl instead of system guile for validation to ensure Guix modules are available
+          echo "Validating guix.scm syntax using guix repl..."
+          if ! guix repl -- <<EOF
+          (use-modules (guix packages))
+          (with-input-from-file "guix.scm" 
+            (lambda () 
+              (let loop ((expr (read)))
+                (unless (eof-object? expr)
+                  (loop (read))))))
+          (display "guix.scm: Syntax OK\n")
+          EOF
+          then
+            echo "Syntax validation failed"
+            exit 1
+          fi
+          
+      - name: Build with Guix (dry-run)
+        run: |
+          # Use $(whoami) for consistent PATH construction
+          export PATH="/var/guix/profiles/per-user/$(whoami)/current-guix/bin:$PATH"
+          
+          # Set up Guix environment variables
+          export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+          export GUIX_PACKAGE_PATH="$GITHUB_WORKSPACE"
+          
+          # Source Guix profile to ensure modules are available
+          export GUIX_PROFILE="/var/guix/profiles/per-user/$(whoami)/current-guix"
+          source $GUIX_PROFILE/etc/profile || true
+          source /etc/profile || true
+          
+          # Set GUILE_LOAD_PATH and GUILE_LOAD_COMPILED_PATH for Guile to find Guix modules
+          export GUILE_LOAD_PATH="$GUIX_PROFILE/share/guile/site/3.0"
+          export GUILE_LOAD_COMPILED_PATH="$GUIX_PROFILE/lib/guile/3.0/site-ccache"
+          
+          echo "Running dry-run build to check package definition..."
+          guix build -f guix.scm --dry-run --verbosity=1 --fallback || {
+            echo "Dry-run failed, checking package syntax with guix repl..."
+            guix repl -- <<EOF
+            (use-modules (guix packages))
+            (with-input-from-file "guix.scm" 
+              (lambda () 
+                (let loop ((expr (read)))
+                  (unless (eof-object? expr)
+                    (loop (read))))))
+            (display "Package syntax check passed\n")
+          EOF
+            exit 1
+          }
+          
+      - name: Build with Guix (actual build - may be slow)
+        continue-on-error: true
+        run: |
+          export PATH="/var/guix/profiles/per-user/$(whoami)/current-guix/bin:$PATH"
+          
+          # Set up Guix environment variables
+          export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+          export GUIX_PACKAGE_PATH="$GITHUB_WORKSPACE"
+          
+          # Source Guix profile to ensure modules are available
+          export GUIX_PROFILE="/var/guix/profiles/per-user/$(whoami)/current-guix"
+          source $GUIX_PROFILE/etc/profile || true
+          source /etc/profile || true
+          
+          # Attempt actual build with fallback enabled
+          echo "Attempting actual build..."
+          guix build -f guix.scm --verbosity=1 --no-grafts --fallback
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guix-build-logs
+          path: |
+            /var/log/guix/
+            ~/.cache/guix/
+          if-no-files-found: ignore

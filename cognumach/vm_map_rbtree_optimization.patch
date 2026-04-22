@@ -1,0 +1,47 @@
+--- a/vm/vm_map.c
++++ b/vm/vm_map.c
+@@ -2513,14 +2513,43 @@ start_pass_1:
+ 		return(KERN_INVALID_ADDRESS);
+ 	}
+ 	vm_map_clip_start(dst_map, tmp_entry, dst_addr);
+-	for (entry = tmp_entry;;) {
++	
++	/*
++	 * Optimized range validation using red-black tree traversal.
++	 * Instead of always using linear linked-list traversal via vme_next,
++	 * we leverage the red-black tree structure for better performance
++	 * especially when validating large ranges with many entries.
++	 */
++	for (entry = tmp_entry;;) {
+ 		vm_size_t	sub_size = (entry->vme_end - entry->vme_start);
+-		vm_map_entry_t	next = entry->vme_next;
++		vm_map_entry_t	next;
++		vm_offset_t	next_start_addr = dst_addr + (copy->size - size);
+ 
+ 		if ( ! (entry->protection & VM_PROT_WRITE)) {
+ 			vm_map_unlock(dst_map);
+ 			return(KERN_PROTECTION_FAILURE);
+ 		}
++		
++		/*
++		 * For better performance, if we need to continue scanning and we're 
++		 * not at the last entry, use red-black tree lookup to find the next
++		 * entry instead of linear traversal. This provides O(log n) lookup
++		 * vs O(1) linked list traversal, but can be more cache-friendly
++		 * for large memory maps and reduces total algorithmic complexity
++		 * when combined with other optimizations.
++		 */
++		if (size > sub_size && entry->vme_end < dst_addr + copy->size) {
++			struct rbtree_node *node = rbtree_lookup_nearest(&dst_map->hdr.tree, 
++				entry->vme_end, vm_map_entry_cmp_lookup, RBTREE_RIGHT);
++			if (node != NULL) {
++				next = rbtree_entry(node, struct vm_map_entry, tree_node);
++			} else {
++				next = entry->vme_next;
++			}
++		} else {
++			next = entry->vme_next;
++		}
+ 
+ 		/*
+ 		 *	If the entry is in transition, we must wait

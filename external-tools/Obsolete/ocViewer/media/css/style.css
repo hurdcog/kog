@@ -1,0 +1,776 @@
+/* STANDART TAGS */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+body 
+{
+  background-color: #f8f8f8;
+  display:none;
+  overflow: hidden;
+}
+hr
+{
+    margin:0;
+    padding:0;
+    height:0;
+}
+
+
+/* LAYOUT */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#wrapper
+{
+   height:100%;  
+} 
+
+#leftMenu
+{   
+  background-color:#777;
+  padding:0;
+}
+#rightMenu
+{
+  padding:0;
+  background-color: #777;
+}
+
+#mainContent
+{
+    
+  padding:0;
+}
+
+#atomDetails
+{
+  background-color: #ddd;
+  border:2px solid #ddd;
+}
+
+/* TOOLBOX */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+.toolboxButtonSelected
+{
+  background-color: #d3d3f3!important;
+  border:1px solid #ddd!important;
+  color:#000!important;
+}
+
+/* DETAILS */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#details
+{
+  width: 240px;
+  height: 400px;
+  position: fixed;
+  border: 1px solid #111;
+  z-index: 399990;
+  right: 50px;
+  top: 50px;
+  background-color: #ddd;
+  font-size: 12px;
+}
+
+#detailsBar 
+{
+  background-color: #3366cc;
+  padding: 10px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 1px solid #111;
+}
+
+#detailsBar:hover
+{
+  background-color: #4477dd;
+}
+
+#detailsPanel
+{
+   
+}
+
+#detailsContent
+{
+  padding: 0px;
+  display:none;
+}
+
+#detailsContentNone
+{
+  padding:10px;
+  text-align: center;
+}
+
+#detailsLinkContent
+{
+  padding:10px;
+  display:none;
+}
+
+#detailsAtomHandle
+{
+  font-weight: bold;
+}
+
+.detailBarCloseButton a:link
+{
+  color:#fff!important;
+}
+
+.detailBarCloseButton a:hover
+{
+  color:#fff;
+}
+
+#detailsPanelNodeContent
+{
+  display:none;
+}
+
+#detailsPanelLinkContent
+{
+  display:none;
+}
+
+#detailsPanelContentNone
+{
+  padding:10px;
+}
+
+/* TOOLBAR */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#toolbox 
+{
+  width:120px;
+  height:300px;
+  position: fixed;
+  border: 1px solid #fff;
+  z-index: 399990;
+  right: 50px;
+  top: 50px;
+  background-color: #333;
+  font-size: 12px;
+}
+
+#toolboxBar
+{
+  padding:10px;
+  font-size:12px;
+  font-weight: bold;
+  color:#fff;
+  background-color: #3366cc;
+  cursor:pointer;
+}
+
+#toolboxBar:hover
+{
+  background-color: #4477dd;
+}
+
+#toolboxContent
+{
+  
+ 
+}
+.toolboxIcon
+{
+  border:1px solid #aaa;  
+  float:left;
+  width:50px;
+  height:50px;
+  margin:2px;
+  text-align: center;
+  overflow: hidden;
+  font-size:34px;
+  color:#ddd;
+  background-color:#222;
+  cursor:pointer;
+}
+
+.toolBoxLine
+{
+  clear:left;
+  margin:10px;
+  height:2px;
+  background-color: #333;
+}
+
+.toolboxIcon:hover
+{
+  background-color:#ddd;
+  color:#333;
+}
+
+.toolboxIconSelected
+{
+  background-color: #ddd;
+  color:#333;
+}
+
+/* TERMINAL */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#terminal
+{
+  width:320px;
+  height:320px;
+  position: fixed;
+  z-index: 399990;
+  right: 50px;
+  top: 50px;
+  background-color: #ddd;
+  border: 1px solid #fff;
+  overflow: hidden;
+}
+
+#terminalBar 
+{
+  padding:10px;
+  font-size:12px;
+  font-weight: bold;
+  color:#fff;
+  background-color: #3366cc;
+  cursor:pointer;
+}
+
+#terminalBar:hover
+{
+  background-color: #4477dd;
+}
+
+#terminalText
+{
+   width:100%;
+   height:90%;
+   border:none;
+   size :none;
+   resize:none;
+}
+
+/* VISUAL ELEMENTS */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+
+.link {
+  stroke: #fff;
+  stroke-width:0.2px;
+  stroke-opacity: 0.8;
+  z-index: 1;
+}
+
+.link:hover {
+  stroke:  red;
+  stroke-width: 3px;
+  cursor: default;
+}
+
+.node circle
+{  
+  stroke: #fff;
+  stroke-width: 0;
+  cursor: default;
+  z-index:50;
+   
+}
+
+.node circle:hover
+{  
+  stroke: red;
+  stroke-width: 2px; 
+}
+
+.node-active circle{
+  stroke: red;
+  fill: #321;
+  stroke-width: 2px;
+}
+
+.linkNode
+{
+  stroke:red;
+  stroke-width:1px;
+  fill:red;
+} 
+
+.tempSelected 
+{  
+  stroke-width:1px;
+  stroke:yellow;
+}
+
+.link-active
+{
+  stroke-opacity: 1;stroke: red;
+  stroke-width: 1px;
+}
+
+.fixed circle
+{
+  stroke:red;
+  stroke-width:2px;
+  box-shadow: 2px 2px 2px #ddd;
+}
+
+.linkToolNode circle
+{
+  fill:blue;
+}
+
+.selectedNode circle
+{
+  stroke-width:4px;
+  stroke:red;
+}
+
+.selectedNode text
+{
+ 
+  fill:red;
+}
+.selectedLink
+{
+  stroke:red; stroke-width: 3px;
+}
+
+.text
+{
+  fill:#ddd;
+  color:#ddd;
+  font-size:12px;
+  padding:10px;
+  background-color: #ddd;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+   user-select: none;
+  -webkit-user-select: none; /* Chrome/Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+ */
+  cursor: default;
+  margin-left:20px;
+  margin-top:20px;
+}
+
+.text:hover
+{
+   fill:#fff;
+}
+
+.overlay
+{
+  fill: none;
+  pointer-events: all;
+}
+
+.highlight
+{
+   
+}
+
+.highlight text
+{
+ 
+  
+}
+/* ACCORDION */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+.accordion-heading  
+{
+    padding:10px; 
+    border:1px solid #ddd;
+    border-top:none;
+}
+
+.accordion-heading:hover  
+{
+    background-color:#ccc;
+}
+
+.accordion-heading a:link  
+{
+    text-decoration: none;
+}
+
+.accordion-heading a:hover  
+{
+    text-decoration: none;
+}
+
+.accordion-inner  
+{
+    padding:10px;
+    padding-right:20px; 
+    background-color:#fff;
+}
+
+/* CONNECT PANEL */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#ConnectConnectButton, #ConnectRefreshButton
+{
+  cursor: pointer;
+}
+
+#ConnectConnectButton:hover, #ConnectRefreshButton:hover
+{
+  background-color:#5cb85c;
+  color:#fff;
+}
+
+#ConnectionStatus
+{
+   
+}
+
+
+/* SCREENS */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+#snapshotFlash
+{
+  background-color: #fff;
+  width:100%;
+  height:100%;
+  display:none;
+  z-index: 100;
+  position:absolute;
+}
+
+#screen-d3
+{
+   dbackground-color:#333;
+   abackground-image: url(data:image/png;base64,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);
+
+ }
+ 
+#screen-3d
+{
+  background-color:#ddd;
+}
+
+#screen-sigma
+{
+  background-color:#000;
+}
+
+#screen-json
+{
+  padding:20px;
+  background-color: #fff;
+  color:#000;
+  overflow:scroll;
+}
+
+#screen-table
+{
+  padding:20px;
+  background-color: #fff;
+  color:#000;
+  overflow:scroll;
+}
+
+#screen-scheme
+{
+  padding:20px;
+  background-color: #fff;
+  color:#000;
+  overflow:scroll;
+}
+
+#screen-statistics
+{
+  padding:20px;
+  overflow:scroll;
+}
+
+#screen-import
+{
+    padding:20px;
+    background-color: #fff;
+    color:#000;
+}
+
+#screen-export
+{
+    padding:20px;
+    background-color: #fff;
+    color:#000;
+}
+
+#screen-help
+{
+    padding:20px;
+    background-color: #fff;
+    color:#000;
+    overflow:scroll;
+}
+
+#screen-about
+{
+    padding:20px;
+    background-color: #fff;
+    color:#000;
+}
+
+#screen-gexf
+{
+    padding:20px;
+    background-color: #fff;
+    color:#000;
+}
+
+#visualizerInner
+{
+  width:100%;
+
+}
+
+/* CLASSES */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+.success
+{
+    color:#5cb85c;
+}
+
+.fail
+{
+    color:red;
+}
+
+#loading
+{
+  background-color:#000;
+  opacity: 0.8;
+  width:100%;
+  height:100%;
+  position: absolute;
+  z-index:100000;
+}
+
+#loadingInner
+{
+  width:300px;
+  margin-top:100px;
+  margin-left:auto;
+  margin-right:auto;
+  color:#fff;
+  padding:50px;
+  font-size:18px;
+  text-align: center;
+}
+
+
+/* DISPLAY */
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+/*-----------------*/
+.table-settings
+{
+  border:1px solid #ddd;
+  margin:0px!important;
+}
+.table-settings td
+{
+  border:1px solid #ddd;
+  
+  
+}
+
+#display-none
+{
+  padding:10px;
+}
+
+.accordion-heading
+{
+  background-color: #777!important;
+  border: none;
+}
+
+.accordion-heading:hover
+{
+  background-color: #333!important;   
+}
+
+.accordion-group
+{
+  border:none;
+}
+
+.accordion-heading a:link
+{
+  color:#fff!important;
+}
+.accordion-inner
+{
+  padding:0;
+  background-color: #efefef;
+}
+#FilterSTIRangeAmount
+{
+  font-size: 10px;
+}
+
+.navbar .divider-vertical
+{
+height: 50px;
+margin: 0 9px;
+border-right: 1px solid #ffffff;
+border-left: 1px solid #f2f2f2;
+}
+
+.navbar-inverse .divider-vertical
+{
+border-right-color: #222222;
+border-left-color: #111111;
+}
+
+@media (max-width: 767px) {
+  .navbar-collapse .nav > .divider-vertical
+  {
+      display: none;
+  }
+}
+
+.tab-content
+{
+   
+}
+.nav-tabs, .nav-tabs li
+{
+  background-color: #999!important;
+  border:none!important;
+  margin:0px!important;
+}
+.nav-tabs a
+{
+  padding:0px;margin:0px;
+  font-size: 13px;
+  border:none;
+}
+.nav-tabs>li>a 
+{
+  margin:0!important;
+  border:none!important;
+}
+.nav-tabs>li>a:hover
+{
+  background-color: #999!important;
+  color:#fff!important; 
+  border:none!important;
+  margin:0!important;
+  border-radius: 0px;
+}
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover
+{
+  background-color: #888!important;
+  color:#fff!important; 
+  border:none!important;
+  margin:0!important;
+  border-radius: 0px;
+}
+
+.nav-tabs a
+{
+  color: #fff!important;
+}
+.contextMenu
+{
+  z-index: 9999;
+}
+
+#NodeContextMenu
+{
+  position: absolute;
+   
+  display:none;
+} 
+
+#VisContextMenu
+{
+  position:absolute;
+  display:none;
+}
+
+.btn-separator:after
+{
+  content: ' ';
+  display: inline-block;
+   
+  background: #ddd;
+  border-right:#fff 1px solid;
+  margin:0 10px;
+  height: 10px;
+  width: 2px;
+}
+
+.modalAtomTypesColorsEntry
+{
+  display:inline-block;
+  
+  
+  margin:10px;
+  border:1px solid #ddd;
+  overflow: hidden;
+  text-align: center;
+  padding:20px;
+}
+.collapsed
+{
+  fill:#fdf;
+}

@@ -1,0 +1,11 @@
+
+                  OpenCog Source Code
+                  -------------------
+
+This directory contains core OpenCog code.  Tests and examples
+are located one directory up from this.
+
+Source code overview:
+
+miner           -- Implements a URE based pattern miner algorithm for
+                   the AtomSpace.

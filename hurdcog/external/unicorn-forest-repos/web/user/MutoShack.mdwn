@@ -1,0 +1,5 @@
+I'm Muto. I'm a Free Software user and creator. I love the Hurd & have created this account just in case I decide to edit the wiki.
+
+You can find my static, JS-free blog at <https://muto.ca> (which contains various contact links if you'd like to talk about the Hurd with me).
+
+I maintain an unofficial CSS file for the hurd wiki that can be found [here](https://gitlab.com/MutoShack/new-hurd-local.css). It may give inspiration to anyone else interested in contributing to the [[contributing/web_pages]].

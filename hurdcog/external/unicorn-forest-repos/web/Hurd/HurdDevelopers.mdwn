@@ -1,0 +1,40 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Hurd Developers"]]
+
+The Hurd has very few people working on it. This is a list of people who are  large contributors to the project.
+
+* Samuel Thibault - Maintainer
+* Joshua Branson - Documentation
+* Sergey Bugaev - 64 bit port and security fixes
+* Flávio Cruz - Mach IPC improvements
+* Luca Dariz - 64 bit port
+* Almudena Garcia - SMP work and hardware tester
+* Joan Lledó - PCI arbiter and lwip port
+* Svante Signell - file record locking, ada/gnat/go port, owner of mahler buildd
+* Damien Zammit - ACPI arbiter, SMP, and rumpkernel
+
+Here is a list of people who were large contributors:
+
+* Miles Bader - Original developer
+* Richard Braun - MM hacker, owner of darnassus, ironforge buildd, exodar
+* Marcus Brinkman - Co-author of the Critique
+* Thomas Bushnell - Original maintainer
+* Zheng Da - netdde
+* Jeremie Koenig - Debian installer
+* Roland McGrath - Original maintainer
+* Manolis Ragkousis - Hurd support for Guix
+* Marin Ramesa - Cleanups
+* Guillem Jover - 64 bit port
+* Thomas Schwinge - Previous Maintainer
+* Pino Toscano - Portability fixes
+* Neal H. Walfield - Co-author of the Critique, libpthread
+* Justus Winter - Developer
+
+[See the full list at Savannah](https://savannah.gnu.org/project/memberlist.php?group=hurd)

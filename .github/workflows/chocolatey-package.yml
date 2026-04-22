@@ -1,0 +1,302 @@
+name: Build Chocolatey Package
+
+# Chocolatey packaging workflow for OpenCog Collection
+# Depends on successful Windows builds from occ-win-build-complete.yml
+# Creates installable Chocolatey package for Windows
+
+on:
+  workflow_run:
+    workflows: ["OCC Windows Build - Fixed"]
+    types:
+      - completed
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+      force_build:
+        description: 'Force build even if workflow failed'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PACKAGE_NAME: opencog-occ
+  PACKAGE_MAINTAINER: "OpenCog Community"
+
+jobs:
+  build-chocolatey:
+    runs-on: windows-latest
+    name: Build Chocolatey Package
+    if: |
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event.inputs.force_build == 'true'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Determine Package Version
+      id: version
+      shell: pwsh
+      run: |
+        if ("${{ github.event_name }}" -eq "release") {
+          $version = "${{ github.event.release.tag_name }}".TrimStart('v')
+        } elseif ("${{ github.event.inputs.version }}") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          # Generate version from date and commit
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $commit = "${{ github.sha }}".Substring(0, 7)
+          $version = "$date-$commit"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        Write-Host "📦 Package version: $version" -ForegroundColor Cyan
+    
+    - name: Download Complete Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: build-artifacts
+      continue-on-error: true
+    
+    - name: Consolidate Build Artifacts
+      shell: pwsh
+      run: |
+        Write-Host "=== Consolidating Build Artifacts ===" -ForegroundColor Cyan
+        
+        # Create consolidated directory
+        New-Item -ItemType Directory -Force -Path "consolidated" | Out-Null
+        
+        # Copy all artifacts to consolidated directory
+        if (Test-Path "build-artifacts") {
+          Get-ChildItem -Path "build-artifacts" -Recurse -File | ForEach-Object {
+            $dest = Join-Path "consolidated" $_.Name
+            Copy-Item -Path $_.FullName -Destination $dest -Force
+            Write-Host "  Copied: $($_.Name)" -ForegroundColor Green
+          }
+        }
+        
+        Write-Host "✓ Consolidation complete" -ForegroundColor Green
+    
+    - name: Verify Artifacts
+      id: verify
+      shell: pwsh
+      run: |
+        Write-Host "=== Verifying Build Artifacts ===" -ForegroundColor Cyan
+        
+        if (Test-Path "consolidated") {
+          $files = Get-ChildItem -Path consolidated -Recurse -File
+          Write-Host "✓ Found $($files.Count) files in artifacts" -ForegroundColor Green
+          echo "HAS_ARTIFACTS=true" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "⚠ No artifacts found, will create minimal package" -ForegroundColor Yellow
+          echo "HAS_ARTIFACTS=false" >> $env:GITHUB_OUTPUT
+        }
+    
+    - name: Install Chocolatey
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Chocolatey ===" -ForegroundColor Cyan
+        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        }
+        choco --version
+        Write-Host "✓ Chocolatey installed" -ForegroundColor Green
+    
+    - name: Create Package Directory Structure
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating Package Structure ===" -ForegroundColor Cyan
+        
+        # Use existing packaging structure from repo
+        if (Test-Path "packaging/chocolatey") {
+          Copy-Item -Path "packaging/chocolatey/*" -Destination "choco-package" -Recurse -Force
+          Write-Host "Copied existing packaging structure" -ForegroundColor Green
+        } else {
+          Write-Host "No existing packaging structure found, creating from scratch" -ForegroundColor Yellow
+        }
+        # Always ensure required directories exist
+        New-Item -ItemType Directory -Force -Path "choco-package/tools" | Out-Null
+        New-Item -ItemType Directory -Force -Path "choco-package/legal" | Out-Null
+        
+        # Copy build artifacts if available
+        if (Test-Path "consolidated") {
+          New-Item -ItemType Directory -Force -Path "choco-package/tools/opencog" | Out-Null
+          Copy-Item -Path "consolidated/*" -Destination "choco-package/tools/opencog" -Recurse -Force
+          Write-Host "✓ Copied build artifacts" -ForegroundColor Green
+        }
+        
+        Write-Host "✓ Package structure created" -ForegroundColor Green
+    
+    - name: Create Chocolatey Nuspec
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating Nuspec File ===" -ForegroundColor Cyan
+        
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $pkgName = $env:PACKAGE_NAME
+        $maintainer = $env:PACKAGE_MAINTAINER
+
+        $nuspec = @"
+        <?xml version="1.0" encoding="utf-8"?>
+        <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+          <metadata>
+            <id>$pkgName</id>
+            <version>$version</version>
+            <title>OpenCog Collection (OCC)</title>
+            <authors>$maintainer</authors>
+            <owners>$maintainer</owners>
+            <licenseUrl>https://github.com/o9nn/occ/blob/main/LICENSE</licenseUrl>
+            <projectUrl>https://github.com/o9nn/occ</projectUrl>
+            <requireLicenseAcceptance>false</requireLicenseAcceptance>
+            <description>OpenCog Collection (OCC) - A comprehensive monorepo of OpenCog cognitive architecture components. Includes CogUtil, AtomSpace, Moses, CogServer, URE, and more.</description>
+            <summary>OpenCog cognitive architecture framework for Windows</summary>
+            <tags>opencog ai agi cognitive-architecture atomspace moses machine-learning</tags>
+            <copyright>Copyright 2025 OpenCog Community</copyright>
+            <dependencies>
+              <dependency id="vcredist140" version="14.0" />
+            </dependencies>
+          </metadata>
+          <files>
+            <file src="tools\**" target="tools" />
+            <file src="legal\**" target="legal" />
+          </files>
+        </package>
+        "@
+        
+        Set-Content -Path "choco-package/$env:PACKAGE_NAME.nuspec" -Value $nuspec
+        Write-Host "✓ Nuspec file created" -ForegroundColor Green
+    
+    - name: Create Installation Script
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating Installation Script ===" -ForegroundColor Cyan
+        $lines = @(
+          "`$ErrorActionPreference = 'Stop'",
+          "`$packageName = `$env:ChocolateyPackageName",
+          "`$toolsDir = `"```$(Split-Path -parent `$MyInvocation.MyCommand.Definition)`"",
+          "`$installDir = Join-Path `$env:ProgramFiles 'OpenCog\OCC'",
+          "Write-Host 'Installing' `$packageName 'to' `$installDir -ForegroundColor Cyan",
+          "New-Item -ItemType Directory -Force -Path `$installDir | Out-Null",
+          "if (Test-Path `"`$toolsDir\bin`") {",
+          "    Copy-Item -Path `"`$toolsDir\*`" -Destination `$installDir -Recurse -Force",
+          "    Write-Host 'Installed OpenCog binaries' -ForegroundColor Green",
+          "    Install-ChocolateyPath -PathToInstall `"`$installDir\bin`" -PathType 'Machine'",
+          "    Install-ChocolateyEnvironmentVariable -VariableName 'OPENCOG_HOME' -VariableValue `$installDir -VariableType 'Machine'",
+          "    Write-Host 'OpenCog Collection installed successfully!' -ForegroundColor Green",
+          "} else {",
+          "    Write-Host 'No binaries found in package. Minimal installation.' -ForegroundColor Yellow",
+          "}"
+        )
+        $installScript = $lines -join "`n"
+        Set-Content -Path "choco-package/tools/chocolateyinstall.ps1" -Value $installScript
+        Write-Host "Installation script created" -ForegroundColor Green
+    
+    - name: Create Uninstallation Script
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating Uninstallation Script ===" -ForegroundColor Cyan
+        $lines = @(
+          "`$ErrorActionPreference = 'Stop'",
+          "`$packageName = `$env:ChocolateyPackageName",
+          "`$installDir = Join-Path `$env:ProgramFiles 'OpenCog\OCC'",
+          "Write-Host 'Uninstalling' `$packageName -ForegroundColor Cyan",
+          "Uninstall-ChocolateyPath -PathToUninstall `"`$installDir\bin`" -PathType 'Machine'",
+          "Uninstall-ChocolateyEnvironmentVariable -VariableName 'OPENCOG_HOME' -VariableType 'Machine'",
+          "if (Test-Path `$installDir) {",
+          "    Remove-Item -Path `$installDir -Recurse -Force",
+          "    Write-Host 'Removed installation directory' -ForegroundColor Green",
+          "}",
+          "Write-Host 'OpenCog Collection uninstalled successfully!' -ForegroundColor Green"
+        )
+        $uninstallScript = $lines -join "`n"
+        Set-Content -Path "choco-package/tools/chocolateyuninstall.ps1" -Value $uninstallScript
+        Write-Host "Uninstallation script created" -ForegroundColor Green
+    
+    - name: Create License File
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating License File ===" -ForegroundColor Cyan
+        
+        if (Test-Path "LICENSE") {
+          Copy-Item -Path "LICENSE" -Destination "choco-package/legal/LICENSE.txt"
+        } else {
+          $license = "OpenCog Collection (OCC)`nCopyright 2025 OpenCog Community`nLicensed under the GNU Affero General Public License v3.0`nSee: https://github.com/o9nn/occ/blob/main/LICENSE"
+          Set-Content -Path "choco-package/legal/LICENSE.txt" -Value $license
+        }
+        
+        Write-Host "✓ License file created" -ForegroundColor Green
+    
+    - name: Build Chocolatey Package
+      shell: pwsh
+      run: |
+        Write-Host "=== Building Chocolatey Package ===" -ForegroundColor Cyan
+        Set-Location choco-package
+        # Remove any template nuspec files that conflict with our generated one
+        Get-ChildItem -Filter "*.nuspec" | Where-Object { $_.Name -ne "$env:PACKAGE_NAME.nuspec" } | Remove-Item -Force
+        choco pack "$env:PACKAGE_NAME.nuspec"
+        Write-Host "Package built successfully" -ForegroundColor Green
+    
+    - name: Test Package Installation
+      shell: pwsh
+      run: |
+        Write-Host "=== Testing Package Installation ===" -ForegroundColor Cyan
+        Set-Location choco-package
+        $package = Get-ChildItem -Filter "*.nupkg" | Select-Object -First 1
+        
+        if ($package) {
+          Write-Host "Testing installation of: $($package.Name)" -ForegroundColor Yellow
+          choco install $env:PACKAGE_NAME -s . -y --force
+          
+          Write-Host "✓ Package installed successfully" -ForegroundColor Green
+          
+          # Uninstall test package
+          choco uninstall $env:PACKAGE_NAME -y
+          Write-Host "✓ Package uninstalled successfully" -ForegroundColor Green
+        } else {
+          Write-Host "⚠ No package file found to test" -ForegroundColor Yellow
+        }
+      continue-on-error: true
+    
+    - name: Upload Chocolatey Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: chocolatey-package-${{ steps.version.outputs.VERSION }}
+        path: choco-package/*.nupkg
+        retention-days: 30
+    
+    - name: Package Summary
+      shell: pwsh
+      run: |
+        Write-Host "=== Chocolatey Package Summary ===" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Package Name: $env:PACKAGE_NAME" -ForegroundColor Yellow
+        Write-Host "Version: ${{ steps.version.outputs.VERSION }}" -ForegroundColor Yellow
+        Write-Host "Has Artifacts: ${{ steps.verify.outputs.HAS_ARTIFACTS }}" -ForegroundColor Yellow
+        Write-Host ""
+        
+        $package = Get-ChildItem -Path choco-package -Filter "*.nupkg" | Select-Object -First 1
+        if ($package) {
+          Write-Host "✅ Package created: $($package.Name)" -ForegroundColor Green
+          Write-Host "Size: $([math]::Round($package.Length / 1MB, 2)) MB" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "To install locally:" -ForegroundColor Cyan
+          Write-Host "  choco install $env:PACKAGE_NAME -s path/to/package -y" -ForegroundColor White
+          Write-Host ""
+          Write-Host "To publish to Chocolatey Community:" -ForegroundColor Cyan
+          Write-Host "  choco push $($package.Name) --source https://push.chocolatey.org/" -ForegroundColor White
+        } else {
+          Write-Host "❌ No package file created" -ForegroundColor Red
+          exit 1
+        }

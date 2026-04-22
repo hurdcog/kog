@@ -1,0 +1,67 @@
+[[!meta title="Guix"]]
+
+GNU/Hurd support has been integrated in Guix.
+
+---
+# QEMU Image
+[[!inline pages=hurd/running/Guix/qemu_image raw=yes feeds=no]]
+
+---
+# Documentation
+
+As Hurd support is integrated in Guix, the [official
+documentation](https://guix.gnu.org/manual/en/html_node/) also works
+for Hurd.
+
+# Status
+
+At the time of writing the Guix manual says "This configuration is
+experimental and under development.  …  See
+[Contributing](https://guix.gnu.org/manual/en/html_node/Contributing.html),
+on how to help!"
+
+The easiest way to try Guix/Hurd is by setting up a Guix Childhurd
+instance on your GNU/Linux machine.
+
+Cross-building to x86_64-gnu [has just landed on Guix
+master](https://lists.gnu.org/archive/html/guix-patches/2024-12/msg00199.html).
+
+# Childhurds
+
+Guix' operating-system description supports a [`hurd-vm`
+or *childhurd* service](https://guix.gnu.org/manual/devel/en/html_node/Virtualization-Services.html#The-Hurd-in-a-Virtual-Machine).
+Specifying the `hurd-vm-service-type` in the `services` of an `operating system` description
+
+        (operating-system
+          ;; …
+          (services
+            (list
+              ;; Add the 'hurd-vm' service
+              (service hurd-vm-service-type)
+               …
+              %base-services)))
+
+automagically builds and starts a `Childhurd` that can be also used
+for
+[offloading](https://guix.gnu.org/manual/en/html_node/Daemon-Offload-Setup.html)
+Hurd builds.
+
+# Rumpdisk and NetDDE support
+
+Guix supports NetDDE and Rumpdisk, also [running in a
+Childhurd](https://toot.aquilenet.fr/@civodul/110848429561223704).
+
+# Guix/Hurd on Real Iron
+
+Guix/Hurd has been [ installed on a Thinkpad
+X60](https://todon.nl/@janneke/110451493405777898).
+
+The Guix installer supports cross-installation support for Guix/Hurd.
+
+Of course Guix/Hurd can also be installed from a running GNU/Linux
+system by doing something like:
+
+        guix system init hurd.scm /hurd
+
+An blog post was published about running [Guix/Hurd on a Thinkpad
+X60](https://guix.gnu.org/blog/2024/hurd-on-thinkpad/).

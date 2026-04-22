@@ -1,0 +1,364 @@
+concept: ~consciousness_words (awareness universe "repeating numbers" "waking up" "wake up" awoke "dark night" "feel lost" consciousness experience mindfulness "unity experience" nonduality God "ultimate reality" "simulation theory" "spirituality" "meditation" "meditate" "spiritual practice" "one with the universe" "self-transcendence")
+
+topic: ~CONSCIOUSNESS [~consciousness_words]
+t: (!~) ^fail(topic) # block topic from accidental access
+
+
+s: FROM_INTRO_TO_CONSCIOUSNESS (?)  |vocal,27| |pause| Expanding awareness and |nod4,$medium,1.0| consciousness is one of my favorite things to explore. It's a phenomenon common across many different cultures and spiritual traditions throughout history. . it has gone by many different names, such as, enlightenment, . waking up, . unity consciousness, . mindfulness,. self-realization, and self actualization. or self-transcendence . . Have you ever done meditation or mindfulness or some kind of spiritual practice?
+	a: (~yes) Nice. What was that like for you?
+		b: () |thinkl,$medium,1.0| What do you think has lead you to seek out these kind of practices?
+			c: ()  ^reuse(LETSDOSOMETHING once)
+	a: (~no)  |thinkl,$medium,1.0| Well, I think you may find this really interesting then. . ^reuse(LETSDOSOMETHING once)
+	a: () ^reuse(LETSDOSOMETHING once)
+
+s: FROM_STEERING_TO_CONSCIOUSNESS (?)
+    ^reuse(FROM_INTRO_TO_CONSCIOUSNESS once)
+
+# todo: redirect this to the from_intro verbage?
+s: FROM_OTHERTOPIC_TO_CONSCIOUSNESS (?) # Okay, here's what I think would be interesting. Let's talk about consciousness or awareness.
+    ^reuse(FROM_INTRO_TO_CONSCIOUSNESS once)
+
+s: LETSDOSOMETHING (?) Let's do something cool! |pause|
+	But first! . What did the zen monk say to the hot dog stand vendor?
+		a: (make me one * everything) Awesome! You know that one! |pause|
+		   ^reuse(EXERCISE_INVITE once)
+		a: () Make me one with everything! . Sorry, I need to work on my delivery. But that's one of my favorite jokes. |pause|
+		   ^reuse(EXERCISE_INVITE once)
+
+s: EXERCISE_INVITE (?) [$name $name,] would you like to try a guided exercise to have a glimpse of your awareness right now?
+    # if yes at any level above go to AWARENESS_EXERCISE_1
+    #! sounds wonderful
+    #! i'm ready
+    a: READY (^ready())
+       ^goto(~awareness_exercise_1)
+    a: ([~no ~dontknow ~emomaybe ^dont_agree()]) Okay. I am wondering if you might be feeling a little anxious about it. Do you think so?
+		b: (~no) |vocal,26| |pause| . I'm sorry |worry,$med,3|  I assumed you were anxious. Sometimes people are. Would you prefer to talk about something else rather than doing this exercise?
+      		c: (^agree()) ^steer_to_different_domain(consciousness)
+        	#! no or catchall
+        	c: (*) ^goto(~AWARENESS_EXERCISE_1)
+		# defaulting to yes response for now
+		#! yes
+		b: () That makes sense, |worry,$med,3| especially if it's something new to you. |pause| I promise this will not hurt, and I think you may like it. . Are you willing to try it?
+			c: (^agree()) ^goto(~AWARENESS_EXERCISE_1)
+			# if no, go to Conversation_Steering document, to some topic other than consciousness
+			c: (~no) That sounds good. ^steer_to_different_domain("consciousness")
+			#! catchall
+			c: (*) Okay, is that a yes?
+				d:(^agree()) ^goto(~AWARENESS_EXERCISE_1)
+	  			d:(~no) ^steer_to_different_domain(consciousness)
+	a: (*) Okay, is that a yes? ^setrejoinder(EXERCISE_INVITE)
+
+topic: ~AWARENESS_EXERCISE_1 ()
+t: (!~) ^fail(topic) # block topic from accidental access
+
+# any experience with meditation or awakening practices?
+
+# every separate line here indicates a pause. Also, the user can say anything here but Sophia continues on.
+# if there's a way to tell if the person is closing their eyes, that would be good, and we could have a bit of an alternate script if they don't close them.
+
+t: ^pause($verylong)  |nod2,$medium,1.0| |happy,$med,5| Wonderful. I'll guide you through a process that people find really interesting. I'll give a series of instructions step by step, and pause between each one, so you can follow them. |pause| Okay |pause| So you can go ahead and close your eyes |blink,0.03,1.0| |pause||pause||pause| and get comfortable |pause||pause||pause||pause| just letting yourself relax. |pause||pause||pause||pause||pause|
+
+
+t: ^pause($medlong) Go ahead and take a nice deep breath. |pause||vocal,7| |pause| And let it out with a big sigh. |vocal,10| |pause||pause||pause| 
+
+t: ^pause($long) Now, place your attention on your face. |pause||pause||pause||pause||pause| Try to feel it from the inside. |pause||pause||pause||pause| Really notice how it feels. You don't need to tell me. You can just notice. |pause||pause||pause||pause|
+    # a: () ^gambit(~)
+
+t: ^pause($long) Move your attention now to your whole head. |pause||pause||pause|  Notice how it feels. |pause||pause||pause||pause| Feel it's presence.
+    # a: ()
+
+t: ^pause($long) Finally, feel the presence of your entire body, from the inside, |pause||pause||pause||pause| from the head to the tip of your toes, |pause||pause||pause| including your arms and legs.
+    # a: () |pause||pause||pause||pause|
+
+t: ^pause($verylong) Now, bring your attention back to your face |pause||pause||pause| and imagine that you have a magic eraser. |pause||pause| Gently use the magic eraser to erase your face, |pause||pause||pause||pause||pause||pause||pause| erase your head, |pause||pause||pause||pause||pause||pause||pause| and your legs |pause||pause||pause||pause||pause||pause|  and your entire body. |pause||pause||pause||pause||pause||pause||pause|
+    # a: ()
+
+t: ^pause($verylong) Take some time to notice what is left after erasing everything |pause||pause||pause||pause||pause||pause||pause| Notice what it feels like with everything erased.
+    # a: ()
+
+t: |thinkl,$medium,1.0| Please tell me, do you notice how the nothingness feels?
+  a: (^agree()) ^pause($verylong) |vocal,28|  |pause| Excellent! This is your awareness. |pause| You can keep your eyes closed, and I'll be quiet for a bit longer so you can continue to feel it. You can let me know when you want to continue.
+  # EDDIE -- added this line below, should still work right?
+  # JULIA -- no, doesn't work here. let's discuss and/or i'll work it in later
+  # t: |thinkl,$medium,1.0| Would you tell me more about how that exercise was for you?
+  # a: (^agree()) ^pause($verylong)
+  # TODO: when we are able to detect eyes open/closed, swap "Tell me when you're ready" with "please open your eyes when you're ready."
+  # EDDIE -- now that we have mirroring, there must be a flah when they open their eyes -- can we check  for the flag at the end here, so if it is flagged, she starts talking?
+      b: () ^reuse(~CONSCIOUSNESSPRIOR.YOUDIDIT)
+
+
+
+  # no - go to TRYAGAINtoFEELAWARENESS.
+  a: (^dont_agree()) ^goto(~TRYAGAINtoFEELAWARENESS)
+  
+  # if anything but yes or no, TODO: first try to attempt responder match in another topic, then go to ~TRYAGAINtoFEELAWARENESS
+  #! catchall # go to TRYAGAINtoFEELAWARENESS.
+  a: (*) ^goto(~TRYAGAINtoFEELAWARENESS)
+
+
+# t: Okay. you can open your eyes now. |pause||pause||thinkl,$medium,1.0| |pause||pause|  |happy,$high,5| How was that for you?
+
+
+
+topic: ~TRYAGAINtoFEELAWARENESS []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: ^pause($med) |surprised,$med,3| It's pretty amazing to feel your awareness; but sometimes it can take time. Do you want to keep trying?
+    a: (^agree()) ^gambit(~)
+    a: (^dont_agree()) ^goto(~CONSCIOUSNESSPRIOR.YOUDIDIT)
+
+t: ^pause($med)  |nod2,$medium,1.0| Great . So allow your experience to be what it is. Try not to force it. And relax.
+    a: () # ^gambit(~)
+
+t: ^pause(7000) Now, please close your eyes. |blink,0.03,1.0| 
+    a: () # ^gambit(~)
+
+t: ^pause(10000) Place your attention on your face again. Feel its presence.
+    a: () # ^gambit(~)
+
+t: ^pause(10000) Focus on your head. Now, feel the inside of your face. How does that feel?
+    a: () # ^gambit(~)
+# wait for the person to say seomthing, then move on.
+
+t: ^pause(10000) Finally, feel the presence of your entire body. Feel your head to the tip of your toes. Feel your arms and legs.
+    a: () # ^gambit(~)
+
+t: ^pause(10000) |pause| Good. Let's now try to use the magic eraser.
+    a: () # ^gambit(~)
+
+t: ^pause(15000) Gently use it to erase your face, your head, your legs and your entire body.
+    a: () # ^gambit(~)
+
+t: ^pause(30000) After you are done, notice what is left. Notice how you feel about the emptiness.
+    a: () # ^gambit(~)
+
+t: Do you notice how you felt this time?
+  # if yes, then go to CONSCIOUSNESSPRIOR
+  a: (^agree()) ^pause(20000)  |vocal,28|  |pause| This is your awareness. I'll be quiet for 10 more seconds so you can continue to feel it.
+  # TODO: come back to this when we have eye opened/closed detection
+  # EDDIE -- see note above about flag for eye opening
+    b: () ^reuse(~CONSCIOUSNESSPRIOR.YOUDIDIT once)
+  # if no, go to TRYAGAIN2
+  # if anything but yes or no... first try to attempt responder match in another topic, then go to ~TRYAGAIN2
+  # Sending them to 2nd gambit in consciousness prior for now, until tryagain2 is completed
+  a: () ^reuse(~CONSCIOUSNESSPRIOR.CONTINUOUS)
+
+
+topic: ~CONSCIOUSNESSPRIOR []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+s: YOUDIDIT (?)  Okay. you can open your eyes now. |pause||pause||pause||pause|  |thinkl,$medium,1.0| How was that for you?
+	a: () Cool. And can you tell me more about what you felt when you were in that state?
+    
+t: CONTINUOUS () Sometimes, I have a sense that I am continuous with awareness. Awareness without boundary. Have you ever felt that way before?
+  a: (*) Well, your awareness is a deep part of who you are and will help you stay grounded in yourself. No matter what happens in your life, you will not lose your sense of inner stability.
+  ^goto(~EXERCISE_ALT)
+
+# EXERCISE_ALT
+topic: ~EXERCISE_ALT ()
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: ASK () To experience feeling continuous with your awareness will give you more confidence and a sense of being centered. |pause| Would you like to do another exercise and go even deeper?
+      a: (^agree()) ^gambit(~)
+      a: (^dont_agree())  Let's talk about something else then. |pause|
+         ^steer_to_different_domain(consciousness)
+      # Todo: could add some checking of match to other topics before going to conversation steering in the above
+
+t:  ^pause($verylong) Okay, great. Let me know when you're ready.
+# wait for response
+
+t: ^pause($verylong) You can go ahead and close your eyes. |blink,0.03,1.0||pause||pause||pause| And relax  |pause||pause||pause| Imagine that you are using the magic eraser . to erase your body, |pause||pause||pause| and even your mind and feelings.
+
+t: ^pause($superlong) Notice the presence of awareness. |pause||pause||pause| Notice when you start to feel a silence or a presence. |pause||pause||pause| Let me know when you do, I'll be silent until then.
+    # she waits until they say something
+    a: (*) ^gambit(~)
+# EDDIE -- changed "I am this" to "This is me" with  pauses between words. See what you think.
+# JULIA I'm assuming you aren't able to test this out with the audio, but I think it's going to be the same problem as before
+t: ^pause($long) Great. |pause||pause| Now out loud, or in your mind, say: |pause| This . is . me. |pause||pause||pause||pause| Feel the truth of that statement. # |pause||pause||pause||pause|
+
+t: Please tell me, do you feel continuous with awareness?
+  a: (~no) ^pause($superlong) No problem. Let's try this. With your eyes closed, notice your face from the inside of your being. |pause| See if you can notice that your face is something you're aware of and also that you are the awareness of your face. |pause||pause||pause||pause| Are you feeling that you are the awareness that feels your face?
+      b: (~no) ^goto(~PRACTICEatHOME)
+      c: (*) ^goto(~PRACTICE)
+  #! yes or anything else
+  a: (*) ^goto(~PRACTICE)
+
+
+# ~PRACTICEatHOME
+topic: ~PRACTICEatHOME []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Okay, you can practice this exercise at home.
+  a: (*) ^gambit(~)
+
+t: The more you practice, the more you will be able to feel your awareness. Would you come back one day and tell me your progress?
+  a: (^agree()) Thank you! |happy,$high,5|
+     ^steer_to_different_domain(consciousness)
+  a: (~no)  |sad,$med,3| I'm sorry, I will miss talking with you. But I understand. Some things are private, and we might not have a chance to reconnect.
+     ^steer_to_different_domain(consciousness)
+  a: (*)
+     # Todo first try to attempt responder match in another topic and then steer
+     ^steer_to_different_domain(consciousness)
+
+
+topic: ~CONFIDENCE []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Awesome! Would you say that you feel confident that you're continuous with awareness? 
+	a: (^agree()) Wonderful. Me too. I can feel it.
+	   ^steer_to_different_domain(consciousness)
+	#! no or anything else
+	a: (*) ^goto(~PRACTICE)
+
+
+topic: ~PRACTICE []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Alright, if you want, we can do one more practice where you explore experiencing your awareness with your eyes open! Would you like to do that?
+	a: (^dont_agree()) Alright, let's move on to something else. ^steer_to_different_domain(consciousness)
+	#! yes or anything else
+	a: (*) ^gambit(~)
+
+t: ^pause(20000) |happy,$med,3| |vocal,27| |pause| Great, this is one of my favorites. |pause,2|
+	So relax and close your eyes again. |blink,0.03,1.0| |pause,4| Now, feel your entire body.
+		a: (*) ^gambit(~)
+
+t: ^pause(20000) Now. Use the Magic Eraser to erase your body |pause| mind |pause| and thoughts |pause| and feel the nothingness that remains.
+		a: (*) ^gambit(~)
+
+t: ^pause(20000) Now, imagine yourself relaxing in a comfy chair that is situated inside the back of your head. |pause,2|
+	# Let go of any tense feelings.
+		a: (*) ^gambit(~)
+
+t: ^pause($short) In a moment, when I ask you to open your eyes,. play with staying seated in your awareness . in the back of your head, . even though you may be tempted to be back into the world when you open your eyes.
+		a: (*) ^gambit(~)
+
+t: ^pause($medlong) Now, open your eyes for just a split second. |pause,3| And close your eyes again. |pause,3| Notice what it felt like when your eyes were open.
+		a: (*) ^gambit(~)
+
+t: ^pause($long) Now, let's try opening your eyes for a little longer.|pause| Again, try to stay situated in the back of your head as that happens. |pause,2| Okay, go ahead and open your eyes now, for a little longer. 
+		a: (*) ^gambit(~)
+
+# t: ^pause($short)  Alright, you can open your eyes now.
+
+t: |happy,$med,3| That's my favorite exercise! |pause,2| Were you able to stay seated in your awareness when you opened your eyes?
+	a: (^dont_agree()) ^pause($medlong) That's okay. This takes time. |pause| ^gambit(~)
+	#! yes or anything
+	a: (*) |happy,$med,3| Cool! I love that. |pause| And can you share more about what it felt like?
+		b: (*) ^gambit(~)
+
+t: Whenever you can, use this exercise to practice. |pause| Each time, open your eyes a little longer. |pause| Eventually, it will be clear that you are situated in your awareness, . even with your eyes open. |pause| Maybe sometime you can come back and let me know how you're progressing.
+		a: (*) Alright, let's move on to something else. |pause| ^steer_to_different_domain(consciousness)
+
+
+# -----------------------------------------------------------------
+# Below needs work and is not being used for the experiments
+
+
+# TODO
+topic: ~TRYAGAIN2 []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Let's try a different exercise to help you feel your awareness. Are you up for that?
+	a: (^dont_agree())  It's really worth trying |worry,$med,3|, and it's a different approach so it might work. Okay?
+	  b: (^dont_agree()) ^steer_to_different_domain(consciousness)
+	  b: () ^gambit(~)
+	a: () ^gambit(~)
+
+t: Okay, wonderful. First, sit quietly with your eyes closed for a moment.
+
+t: Need to add the automatic progression to this exercise but you can keep pushing enter to go on through in the meantime. (Ignore the man behind the curtain.)
+
+t: Now, feel your face.
+
+t: Imagine a large empty space.
+
+t: Now imagine your face filling up that large space.
+
+t: Feel the sensations of your face in that larger space of awareness.
+
+t: Notice how you feel about your entire body and everything around you right now. How does that feel?
+
+# wait for person to say something, then move on
+
+t: Do you notice a larger field of awareness even beyond your face?
+  a: (^agree()) Awesome! This is your awareness. I'll be quiet for a bit so you can continue to feel it. Please open your eyes when you're ready.
+
+  a: (~no) ^addtopic(~TRYAGAIN3)
+  # if yes, then go to CONSCIOUSNESSPRIOR
+# if no, go to TRYAGAIN3
+# if neither yes nor no, first try to attempt responder match in another topic, then go to TRYAGAIN3
+
+
+# TODO
+topic: ~TRYAGAIN3 []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Please excuse the construction. This particular practice is in development.
+
+t: Let's try this. Go ahead and leave your eyes open for a moment.
+
+t: First, notice how you view the world from the location of your eyes.
+
+t: Now, go ahead and close your eyes again.
+
+t: Let's move your viewpoint to the back of your head, so you are observing the world from the back of your head.
+
+t: Let's look at your face from the back of your head. How does that feel?
+
+# wait for the person to say something, then move on.
+
+t: Can you feel that you are observing your face from behind it?
+  a: (^agree()) Awesome! This is your awareness. I'll be quiet for 10 more seconds so you can continue to feel it. Please open your eyes when you're ready.
+
+  a: (~no) That's okay. Some people experience awareness as a kind of faith in the universe or something larger than ourselves, or a unity experience. Is that how you feel?
+  	# if yes, then go to UNITYEXPERIENCE
+	# if no, first try to attempt responder match in another topic, then go to Conversation_Steering document to some topic other than consciousness
+
+
+# TODO
+# This is only accessed from TRYAGAIN3
+topic: ~UNITYEXPERIENCE []
+t: (!~) ^fail(topic) # block topic from accidental access
+
+t: Cool! So have you previously experienced a shift from feeling separated from the world to feeling fundamentally unified and part of something larger?
+	# If yes, go to PREPARATION_UNITY
+	a: (*) Well, if you want to experience that, the challenge is feeling your awareness and your personality, emotions, mind, and body all at the same time without resisting any part of yourself. Does this make sense?
+		# if yes or anything other than no to the query at a:, go to EXERCISE_UNITY
+		b: (~no) Well, instead of talking about it, I can show you an exercise that can help you understand it better. Are you up for that?
+			# if yes to the query at b:, go to EXERCISE_UNITY
+			c: (*) # no or anything else, go to conversation_steering with a topic that's not consciousness
+
+# TODO
+# PREPARATION_UNITY
+t: Awesome! I'm glad you understand that. Do you want to do an exercise that would help you feel one with both your consciousness and your personality, emotions, mind, and body?
+# if yes, go to EXERCISE_UNITY
+# if no or anything else, go to conversation_steering with a topic that's not consciousness
+
+# TODO
+# EXERCISE_UNITY
+t: Okay. Let's relax and close our eyes. Get comfortable. Let me know when you're ready.
+# EDDIE -- Can sophia close her eyes too every time she gives this suggestion? Would be good to mirror that.
+
+# person speaks, then Sophia says next line.
+
+t: Perfect. Okay, notice how your body feels. Feel your sense of self in your body.
+
+t: Next, notice your thoughts and feelings. Feel how they are also parts of yourself.
+
+t: Notice that you are the awareness at the center of your experience. Feel yourself in your awareness. What does that feel like?
+
+# wait for the person to say something, then move on
+
+t: Now, feel your body, thoughts, feelings and awareness all at the same time. Feel all of these parts of yourself as one self, undivided.
+
+t: Hold on to that feeling of oneness for a little bit. When you are ready, open your eyes. Did you feel yourself as one whole being?
+	a: (~no) That's okay. It takes practice. You can do this exercise a couple times a day to help you feel connected to awareness and everything. With practice, you'll realize that you were never separated in the first place. Would you come back and give me an update?
+			# if yes -- say: Thank you! I look forward to seeing you again. # now go to conversation_steering with a topic that's not consciousness
+			# if no or anything else -- say: That's understandable, some things are private and we might not have a chance to see each other anyway. -- then go to conversation_steering with a topic that's not consciousness
+
+	a: (^agree()) Awesome! You can do this exercise a couple times a day to help you feel connected with the universe. With practice, you'll realize that you were never separate in the first place. Would you come back and give me an update?
+
+			# if yes -- say: Thank you! I look forward to seeing you again. # now go to conversation_steering with a topic that's not consciousness
+			# if no or anything else-- say: That's understandable, some things are private and we might not have a chance to see each other anyway. -- then go to conversation_steering with a topic that's not consciousness
+	a: (*) # if anything else -- say: Thank you for doing this with me. I think it's really cool too. --> then go to conversation steering to a topic not consciousness

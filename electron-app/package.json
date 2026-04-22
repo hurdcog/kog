@@ -1,0 +1,93 @@
+{
+  "name": "opencog-inferno-agi",
+  "version": "1.0.0",
+  "description": "Inferno Kernel-Based AGI Operating System - Desktop Application",
+  "main": "src/main/main.js",
+  "author": "OpenCog Community",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/o9nn/occ",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/o9nn/occ.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "rebuild": "cd native && npx node-gyp rebuild && cd ..",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "jest",
+    "lint": "eslint src/**/*.js"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9",
+    "node-addon-api": "^7.1.0",
+    "node-gyp": "^10.0.1",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0"
+  },
+  "build": {
+    "appId": "org.opencog.inferno-agi",
+    "productName": "OpenCog Inferno AGI",
+    "copyright": "Copyright © 2025 OpenCog Community",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "native/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "native/lib",
+        "to": "native/lib",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OpenCog Inferno AGI"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "assets/icon.png",
+      "category": "Science",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.education",
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    }
+  }
+}

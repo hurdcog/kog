@@ -1,0 +1,3569 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Language Learning Diary - Part Seven
+\end_layout
+
+\begin_layout Date
+March 2022 - present
+\end_layout
+
+\begin_layout Author
+Linas Vepštas
+\end_layout
+
+\begin_layout Abstract
+The language-learning effort involves research and software development
+ to implement the ideas concerning unsupervised learning of grammar, syntax
+ and semantics from corpora.
+ This document contains supplementary notes and a loosely-organized semi-chronol
+ogical diary of results.
+ The notes here might not always makes sense; they are a short-hand for
+ my own benefit, rather than aimed at you, dear reader!
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+Part Seven of the diary on the language-learning effort opens the door to
+ next steps.
+ The last round of experiments appear to be successful, and there do not
+ seem to be any nagging unresolved issues.
+ What comes next?
+\end_layout
+
+\begin_layout Section*
+Summary Conclusions
+\end_layout
+
+\begin_layout Standard
+A summary of what is found in this part of the diary:
+\end_layout
+
+\begin_layout Itemize
+No summary yet.
+\end_layout
+
+\begin_layout Section*
+The Possibilities
+\end_layout
+
+\begin_layout Standard
+The last round of experiments appear to be successful, and there do not
+ seem to be any nagging unresolved issues.
+ What comes next? Here's a list of possibilities.
+ (The list below was written in March 2022 and got updates in Jan 2023.)
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Accuracy Evaluation.
+
+\series default
+ Compare dictionaries to the hand-crafted LG English dict.
+ This is a bit tedious and boring, since it seems unlikely to yield anything
+ interesting.
+ It seems inevitable, as its the kind of thing other people want to see.
+ The only benefit is that it is a way of perhaps characterizing the the
+ effects of different parameter choices.
+ In current runs, the 
+\begin_inset Quotes eld
+\end_inset
+
+noise
+\begin_inset Quotes erd
+\end_inset
+
+ parameter is the most highly explored: but what setting yields the best
+ results? Comparing to LG should reveal the answer.
+ Estimate a few weeks to a month of sustained effort.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Jan 2023 update
+\emph default
+: I am no longer convinced that the MPG dicts are learning 
+\begin_inset Quotes eld
+\end_inset
+
+conventional
+\begin_inset Quotes erd
+\end_inset
+
+ syntax, as defined in linguistics.
+ And that's OK.
+ There is some overlap, and perhaps something might be learned from a direct
+ comparison, but this now seems to be a lower priority.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Accuracy-Guided Exploration.
+ 
+\series default
+An automated accuracy-comparison system, comparing two different dictionaries,
+ whatever their sources may be, could serve as a guide for exploration.
+ For example, comparing learned dictionaries to the hand-crafted LG dict
+ helps identify parameter regions that are effective.
+ By contrast, comparing two different auto-generated dictionaries can indicate
+ when two dicts diverge, and how sensitive they are to given parameter settings.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Jan 2023 update
+\emph default
+: This is grappling with the fact that the word-class merge code uses a
+ number of parameters (majority voting, in-group membership, etc.) and there's
+ a concern that we need to find 
+\begin_inset Quotes eld
+\end_inset
+
+the best parameters
+\begin_inset Quotes erd
+\end_inset
+
+ to give 
+\begin_inset Quotes eld
+\end_inset
+
+the most accurate results
+\begin_inset Quotes erd
+\end_inset
+
+.
+ I'm no longer sure this is the correct mindset.
+ Think of these parameters as the analogous of ferromagnetic couplings in
+ an Ising model: It's not really the specific values that should matter,
+ but the overall landscape of 
+\begin_inset Quotes eld
+\end_inset
+
+how things work
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Tuning parameters is perhaps premature.
+ Of course, we want 
+\begin_inset Quotes eld
+\end_inset
+
+quality results
+\begin_inset Quotes erd
+\end_inset
+
+, but this task might lead astray?
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Data Cleanup.
+
+\series default
+ During pair-counting and/or MPG parsing, there is a bug that repeatedly
+ escapes backslashes, leading to a cascade of backslashes in the dataset.
+ This is just junk, and should be fixed.
+ Fixing it will surely improve quality.
+ It's tedious and boring.
+ Two ways to fix: (1) start from scratch (2) hunt out multiple backslashes,
+ and perform a custom merge, just like a word-class merge, but without forming
+ a word-class.
+ Option (2) is maybe easier and faster, but requires crafting custom code.
+ Maybe a few weeks to write this code, another few weeks to fully debug
+ it.
+ Option (1) is foundationally better but tedious and time consuming.
+ Estimate a month of keeping a watchful eye on the progress of the data
+ processing.
+ Yuck, either way.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Jan 2023 update
+\emph default
+: option 1 is the correct path and we are on it.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Morphology.
+
+\series default
+ We've ignored the morphological structure of English.
+ Morphology is crucial for most Indoeuropean and Arabic languages, and so
+ coverage could be vastly improved by putting together code for automatic
+ morphology detection/processing.
+ Diary Part One already sketched how this could be done, including a worked
+ example confirming that the idea will provide good results.
+ Implementing this in code, and then performing the experiments to confirm
+ it, is a relatively straight-forward affair.
+ Time-consuming, but well within reach.
+ Estimate six months of sustained effort; more time if interrupted.
+ A motivated grad student could do this, might take 12-18 months.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Jan 2023 update
+\emph default
+: Morphology is important; what I wrote above is wrong.
+ There is a more general problem of segmentation: finding word boundaries,
+ finding sentence boundaries, finding morphological boundaries.
+ This can be lumped into a more general boundary problem in vision and audio
+ processing.
+ Morphology is a 
+\begin_inset Quotes eld
+\end_inset
+
+special case
+\begin_inset Quotes erd
+\end_inset
+
+ of boundary finding.
+ So, no, it is not something that can be just 
+\begin_inset Quotes eld
+\end_inset
+
+knocked off by a grad student in short order
+\begin_inset Quotes erd
+\end_inset
+
+; its a fundamental line of research.
+ This needs to become a high-priority activity.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Reiterate classification.
+
+\series default
+ Given the initial dictionaries, the corpus can be parsed with the LG parser,
+ using those dictionaries.
+ The result of such parsing is again a collection of disjuncts, much like
+ the ones from MPG parsing, but with different observation counts.
+ After collecting such counts, the classification step can be performed
+ again, presumably resulting in a somewhat different classification, perhaps
+ one that is more accurate?
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+This appears to be a technically easy step to take, as it just follows well-trod
+ ground, mostly.
+ A few weeks or a month of close supervision of the training runs.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+A variant of the above is to use the initial category assignment of the
+ word as a 
+\begin_inset Quotes eld
+\end_inset
+
+word-sense
+\begin_inset Quotes erd
+\end_inset
+
+, and to tag the new disjunct with that word-sense.
+ One way to do this would be to treat the initial disjunct as a 
+\begin_inset Quotes eld
+\end_inset
+
+subscript
+\begin_inset Quotes erd
+\end_inset
+
+, and so the same text-word, but with two different subscripts, is treated
+ as two distinct words.
+ Counts and further clustering continue to treat these as two different
+ words, until/unless the second round of clustering erases the distinction.
+ Handling this subscript-tagging requires new code; it is perhaps similar
+ to cross-sensory tagging, e.g.
+ if/when correlating with audio, video data.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Jan 2023 update
+\emph default
+: Yes, this is the correct path forwards.
+ Its the current target.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Refactorization.
+
+\series default
+ The disjuncts from above run provides a dataset that can be compared to
+ the MPG-derived classes, and be used to refactor those, in several different
+ ways.
+ Perhaps some Sections are never used; they could be dropped.
+ Perhaps a block-diagonal structure can be discovered.
+ That is, a word-disjunct pair, the disjunct having N connectors, can be
+ viewed s an N+1-rank tensor.
+ Perhaps the collection of these tensors has some obvious diagonal structure.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Refactoring in this way feels like it might be both theoretically challenging,
+ as well as presenting practical difficulties of discovering high-quality
+ algorithms and then debugging them.
+ This could easily take more than a few months.
+ Compared to just re-iterating, this seems more difficult, more error-prone,
+ and less robust.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Entities and References.
+
+\series default
+ A word-vector, for a given word, can be viewed in two ways.
+ One way is to say that the disjunct describes the textual environment of
+ the word: it's N-gram or skip-gram.
+ Another way to think of it is that it captures the semantic embedding of
+ the word; its a list of all of the 
+\begin_inset Quotes eld
+\end_inset
+
+facts
+\begin_inset Quotes erd
+\end_inset
+
+ known about that word.
+ This is even more powerful, when the word is sense-tagged, i.e.
+ tagged with the initial word-category.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+There are two types of entities: common entities and text-specific entities.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+I want to write 
+\begin_inset Quotes eld
+\end_inset
+
+common nouns
+\begin_inset Quotes erd
+\end_inset
+
+, but in fact, the entities may be specific events in time, i.e.
+ verbs.
+ It would be awkward to write 
+\begin_inset Quotes eld
+\end_inset
+
+common noun or common verb
+\begin_inset Quotes erd
+\end_inset
+
+, so we'll just call them 
+\begin_inset Quotes eld
+\end_inset
+
+entities
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+ Common entities hold across all texts, such as 
+\begin_inset Quotes eld
+\end_inset
+
+cat
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+dog
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+run
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+jump
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Text-specific entities occur in one text but not another: 
+\begin_inset Quotes eld
+\end_inset
+
+John
+\begin_inset Quotes erd
+\end_inset
+
+, which might be a different 
+\begin_inset Quotes eld
+\end_inset
+
+John
+\begin_inset Quotes erd
+\end_inset
+
+ in each text.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The most interesting/valuable task would be reference detection and reference
+ resolution.
+ How could this be done? A naive algo is to gather up a subset of a vector,
+ specific to one text, and look for high-MI transitive relations.
+ For example, 
+\begin_inset Quotes eld
+\end_inset
+
+John ran the engine.
+ It ran fine
+\begin_inset Quotes erd
+\end_inset
+
+ has the relations 
+\begin_inset Quotes eld
+\end_inset
+
+ran engine
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+it ran
+\begin_inset Quotes erd
+\end_inset
+
+, which form a transitive relation between 
+\begin_inset Quotes eld
+\end_inset
+
+it
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+engine
+\begin_inset Quotes erd
+\end_inset
+
+.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Of course, the pairing of 
+\begin_inset Quotes eld
+\end_inset
+
+John
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+it
+\begin_inset Quotes erd
+\end_inset
+
+ can also be deduced.
+\end_layout
+
+\end_inset
+
+ For this to work well, though, stems are needed, or, more properly speaking,
+ lexical functions.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Long-distance correlations, Time.
+ 
+\series default
+Entity detection can be simplified if one introduces a time dimension, and,
+ for each input stimulus (word), a decaying 
+\begin_inset Quotes eld
+\end_inset
+
+activation
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For example, if a word appears only in one text, but not another, and then
+ reappears in a third text, then perhaps this is a different, unrelated
+ entity? If some word has not been seen in a long time, then the new occurrences
+ can be assigned a distinct label.
+ Input processing proceeds as before, accumulating stats for the new occurrence.
+ Later, during the classification phase, it can be determined if the various
+ entities seem to be the same, of not.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Contexts; Neighborhoods.
+
+\series default
+ There is no absolute contextual reference frame,
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See Graeme Hirst, 
+\begin_inset Quotes eld
+\end_inset
+
+Context as a Spurious Concept
+\begin_inset Quotes eld
+\end_inset
+
+ (1997) arXiv:cmp-lg/9712003v1.
+\end_layout
+
+\end_inset
+
+ but there is a general neighborhood of activations around sentences, paragraphs
+, longer texts.
+ How does this neighborhood change, mutate, flow with the text? I think
+ we can look at this with the conventional MI and high-dimensional similarity
+ tools we've been developing...
+ The Hirst paper mentions Dryer and the idea of a sentence topic being a
+ 
+\begin_inset Quotes eld
+\end_inset
+
+metalinguistic illusion
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This seems to be correct.
+ But we have the antidote: the 
+\begin_inset Quotes eld
+\end_inset
+
+sentence topic
+\begin_inset Quotes erd
+\end_inset
+
+ is smallest neighborhood or context; the 
+\begin_inset Quotes eld
+\end_inset
+
+center of gravity
+\begin_inset Quotes erd
+\end_inset
+
+ of the neighborhood.
+ This can be made concrete in terms of cosine distances on the hyperspheres.
+ I like this, because it seems to unify a 
+\begin_inset Quotes eld
+\end_inset
+
+surface meaning
+\begin_inset Quotes erd
+\end_inset
+
+ knowledge representation of a sentence with the post-modern reading of
+ the 
+\begin_inset Quotes eld
+\end_inset
+
+deep meaning
+\begin_inset Quotes erd
+\end_inset
+
+.
+ (According to sources quoted by Hirst, this is something the Amhara, Somali
+ already employ as a matter of course?)
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Scenes; Limnal Spaces; Identifying Transitions.
+
+\series default
+ Humans conventionally organize knowledge into contextual groupings (how
+ else could it be?) In theatre, these are scenes; in books, chapters with
+ titles.
+ 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Scene detection can be hard-coded, in the processing input stage.
+ It might also be detectable, as a zone where there are many activation
+ changes (as measured in the previous bullet.) Inputs can be classified into
+ 
+\begin_inset Quotes eld
+\end_inset
+
+eras
+\begin_inset Quotes erd
+\end_inset
+
+ in this way, with different phenomena in different eras presumably belonging
+ to different 
+\begin_inset Quotes eld
+\end_inset
+
+regimes
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Lexical Functions.
+
+\series default
+ This seems eminently important, but how? 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Synonymous Phrases.
+
+\series default
+ Word-classes are already a form of weak synonymy; how can one form strong
+ synonymy? By applying more stringent membership requirements? Based on
+ current results, it appears that this would be enough, and that it would
+ work fairly well.
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Synonymous phrases require the ability to compare collections of partially-assem
+bled disjuncts, to see how the connectors compare.
+ This risks a combinatorial explosion.
+ It does require new code.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+It might be possible and worthwhile to simultaneously fish for synonyms
+ as well as grammar.
+ Synonyms are already going to behave the same way grammatically, whereas
+ part-of-speech groupings are much looser.
+ This would result in a 
+\begin_inset Quotes eld
+\end_inset
+
+multi-scale
+\begin_inset Quotes erd
+\end_inset
+
+ dictionary, where each part-of-speech grouping can be further subdivided
+ into synonym collections.
+ Implementing this requires altering the 
+\begin_inset Quotes eld
+\end_inset
+
+WordClass
+\begin_inset Quotes erd
+\end_inset
+
+ construction to be marked with a class-type: a loose part-of-speech; a
+ tighter synonym designation.
+ This requires rejiggering the code a little bit; seems like a great idea.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Set Phrases, Institutional Phrases, Idioms.
+
+\series default
+ These are groupings of words that occur more frequently together, than
+ apart.
+ How can these be identified? Why would we be interested in performing such
+ an identification? Is it a stepping stone to something better?
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Antonyms.
+
+\series default
+ A famous deficiency in neural net approaches is the inability to identify
+ antonyms.
+ The current code & theory is equally blind to antonyms.
+ Yet this is deeply, fundamentally important for understanding.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Sound, Pictures, Blueprints, Video
+\series default
+ The approach to this is sketched elsewhere, already.
+ This is a huge, multi-year project.
+ Interesting, too.
+ Will it impress anyone in the short term? Probably not? Who has time to
+ do this? How can I nurture it along? At any rate, code should be altered
+ to at least allow multi-sensory data streams, which is not possible right
+ now.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Common-sense Reasoning.
+ 
+\series default
+This is the holy grail.
+ I had some insights into this.
+ How did that go, again? Something about large-scale correlations.
+ This is combinatorially-explosive territory, again.
+ How can it be tackled?
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+System Interaction.
+
+\series default
+ Currently, only I can perceive results within the knowledge graph.
+ How can it be exposed so that it can be viewed by outsiders? Even shallow
+ perusal would help build interest and support.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Performance and scalability
+\series default
+.
+ Currently, the MI between word-pairs is computed in a bulk batch process.
+ Computing it on the fly, per request, will improve the usability of the
+ MST parsing code.
+ However, sometimes we need 
+\begin_inset Quotes eld
+\end_inset
+
+all
+\begin_inset Quotes erd
+\end_inset
+
+ of the MI's.
+ For example, the cosine distance in the high-dimensional spheres requires
+ each of the vector components to be computed.
+ Fine: this requires 
+\begin_inset Formula $2N$
+\end_inset
+
+ MI's to be computed.
+ But if we are given a single word, and want to find the *nearest* other
+ word, we need to (potentially) look at all 
+\begin_inset Formula $N^{2}$
+\end_inset
+
+ MI's.
+ This scales badly as 
+\begin_inset Formula $N$
+\end_inset
+
+ increases.
+ One idea is to implement the page-rank algorithm, so that we can do the
+ computations locally and in a distributed fashion.
+ Another idea is to search for 
+\begin_inset Quotes eld
+\end_inset
+
+most-likely-nearest
+\begin_inset Quotes erd
+\end_inset
+
+ by computing only a portion of a dot-product, the part that 
+\begin_inset Quotes eld
+\end_inset
+
+should be the largest
+\begin_inset Quotes erd
+\end_inset
+
+, and then exploring only from this base.
+ This requires more code-monkey work.
+ Ugh.
+ But its important, as otherwise, we've got scaling problems.
+\end_layout
+
+\begin_layout Subsection*
+Favorites
+\end_layout
+
+\begin_layout Standard
+Lets narrow down the above.
+ Favorite next tasks are:
+\end_layout
+
+\begin_layout Itemize
+Reiterate classification.
+ Run it a second time.
+ This includes implementing word-sense tagging.
+ Shouldn't be too hard.
+ Interesting, and the generalization seems useful, anyway.
+\end_layout
+
+\begin_layout Itemize
+Multi-scale clustering.
+ (aka synonyms) This requires developing multi-scale WordClass infrastructure.
+ Shouldn't be too hard.
+ Seems useful, anyway.
+\end_layout
+
+\begin_layout Itemize
+Add support for multi-sensory data streams.
+ This is a refactorization of the current code, to allow it to operate on
+ more general data streams.
+ Might fit well with the multi-scale work, above.
+\end_layout
+
+\begin_layout Itemize
+Add time-stamp tagging and decaying activation; start new entities when
+ needed.
+ This requires an indirection: statistics are to be gathered for the entity
+ in the current era, which needs to be treated as distinct, despite having
+ the same spelling.
+ That is, we need to distinguish between words and word-instances.
+ The code base needs significant modification to handle this.
+\end_layout
+
+\begin_layout Standard
+Favorite theoretical activities:
+\end_layout
+
+\begin_layout Itemize
+Lexical Functions.
+ This seems important, but don't yet have a clear vision on how to do this.
+ This needs to be developed.
+ Perhaps this can be a heavily-abstracted synonym thingy? 
+\end_layout
+
+\begin_layout Itemize
+Antonyms.
+ This is important.
+ But how? Anti-correlations are not the same thing as non-correlations.
+ Words that are antonyms will appear near each other, so naive correlation
+ will not work.
+\end_layout
+
+\begin_layout Subsubsection*
+Coding tasks
+\end_layout
+
+\begin_layout Standard
+The following coding tasks lie ahead:
+\end_layout
+
+\begin_layout Itemize
+It is no longer appropriate, under any circumstances, to store counts on
+ the TV.
+ This will churn the code a bit.
+ (Or is it? AtomSpace Frames seem to alleviate the pressure...)
+\end_layout
+
+\begin_layout Section*
+Tokenization (Morphology)
+\end_layout
+
+\begin_layout Standard
+Tokenization is the problem of taking a sequence of input symbols (individual
+ letters) and breaking them up into words (and/or morphemes).
+ Kolonin reports that 
+\begin_inset Quotes eld
+\end_inset
+
+transition freedom
+\begin_inset Quotes erd
+\end_inset
+
+ is the best way of doing this:
+\end_layout
+
+\begin_layout Itemize
+Anton Kolonin, 
+\begin_inset Quotes eld
+\end_inset
+
+Unsupervised Tokenization Learning
+\begin_inset Quotes erd
+\end_inset
+
+, (2022) https://arxiv.org/abs/2205.11443
+\end_layout
+
+\begin_layout Standard
+He cites the following as an 
+\begin_inset Quotes eld
+\end_inset
+
+exhaustive review of different tokenization techniques
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Logan R.
+ Kearsley.
+ 2016.
+ A Hybrid Approach to Cross-Linguistic Tokenization: Morphology with Statistics.
+ Brigham Young University.
+ Theses and Dissertations.
+\end_layout
+
+\begin_layout Standard
+The idea of 
+\begin_inset Quotes eld
+\end_inset
+
+transition freedom
+\begin_inset Quotes erd
+\end_inset
+
+ is introduced in
+\end_layout
+
+\begin_layout Itemize
+Jesse O.
+ Wrenn, Peter D.
+ Stetson, and Stephen B.
+ Johnson.
+ 2007.
+ An Unsupervised Machine Learning Approach to Segmentation of Clinician-Entered
+ Free Text.
+ PubMed Central.
+ AMIA Annual Symposium Proc.
+ 2007; 2007: 811–815.
+ PMCID: PMC2655800 PMID: 18693949 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC26558
+00/
+\end_layout
+
+\begin_layout Standard
+Transition freedom is defined as the 
+\begin_inset Quotes eld
+\end_inset
+
+number of symbolic states (characters, letters or N-grams) that can be following
+ after the current state or preceding the current state.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Rather than attempting to manually discover a specific best tokenization
+ algorithm, is there a way of discovering a tokenization algorithm automatically
+? That is, can we explore the space of all possible algorithms, and select
+ a handful of them? How can this be done, without manual supervision (i.e.
+ without comparing the segmented results to a desired outcome or reference
+ corpus?)
+\end_layout
+
+\begin_layout Standard
+We muse on this here.
+ First, a review of the known algos, to give a hint of what we are looking
+ for.
+ Next, a review of the a minimal data structure needed to represent a sequential
+ time series, so that automated algorithm exploration (a la MOSES) can be
+ applied.
+ That is, what would the MOSES primitives be, for a time series? Third,
+ some thoughts about what kinds of output one might expect from a segmentation
+ algo.
+ Fourth, how these outputs can be used to obtain a measure of quality or
+ interestingness.
+\end_layout
+
+\begin_layout Subsection*
+Transition Freedom
+\end_layout
+
+\begin_layout Standard
+Lets start with examples of the kinds of algos we expect to learn, automatically.
+ First up, transition freedom.
+ Two parts.
+ First, give a precise, formal (mathematical) definition.
+ Second, give a data representation.
+\end_layout
+
+\begin_layout Subsubsection*
+Formal Definition
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $t$
+\end_inset
+
+ be a token drawn from a vocabulary 
+\begin_inset Formula $T=\left\{ t\right\} $
+\end_inset
+
+ of size 
+\begin_inset Formula $\left|T\right|$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $w=t_{1}t_{2}\cdots t_{n}$
+\end_inset
+
+ be an 
+\begin_inset Formula $n$
+\end_inset
+
+-gram.
+ Then, given the observed sequence 
+\begin_inset Formula $\left(w,t\right)$
+\end_inset
+
+ of an 
+\begin_inset Formula $n$
+\end_inset
+
+-gram followed by a 
+\begin_inset Formula $1$
+\end_inset
+
+-gram, define the following:
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $N\left(w,t\right)$
+\end_inset
+
+ be the number of times that the sequence 
+\begin_inset Formula $\left(w,t\right)$
+\end_inset
+
+ was observed.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $N\left(w,*\right)=\sum_{t}N\left(w,t\right)$
+\end_inset
+
+ be the sum over counts of all such sequences.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $\Delta\left(w,t\right)=\begin{cases}
+1 & \mbox{if }N\left(w,t\right)>0\\
+0 & \mbox{if }N\left(w,t\right)=0
+\end{cases}$
+\end_inset
+
+ be the 
+\begin_inset Quotes eld
+\end_inset
+
+Dirac delta
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+indicator function
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $\Delta\left(w,*\right)=\sum_{t}\Delta\left(w,t\right)$
+\end_inset
+
+ be called the 
+\begin_inset Quotes eld
+\end_inset
+
+transition freedom
+\begin_inset Quotes erd
+\end_inset
+
+ (I think this is the correct definition of transition freedom, is that
+ correct?)
+\end_layout
+
+\begin_layout Standard
+The forward 
+\begin_inset Quotes eld
+\end_inset
+
+peak freedom
+\begin_inset Quotes erd
+\end_inset
+
+ is then defined as
+\begin_inset Formula 
+\[
+\Delta\left(t_{1}t_{2}\cdots t_{n},*\right)-\Delta\left(t_{2}t_{3}\cdots t_{n+1},*\right)
+\]
+
+\end_inset
+
+is that correct?
+\end_layout
+
+\begin_layout Standard
+The reverse peak freedom is then 
+\begin_inset Formula 
+\[
+\Delta\left(*,t_{1}t_{2}\cdots t_{n}\right)-\Delta\left(*,t_{2}t_{3}\cdots t_{n+1}\right)
+\]
+
+\end_inset
+
+Is that right, or am I off-by-one in this definition? 
+\end_layout
+
+\begin_layout Standard
+For a vocabulary 
+\begin_inset Formula $T$
+\end_inset
+
+ of fixed size 
+\begin_inset Formula $\left|T\right|$
+\end_inset
+
+ that is known in advance, one has that 
+\begin_inset Formula $\Delta\left(w,*\right)\le\left|T\right|$
+\end_inset
+
+ always.
+\end_layout
+
+\begin_layout Standard
+Other norms are
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $N_{p}\left(w,*\right)=\sum_{t}N^{p}\left(w,t\right)$
+\end_inset
+
+ be the power norm (like the Banach 
+\begin_inset Formula $\ell_{p}$
+\end_inset
+
+ norm but without the root).
+\end_layout
+
+\begin_layout Itemize
+Clearly 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\Delta\left(w,*\right)=\left.N_{p}\left(w,*\right)\right|_{p=0}$
+\end_inset
+
+ is just the limit.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $S\left(w,*\right)=\frac{1}{\log2}\cdot\left.\frac{d}{dp}N_{p}\left(w,*\right)\right|_{p=0}=\sum_{t}\log_{2}N\left(w,t\right)$
+\end_inset
+
+ be an entropy.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $H\left(w,*\right)=\frac{1}{\log2}\cdot\left.\frac{d}{dp}N_{p}\left(w,*\right)\right|_{p=1}=\sum_{t}N\left(w,t\right)\log_{2}N\left(w,t\right)$
+\end_inset
+
+ be a weighted entropy.
+\end_layout
+
+\begin_layout Itemize
+Let 
+\begin_inset Formula $\left\Vert N\right\Vert _{p}\left(w,*\right)=\left[\sum_{t}N^{p}\left(w,t\right)\right]^{1/p}$
+\end_inset
+
+ be the Banach norm.
+\end_layout
+
+\begin_layout Standard
+The two entropy variants 
+\begin_inset Formula $S\left(w,*\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $H\left(w,*\right)$
+\end_inset
+
+ are interesting, as they minimize the contribution of stray, accidental
+ markup.
+ That is, if 
+\begin_inset Formula $N\left(w,*\right)$
+\end_inset
+
+ is a million, and there's a stray 
+\begin_inset Formula $t$
+\end_inset
+
+ such that 
+\begin_inset Formula $\Delta\left(w,t\right)=1$
+\end_inset
+
+, then 
+\begin_inset Formula $\Delta\left(w,*\right)$
+\end_inset
+
+ is larger by one, than it would otherwise be.
+ Meanwhile, both 
+\begin_inset Formula $S\left(w,t\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $H\left(w,t\right)$
+\end_inset
+
+ are unchanged.
+\end_layout
+
+\begin_layout Standard
+All of the above definitions pass through, if the token 
+\begin_inset Formula $t$
+\end_inset
+
+ on the right is replaced by a token sequence 
+\begin_inset Formula $w_{R}$
+\end_inset
+
+ on the right.
+ The base count is then 
+\begin_inset Formula $N\left(w_{L},w_{R}\right)$
+\end_inset
+
+ of observed counts on pairs 
+\begin_inset Formula $\left(w_{L},w_{R}\right)$
+\end_inset
+
+, from which the conventional probabilities and MI, etc.
+ can be constructed.
+ 
+\end_layout
+
+\begin_layout Paragraph*
+Banach norms
+\end_layout
+
+\begin_layout Standard
+A rather tedious calculation reveals the derivative of the Banach norm:
+\begin_inset Formula 
+\begin{align*}
+\frac{d}{dp}\left\Vert N\right\Vert _{p}= & \frac{d}{dp}\exp\left(\frac{1}{p}\log\left[\sum N^{p}\right]\right)\\
+= & \left\Vert N\right\Vert _{p}\frac{d}{dp}\left(\frac{1}{p}\log\left[\sum N^{p}\right]\right)\\
+= & \left\Vert N\right\Vert _{p}\left(\frac{1}{p\sum N^{p}}\frac{d}{dp}\left[\sum N^{p}\right]-\frac{\log\left[\sum N^{p}\right]}{p^{2}}\right)\\
+= & \left\Vert N\right\Vert _{p}\left(\frac{1}{p\sum N^{p}}\left[\sum N^{p}\log N\right]-\frac{\log\left\Vert N\right\Vert _{p}}{p}\right)\\
+= & \frac{1}{p}\left(\left\Vert N\right\Vert _{p}^{1-p}\left[\sum N^{p}\log N\right]-\left\Vert N\right\Vert _{p}\log\left\Vert N\right\Vert _{p}\right)
+\end{align*}
+
+\end_inset
+
+and so, for 
+\begin_inset Formula $p=1$
+\end_inset
+
+ this becomes
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\left.\frac{d}{dp}\left\Vert N\right\Vert _{p}\right|_{p=1}= & \left[\sum N\log N\right]-\left\Vert N\right\Vert _{1}\log\left\Vert N\right\Vert _{1}\\
+= & \sum N\log\frac{N}{\left\Vert N\right\Vert _{1}}
+\end{align*}
+
+\end_inset
+
+and if we then normalize so that 
+\begin_inset Formula $\left\Vert N\right\Vert _{1}=\sum N=1$
+\end_inset
+
+ then the last term falls away and we just get
+\begin_inset Formula 
+\[
+\left.\frac{d}{dp}\left\Vert N\right\Vert _{p}\right|_{p=1}=\sum N\log N=H\log2
+\]
+
+\end_inset
+
+and so we could have worked with the Banach norms, if desired.
+ But its painful.
+ Note that it's divergent for 
+\begin_inset Formula $p\to0$
+\end_inset
+
+ and that the expressions for 
+\begin_inset Formula $p=1/2$
+\end_inset
+
+ or 
+\begin_inset Formula $p=2$
+\end_inset
+
+ do not seem to be enlightening.
+\end_layout
+
+\begin_layout Subsubsection*
+Data representation
+\end_layout
+
+\begin_layout Standard
+To represent the above ideas, something like the following data structure
+ is necessary:
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+   SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+AB
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       List
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+B
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The above is a definition of a token AB as a sequence of two tokens A and
+ B.
+ In order to find all possible things that can follow A, its enough to look
+ at the incoming set of A (or better yet, for all SequenceLinks with A in
+ the first position.
+ Frequency counts can be stored in several places on the above.
+\end_layout
+
+\begin_layout Standard
+For alternative splittings, there are several possibilities.
+ This one seems cumbersome:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+   SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+ABC
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+       ChoiceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+           List
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+AB
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+C
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+           List
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+BC
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This one seems better, because it has the same shape as the earlier, simpler
+ example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+   SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+ABC
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+       List
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+AB
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+C
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+   SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+ABC
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+       List
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+BC
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\end_inset
+
+Note that it is *always* binary, and always ordered.
+ Note that the link-type is not specified, which is appropriate if the data
+ really is serial, and really is coming from one source.
+\end_layout
+
+\begin_layout Standard
+If a link-type label were desired, then something like the following would
+ be needed:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+   EvaluationLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       LinkType 'SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       List
+\end_layout
+
+\begin_layout Plain Layout
+
+           Token 
+\begin_inset Quotes eld
+\end_inset
+
+ABC
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+           List
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+AB
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+C
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+Or perhaps the following:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   
+\end_layout
+
+\begin_layout Plain Layout
+
+   NameLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+ABC
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+       EvaluationLink
+\end_layout
+
+\begin_layout Plain Layout
+
+           LinkType 'SequenceLink
+\end_layout
+
+\begin_layout Plain Layout
+
+           List
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+AB
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+               Token 
+\begin_inset Quotes eld
+\end_inset
+
+C
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Both of these are larger and more complex.
+ They succeed in identifying the link type, but they fail in identifying
+ any jigsaw assembly structure (i.e.
+ the sequence is a linear nearest-neighbor-to-nearest neighbor sequence.)
+ Perhaps that's OK, and we can reserve more complex structures for when
+ they are actually needed.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Data Stream
+\end_layout
+
+\begin_layout Standard
+How should a stream of tokens be represented in Atomese? Sadly, this is
+ a difficult question.
+ Suggest:
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   EvaluationLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       LinkTypeNode 
+\begin_inset Quotes eld
+\end_inset
+
+stream-id-42
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       TokenInstance 
+\begin_inset Quotes eld
+\end_inset
+
+A@uuid-hexadecimal
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       TokenInstance 
+\begin_inset Quotes eld
+\end_inset
+
+B@uuid-hexadecimal
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+   TokenLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       TokenInstance 
+\begin_inset Quotes eld
+\end_inset
+
+A@uuid-hexadecimal
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+   TokenLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       TokenInstance 
+\begin_inset Quotes eld
+\end_inset
+
+B@uuid-hexadecimal
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+B
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+The vocabulary of the stream consists of the TokenNodes.
+ The TokenLinks are required to distinguish multiple occurrences of tokens
+ in the stream.
+ The uuid-hexadecimal could be dynamically generated, or they could be timestamp
+s.
+\end_layout
+
+\begin_layout Standard
+The above is the minimum-viable format.
+ It resembles the current word-stream format (viz.
+ WordInstance, etc.) It would be better if instead, Tokens were described
+ as jigsaws, having two connectors: previous, and next.
+ There would be only one link type, 
+\begin_inset Quotes eld
+\end_inset
+
+nearest-neighbor
+\begin_inset Quotes erd
+\end_inset
+
+.
+ For now, we avoid questions of how to generalize to a more generic jigsaw
+ subassembly, and optimize for this special case.
+\end_layout
+
+\begin_layout Subsection*
+Statistics Gathering
+\end_layout
+
+\begin_layout Standard
+Above requires that statistics be gathered.
+ This includes a count of nearest-neighbor token pairs:
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+   EvaluationLink
+\end_layout
+
+\begin_layout Plain Layout
+
+       LinkTypeNode 
+\begin_inset Quotes eld
+\end_inset
+
+nearest-neighbor
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+A
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+       Token 
+\begin_inset Quotes eld
+\end_inset
+
+B
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+After a tokenization is proposed, then a count of token pairs is needed.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Filter Primitives
+\end_layout
+
+\begin_layout Standard
+The above datastream requires a collection of 
+\begin_inset Quotes eld
+\end_inset
+
+filter primitives
+\begin_inset Quotes erd
+\end_inset
+
+ that can be automatically assembled into an abstract syntax tree (AST).
+ A filter primitive is then a lambda, with specific input types, and specific
+ output types, thus providing a grammar from which the AST can be built.
+\end_layout
+
+\begin_layout Itemize
+Single-token recognizer.
+\end_layout
+
+\begin_layout Section*
+Beam Search vs.
+ Syntactic Grammar
+\end_layout
+
+\begin_layout Standard
+Idle ruminations, 13 June 2024.
+\end_layout
+
+\begin_layout Standard
+During all my thinking about symbolic vs.
+ neural net training, I've neglected to exploit the advantage of parsing
+ vs.
+ beam search.
+ So, after training, during generation, it is desired that the NN should
+ generate
+\begin_inset Formula 
+\[
+\widehat{y}=\arg\max_{y}p\left(y;x,\theta\right)
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the parameter set that has been learned, 
+\begin_inset Formula $x=\left(x_{1},x_{2},\cdots,x_{n}\right)$
+\end_inset
+
+ is the input sequence, and 
+\begin_inset Formula $y=\left(y_{1},y_{2},\cdots,y_{m}\right)$
+\end_inset
+
+ the output sequence, and 
+\begin_inset Formula $p$
+\end_inset
+
+ the probability.
+ Now, the way that LSTM's work is the the output sequences are generated
+ in order: that is, first, 
+\begin_inset Formula $y_{1}$
+\end_inset
+
+ and then 
+\begin_inset Formula $y_{2}$
+\end_inset
+
+ and so on, and there is no guarantee that the final sequence is the actual
+ argmax; all that you get is a selection of 
+\begin_inset Formula $y_{1}$
+\end_inset
+
+ with high values of 
+\begin_inset Formula $p\left(y_{1}|x,\theta\right)$
+\end_inset
+
+ to pick from, and then, only after fixing 
+\begin_inset Formula $y_{1}$
+\end_inset
+
+, can one obtain 
+\begin_inset Formula $p\left(y_{2}|y_{1},x,\theta\right)$
+\end_inset
+
+ and so on.
+ The argmax is intractable when looked at this way, as (for vocabulary of
+ size 
+\begin_inset Formula $N$
+\end_inset
+
+) there are 
+\begin_inset Formula $N$
+\end_inset
+
+ choices for 
+\begin_inset Formula $p\left(y_{1}|x,\theta\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $N^{2}$
+\end_inset
+
+ for 
+\begin_inset Formula $p\left(y_{2}|y_{1},x,\theta\right)$
+\end_inset
+
+ and so on.
+ The standard solution is to use beam search.
+ This is not just 
+\begin_inset Quotes eld
+\end_inset
+
+standard
+\begin_inset Quotes erd
+\end_inset
+
+, but is forced, since RNN/LSTM generation is necessarily sequential.
+ Beam search is the best one can do.
+\end_layout
+
+\begin_layout Standard
+With a link-grammar/sheaf approach, one can pluck out of thin air the 
+\begin_inset Formula $p\left(\cdots,y_{j},\cdots,y_{k},\cdots|x,\theta\right)$
+\end_inset
+
+ for arbitrary 
+\begin_inset Formula $j,k$
+\end_inset
+
+ and thus do maximum-planar-tree parsing, or even more generally, disjunct
+ parsing.
+ So this is a large(?) improvement over sequential-beam-search methods,
+ especially when the distance between elements 
+\begin_inset Formula $j,k$
+\end_inset
+
+ is large, i.e.
+ when 
+\begin_inset Formula $\Delta=k-j$
+\end_inset
+
+ is large.
+\end_layout
+
+\begin_layout Standard
+So ...
+ when is 
+\begin_inset Formula $\Delta$
+\end_inset
+
+ large? Well, for 
+\begin_inset Quotes eld
+\end_inset
+
+most
+\begin_inset Quotes erd
+\end_inset
+
+ English-language sentences, considered at the syntactic level only, it
+ is rare for 
+\begin_inset Formula $\Delta$
+\end_inset
+
+ to be larger than about 3 or 4 or 5, and so a beam search of depth 3 or
+ 4 or 5 is enough to cover those situations.
+ This is for things like determiner-noun agreement, or singular/plural agreement
+, when there are intervening adjectives, etc.
+ For semantic content, one has correlations for 
+\begin_inset Formula $\Delta$
+\end_inset
+
+ in the dozens-to-hundreds type ranges.
+ But, for that, the conventional sequential generation of an RNN/LSTM will
+ resolve the need for long-distance correlates.
+ The beam search was needed only to crawl past the syntactic agreement issues,
+ which are effectively short range, while anything longer-distance is encoded
+ in the weights.
+ Hmm.
+ 
+\end_layout
+
+\begin_layout Standard
+I want to turn this on the side; I still don't have an effective i.e.
+ fast algo for this.
+\end_layout
+
+\begin_layout Section*
+Energy Scales
+\end_layout
+
+\begin_layout Standard
+A half-baked thought pursuant to the above.
+ Back in the day, 10-15 years ago, I converted MOSES to hill-climbing.
+ The basic idea of MOSES is that it keeps around 
+\begin_inset Quotes eld
+\end_inset
+
+demes
+\begin_inset Quotes erd
+\end_inset
+
+, a limited number of 
+\begin_inset Quotes eld
+\end_inset
+
+representatives
+\begin_inset Quotes erd
+\end_inset
+
+; it then chooses one to elaborate further, and then reinserts it into the
+ deme.
+ If only the top N scorers are kept, this can be thought of as a kind of
+ 
+\begin_inset Quotes eld
+\end_inset
+
+beam search
+\begin_inset Quotes erd
+\end_inset
+
+.
+ If the selection of top-scorers is strict, this can be called 
+\begin_inset Quotes eld
+\end_inset
+
+hill-climbing
+\begin_inset Quotes erd
+\end_inset
+
+, as one keeps only the best of the best.
+\end_layout
+
+\begin_layout Standard
+Of course, this allows the deme to get trapped in a local maximum: all top
+ N scorers may be in the maximum, and there's no way out.
+ To avoid this issue, Nil added a probabilistic mechanism, keeping lower-scoring
+ instances with probability 
+\begin_inset Formula $p\sim2^{-\mbox{score}}$
+\end_inset
+
+.
+ Nil provided some argument inspired by Solomonoff-blah-blah or Kolmogorov-compl
+exity-blah-blah, I don't recall.
+ I promptly realized that the 2 is too harsh a penalty, it punishes low
+ scores too strongly.
+ So I introduced a free parameter 
+\begin_inset Formula $\beta$
+\end_inset
+
+, so that 
+\begin_inset Formula $p\sim e^{-\beta\mbox{score}}$
+\end_inset
+
+ with an obvious thermodynamic (Boltzmann) interpretation.
+ Turns out, the system worked much much better, when (typically) 
+\begin_inset Formula $0.01<\beta<0.1$
+\end_inset
+
+ in general (and of course this depends on the problem type, and the method
+ of scoring, since the 
+\begin_inset Formula $\beta$
+\end_inset
+
+ can obviously be reabsorbed into the score.
+ At any rate, 
+\begin_inset Formula $\beta$
+\end_inset
+
+ was now a free parameter, that the system user could specify on the command-lin
+e, as a part of the configuration.
+\end_layout
+
+\begin_layout Standard
+And that was the end of it; I thought no further of it, as I was busy coding,
+ not theorizing.
+ In retrospect, this was a mistake, for which I now attempt to make the
+ weakest of amends.
+ So, some observations:
+\end_layout
+
+\begin_layout Enumerate
+In physical systems, 
+\begin_inset Formula $\beta$
+\end_inset
+
+ is not a free parameter, but an intensive thermodynamic property.
+\end_layout
+
+\begin_layout Enumerate
+In a physical system, the distribution of particle energies is given by
+ Boltzmann, or Fermi–Dirac or Bose–Einstein statistics.
+\end_layout
+
+\begin_layout Enumerate
+What is the distribution for MOSES, and should we care?
+\end_layout
+
+\begin_layout Standard
+The point of the last question is that we kind of don't care.
+ We're not particularly interested in the entire collection of possible
+ solutions, and their ranking.
+ Perhaps we should be, but the comp-sci task is always to find the best
+ solution, and not to obtain the full spectrum of possibilities.
+ So, for any given learning task, we don't know this distribution; at best,
+ we have access to the high-scoring tail.
+ I now strongly regret, lament that I never took the time & effort to characteri
+ze the shape of that tail.
+\end_layout
+
+\begin_layout Standard
+It must surely be described with some critical exponent; viz, the number
+ of instances 
+\begin_inset Formula $N(s)$
+\end_inset
+
+ having a score larger that 
+\begin_inset Formula $s$
+\end_inset
+
+ must go as 
+\begin_inset Formula $N(s)\sim\left(s_{0}-s\right)^{-\alpha}$
+\end_inset
+
+ for some 
+\begin_inset Quotes eld
+\end_inset
+
+critical exponent
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ (which depends on the problem type).
+ But what is this 
+\begin_inset Formula $\alpha$
+\end_inset
+
+? Alas.
+ 
+\end_layout
+
+\begin_layout Standard
+Here, I've written 
+\begin_inset Formula $s_{0}$
+\end_inset
+
+ as some ambiguous offset: at any given point in time, there is only one
+ top score, and so, at that moment, take 
+\begin_inset Formula $s_{0}$
+\end_inset
+
+ to be that top score, so that 
+\begin_inset Formula $N\left(s_{0}\right)=1$
+\end_inset
+
+.
+ As new top scores are discovered, 
+\begin_inset Formula $s_{0}$
+\end_inset
+
+ increases monotonically.
+ Presumably, along the way, one finds plenty of other exemplars that score
+ equally with the previous top score.
+ I did create graphs showing the change in top score over time; just not
+ what the density of states was, below that top score.
+ Alas.
+ 
+\end_layout
+
+\begin_layout Standard
+A second mistake was to not ascribe an information theoretic unit to the
+ proceedings.
+ Thus, when one has 
+\begin_inset Formula $p\sim2^{-\mbox{score}}$
+\end_inset
+
+ then clearly, one can say that 
+\begin_inset Quotes eld
+\end_inset
+
+score
+\begin_inset Quotes erd
+\end_inset
+
+ is measured in units of 
+\begin_inset Quotes eld
+\end_inset
+
+bits
+\begin_inset Quotes erd
+\end_inset
+
+.
+ When instead one has that 
+\begin_inset Formula $p\sim e^{-\beta\mbox{score}}=2^{-\beta\mbox{score}/\log2}$
+\end_inset
+
+ then a delta-score of 1.0 carries 
+\begin_inset Formula $\beta/\log2$
+\end_inset
+
+ bits of information.
+ A mini-mistake was to not calibrate 
+\begin_inset Formula $\beta$
+\end_inset
+
+ by 
+\begin_inset Formula $\log2$
+\end_inset
+
+ so that the adjustable parameter could be interpreted not as 
+\begin_inset Quotes eld
+\end_inset
+
+inverse temperature
+\begin_inset Quotes erd
+\end_inset
+
+ but as 
+\begin_inset Quotes eld
+\end_inset
+
+information content associated with an improved score
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Combining these two ideas into one now gives a measure for the complexity
+ of the system: the number of accessible solutions decreases for each bit
+ of improved score.
+ If we look at the number of acceptable solutions as indicating how much
+ we don't know about the system, then we seem to have two measures: directly,
+ there is 
+\begin_inset Formula $\log_{2}N(s)$
+\end_inset
+
+ as a function of the score 
+\begin_inset Formula $s$
+\end_inset
+
+, and the derivative: so if 
+\begin_inset Formula $N(s)\sim s^{-\alpha}$
+\end_inset
+
+ then 
+\begin_inset Formula $\log_{2}N(s)\sim-\alpha\log s/\log2$
+\end_inset
+
+ and ...
+ umm...
+\end_layout
+
+\begin_layout Standard
+Well, there was also a second parameter: a complexity penalty.
+ The system easily found complicated solutions, which were readily recognized
+ as resulting in an over-fit to the training data.
+ The complexity penalty suppressed the overfitting, with the added side
+ benefit of helping performance by avoiding complex evaluations.
+ It also seems that the complexity penalty helped prevent the system from
+ crawling into local maxima.
+ (Once trapped in the local maximum, all that was left was the opportunity
+ to over-fit to the training data.).
+ Presumably, there was a density of states and some critical exponent here
+ as well: I did not collect this data.
+ I'm only guessing that it was exponent-like.
+\end_layout
+
+\begin_layout Standard
+Should these experiments be repeated? Upon repetition, what would be learned?
+ I'd rather move on to new things, and if/when/as something similar appears,
+ then the characerization of the density of states should be performed.
+ The search for critical exponents made.
+ I guess I should do this for the word-pairs dataset — I could graph the
+ number of spanning-tree parses vs the total MI of such parses, including
+ the sub-optimal parses: that is, if one considers all possible spanning-tree
+ parses, how is eh MI distributed? Hmm.
+ Good question, why haven't I done this before?
+\end_layout
+
+\begin_layout Section*
+Pointer Nets
+\end_layout
+
+\begin_layout Standard
+I was reading the paper 
+\begin_inset Quotes eld
+\end_inset
+
+Pointer Networks
+\begin_inset Quotes erd
+\end_inset
+
+ Oriol Vinyals, Meire Fortunato, Navdeep Jaitly (2017) arXiv:1506.03134v2
+ [stat.ML] 2 Jan 2017 and got to thinking about how one might give a geometric
+ interpretation to the structure described there.
+ So here goes.
+ I'm flying blind, I've got a few half-baked ideas that I will attempt to
+ string together into an idea-salad, train-of-thought.
+ Train-of-thought is the common expression; its more like a drunkards-walk-of-th
+ought.
+ Lets go for it.
+\end_layout
+
+\begin_layout Subsection*
+Review & Notation
+\end_layout
+
+\begin_layout Standard
+I'm going to use a slightly different notation from the original paper,
+ its more convenient for me.
+ The two (really just one, after renomalization) equations for pointer networks
+ are:
+\begin_inset Formula 
+\[
+u_{ij}=\left\langle r,\tanh\left(Uc_{j}+Vd_{i}\right)\right\rangle 
+\]
+
+\end_inset
+
+and
+\begin_inset Formula 
+\[
+p\left(x_{i}=w_{j}\vert x_{1,}\cdots x_{i-1};X\right)=\frac{\exp\left(-\beta u_{ij}\right)}{\sum_{j}\exp\left(-\beta u_{ij}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Pointer networks have the property that the only symbols appearing in the
+ output are taken from the symbols in the input set.
+ Let the input sentence be the words 
+\begin_inset Formula $w_{1},w_{2},\cdots,w_{n}$
+\end_inset
+
+.
+ We could take 
+\begin_inset Formula $w_{j}=j$
+\end_inset
+
+ as the label, but this invites mild confusion, so I'll denote the word
+ in the 
+\begin_inset Formula $j$
+\end_inset
+
+'th position as 
+\begin_inset Formula $w_{j}.$
+\end_inset
+
+ Additional confusion results if the input sentence contains repeated words,
+ so that the vocabulary size is less than 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ I'll get back to that, later; for now, assume that the input words are
+ unique, so that 
+\begin_inset Formula $j$
+\end_inset
+
+ really is a positional indicator, instead of a vocabulary index.
+\end_layout
+
+\begin_layout Standard
+The output to be generated is a string 
+\begin_inset Formula $x_{1},x_{2},\cdots,x_{m}$
+\end_inset
+
+ with each 
+\begin_inset Formula $x_{i}\in\left\{ w_{j}\right\} $
+\end_inset
+
+ 
+\emph on
+i.e.
+
+\emph default
+ the only words appearing in the output are words that appeared in the input.
+ The conditional probability 
+\begin_inset Formula $p\left(x_{i}=w_{j}\vert x_{1},\cdots,x_{i-1};X\right)$
+\end_inset
+
+ indicates the probability of choosing 
+\begin_inset Formula $x_{i}=w_{j}$
+\end_inset
+
+, given the earlier selection of output symbols 
+\begin_inset Formula $x_{1},\cdots,x_{i-1}$
+\end_inset
+
+, and the general system priors 
+\begin_inset Formula $X$
+\end_inset
+
+, which includes assorted parameters.
+\end_layout
+
+\begin_layout Standard
+The parameter 
+\begin_inset Formula $\beta$
+\end_inset
+
+ does not appear in the original paper; at any rate, in can be reabsorbed
+ into the vector 
+\begin_inset Formula $r$
+\end_inset
+
+ and so is 
+\begin_inset Quotes eld
+\end_inset
+
+superfluous
+\begin_inset Quotes erd
+\end_inset
+
+; however, thermodynamic convention suggests that we keep it around as a
+ handy-dandy multiplier.
+\end_layout
+
+\begin_layout Standard
+The angle brackets 
+\begin_inset Formula $\left\langle \cdot,\cdot\right\rangle $
+\end_inset
+
+ denote the inner product.
+ The 
+\begin_inset Formula $U$
+\end_inset
+
+ and 
+\begin_inset Formula $V$
+\end_inset
+
+ are the hidden-state weight matrices after training two RNN neural nets.
+ These are 
+\begin_inset Formula $N\times N$
+\end_inset
+
+ square matrices, with 
+\begin_inset Formula $N=500$
+\end_inset
+
+ for the examples covered in the paper.
+ There are two RNN's: the 
+\begin_inset Quotes eld
+\end_inset
+
+encoding
+\begin_inset Quotes erd
+\end_inset
+
+ RNN and the 
+\begin_inset Quotes eld
+\end_inset
+
+decoding
+\begin_inset Quotes erd
+\end_inset
+
+ RNN, wired up in series.
+\end_layout
+
+\begin_layout Standard
+At this point, I'm mildly confused.
+ The section immediately prior, titled 
+\begin_inset Quotes eld
+\end_inset
+
+content-based input attention
+\begin_inset Quotes erd
+\end_inset
+
+, explicitly talks of LTSM's (i.e.
+ that the RNN's are implemented as LSTM's).
+ It then states, I quote: 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+For the LSTM RNNs, we use the state after the output gate has been component-wis
+e multiplied by the cell activations
+\emph default
+.
+\begin_inset Quotes erd
+\end_inset
+
+ I interpret this as saying that the 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+ is the hidden state vector in the encoder, obtained immediately after observing
+ input word 
+\begin_inset Formula $w_{j}$
+\end_inset
+
+; the 
+\begin_inset Formula $d_{i}$
+\end_inset
+
+ is the hidden state vector in the decoder, observed immediately before
+ generating output 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The issue here is that LSTM's have eight distinct weight matrices, playing
+ different roles: are the matrices 
+\begin_inset Formula $U$
+\end_inset
+
+ and 
+\begin_inset Formula $V$
+\end_inset
+
+ supposed to be one of these? Or are they something else, some matrices
+ in addition to what the LSTM is doing? They say; I quote: 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+...
+ and 
+\begin_inset Formula $r$
+\end_inset
+
+, 
+\begin_inset Formula $U$
+\end_inset
+
+, and 
+\begin_inset Formula $V$
+\end_inset
+
+ are learnable parameters of the model.
+\emph default
+
+\begin_inset Quotes erd
+\end_inset
+
+ So these are in addition to the various weight-matrices in a conventional
+ LSTM? OK, so I'm just an uneducated rube; the paper is annoyingly sloppy
+ in several respects; this is one.
+ Oh well.
+\end_layout
+
+\begin_layout Standard
+Anyway, last but not least, 
+\begin_inset Formula $r$
+\end_inset
+
+ is an 
+\begin_inset Formula $N$
+\end_inset
+
+-dimensional vector, trained up along with 
+\begin_inset Formula $U$
+\end_inset
+
+ and 
+\begin_inset Formula $V$
+\end_inset
+
+.
+ As noted earlier, one may rescale 
+\begin_inset Formula $r\mapsto\beta r$
+\end_inset
+
+ to absorb the extra thermodynamic multiplier 
+\begin_inset Formula $\beta$
+\end_inset
+
+.
+ I'm guessing that the vector 
+\begin_inset Formula $r$
+\end_inset
+
+ self-normalizes during training: that is, during training, 
+\begin_inset Formula $\beta=1$
+\end_inset
+
+ is taken, so that training automatically finds the correct scale.
+ I guess.
+ The text is silent on this topic.
+\end_layout
+
+\begin_layout Subsection*
+Algorithmic Interpretation
+\end_layout
+
+\begin_layout Standard
+Part of the slop of the paper is that it does not describe how to encode
+ the inputs.
+\end_layout
+
+\begin_layout Standard
+For the simplest case, convex hulls, let's work out from first principles
+ what would be needed, given the generic PtrNet architecture.
+ For the provided example, the input is a collection of 2D points; the paper
+ does not examine the case of 3D, 4D convex hulls, but it seems the same
+ algo would apply in any dimension.
+ The algo would be take each point as a ray, and, at the end of the ray,
+ compute the orthogonal plane.
+ This plane splits n-dim space into two: if all other points are to the
+ same side of the plane, then this point belongs to the convex hull.
+ Rays, orthogonal planes, and the determination of which side a point lies
+ on can all be computed using a recursive set of linear operations, so it
+ makes sense that some sequence of (recursive) linear ops should be able
+ to solve this problem.
+ It also seems reasonable that, after the end-of-data, that a handful of
+ additional 
+\begin_inset Quotes eld
+\end_inset
+
+idle
+\begin_inset Quotes erd
+\end_inset
+
+ steps might be required to complete the computations, instead of immediately
+ moving to the generation mode.
+ The paper does not consider this case, of having 
+\begin_inset Quotes eld
+\end_inset
+
+idler
+\begin_inset Quotes erd
+\end_inset
+
+ steps, to finish the recursive computations: it is not mentioned, and is
+ explicitly hard-coded to one.
+ Curious oversight.
+\end_layout
+
+\begin_layout Standard
+For the 2D case, there is an obvious sequential ordering for the points
+ fixing the convex hull.
+ For three and higher dimensions, there is not: instead, it is enough to
+ provide a yes/no answer to 
+\begin_inset Quotes eld
+\end_inset
+
+is this point part of the convex hull?
+\begin_inset Quotes erd
+\end_inset
+
+ One possible output is to just repeat the input points in the same order,
+ skipping over those that are not a part of the hull.
+\end_layout
+
+\begin_layout Standard
+One possible way of hand-coding (not training!) the convex hull problem
+ would be to divide the total vector space into three parts: 
+\begin_inset Formula $C\oplus D\oplus S$
+\end_inset
+
+ where the subspace 
+\begin_inset Formula $C$
+\end_inset
+
+ holds the explicit coordinates for the input points, the subspace 
+\begin_inset Formula $S$
+\end_inset
+
+ is a scratch space for holding cross-products, and the subspace 
+\begin_inset Formula $D$
+\end_inset
+
+ is just an index, to number the input points in sequential order.
+ Thus, for example, one would issue basis vectors 
+\begin_inset Formula $e_{nk+1},e_{nk+2},\cdots,e_{nk+n}$
+\end_inset
+
+ for the 
+\begin_inset Formula $k$
+\end_inset
+
+'th point in the 
+\begin_inset Formula $n$
+\end_inset
+
+-dimensional convex hull problem.
+ These basis vectors span 
+\begin_inset Formula $C$
+\end_inset
+
+, and are used to explicitly and directly encode the input sequence.
+ In addition, basis vectors from the scratch-space 
+\begin_inset Formula $S$
+\end_inset
+
+ are issued; these would be vectors 
+\begin_inset Formula $e_{mk+1},\cdots,e_{mk+m}$
+\end_inset
+
+ for an 
+\begin_inset Formula $m$
+\end_inset
+
+-dimensional scratch space.
+ 
+\end_layout
+
+\begin_layout Standard
+The vector 
+\begin_inset Formula $r$
+\end_inset
+
+ then serves as a mask, to mask out the subspaces within which the scratch
+ computations are done: the final answers are copied into that zone from
+ which the vector 
+\begin_inset Formula $r$
+\end_inset
+
+ projects out.
+ Taken as a projection, 
+\begin_inset Formula $r$
+\end_inset
+
+ should act as an idempotent.
+ That is, the dot product with 
+\begin_inset Formula $r$
+\end_inset
+
+ should be understood first as a subspace projection, followed by a trace
+ over that subspace.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Should be understood
+\begin_inset Quotes erd
+\end_inset
+
+ is the operative phrase, here: as, otherwise, vectors and subspace projections
+ are very different things; they behave differently under coordinate transformat
+ions, and are only comparable to one-another under confusing circumstances.
+ Thus, although the original paper writes a dot-product here, the 
+\begin_inset Quotes eld
+\end_inset
+
+intent
+\begin_inset Quotes erd
+\end_inset
+
+ was a read-out projection; that some subspace is meant to be treated as
+ a scratch-space for intermediate results, and that this subspace is to
+ be ignored, when the final result is to be read-out.
+\end_layout
+
+\begin_layout Standard
+At any rate, the point here is that, with a fair amount of pain and effort,
+ the matrix 
+\begin_inset Formula $U$
+\end_inset
+
+ and the matrix 
+\begin_inset Formula $V$
+\end_inset
+
+ and the vector 
+\begin_inset Formula $r$
+\end_inset
+
+ could be explicitly described and written down, such that they solve the
+ convex hull problem within the framework of the dot-product-tanh + softmax
+ equations: this can be done, without training.
+ Of course, this is not how neural nets actually work; they are trained
+ with gradient descent.
+ The claim is that, whatever it is that the neural net actually learns,
+ that it is 
+\begin_inset Quotes eld
+\end_inset
+
+more or less
+\begin_inset Quotes erd
+\end_inset
+
+ isomorphic to such a hand-crafted algorithm.
+\end_layout
+
+\begin_layout Standard
+For the case of NN via gradient descent, one issues, I guess, random vectors.
+ During gradient descent, a space is learned that must be isomorphic to
+ the above, with a partitioning into 
+\begin_inset Formula $C\oplus D\oplus S$
+\end_inset
+
+ being implicit, 
+\begin_inset Quotes eld
+\end_inset
+
+encrypted
+\begin_inset Quotes erd
+\end_inset
+
+ into the encoding.
+ For this to work, the hidden space must be large enough.
+ The paper states that the dimension of the hidden space was 
+\begin_inset Formula $N=500$
+\end_inset
+
+, which seems like plenty enough space for 50 two-D points: a total of 
+\begin_inset Formula $2\times50=100$
+\end_inset
+
+ dimensions to explicitly store the coordinates, leaving 400 for the scratch
+ space.
+ Plenty of room.
+\end_layout
+
+\begin_layout Subsection*
+Geometric interpretation
+\end_layout
+
+\begin_layout Standard
+Lets daydream about geometry.
+ The tanh is taken component-wise; it compresses the whole of space to a
+ cube.
+ In particular, it pushes a uniform distribution into the corners of a cube.
+ Even more strongly: the corners becomes more heavily occupied, the higher
+ the dimension, approaching a limit of delta functions at the corners.
+ I think...
+ lets check!? (Skip the section below if you already know this.
+ It contains a rough proof.).
+\end_layout
+
+\begin_layout Subsubsection*
+Cube corners
+\end_layout
+
+\begin_layout Standard
+What does the point-wise tanh do to a distribution of vectors? In particular,
+ to a distribution of vectors, centered on the origin, with deviation much
+ greater than one? Lets start with some quasi-uniform distribution.
+ There are three 
+\begin_inset Quotes eld
+\end_inset
+
+obvious
+\begin_inset Quotes erd
+\end_inset
+
+ choices: points distributed uniformly on the surface of a sphere, points
+ distributed uniformly in a ball, and points distributed uniformly as a
+ Gaussian.
+ In each case, take the sphere radius 
+\begin_inset Formula $R$
+\end_inset
+
+ to be 
+\begin_inset Formula $R\gg1$
+\end_inset
+
+ and then it seems obvious that, for a vector 
+\begin_inset Formula $\overrightarrow{v}=\left(v_{1},\cdots,v_{n}\right)$
+\end_inset
+
+ that for almost all 
+\begin_inset Formula $k$
+\end_inset
+
+, that 
+\begin_inset Formula $\left|v_{k}\right|\gg1$
+\end_inset
+
+, right? It seems obvious, and there's a simple proof: for normally-distributed
+ points, having a normal distribution with 
+\begin_inset Formula $\sigma\gg1$
+\end_inset
+
+, one has that 
+\begin_inset Formula $\left(1/\sigma\sqrt{2\pi}\right)\int_{-1}^{1}\exp\left(-x^{2}/2\sigma^{2}\right)dx\to0$
+\end_inset
+
+ as 
+\begin_inset Formula $\sigma\to\infty$
+\end_inset
+
+.
+ Thus, 
+\begin_inset Formula $\tanh v_{k}\approx\pm1$
+\end_inset
+
+ almost always, for almost all 
+\begin_inset Formula $k$
+\end_inset
+
+, and so 
+\begin_inset Formula $\tanh\overrightarrow{v}$
+\end_inset
+
+ lives on one (and only one) of the corners of a cube.
+ This holds, independent of the dimension, and requires only that 
+\begin_inset Formula $R\gg1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+What about the case of high dimensions? In this case, lets contemplate a
+ relatively small 
+\begin_inset Formula $R$
+\end_inset
+
+ corresponding to the case of 
+\begin_inset Formula $\left(1/\sigma\sqrt{2\pi}\right)\int_{-1}^{1}\exp\left(-x^{2}/2\sigma^{2}\right)dx=1/2$
+\end_inset
+
+, so that there is a 50-50 chance that 
+\begin_inset Formula $\left|v_{k}\right|<1$
+\end_inset
+
+.
+ Applying tanh, there is a 50-50 chance that 
+\begin_inset Formula $\left|\tanh v_{k}\right|\approx1$
+\end_inset
+
+.
+ For an 
+\begin_inset Formula $N$
+\end_inset
+
+-dimensional space, the corresponding point will be in the interior of an
+ 
+\begin_inset Formula $N/2$
+\end_inset
+
+-dimensional face of the cube, with the other 
+\begin_inset Formula $N/2$
+\end_inset
+
+ coordinates being 
+\begin_inset Formula $\approx\pm1$
+\end_inset
+
+.
+ The volume of these faces gets very small: the volume goes as 
+\begin_inset Formula $R^{-N/2}$
+\end_inset
+
+ so even if 
+\begin_inset Formula $R$
+\end_inset
+
+ is only slightly larger than 1, almost all points 
+\begin_inset Formula $\overrightarrow{v}$
+\end_inset
+
+ will end up in a very small volume, as 
+\begin_inset Formula $N\gg1$
+\end_inset
+
+.
+ Yes, the faces have a bigger volume than the corners, but still, the interior
+ of the cube is swept clean as 
+\begin_inset Formula $N\to\infty$
+\end_inset
+
+, even for modest 
+\begin_inset Formula $R$
+\end_inset
+
+.
+ The point-wise application of the tanh function pushes distributions into
+ the corners of a cube.
+\end_layout
+
+\begin_layout Subsubsection*
+Cube distributions
+\end_layout
+
+\begin_layout Standard
+So, for almost any distribution, the tanh function maps vectors to the corners
+ of a cube.
+ In particular, during the gradient descent learning stage, matrices 
+\begin_inset Formula $U$
+\end_inset
+
+ and 
+\begin_inset Formula $V$
+\end_inset
+
+ were learnt, but there was no particular control of their norm.
+ Can we assume that 
+\begin_inset Formula $\left\Vert U\right\Vert \gg1$
+\end_inset
+
+ and likewise 
+\begin_inset Formula $\left\Vert V\right\Vert \gg1$
+\end_inset
+
+? What about the hidden vectors 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+ and 
+\begin_inset Formula $d_{i}$
+\end_inset
+
+? What is their norm? Can we assume that 
+\begin_inset Formula $\left|Uc_{j}+Vd_{i}\right|\gg1$
+\end_inset
+
+ for all 
+\begin_inset Formula $i,j$
+\end_inset
+
+? The original paper makes no mention of this, and I have no clue whether
+ this is supposed to be well-known in the deep-learning NN community.
+ Apparently, I'm a rube.
+\end_layout
+
+\begin_layout Standard
+Lets assume this is the case.
+ Then the vector 
+\begin_inset Formula $\tanh\left(Uc_{j}+Vd_{i}\right)$
+\end_inset
+
+ is just a binary vector (vector components taking values in 
+\begin_inset Formula $\pm1$
+\end_inset
+
+) and the dot product 
+\begin_inset Formula $u_{ij}=\left\langle r,\tanh\left(Uc_{j}+Vd_{i}\right)\right\rangle $
+\end_inset
+
+ appears to be a kind-of Hamming distance to 
+\begin_inset Formula $r$
+\end_inset
+
+.
+ The softmax then emphasizes the point: the smaller this Hamming distance,
+ the greater larger that 
+\begin_inset Formula $p\left(x_{i}=w_{j}\vert x_{1},\cdots,x_{i-1};X\right)$
+\end_inset
+
+ becomes.
+ Thus we arrive at the final geometric interpretation: the vector 
+\begin_inset Formula $r$
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+characteristic vector
+\begin_inset Quotes erd
+\end_inset
+
+ encoding the problem, and the solution to the problem is described by an
+ output sequence 
+\begin_inset Formula $x_{1},\cdots,x_{m}$
+\end_inset
+
+ such that the sequence corresponds to a set of corners of the hypercube
+ that never stray very far from the characteristic direction 
+\begin_inset Formula $r$
+\end_inset
+
+.
+ All solutions are never very far from 
+\begin_inset Formula $r$
+\end_inset
+
+, the softmax guarantees this.
+\end_layout
+
+\begin_layout Standard
+Unclear in this geometric interpretation is whether the sequence of outputs
+ 
+\begin_inset Formula $x_{1},\cdots,x_{m}$
+\end_inset
+
+ can be thought of as being drawn randomly from the hypercube corners near
+ the characteristic vector 
+\begin_inset Formula $r$
+\end_inset
+
+ or whether perhaps the corners of the hypercube are being visited via a
+ random walk amongst nearest-neighbors.
+ There are reasons to suspect that there's a walk to nearest neighbors,
+ but mounting a concrete argument for that is difficult, and seems like
+ a fools errand without at least some experimental evidence.
+ It's possible that all this is well-known to the academic community, and
+ I am simply not broadly-read enough.
+\end_layout
+
+\begin_layout Standard
+Lets wrap this up, for now.
+ Obtaining experimental evidence for this interpretation for pointer nets
+ would be an interesting task.
+\end_layout
+
+\begin_layout Section*
+The End
+\end_layout
+
+\begin_layout Standard
+This is the end of Part Seven of the diary.
+ 
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,36 @@
+[[!meta copyright="Copyright © 2007, 2008, 2010 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+An extensible system is one that enables extensibility.  Enabling extensibility
+means providing non-privileged mechanisms to extend existing objects and to
+introduce new objects.  [[UNIX]] is generally not an extensible system as it does
+not generally facilitate the hooking of [[system call]]s.  For instance, there is
+no way to hook into the virtual file system.  This has motivated the introduction
+of separate, parallel interfaces by both the GNOME and KDE projects to provide
+users a more integrated view of their objects.
+
+The Hurd introduces the concept of [[translators|hurd/translator]] to let users 
+hook into the virtual filesystem.  We have translators that let ordinary users 
+create their own [[ext2 filesystem|hurd/translator/ext2fs]], 
+[[ftp filesystem|hurd/translator/ftpfs]], iso filesystem, 
+[[http filesystem|hurd/translator/httpfs]], etc.  You can get started using
+the existing translators by reading the [[how to|hurd/translator/examples]] page.
+
+The Hurd's extensibility is not just limited to the VFS.  It is possible for
+users to have their own [[TCP/IP|hurd/translator/pfinet]] 
+[[stack|hurd/translator/lwip]] using the [[hurd/translator/remap]]
+translator.  Users can create their own 
+[[personal firewall|https://darnassus.sceen.net/~hurd-web/hurd/translator/eth-filter/]],
+run a personal [[hurd/translator/auth]] server, or isolate untrusted applications inside
+a [[hurd/subhurd]].  The possibilities are endless!
+
+# External
+* The Wikipedia article on [[!wikipedia extensibility]]

@@ -1,0 +1,8 @@
+atomspace-storage (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian package for atomspace-storage
+  * Provides StorageNode API for AtomSpace I/O operations
+  * Required dependency for cogserver, atomspace-rocks, atomspace-pgres
+  * Fixes critical dependency chain: atomspace -> atomspace-storage -> cogserver
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Thu, 12 Dec 2025 00:00:00 +0000

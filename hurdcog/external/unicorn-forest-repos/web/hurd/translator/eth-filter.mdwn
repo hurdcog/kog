@@ -1,0 +1,52 @@
+[[!meta copyright="Copyright © 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+`eth-filter` is a translator that implements a very simple stateless firewall.
+
+
+# Source
+
+[[source_repositories/incubator]], dde
+
+
+# Usage
+
+For instance, to drop any attempt to access port 22:
+
+    # settrans -c /dev/eth0f /hurd/eth-filter -i /dev/eth0 -r "not port 22"
+
+This creates a `/dev/eth0f` device, which is the filtered version of
+`/dev/eth0`.  One can then use `/dev/eth0f` instead of `/dev/eth0`:
+
+    # settrans /servers/socket/2 /hurd/pfinet -i /dev/eth0f [...]
+
+..., or run `dhclient /dev/eth0f`, or similar.
+
+See also Zheng Da's [[user/zhengda/howto]].
+
+
+# Open Issues
+
+## IRC, freenode, #hurd, 2013-07-27
+
+[[!tag open_issue_hurd]]
+
+    <youpi> ok, so as usual we actually *already* have a firewall
+    <youpi> it's the eth-filter translator from zheng da
+    <youpi> it has just never been really pushed forward...
+    <teythoon> good news :)
+    <youpi> well, the bad news is that it probably doesn't support connection
+      tracking
+    <youpi> since it's just bpf
+    <youpi> using the libpcap syntax
+    <teythoon> well, a stateless fw should do for Debian/Hurds needs for now,
+      right?
+    <youpi> yes
+    <youpi> and it does work indeed

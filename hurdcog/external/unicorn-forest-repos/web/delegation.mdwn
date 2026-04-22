@@ -1,0 +1,20 @@
+[[!meta copyright="Copyright © 2019 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+As in the English dictionary, a delegate is "a person designated to represent or act for another"
+
+Delegation is when one object (delegator) passes a helper object (delegate) to another object (delegatee?). A certain delegate to be delegated is passed between a delegator and a delegatee. Delegation is an alternative to inheritance.
+
+#External Links
+
+* [Deligation pattern](https://en.wikipedia.org/wiki/Delegation_pattern) on Wikipedia.
+* [Deligation](https://kotlinlang.org/docs/reference/delegation.html) is a built-in feature of the Kotlin programming language.
+* [Deligates](http://rosettacode.org/wiki/Delegates) on Rosetta Code.
+* [What is Deligation](http://wiki.c2.com/?WhatIsDelegation) on the Wiki Wiki Web.

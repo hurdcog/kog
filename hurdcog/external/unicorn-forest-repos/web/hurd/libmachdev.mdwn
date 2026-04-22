@@ -1,0 +1,28 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+GNU/Linux is a monolithic kernel, meaning that a lot of functionality
+is baked into the kernel, including filesystems like `ext4` or `xfs`.
+Alternatively, the Hurd's filesystems are in userspace, but our disk
+device drivers are baked into the GNU Mach kernel image (via
+[[DDE|hurd/dde]]).  With [[rumpdisk|hurd/rump/rumpdisk]], the Hurd can
+use SSDs with userspace device drivers! RumpDisk uses `libmachdev` as
+a helper library.
+
+`libmachdev` exposes devices to userspace via some Mach `device-*` RPC
+calls.  `libmachdev` provides a trivfs that intercepts the
+`device_open` RPC, which the `/dev` node uses.  It also fakes a
+filesystem node, so you can mount a `netfs` onto it.  You still have
+to implement `device_read` and `device_write` yourself, but that code
+runs in userspace.  An example of this can be found in
+`rumpdisk/block-rump.c`.
+
+If [[serverboot V2|open_issues/serverbootv2]] is written, then
+`libmachdev` could be simplified or maybe removed.

@@ -1,0 +1,717 @@
+name: Generate Development Issues for Triadic Architecture
+description: Creates GitHub issues for each phase of the Triadic Architecture implementation
+
+"on":
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Which phase to generate issues for (1-6 or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+
+jobs:
+  generate-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      repository-projects: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Generate Phase 1 Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '1' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Implement coqutil equivalent as hypergraph utilities",
+              body: `## Description
+              Implement core hypergraph utility functions as equivalent to coqutil:
+              
+              ## Tasks
+              - [ ] Complete hypergraph traversal algorithms
+              - [ ] Implement pattern matching engine
+              - [ ] Add hypergraph statistics and metrics
+              - [ ] Create serialization/deserialization
+              - [ ] Add community detection algorithms
+              
+              ## Acceptance Criteria
+              - All unit tests pass
+              - Performance benchmarks meet targets
+              - Documentation is complete
+              
+              **Phase**: 1 - Core Components
+              **Priority**: High
+              **Estimated Effort**: 5 days`,
+              labels: ['enhancement', 'phase-1', 'hypergraph', 'core-components']
+            },
+            {
+              title: "Expand AtomSpace with full tensor support",
+              body: `## Description
+              Enhance the AtomSpace implementation with comprehensive tensor support:
+              
+              ## Tasks
+              - [ ] Implement tensor shape validation
+              - [ ] Add tensor operations (add, multiply, reshape)
+              - [ ] Create tensor-aware pattern matching
+              - [ ] Implement tensor serialization
+              - [ ] Add memory optimization for large tensors
+              
+              ## Tensor Specifications
+              - Neuron tensor: (N, D, F) - neurons/degrees/features
+              - Attention tensor: (A, T) - attention heads/temporal
+              
+              **Phase**: 1 - Core Components
+              **Priority**: High  
+              **Estimated Effort**: 7 days`,
+              labels: ['enhancement', 'phase-1', 'atomspace', 'tensors']
+            },
+            {
+              title: "Create coqserver equivalent with natural language interface",
+              body: `## Description
+              Implement a cognitive server with natural language processing capabilities:
+              
+              ## Tasks
+              - [ ] Design REST API for cognitive operations
+              - [ ] Implement natural language query parsing
+              - [ ] Add reasoning session management
+              - [ ] Create response generation system
+              - [ ] Add authentication and authorization
+              
+              ## API Endpoints
+              - POST /api/v1/query - Submit natural language queries
+              - GET /api/v1/atoms - Retrieve atoms from AtomSpace
+              - POST /api/v1/reason - Execute reasoning operations
+              
+              **Phase**: 1 - Core Components
+              **Priority**: Medium
+              **Estimated Effort**: 10 days`,
+              labels: ['enhancement', 'phase-1', 'server', 'nlp', 'api']
+            },
+            {
+              title: "Implement asmoses equivalent with MOSES integration",
+              body: `## Description
+              Create MOSES (Meta-Optimizing Semantic Evolutionary Search) integration:
+              
+              ## Tasks
+              - [ ] Implement program tree representation
+              - [ ] Add genetic operators (crossover, mutation)
+              - [ ] Create fitness evaluation framework
+              - [ ] Add population management
+              - [ ] Implement multi-objective optimization
+              
+              ## Integration Points
+              - AtomSpace program storage
+              - Tensor-based fitness evaluation
+              - Parallel evolution execution
+              
+              **Phase**: 1 - Core Components
+              **Priority**: Medium
+              **Estimated Effort**: 8 days`,
+              labels: ['enhancement', 'phase-1', 'moses', 'evolution', 'optimization']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+
+      - name: Generate Phase 2 Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '2' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Implement neural-symbolic tensor integration",
+              body: `## Description
+              Create tensor operations for neural-symbolic integration:
+              
+              ## Tasks
+              - [ ] Implement tensor shape specifications: (N, D, F)
+              - [ ] Create neural activation encoding to AtomSpace
+              - [ ] Add gradient computation for symbolic operations
+              - [ ] Implement backpropagation through AtomSpace
+              - [ ] Add tensor fusion operations
+              
+              ## Neural Tensor Specs
+              - N = neurons, D = degrees of freedom, F = feature depth
+              - Integration with ggml tensor operations
+              
+              **Phase**: 2 - Neural Integration
+              **Priority**: High
+              **Estimated Effort**: 12 days`,
+              labels: ['enhancement', 'phase-2', 'neural-symbolic', 'tensors', 'ggml']
+            },
+            {
+              title: "Build Scheme/OCaml bridge for Rocq Prover dataflow",
+              body: `## Description
+              Create comprehensive bridge between Rocq Prover and ggml tensors with OpenCoq integration:
+              
+              ## Tasks
+              - [ ] Design FFI interface for Scheme/OCaml with OpenCoq bindings
+              - [ ] Implement tensor data marshalling for Rocq Prover interop
+              - [ ] Add proof verification integration with automated theorem generation
+              - [ ] Create symbolic-to-numeric conversion with type safety guarantees
+              - [ ] Add error handling and validation with formal verification
+              - [ ] Implement OpenCoq tactic integration for automated proving
+              
+              ## Integration Requirements
+              - Rocq Prover compatibility with OpenCoq theorem libraries
+              - ggml tensor format support with verified numeric precision
+              - Memory-efficient data transfer with garbage collection safety
+              - Automated proof checking for neural-symbolic correctness
+              - Integration with OpenCoq's Category Theory libraries
+              
+              ## Advanced OpenCoq Features
+              - Automatic generation of Coq proofs from hypergraph inference
+              - Type-safe tensor operation verification
+              - Formal verification of attention allocation algorithms
+              - Automated theorem discovery from cognitive patterns
+              
+              **Phase**: 2 - Neural Integration
+              **Priority**: Medium
+              **Estimated Effort**: 18 days`,
+              labels: ['enhancement', 'phase-2', 'rocq-prover', 'ffi', 'bridge', 'opencoq', 'formal-verification']
+            },
+            {
+              title: "Implement ECAN-inspired attention mechanisms",
+              body: `## Description
+              Create Economic Attention Network for compute allocation:
+              
+              ## Tasks
+              - [ ] Implement attention tensor: (A, T) format
+              - [ ] Add economic resource allocation
+              - [ ] Create dynamic attention budgeting
+              - [ ] Implement spreading activation
+              - [ ] Add attention focus management
+              
+              ## Attention Specifications
+              - A = attention heads, T = temporal depth
+              - Economic allocation of compute cycles
+              - Dynamic focus adjustment
+              
+              **Phase**: 2 - Neural Integration
+              **Priority**: High
+              **Estimated Effort**: 9 days`,
+              labels: ['enhancement', 'phase-2', 'ecan', 'attention', 'economics']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+
+      - name: Generate Phase 3 Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '3' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Implement PLN reasoning with tensor operations",
+              body: `## Description
+              Create Probabilistic Logic Networks with tensor support:
+              
+              ## Tasks
+              - [ ] Implement PLN node tensor: (L, P) format
+              - [ ] Add probabilistic inference rules
+              - [ ] Create uncertainty propagation
+              - [ ] Implement tensor-based truth value operations
+              - [ ] Add higher-order logic support
+              
+              ## PLN Tensor Specs
+              - L = logic types, P = probability states
+              - Support for fuzzy logic operations
+              - Efficient uncertainty quantification
+              
+              **Phase**: 3 - Advanced Reasoning
+              **Priority**: High
+              **Estimated Effort**: 14 days`,
+              labels: ['enhancement', 'phase-3', 'pln', 'reasoning', 'probability']
+            },
+            {
+              title: "Create MOSES program evolution with tensor fitness",
+              body: `## Description
+              Enhance MOSES with tensor-based evolutionary operations:
+              
+              ## Tasks
+              - [ ] Implement MOSES program tensor: (G, S, E) format
+              - [ ] Add tensor-based fitness evaluation
+              - [ ] Create population diversity metrics
+              - [ ] Implement parallel evolution
+              - [ ] Add program complexity analysis
+              
+              ## MOSES Tensor Specs
+              - G = genome length, S = semantic depth, E = evolutionary epoch
+              - Multi-objective fitness evaluation
+              - Diversity preservation mechanisms
+              
+              **Phase**: 3 - Advanced Reasoning
+              **Priority**: Medium
+              **Estimated Effort**: 11 days`,
+              labels: ['enhancement', 'phase-3', 'moses', 'evolution', 'fitness']
+            },
+            {
+              title: "Implement causal and temporal logic systems",
+              body: `## Description
+              Create causal reasoning with temporal logic integration:
+              
+              ## Tasks
+              - [ ] Implement causal tensor: (C, L) format
+              - [ ] Add temporal logic operators
+              - [ ] Create causal graph construction
+              - [ ] Implement intervention analysis
+              - [ ] Add counterfactual reasoning
+              
+              ## Causal Tensor Specs
+              - C = cause/effect pairs, L = logical chain length
+              - Support for Pearl's causal hierarchy
+              - Temporal consistency checking
+              
+              **Phase**: 3 - Advanced Reasoning
+              **Priority**: Medium
+              **Estimated Effort**: 13 days`,
+              labels: ['enhancement', 'phase-3', 'causal', 'temporal', 'logic']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+
+      - name: Generate Phase 4 Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '4' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Design meta-cognitive tensor architecture",
+              body: `## Description
+              Implement meta-cognitive capabilities with tensor support:
+              
+              ## Tasks
+              - [ ] Implement meta-tensor: (R, M) format
+              - [ ] Add recursive self-modification
+              - [ ] Create cognitive grammar tracking
+              - [ ] Implement introspective analysis
+              - [ ] Add system state monitoring
+              
+              ## Meta-Tensor Specs
+              - R = recursion depth, M = modifiable modules
+              - Self-representation capabilities
+              - Dynamic architecture modification
+              
+              **Phase**: 4 - Emergent Capabilities
+              **Priority**: High
+              **Estimated Effort**: 16 days`,
+              labels: ['enhancement', 'phase-4', 'meta-cognitive', 'recursion', 'self-modification']
+            },
+            {
+              title: "Implement goal generation and autonomy systems",
+              body: `## Description
+              Create autonomous goal generation and management:
+              
+              ## Tasks
+              - [ ] Implement goal tensor: (G, C) format
+              - [ ] Add autonomous goal discovery
+              - [ ] Create goal hierarchy management
+              - [ ] Implement goal conflict resolution
+              - [ ] Add motivation and drive systems
+              
+              ## Goal Tensor Specs
+              - G = goal categories, C = cognitive context vectors
+              - Hierarchical goal structures
+              - Dynamic priority adjustment
+              
+              **Phase**: 4 - Emergent Capabilities
+              **Priority**: High
+              **Estimated Effort**: 14 days`,
+              labels: ['enhancement', 'phase-4', 'goals', 'autonomy', 'motivation']
+            },
+            {
+              title: "Create introspective tensor optimization modules",
+              body: `## Description
+              Implement systems for analyzing and optimizing tensor operations:
+              
+              ## Tasks
+              - [ ] Add tensor shape analysis and optimization
+              - [ ] Implement performance monitoring
+              - [ ] Create adaptive tensor sizing
+              - [ ] Add memory usage optimization
+              - [ ] Implement computational efficiency metrics
+              
+              ## Optimization Targets
+              - Automatic tensor shape adjustment
+              - Memory footprint minimization
+              - Computational efficiency maximization
+              
+              **Phase**: 4 - Emergent Capabilities
+              **Priority**: Medium
+              **Estimated Effort**: 10 days`,
+              labels: ['enhancement', 'phase-4', 'optimization', 'introspection', 'performance']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+
+      - name: Generate Testing and Validation Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '5' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Comprehensive testing framework for triadic architecture",
+              body: `## Description
+              Create comprehensive testing for all triadic architecture components:
+              
+              ## Tasks
+              - [ ] Design integration test suite for neural-symbolic bridge
+              - [ ] Add performance benchmarks for tensor operations
+              - [ ] Create cognitive synergy tests using ECAN attention metrics
+              - [ ] Implement attention allocation validation with economic modeling
+              - [ ] Add recursive pathway testing for self-enhancement loops
+              - [ ] Validate OpenCoq integration points
+              
+              ## Test Coverage Requirements
+              - Unit tests for all triadic components (autopoiesis, anticipation, adaptation)
+              - Integration tests for OpenCoq Prover dataflow
+              - Performance benchmarks with cognitive complexity baselines
+              - Emergent capability validation using pattern detection
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: Critical
+              **Estimated Effort**: 8 days`,
+              labels: ['testing', 'phase-5', 'validation', 'benchmarks', 'opencoq']
+            },
+            {
+              title: "Documentation and tensor specification validation",
+              body: `## Description
+              Complete documentation for tensor shapes and system architecture:
+              
+              ## Tasks
+              - [ ] Document all tensor shapes and degrees of freedom
+              - [ ] Create architecture diagrams
+              - [ ] Add API reference documentation
+              - [ ] Create usage examples and tutorials
+              - [ ] Add performance tuning guides
+              
+              ## Documentation Requirements
+              - Complete tensor specification reference
+              - Component interaction diagrams
+              - Usage examples for each phase
+              - Performance optimization guides
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: High
+              **Estimated Effort**: 6 days`,
+              labels: ['documentation', 'phase-5', 'tensors', 'architecture']
+            },
+            {
+              title: "OpenCoq integration with Rocq Prover validation framework",
+              body: `## Description
+              Create comprehensive OpenCoq integration with formal verification:
+              
+              ## Tasks
+              - [ ] Implement Rocq Prover theorem verification for triadic patterns
+              - [ ] Add formal verification of tensor shape consistency
+              - [ ] Create proof automation for relevance realization theorems
+              - [ ] Implement automatic generation of Coq proofs from AtomSpace inference
+              - [ ] Add formal verification of cognitive emergence properties
+              - [ ] Create automated proof checking for neural-symbolic bridge correctness
+              
+              ## OpenCoq Integration Points
+              - Rocq Prover formal verification of triadic composition laws
+              - Automated theorem generation from hypergraph patterns
+              - Proof verification for attention allocation algorithms
+              - Formal verification of recursive self-enhancement properties
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: High
+              **Estimated Effort**: 12 days`,
+              labels: ['testing', 'phase-5', 'opencoq', 'formal-verification', 'rocq-prover']
+            },
+              body: `## Description
+              Validate emergent cognitive phenomena and system synergies:
+              
+              ## Tasks
+              - [ ] Implement cognitive capability benchmarks
+              - [ ] Add emergence detection metrics
+              - [ ] Create synergy measurement tools
+              - [ ] Validate triadic composition properties
+              - [ ] Test recursive enhancement capabilities
+              
+              ## Validation Metrics
+              - Cognitive complexity measures
+              - Emergence detection algorithms
+              - Synergy quantification methods
+              - Recursive improvement tracking
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: High
+              **Estimated Effort**: 12 days`,
+            {
+              title: "Cognitive synergy and emergence validation with meta-analysis",
+              body: `## Description
+              Validate emergent cognitive phenomena and system synergies with advanced analytics:
+              
+              ## Tasks
+              - [ ] Implement cognitive capability benchmarks using triadic complexity metrics
+              - [ ] Add emergence detection using hypergraph spectral analysis
+              - [ ] Create synergy measurement tools based on information integration theory
+              - [ ] Validate triadic composition properties using algebraic topology
+              - [ ] Test recursive enhancement capabilities with meta-cognitive loops
+              - [ ] Implement automated discovery of emergent patterns in AtomSpace
+              
+              ## Validation Metrics
+              - Cognitive complexity measures based on triadic depth
+              - Emergence detection using topological data analysis
+              - Synergy quantification through integrated information (Φ)
+              - Recursive improvement tracking with meta-tensor analysis
+              - Pattern learning acceleration metrics
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: High
+              **Estimated Effort**: 14 days`,
+              labels: ['validation', 'phase-5', 'emergence', 'synergy', 'cognition', 'meta-analysis']
+            },
+            {
+              title: "Automated benchmarking suite for triadic architecture performance",
+              body: `## Description
+              Create comprehensive automated benchmarking for all phases of triadic architecture:
+              
+              ## Tasks
+              - [ ] Implement performance regression testing for tensor operations
+              - [ ] Add memory usage profiling for large-scale AtomSpace operations
+              - [ ] Create attention allocation efficiency benchmarks
+              - [ ] Implement cognitive load testing for neural-symbolic integration
+              - [ ] Add automated performance comparison against baseline implementations
+              - [ ] Create continuous performance monitoring dashboard
+              
+              ## Benchmark Categories
+              - Tensor operation throughput (Phase 2)
+              - PLN inference speed and accuracy (Phase 3)
+              - MOSES evolution convergence rates (Phase 3)
+              - Meta-cognitive processing overhead (Phase 4)
+              - Overall system integration performance
+              
+              **Phase**: 5 - Testing & Validation
+              **Priority**: Medium
+              **Estimated Effort**: 10 days`,
+              labels: ['benchmarking', 'phase-5', 'performance', 'automation', 'monitoring']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+          
+      - name: Generate Meta-Cognitive Enhancement Issues
+        if: ${{ github.event.inputs.phase == 'all' || github.event.inputs.phase == '6' }}
+        uses: actions/github-script@v7
+        with:
+        script: |
+          const issues = [
+            {
+              title: "Implement self-representation tensors for cognitive grammar tracking",
+              body: `## Description
+              Design and implement self-representation tensors that dynamically track the evolving cognitive grammar and system state:
+              
+              ## Tasks
+              - [ ] Design meta-tensor architecture for self-representation
+              - [ ] Implement cognitive grammar evolution tracking
+              - [ ] Add system state introspection mechanisms  
+              - [ ] Create dynamic tensor shape adaptation based on cognitive load
+              - [ ] Implement recursive self-monitoring loops
+              - [ ] Add cognitive architecture mutation detection
+              
+              ## Self-Representation Specifications
+              - Meta-tensor: (S, G, T) - self-model depth, grammar complexity, temporal scope
+              - Cognitive grammar tracker: (C, R, E) - concepts, relations, evolution state
+              - System state monitor: (M, A, P) - memory state, attention state, processing state
+              
+              ## Integration with OpenCoq
+              - Formal verification of self-model consistency
+              - Automated theorem generation for cognitive grammar properties
+              - Proof automation for recursive enhancement correctness
+              
+              **Phase**: 6 - Meta-Cognitive Enhancement
+              **Priority**: High
+              **Estimated Effort**: 18 days`,
+              labels: ['enhancement', 'phase-6', 'meta-cognitive', 'self-representation', 'opencoq']
+            },
+            {
+              title: "Create introspective modules for cognitive architecture analysis",
+              body: `## Description
+              Implement comprehensive introspective capabilities for analyzing and optimizing cognitive architecture:
+              
+              ## Tasks
+              - [ ] Design introspective attention mechanisms for self-analysis
+              - [ ] Implement cognitive load monitoring and optimization
+              - [ ] Add automatic detection of cognitive bottlenecks
+              - [ ] Create self-modifying attention allocation strategies
+              - [ ] Implement cognitive architecture performance profiling
+              - [ ] Add automatic cognitive pattern discovery and optimization
+              
+              ## Introspective Capabilities
+              - Real-time cognitive load assessment
+              - Automatic attention reallocation based on performance metrics
+              - Dynamic tensor shape optimization for computational efficiency
+              - Cognitive pattern mining for architecture improvement
+              - Self-correcting inference mechanisms
+              
+              ## Advanced Features
+              - Meta-learning for cognitive strategy optimization
+              - Automated discovery of new cognitive architectures
+              - Self-organizing attention networks
+              - Recursive cognitive enhancement loops
+              
+              **Phase**: 6 - Meta-Cognitive Enhancement  
+              **Priority**: High
+              **Estimated Effort**: 16 days`,
+              labels: ['enhancement', 'phase-6', 'introspection', 'optimization', 'meta-learning']
+            },
+            {
+              title: "Develop recursive self-enhancement validation framework",
+              body: `## Description
+              Create comprehensive framework for validating and measuring recursive self-enhancement capabilities:
+              
+              ## Tasks
+              - [ ] Implement recursive enhancement detection metrics
+              - [ ] Add validation framework for self-modification safety
+              - [ ] Create performance improvement tracking over recursive cycles
+              - [ ] Implement automatic detection of cognitive improvement plateaus
+              - [ ] Add formal verification of self-enhancement convergence properties
+              - [ ] Create safety mechanisms for recursive modification limits
+              
+              ## Validation Framework Components
+              - Recursive improvement metrics with mathematical foundations
+              - Safety boundary detection for self-modification
+              - Convergence analysis for recursive enhancement loops
+              - Performance degradation early warning systems
+              - Automatic rollback mechanisms for failed enhancements
+              
+              ## OpenCoq Integration
+              - Formal verification of recursive enhancement safety properties
+              - Automated proof generation for convergence theorems
+              - Theorem verification for self-modification correctness
+              
+              **Phase**: 6 - Meta-Cognitive Enhancement
+              **Priority**: Critical
+              **Estimated Effort**: 20 days`,
+              labels: ['validation', 'phase-6', 'recursive-enhancement', 'safety', 'opencoq']
+            },
+            {
+              title: "Implement autonomous cognitive architecture evolution",
+              body: `## Description
+              Create systems for autonomous evolution and improvement of the cognitive architecture itself:
+              
+              ## Tasks
+              - [ ] Design evolutionary algorithms for cognitive architecture optimization
+              - [ ] Implement automatic discovery of new tensor compositions
+              - [ ] Add autonomous generation of novel attention mechanisms
+              - [ ] Create self-organizing hypergraph structures
+              - [ ] Implement automatic cognitive module generation and testing
+              - [ ] Add evolutionary pressure simulation for cognitive improvement
+              
+              ## Evolutionary Capabilities
+              - Genetic algorithms for tensor architecture optimization
+              - Automated search for optimal cognitive compositions
+              - Self-organizing attention network topologies
+              - Automatic module discovery and integration
+              - Evolutionary cognitive architecture search (ECAS)
+              
+              ## Safety and Validation
+              - Automatic testing of evolved cognitive architectures
+              - Performance validation against baseline architectures
+              - Safety verification for new cognitive modules
+              - Rollback mechanisms for failed evolutions
+              
+              **Phase**: 6 - Meta-Cognitive Enhancement
+              **Priority**: Medium
+              **Estimated Effort**: 22 days`,
+              labels: ['enhancement', 'phase-6', 'evolution', 'autonomous', 'architecture-optimization']
+            }
+          ];
+          
+          for (const issue of issues) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue.title,
+              body: issue.body,
+              labels: issue.labels
+            });
+          }
+
+      - name: Create Project Board (Projects v2)
+        uses: actions/github-script@v7
+        with:
+        script: |
+          // Create a new Projects v2 board using GraphQL
+          const repoId = (await github.graphql(`
+            query($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) { id }
+            }
+          `, { owner: context.repo.owner, repo: context.repo.repo })).repository.id;
+          
+          const project = await github.graphql(`
+            mutation($repoId: ID!) {
+              createProjectV2(input: {
+                ownerId: $repoId
+                title: "Triadic Architecture Implementation"
+              }) {
+                projectV2 { id, title, url }
+              }
+            }
+          `, { repoId });
+
+          console.log('Created Projects v2 board:', project.createProjectV2.projectV2.url);
+          console.log('Project ID:', project.createProjectV2.projectV2.id);
+          console.log('Note: Projects v2 uses custom fields and views instead of columns. Configure these in the web interface if needed.');

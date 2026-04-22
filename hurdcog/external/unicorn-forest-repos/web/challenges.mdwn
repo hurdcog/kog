@@ -1,0 +1,30 @@
+[//]: # ([[meta copyright="Copyright © 2010 Free Software Foundation, Inc."]])
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Challenges"]]
+
+The GNU Hurd has a lot of [[advantages]], but there are challenges, too.
+
+Some of these are explained in the [[hurd/critique]].
+
+Even though they're quite popular in the simpler embedded space, there is no
+successful true multi-server [[microkernel]] system for general-purpose desktop
+use yet.  This is still an ongoing research effort.  Also the Hurd is not the
+only multiserver operating system. Other examples include:
+[[Genode OS|https://genode.org/]] (FOSS),  [[MINIX 3|https://www.minix3.org/]] (FOSS), 
+[[HELON OS|http://www.helenos.org/]] (FOSS), [[Redox OS|https://www.redox-os.org/]],
+and [[QNX|https://blackberry.qnx.com/en]] (proprietary).
+
+Likewise, [[resource scheduling|open_issues/multiprocessing]] in distributed operating system kernels is a
+research topic. The GNU/Hurd also has
+[[open_issues/resource_management_problems]]. The [[microkernel/Viengoos]]
+research kernel project strives to fix these issues, but its development has ended.
+
+TODO: more to come.  [[!tag open_issue_documentation]]

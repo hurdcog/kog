@@ -1,0 +1,175 @@
+/*
+ * GNU Mach Operating System
+ * Copyright (c) 2024 Free Software Foundation, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+/*
+ * User-space Device Driver Interface
+ * 
+ * This interface defines the protocol for user-space device drivers
+ * to register with the kernel and handle device operations.
+ */
+
+subsystem
+#if	KERNEL_SERVER
+	  KernelServer
+#endif
+		       userspace_driver 3000;
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+#include <device/device_types.defs>
+
+serverprefix	usrd_;
+
+type reply_port_t = MACH_MSG_TYPE_MAKE_SEND_ONCE | polymorphic
+	ctype: mach_port_t
+#ifndef	KERNEL_SERVER
+#ifdef	MACH_PAYLOAD_TO_PORT
+		intranpayload: mach_port_t MACH_PAYLOAD_TO_PORT
+#endif	/* MACH_PAYLOAD_TO_PORT */
+#endif	/* KERNEL_SERVER */
+;
+
+/*
+ * Driver capability flags (used in driver registration)
+ */
+type driver_caps_t = unsigned32;
+
+/*
+ * Driver resource limits structure
+ */
+type driver_limits_t = array[8] of unsigned32;
+
+/*
+ * Driver registration information
+ */
+type driver_info_t = struct {
+    char	name[64];		/* Driver name */
+    char	description[128];	/* Driver description */
+    unsigned32	version_major;		/* Major version */
+    unsigned32	version_minor;		/* Minor version */
+    driver_caps_t capabilities;		/* Driver capabilities */
+    driver_limits_t resource_limits;	/* Resource limits */
+};
+
+/*
+ * Register a user-space driver with the kernel
+ */
+routine userspace_driver_register(
+		driver_registry_port	: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	driver_info		: driver_info_t;
+	in	driver_port		: mach_port_send_t;
+	out	registration_token	: unsigned32
+	);
+
+/*
+ * Unregister a user-space driver
+ */
+routine userspace_driver_unregister(
+		driver_registry_port	: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	registration_token	: unsigned32
+	);
+
+/*
+ * Update driver status (health, resource usage)
+ */
+routine userspace_driver_update_status(
+		driver_registry_port	: mach_port_t;
+	in	registration_token	: unsigned32;
+	in	status_flags		: unsigned32;
+	in	resource_usage		: driver_limits_t
+	);
+
+/*
+ * Get list of registered user-space drivers
+ */
+routine userspace_driver_list(
+		driver_registry_port	: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	out	driver_count		: unsigned32;
+	out	driver_list		: array[] of driver_info_t, dealloc
+	);
+
+/*
+ * Driver proxy operations - kernel forwards device requests to user-space drivers
+ */
+
+/*
+ * Forward device open request to user-space driver
+ */
+routine userspace_driver_device_open(
+		driver_port		: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	mode			: dev_mode_t;
+	in	name			: new_dev_name_t;
+	out	device_port		: mach_port_send_t
+	);
+
+/*
+ * Forward device close request to user-space driver
+ */
+routine userspace_driver_device_close(
+		driver_port		: mach_port_t;
+	in	device_port		: mach_port_t
+	);
+
+/*
+ * Forward device read request to user-space driver
+ */
+routine userspace_driver_device_read(
+		driver_port		: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	device_port		: mach_port_t;
+	in	mode			: dev_mode_t;
+	in	recnum			: recnum_t;
+	in	bytes_wanted		: int;
+	out	data			: io_buf_ptr_t, dealloc
+	);
+
+/*
+ * Forward device write request to user-space driver
+ */
+routine userspace_driver_device_write(
+		driver_port		: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	device_port		: mach_port_t;
+	in	mode			: dev_mode_t;
+	in	recnum			: recnum_t;
+	in	data			: io_buf_ptr_t;
+	out	bytes_written		: int
+	);
+
+/*
+ * Forward device control request to user-space driver
+ */
+routine userspace_driver_device_get_status(
+		driver_port		: mach_port_t;
+	sreplyport reply_port		: reply_port_t;
+	in	device_port		: mach_port_t;
+	in	flavor			: dev_flavor_t;
+	out	status			: dev_status_t, CountInOut
+	);
+
+routine userspace_driver_device_set_status(
+		driver_port		: mach_port_t;
+	in	device_port		: mach_port_t;
+	in	flavor			: dev_flavor_t;
+	in	status			: dev_status_t
+	);

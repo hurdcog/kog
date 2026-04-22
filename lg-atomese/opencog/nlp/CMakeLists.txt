@@ -1,0 +1,14 @@
+
+# Build C++ code in assorted NLP subdirectories
+
+ADD_SUBDIRECTORY (types)
+
+ADD_SUBDIRECTORY (lg-dict)
+IF (HAVE_UUID)
+	ADD_SUBDIRECTORY (lg-parse)
+ENDIF (HAVE_UUID)
+
+IF (HAVE_CYTHON)
+	ADD_SUBDIRECTORY (cython)
+ENDIF (HAVE_CYTHON)
+ADD_SUBDIRECTORY (scm)

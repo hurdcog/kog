@@ -1,0 +1,172 @@
+# The White King film
+# Shot 1, line 1
+# Lines:
+# Hello
+
+
+
+h1 = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+contour="(0%,-5Hz) (35%,+15Hz) (55%,-10Hz) (75%,+50Hz)" 
+rate="42%"
+>
+Hello
+</prosody>
+
+</voice>
+
+</speak>
+"""
+h2 = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+contour="(0%,+5Hz) (35%,-10Hz) (55%,-10Hz) (95%,+30Hz)"
+rate="38%"
+>
+Hello
+</prosody>
+
+</voice>
+
+</speak>
+"""
+
+h3 = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+contour="(0%,-5Hz) (35%,+5Hz) (55%,+10Hz) (75%,+20Hz)"
+rate="46%"
+>
+Hello
+</prosody>
+
+</voice>
+
+</speak>
+"""
+
+name = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+pitch="+10Hz"
+rate="85%"
+>
+
+What's your name?
+
+</prosody>
+
+</voice>
+
+</speak>
+"""
+
+sophia = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+contour="(0%,+5Hz) (50%,+5Hz) (70%,+40Hz)"
+rate="95%"
+>
+
+I'm Sofeeyah.
+
+</prosody>
+
+</voice>
+
+</speak>
+"""
+
+wana = """
+<speak>
+
+<voice
+emotion='calm'>
+
+
+<prosody
+rate="90%">
+
+
+
+</prosody>
+
+<prosody
+contour="(50%,-1Hz) (65%,-5Hz) (80%,+50Hz) (85%,+10Hz) (90%,+15Hz) (95%,+15Hz)"
+rate="83%"
+>
+
+Wana playe?
+
+</prosody>
+
+</voice>
+
+</speak>
+"""
+
+turn = """
+<speak>
+
+
+
+
+
+<prosody
+pitch="+10Hz"
+rate="85%"
+>
+
+It's your turn.
+
+</prosody>
+
+
+
+</speak>
+"""
+
+
+#say(h1)
+sleep(0.2)      # time for chatbot and blender to sync
+play("wk_shot.all.001")
+#sleep(3.96)
+#say(h2)
+#sleep(4.32)
+#say(h3)
+#sleep(6.32)
+sleep(1.4)
+say(name)
+sleep(10.2)
+say(sophia)
+sleep(3.2)
+say(wana)
+sleep(5.92)
+say(turn)
+

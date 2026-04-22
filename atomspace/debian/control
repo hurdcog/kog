@@ -1,0 +1,44 @@
+Source: atomspace
+Section: libs
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 13),
+               cmake (>= 3.22),
+               g++ (>= 11),
+               libcogutil-dev (>= 1.0.0),
+               guile-3.0-dev,
+               libboost-dev,
+               libboost-filesystem-dev,
+               libboost-system-dev,
+               libboost-thread-dev,
+               cython3,
+               python3-dev
+Standards-Version: 4.6.2
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: libatomspace
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libcogutil (>= 1.0.0),
+         guile-3.0
+Description: OpenCog AtomSpace hypergraph database (runtime)
+ The AtomSpace is a weighted, labeled hypergraph database designed for
+ knowledge representation and reasoning in artificial intelligence systems.
+ .
+ This package contains the shared libraries for runtime use.
+
+Package: libatomspace-dev
+Section: libdevel
+Architecture: any
+Depends: libatomspace (= ${binary:Version}),
+         libcogutil-dev (>= 1.0.0),
+         guile-3.0-dev,
+         ${misc:Depends}
+Description: OpenCog AtomSpace hypergraph database (development files)
+ The AtomSpace is a weighted, labeled hypergraph database designed for
+ knowledge representation and reasoning in artificial intelligence systems.
+ .
+ This package contains the header files and development libraries.

@@ -1,0 +1,36 @@
+Source: cogutil
+Section: libs
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 13),
+               cmake (>= 3.22),
+               g++ (>= 11),
+               binutils-dev,
+               libiberty-dev
+Standards-Version: 4.6.2
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: libcogutil
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: OpenCog utility library (runtime)
+ CogUtil is the foundational utility library for the OpenCog cognitive
+ architecture. It provides essential data structures, algorithms, and
+ system utilities used throughout the OpenCog framework.
+ .
+ This package contains the shared library for runtime use.
+
+Package: libcogutil-dev
+Section: libdevel
+Architecture: any
+Depends: libcogutil (= ${binary:Version}),
+         ${misc:Depends}
+Description: OpenCog utility library (development files)
+ CogUtil is the foundational utility library for the OpenCog cognitive
+ architecture. It provides essential data structures, algorithms, and
+ system utilities used throughout the OpenCog framework.
+ .
+ This package contains the header files and static libraries needed
+ for development with CogUtil.

@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  metasystem:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/metasystem
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package metasystem verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - metasystem

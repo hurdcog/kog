@@ -1,0 +1,8 @@
+ADD_SUBDIRECTORY (scoring)
+ADD_SUBDIRECTORY (metapopulation)
+ADD_SUBDIRECTORY (moses)
+ADD_SUBDIRECTORY (optimization)
+ADD_SUBDIRECTORY (representation)
+ADD_SUBDIRECTORY (main)
+
+

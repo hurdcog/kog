@@ -1,0 +1,26 @@
+# Generated test components
+test-*/
+example-*/
+demo-*/
+
+# Temporary files
+*.bak
+*.tmp
+*~
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+build/
+*.o
+*.so
+*.a
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

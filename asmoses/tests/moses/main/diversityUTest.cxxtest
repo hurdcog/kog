@@ -1,0 +1,78 @@
+/** diversityUTest.cxxtest ---
+ *
+ * Copyright (C) 2019 SingularityNET Foundation
+ *
+ * Author: Nil Geisweiller
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License v3 as
+ * published by the Free Software Foundation and including the exceptions
+ * at http://opencog.org/wiki/Licenses
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program; if not, write to:
+ * Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include <cxxtest/TestSuite.h>
+#include <opencog/util/mt19937ar.h>
+#include <opencog/util/Logger.h>
+#include "moses-framework.h"
+
+using namespace opencog;
+using namespace opencog::moses;
+
+const string test_dir = string(PROJECT_SOURCE_DIR) + "/tests/moses/";
+
+/**
+ * Test operation of the diversity pressure.
+ */
+class diversityUTest : public CxxTest::TestSuite
+{
+public:
+	diversityUTest()
+	{
+		// logger().set_print_to_stdout_flag(true);
+		// logger().set_timestamp_flag(false);
+		// to control the log level use option -l
+	}
+
+	void test_diversity_5_parity_no_autoscale();
+	void test_diversity_5_parity_autoscale();
+};
+
+void diversityUTest::test_diversity_5_parity_no_autoscale()
+{
+	// Define expected candidates
+	vector<scored_combo_tree> scts;
+	scts.push_back(string_to_scored_combo_tree("-9 or(and(or(and(or(and(!$3 !$4) $5) or(!$1 $2)) and($3 $4)) or(!$1 $2 $5) or($3 $4 !$5)) and(!$1 $2))  [score=-9, penalized score=-12.3333330154418945, complexity=15, complexity penalty=3.33333325386047363, uniformity penalty=0]"));
+	scts.push_back(string_to_scored_combo_tree("-10 or(and(or(and(!$3 !$4) and($3 $4) $5) or(!$1 $2) or($3 $4 !$5)) and(!$1 $2))  [score=-10, penalized score=-12.9166669845581055, complexity=12, complexity penalty=2.66666674613952637, uniformity penalty=0.25]"));
+	scts.push_back(string_to_scored_combo_tree("-10 or(and(or(and(or(and(!$3 !$4) $5) or(!$1 $2)) and($3 $4)) or($3 $4 !$5)) and(!$1 $2))  [score=-10, penalized score=-12.9166669845581055, complexity=12, complexity penalty=2.66666674613952637, uniformity penalty=0.25]"));
+
+	// Run test
+	moses_test_scored_combo_trees(
+		{"-l debug", "-c3", "-Hpa", "-m10000", "-k5", "-x1", "-z4.5",
+		 "--diversity-pressure=0.5", "--diversity-autoscale=0"},
+		scts);
+}
+
+void diversityUTest::test_diversity_5_parity_autoscale()
+{
+	// Define expected candidates
+	vector<scored_combo_tree> scts;
+	scts.push_back(string_to_scored_combo_tree("-16 true  [score=-16, penalized score=-16, complexity=0, complexity penalty=0, uniformity penalty=0]"));
+	scts.push_back(string_to_scored_combo_tree("-16 false  [score=-16, penalized score=-18.4035377502441406, complexity=0, complexity penalty=0, uniformity penalty=2.40353775024414062]"));
+	scts.push_back(string_to_scored_combo_tree("-16 !$1  [score=-16, penalized score=-19.4857158660888672, complexity=1, complexity penalty=0.285714298486709595, uniformity penalty=3.20000004768371582]"));
+
+	// Run test
+	moses_test_scored_combo_trees(
+		{"-l debug", "-c3", "-Hpa", "-m10000", "-k5", "-x1",
+		 "--diversity-pressure=0.5", "--diversity-autoscale=1"},
+		scts);
+}

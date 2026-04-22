@@ -1,0 +1,3 @@
+usr/include/opencog/util/*
+usr/lib/*/cmake/CogUtil/*
+usr/share/opencog/cmake/*

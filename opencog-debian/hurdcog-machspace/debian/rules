@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	# Install Scheme modules
+	install -d $(CURDIR)/debian/hurdcog-machspace/usr/share/guile/site/3.0/hurdcog
+	install -m 644 machspace.scm $(CURDIR)/debian/hurdcog-machspace/usr/share/guile/site/3.0/hurdcog/
+	install -m 644 cognitive-grip.scm $(CURDIR)/debian/hurdcog-machspace/usr/share/guile/site/3.0/hurdcog/
+	
+	# Install Mach integration bridge
+	install -d $(CURDIR)/debian/hurdcog-machspace/usr/share/guile/site/3.0/hurdcog/mach-integration
+	install -m 644 mach-integration/machspace-bridge.scm $(CURDIR)/debian/hurdcog-machspace/usr/share/guile/site/3.0/hurdcog/mach-integration/
+	
+	# Install documentation
+	install -d $(CURDIR)/debian/hurdcog-machspace/usr/share/doc/hurdcog-machspace
+	install -m 644 README.md $(CURDIR)/debian/hurdcog-machspace/usr/share/doc/hurdcog-machspace/ || true

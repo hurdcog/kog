@@ -1,0 +1,138 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+The text in this page is based on the following code (from `$(hurd)/rtc/mig-mutate.h`):
+
+	#define IO_INTRAN trivfs_protid_t trivfs_begin_using_protid (io_t)
+	#define IO_INTRAN_PAYLOAD trivfs_protid_t trivfs_begin_using_protid_payload
+	#define IO_DESTRUCTOR trivfs_end_using_protid (trivfs_protid_t)
+	#define IO_IMPORTS import "libtrivfs/mig-decls.h";
+
+First, a brief description of what a protid is. Hurd translators
+typically represent "files" internally with three kinds of distinct
+structures:
+
+1. **node** -- these are filesystem nodes, same concept as an "inode".
+2. **peropen** -- this keeps the data "per open" of the file and
+corresponds to an "open file description" in POSIX. Things like
+current I/O offset and the open mode (`O_READ | O_WRITE` ...) live here.
+3. **protid** (or "credential") -- describes a specific "user" (UIDs/GIDs)
+on behalf of whom the file is being accessed.
+
+A protid has a pointer to the peropen, and the peropen has a pointer
+to the node. A node can have multiple peropens referring to it (when
+the file has been opened multiple times), and a peropen can have
+multiple protids referring to it (when processes running as different
+users share an open file description, e.g. your shell and a sudo
+invocation share the pts). In trivfs, there's only a single node, so
+the concept is deemphasized.
+
+The concept of protid doesn't exist in classic Unix, since a
+monolithic kernel can just directly see which UID the current process
+runs as. But Mach IPC is (intentionally) designed in a way that it's
+inherently impossible to see "who's asking", so instead we represent
+differently-privileged callers with different handles (protids) that
+refer to the same peropen, and then we check which protid the request
+was made on.
+
+It is a protid that corresponds to an Mach port (`io_t`, `file_t`, ...),
+though the client side doesn't need to care.
+
+When an incoming request arrives, the thing you actually receive in a
+message is the port name (ignoring protected payloads for now). What
+you actually want is the protid that it corresponds to.
+
+trivfs has the API to look up the protid given the port, namely
+`trivfs_begin_using_protid` (which wraps `ports_lookup_port` from
+libports), and you could call that yourself:
+
+	kern_return_t
+	rtc_S_foobar (io_t port, int foo, int *bar)
+	{
+	  error_t err = 0;
+	  struct trivfs_protid *cred = trivfs_begin_using_protid (port);
+	
+	  if (!cred)
+	    /* The request came in on a port that we listen for incoming
+	     * messages on, but it doesn't correspond to a protid. Must
+	     * be some other kind of port. */
+	    return EOPNOTSUPP;
+	
+	  if (!(cred->po->openmodes & O_READ))
+	    {
+	      err = EBADF;
+	      goto out;
+	    }
+
+  do something with cred...
+
+	out:
+	  trivfs_end_using_protid (cred);
+	  return err;
+	}
+
+But since we already have a code generator (MIG), why not make it
+generate the conversion logic for us as well. And so, in MIG, when
+defining a type, you can provide `intran` and `outtran` and
+`destructor` function names, and MIG will generate the calls for you.
+
+So the proper MIG way to (but see below about the Hurd way) to do the
+thing that you're trying to do would be to define your own flavor of
+Mach ports, say `rtc_port_t`, like this:
+
+	type rtc_port_t = mach_port_t
+	  intran: trivfs_protid_t trivfs_begin_using_protid (io_t)
+	  destructor: trivfs_end_using_protid (trivfs_protid_t);
+
+and then use that type in the routine definitions. MIG would then call
+`trivfs_begin_using_protid` and `trivfs_end_using_protid` in the server-side
+generated functions, only passing `trivfs_protid_t` (which is a typedef
+for `struct trivfs_protid *`, since MIG can't deal with the full C type
+notation) to your implementation. The downside of this is that it the
+implementation details of the server leak into the API definition, and
+for instance you'd have to edit the `.defs` if you switch the server
+from trivfs to netfs.
+
+You can find some documentation about this MIG feature under "Type
+Translation Information" on page 17 of the [Mach 3 Server Writer’s
+Guide](http://shakthimaan.com/downloads/hurd/server_writer.pdf),
+but of course keep in mind that the guide was written a long time
+ago, about a much older version of MIG, without any of the Hurd
+additions/specifics/best practices.
+
+Then, `hurd_types.defs` has this:
+
+	type io_t = mach_port_copy_send_t
+	#ifdef IO_INTRAN
+	intran: IO_INTRAN
+	intranpayload: IO_INTRAN_PAYLOAD
+	#else
+	#ifdef HURD_DEFAULT_PAYLOAD_TO_PORT
+	intranpayload: io_t HURD_DEFAULT_PAYLOAD_TO_PORT
+	#endif
+	#endif
+	#ifdef IO_OUTTRAN
+	outtran: IO_OUTTRAN
+	#endif
+	#ifdef IO_DESTRUCTOR
+	destructor: IO_DESTRUCTOR
+	#endif
+	;
+
+(and same for all the other types of ports, e.g. `FILE_INTRAN`,
+`SHUTDOWN_DESTRUCTOR` etc)
+
+which lets you use the standard `io_t` type while plugging in your own
+`intran/intranpayload/outtran/destructor` functions, in a way that
+doesn't leak into the `defs`. You only have to define the macros in your
+local `mig-mutate.h` header in your server.
+
+The content in this page is from [bug-hurd mail list](https://mail.gnu.org/archive/html/bug-hurd/2024-11/msg00045.html) with some modifications.

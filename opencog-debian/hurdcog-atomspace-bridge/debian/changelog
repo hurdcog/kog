@@ -1,0 +1,10 @@
+hurdcog-atomspace-bridge (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of HurdCog AtomSpace Bridge
+  * Implements MachSpace abstraction layer
+  * Provides kernel-level hypergraph integration
+  * Enables zero-copy atom transfer between processes
+  * Supports attention-aware kernel operations
+  * Integrates with HurdCog cognitive OS layer
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Fri, 06 Dec 2025 12:00:00 +0000

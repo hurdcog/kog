@@ -1,0 +1,7 @@
+ruth
+----
+
+Ruth is a small test suite that exercises kernel functionality and and
+the system run-time.  If you modify the kernel or find a bug, here is
+a good place to add a test.
+

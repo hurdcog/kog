@@ -1,0 +1,350 @@
+2008-08-14  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.h: Include <stdint.h>.
+	(total_memory): New declaration.
+	* laden.c (total_memory): New definition.
+	(load_components): Remove V2 specific code.
+	* kip-fixup.c (kip_fixup): Remove V2 specific code.
+	* ia32-cmain.c (find_components): Add module regions as type -1,
+	not L4_MEMDESC_BOOTLOADER.  Don't make total_memory a local
+	variable.  Also calculate the total memory in the case where only
+	MBI->MEM_LOWER and MBI->MEM_UPPER are available.  Move kernel
+	memory reservation from here...
+	* loader.c (loader_regions_reserve): ... to here.  Implement more
+	robustly.  Always add descriptors for
+	all memory regions with a type other than -1.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (debug_dump): Don't include redundant \n's in
+	debugging output.
+	(modules_relocate): Likewise.
+	* kip-fixup.c (kip_fixup): Likewise.
+	* laden.c (main): Likewise.
+	* loader.c (mem_check): Likewise.
+	(loader_add_region): Likewise.
+	(loader_regions_reserve): Likewise.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (debug): Don't define.
+	* ia32-cmain.c (debug_dump): Update to use standard debug API.
+	(modules_relocate): Likewise.
+	* kip-fixup.c (kip_fixup): Likewise.
+	* laden.c (main): Likewise.
+	* loader.c (mem_check): Likewise.
+	(loader_add_region): Likewise.
+	(loader_regions_reserve): Likewise.
+
+2008-06-06  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (find_components): Reserve 20% of available memory
+	for L4.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am [ENABLE_TESTS]: Don't build package's program.
+
+	* output-serial.c: Include <stdbool.h>.
+
+	* Makefile.am (laden_CPPFLAGS, laden_CFLAGS, laden_LDFLAGS): Don't
+	discard the respective AM_* flags and also add the respective KERNEL_*
+	flags.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.h (program_name): Change type to char *.
+	* laden.c (program_name): Likewise.
+	* shutdown.h (program_name): Likewise.
+	* output.h (debug): Change program_name's type to char *.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (laden_LDADD): Link against newlib's `libc-routines.a'.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* output-serial.c (serial_init): Rewrite command-line parser to
+	not use strtok.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (laden_LDADD): Set to ../libc-parts/libc-kernel.a,
+	not ../libc-parts/libc-parts.a.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (laden_CPPFLAGS): Add -DS_PRINTF=printf.
+
+2007-12-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (cmain): Cast PROGRAM_NAME to elide gcc warning.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.c (program_name): Remove extern qualifier.
+
+2007-12-21  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (KMEM_MAX): Set to the last valid byte, not the
+	first invalid byte.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.h (program_name): Change type to a const char [].
+	* laden.c (program_name): Likewise.
+	* shutdown.h (program_name): Likewise.
+	* output.h (debug): Change program_name's type to a const char [].
+
+2007-08-14  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32-shutdown.c (reset): Swap arguments to outb_p.
+
+2007-08-02  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-cmain.c (find_components): Save the correct module number.
+
+	* loader.c (loader_add_region): When relocating a region, set the
+	new start and end after calling the callback.
+	
+	(loader_regions_reserve): Only convert region descriptors on a V2
+	kernel.
+
+2007-07-30  Neal H. Walfield  <neal@gnu.org>
+
+	* kip-fixup.c (kip_fixup): Use a symbolic name rather than a magic
+	number.
+
+	[_L4_X2]: Set KIP->MEMORY_INFO.NR to MEMORY_MAP_SIZE.
+
+	* laden.c (load_components): Don't add L4 memory maps
+	corresponding to the the kernel's, sigma0's, sigma1's or the root
+	task's image.
+
+	* loader.c (mem_check): Add debugging output.
+	
+	(loader_regions_reserve): Round USED_REGIONS[I].START and
+	USED_REGIONS[I].END appropriately.
+
+2007-07-27  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.h (add_memory_map): Improve comment.
+	* loader.h (loader_add_region): Likewise.
+	(loader_remove_region): Likewise.
+
+	* laden.c (memory_map): Move from here...
+	* loader.c (memory_map): ... to here.
+	* laden.c (memory_map_size): Move from here...
+	* loader.c (memory_map_size): ... to here.
+	* laden.c (loader_get_num_memory_desc): Move from here...
+	* loader.c (loader_get_num_memory_desc): ... to here.
+	* laden.c (loader_get_memory_desc): Move from here...
+	* loader.c (loader_get_memory_desc): ... to here.
+
+	* kip-fixup.c (kip_fixup): Don't call loader_regions_reserve
+	here...
+	* laden.c (main): ... but here.
+
+	* loader.c (mem_check): Don't decrement end.
+
+2007-07-26  Neal H. Walfield  <neal@gnu.org>
+
+	* loader.h (loader_add_region): Take an additional parameter, the
+	L4 descriptor type.  Update callers.
+	(loader_elf_load): Likewise.
+	(loader_regions_reserve): New function.
+	* loader.c: Add field desc_type.
+	(loader_add_region): Take an additional parameter, an L4
+	descriptor type.  Save it in the allocated descriptor.  Round the
+	start address to a page boundary.
+	(loader_remove_region): Remove all regions with the name NAME, not
+	just the first one.
+	(loader_regions_reserve): New function.
+	(loader_elf_load): Take an additional parameter, an L4 descriptor
+	type.  Mark regions that we allocate with this type.  Coalesce
+	regions where possible.
+	* laden.h: Include <assert.h>.
+	(add_memory_map): Improve comment.  Add an assert.
+	* ia32-cmain.c (module_relocate): Rename from this...
+	(modules_relocate): ... to this.  Handle relocating multiple
+	modules.
+	(find_components): When protecting module data areas, coalesce
+	when possible.  Fix an off by one error when calculating the upper
+	memory bound.  Rename the module meta data region to better
+	reflect its nature.
+	
+	* kip-fixup.c (kip_fixup): Call loader_regions_reserve before
+	copying the memory descriptors.  Don't set KIP->MEMORY_INFO.NR
+
+	* laden.c (load_components): Allocate a stack for sigma0 and the
+	root server just beyond their highest address.
+
+	* kip-fixup.c (kip_fixup): Only boot versions of L4 that we know
+	how to boot.
+
+	* ia32-cmain.c (find_components): Only reserve conventional memory
+	for an X2 kernel.
+
+2007-07-25  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.h (add_memory_map): Fix indentation.
+
+2007-07-25  Neal H. Walfield  <neal@gnu.org>
+
+	* loader.h (relocate_region): New typedef.
+	(loader_add_region): Add two additional arguments, rr and cookie.
+	Update callers.
+	* loader.c: Include "laden.h".
+	(struct): Add fields rr, cookie and used.
+	(check_region): Remove function.
+	(loader_add_region): Allocate a region descriptor by checking
+	whether the used bit is unset.  Don't call check_region, check
+	here if a region is okay.  If there is overlap, move the other
+	regions out of the way if possible.
+	(loader_remove_region): Just set the used bit to zero.
+	(loader_elf_load): Don't call check_region.  Protect each segment
+	individually.
+	* ia32-cmain.c (cmain): Make a copy of the command line on the
+	stack and pass that to main.
+	(mbi_relocate): New function.
+	(mods_relocate): Likewise.
+	(cmdline_relocate): Likewise.
+	(module_relocate): Likewise.
+	(find_components): Protect the other modules.  Protect each
+	module's string individually.  Protect the first page.
+	* laden.c (rootserver_relocate): New function.
+
+	* ia32-cmain.c (start_kernel): Before jumping to IP, load Grub's
+	booloader magic into EAX and the address of the boot info
+	structure into EBX.
+
+2005-01-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* config.m4: Change to 0x190000 to make more room for a
+	debugging-enabled kernel.
+
+2005-01-07  Neal H. Walfield  <neal@gnu.org>
+
+	* laden.c (parse_args): Argument is `--reboot', not `--reset'.
+
+2005-01-07  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (debug): Preface __VA_ARGS__ with ## thereby making it
+	optional.
+
+2004-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (bootdir): New variable.
+	(boot_PROGRAMS): Use this instead of noinst_PROGRAMS.
+
+2004-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h (debug): Include program_name and __FUNCTION__ in
+	output.
+
+2004-10-23  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32-cmain.c (start_kernel): Flush the D-cache.
+	* laden.c (main): Call panic() instead of shutdown() if kernel
+	returns.
+
+2004-03-30  Marcus Brinkmann  <marcus@gnu.org>
+
+	* loader.c (loader_elf_dest, loader_elf_load): Use 32 and 64
+	instead of _L4_WORDSIZE_32 and _L4_WORDSIZE_64.
+
+2004-03-15  Marcus Brinkmann  <marcus@gnu.org>
+
+	* loader.h (loader_get_memory_desc): Change return type to
+	l4_memory_desc_t *.
+	* laden.h (rootserver_t): Remove typedef.
+	(kernel, sigma0, sigma1, rootserver): Change type to
+	l4_rootserver_t.
+	(memory_map): Change type to l4_memory_desc_t.
+	* laden.c (kernel, sigma0, sigma1, rootserver): Change type to
+	l4_rootserver_t.
+	(memory_map): Change type to l4_memory_desc_t.
+	(loader_get_memory_desc): Change return type to l4_memory_desc_t *.
+	* kip-fixup.c (kip_fixup): Use cast to l4_memory_desc_t.
+
+2003-10-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Removed.
+	(laden_CFLAGS): Rename to ...
+	(laden_CPPFLAGS): Add AM_CPPFLAGS.  Change -I$(top_srcdir)/include
+	to -I$(top_builddir).
+
+2003-10-12  Marcus Brinkmann  <marcus@gnu.org>
+
+	* config.m4: New file.
+	* Makefile.am (laden_LDFLAGS): Replace load address with
+	@HURD_LADEN_LOAD_ADDRESS@.
+
+2003-10-04  Marcus Brinkmann  <marcus@gnu.org>
+
+	* laden.h (add_memory_map): Don't round END up to 1K.
+	* ia32-cmain.c (find_components): Pass the address of the last
+	byte as END to add_memory_map.  Don't do bogus alignment check
+	without BIOS map.  Add 0xc0000 - 0xf0000 as shared memory.
+	Initially, add the whole address space as shared memory to allow
+	arbitrary device access.
+	* loader.c: Include <l4/kip.h>.
+	(mem_check): Change type of address args to l4_word_t.  Use
+	l4_memory_desc_low and l4_memory_desc_high to determine range of
+	memory descriptor.  The high address is inclusive now, so take
+	this into account.  Allow conventional memory descriptors to
+	override non-conventional.  Use L4_PRIxWORD.
+
+2003-09-29  Marcus Brinkmann  <marcus@gnu.org>
+
+	* loader.c (loader_elf_load): Fix wordsize check.  Submitted by
+	Johan Rydberg.
+
+2003-09-25  Johan Rydberg  <jrydberg@night.trouble.net>
+
+        * laden.c (main): Call start_kernel to launch kernel instead
+        of calling the kernel start address.
+        * laden.h (start_kernel): Prototype.
+        * ia32-cmain.c (start_kernel): New function.
+
+2003-09-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* loader.c [HAVE_CONFIG_H]: Include <config.h>.
+	(loader_elf_load): Rewritten architecture check of ELF binary,
+	support PPC now.
+
+2003-09-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* elf.h: Remove cruft.
+
+2003-09-21  Marco Gerards  <metgerards@student.han.nl>
+
+	* output-serial.c (serial_init): Make sure the order of the
+	arguments of outb are correct.
+
+	* Makefile.am (AM_CPPFLAGS): New variable.
+
+2003-09-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ia32-cmain.c (debug_dump): Cast mod[nr].string to char *.
+	* laden.c (parse_args): Remove superfluous arguments.
+	* loader.c: Include <string.h>.
+	* kip-fixup.c (kip_fixup): Use %p for pointer.
+	* output-serial.c: Include <stdlib.h>.
+	
+	* Makefile.am (laden_CFLAGS): Add -I$(top_srcdir)/libc-parts.
+	* output.c: Include <stdlib.h> and <string.h>.
+	* output.h (struct output_driver): Add CFG argument to INIT
+	function.
+	(output_init): Make NAME argument const, rename it to DRIVER.
+	* output.c (output_init): Likewise.  Only check if the prefix of
+	DRIVER is a driver name.  Then skip a trailing comma and pass the
+	remainder via the new variable DRIVER_CFG to the init function of
+	the driver.
+	* output-vga.c (vga_init): Add CFG argument.
+	* output-serial.c: New file by Daniel Wagner <wagi@gmx.de>.
+
+2003-07-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.
+

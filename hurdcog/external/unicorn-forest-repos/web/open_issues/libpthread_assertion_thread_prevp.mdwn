@@ -1,0 +1,120 @@
+[[!meta copyright="Copyright © 2011, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="libpthread: __pthread_enqueue: Assertion `thread->prevp == 0'
+failed"]]
+
+[[!tag open_issue_libpthread]]
+
+
+# IRC, OFTC, #debian-hurd, 2011-10-21
+
+    [Python testsuite]
+    <pinotree> [169/340/1] test_logging
+    <pinotree> python:
+      /home/pino/sources/hurd/hurd-20110519/./libpthread/pthread/pt-internal.h:109:
+      __pthread_enqueue: Assertion `thread->prevp == 0' failed.
+    <pinotree> sigh
+
+
+## IRC, freenode, #hurd, 2011-10-21
+
+    <pinotree> am i missing anything, or in libpthread the __pthread_threads
+      list does not ever has elements removed from it?
+    <pinotree> ... thus potentially causing
+      "./libpthread/pthread/pt-internal.h:109: __pthread_enqueue: Assertion
+      `thread->prevp == 0' failed." because threads can be appended on
+      __pthread_dealloc() to the __pthread_free_threads list as well?
+    <pinotree> maybe reusing the same next+prevp pointers in the __pthread
+      struct for more than one list at the same time isn't a good idea...
+
+
+## IRC, freenode, #hurd, 2011-10-23
+
+    <youpi> pinotree: I don't understand the relation between thread->prevp !=
+      0 and the __pthread_threads list
+    <youpi> the list never has elements removed indeed, since libpthread never
+      frees __pthread structures apparently
+    <pinotree> youpi: ye sorry, that relation is indeed nonsense
+    <youpi> in which condition did you get prevp != 0
+    <pinotree> i wa trying to find some explaination for the "thread->prevp ==
+      0" assertion in the _queue function
+    <youpi> ?
+    <pinotree> *was
+    <youpi> it's not obvious to me how libpthread makes sure the various
+      cond/mutex/rwlock make sure that it's not queued several times
+    <pinotree> yeah
+    <pinotree> apparently prevp/next are used for lists of held
+      waitcond/mutex/rwlock and free threads
+
+
+# IRC, freenode, #hurd, 2013-03-20
+
+    <braunr> aw
+    <braunr> i hit the ext2fs.static: ./pthread/pt-internal.h:122:
+      __pthread_enqueue: Assertion `thread->prevp == 0' failed.
+    <braunr> assertion
+    <braunr> looks like there is a deadlock on assert
+    <braunr> which might explain why i never saw progress when i tested that in
+      the past
+
+
+## IRC, freenode, #hurd, 2013-04-21
+
+    <braunr> damn, there still bugs in libpthread
+    <braunr> (about prevp not being null when it should i mean)
+    <pinotree> braunr: found another trigger for that?
+    <braunr> no
+    <braunr> it's so random i wonder if it's not a completely unrelated
+      corruption
+    <braunr> pinotree: also, i'm having more of these issues with my custom
+      hurd packages that let threads exit after some time from managing ports
+    <braunr> (i removed the libports_stability patch)
+    <braunr> i once had this : http://www.sceen.net/~rbraun/darnassus_crash.png
+
+[The assertion failure.]
+
+
+## IRC, freenode, #hurd, 2013-04-23
+
+    <braunr> removing the libports_stability patch exposed bugs in libpthread,
+      triggering assertions when queueing/dequeue threads from a queue (but i
+      don't know which one / in which function)
+
+
+## IRC, freenode, #hurd, 2013-06-25
+
+    <pinotree> braunr:
+      https://buildd.debian.org/status/fetch.php?pkg=libmemcached&ver=1.0.17-2&arch=hurd-i386&stamp=1372165732
+    <pinotree> make: ./pthread/pt-internal.h:122: __pthread_enqueue: Assertion
+      `thread->prevp == 0' failed. \o/
+    <pinotree> (it should rather be /o\, but better pretend not)
+    <braunr> pinotree: yes, we regularly see it
+    <braunr> pinotree: how long has the machine been running at this point ?
+    <pinotree> dunno, you should ask samuel about that
+    <pinotree> does it happen after N hours/days?
+    <braunr> a few days of moderate to high activity yes
+    <pinotree> ah ok
+    <braunr> and i actually see this error much more often when i disable the
+      libports stability patch in the hurd debian package
+    <braunr> so i guess something is wrong with thread recycling
+    <braunr> but i wanted to completely rewrite that part with the new kernel
+      call i asked bddebian to work on :)
+
+
+## 2014-09-15
+
+During a run of the GDB testsuite, [[I|tschwinge]] hit `C-c`, and then saw:
+
+    [...]
+    Running ../../../W._C._Handy/gdb/testsuite/gdb.base/shreloc.exp ...
+    ^Cexpect: ./pthread/pt-internal.h:131: __pthread_enqueue: Assertion `thread->prevp == 0' failed.
+    Aborted

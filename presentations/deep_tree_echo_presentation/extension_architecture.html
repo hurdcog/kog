@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Architecture: Core Capabilities</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 60px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 24px;
+        }
+        .context-label {
+            font-size: 11px;
+            color: #0f4c81;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding: 6px 12px;
+            border: 1px solid #0f4c81;
+            display: inline-block;
+            background: rgba(15, 76, 129, 0.05);
+        }
+        .extensions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 20px;
+            margin-bottom: 32px;
+        }
+        .extension-box {
+            border: 2px solid #0f4c81;
+            background: #FFFFFF;
+            padding: 24px;
+            min-height: 400px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .extension-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #e94560;
+        }
+        .extension-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-left: 16px;
+            line-height: 1.3;
+        }
+        .extension-component {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0f4c81;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            padding-left: 16px;
+        }
+        .extension-purpose {
+            font-size: 14px;
+            font-weight: 500;
+            color: #16213e;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            padding-left: 16px;
+            flex-grow: 1;
+        }
+        .extension-capabilities {
+            font-size: 12px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.7;
+            padding-left: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #0f4c81;
+        }
+        .capability-label {
+            font-weight: 600;
+            color: #0f4c81;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .continuation-note {
+            border: 2px solid #e94560;
+            background: rgba(233, 69, 96, 0.03);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .note-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #16213e;
+        }
+        .note-indicator {
+            font-size: 11px;
+            font-weight: 700;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Title -->
+        <div class="slide-title">Extension Architecture: Core Capabilities</div>
+        <div class="title-line"></div>
+        
+        <!-- Context Label -->
+        <div class="context-label">Extension Membrane • Plugin Container • Part 1/2</div>
+        
+        <!-- Extensions Grid -->
+        <div class="extensions-grid">
+            
+            <!-- Extension 1: Browser Automation -->
+            <div class="extension-box">
+                <div class="extension-name">Browser Automation</div>
+                <div class="extension-component">DeepTreeEchoBrowser</div>
+                <div class="extension-purpose">
+                    Enables web interaction and information gathering, extending perceptual capabilities beyond direct sensory input to vast web resources.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span>
+                    Web page interaction • Information extraction • Automated web tasks • Data feeding to Hypergraph Memory
+                </div>
+            </div>
+            
+            <!-- Extension 2: ML Integration -->
+            <div class="extension-box">
+                <div class="extension-name">ML Integration</div>
+                <div class="extension-component">Echo9ML</div>
+                <div class="extension-purpose">
+                    Adds statistical learning and neural processing capabilities, complementing symbolic reasoning with pattern recognition from large datasets.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span>
+                    Neural networks • Deep learning • Statistical models • Probabilistic predictions • Complex pattern recognition
+                </div>
+            </div>
+            
+            <!-- Extension 3: Evolution Engine -->
+            <div class="extension-box">
+                <div class="extension-name">Evolution Engine</div>
+                <div class="extension-component">EchoAgent</div>
+                <div class="extension-purpose">
+                    Implements genetic programming and optimization for discovering novel solutions through evolutionary search and automated design.
+                </div>
+                <div class="extension-capabilities">
+                    <span class="capability-label">Capabilities:</span>
+                    Evolutionary algorithms • Program synthesis • Parameter optimization • Variation generation and testing
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Continuation Note -->
+        <div class="continuation-note">
+            <div class="note-text">
+                Core data processing extensions: web interaction, machine learning, and evolutionary optimization
+            </div>
+            <div class="note-indicator">
+                Continued →
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+## @file		ocbootstrap
+## @copyright		OpenCog Foundation (2012)
+## @author		David Hart <dhart@opencog.org>
+## @section DESCRIPTION	A script to create a chroot environment in which to run ocpkg 
+## @section LICENSE	Permission to copy and modify is granted under the GPL
+## @section REQUIREMENT	Any Linux distribution, run as root
+
+DISTRO_MIRROR=http://archive.ubuntu.com/ubuntu
+CHROOT_DISTRO=precise
+ARCH=amd64
+SELF_NAME=$(basename $0)
+PROCESSORS=$(grep "^processor" /proc/cpuinfo | wc -l)
+MAKE_JOBS=$(($PROCESSORS+0))
+
+usage() {
+  echo "Usage: $SELF_NAME [-a ARCH] [-p DISTRO_MIRROR] [DISTRO_NAME]"
+}
+
+while getopts ":a:p:j:" flag ; do
+  case $flag in
+    a)	ARCH="$OPTARG" ;;          
+    p)	DISTRO_MIRROR="$OPTARG" ;;          
+    j)	MAKE_JOBS="$OPTARG" ;;			#override auto-detected MAKE_JOBS
+    \?)	usage ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+if [ $1 ] ; then CHROOT_DISTRO=$1 ; fi
+
+CHROOT_DIR=/var/$CHROOT_DISTRO
+
+if [ ! $(which debootstrap) ] ; then
+  if [ $(which dpkg) ] ; then 
+           wget http://ftp.debian.org/debian/pool/main/d/debootstrap/debootstrap_1.0.48_all.deb
+    dpkg -i debootstrap_1.0.48_all.deb
+  else
+    wget http://ftp.debian.org/debian/pool/main/d/debootstrap/debootstrap_1.0.48.tar.gz
+    tar zxvf debootstrap_1.0.48.tar.gz
+    cd debootstrap-1.0.48/
+    make devices.tar.gz
+    export DEBOOTSTRAP_DIR=$(pwd)
+    export PATH=$PATH:$DEBOOTSTRAP_DIR
+  fi
+fi
+
+if [ ! -d "$CHROOT_DIR" ] ; then
+  mkdir -p $CHROOT_DIR
+  # --variant=buildd installs the build-essential packages (this option is useful when building packages)
+  # This option closely imitates the environment of the official build machines (https://launchpad.net/builders/)
+  debootstrap --variant=buildd --arch $ARCH $CHROOT_DISTRO $CHROOT_DIR $DISTRO_MIRROR
+fi
+
+mkdir -p $CHROOT_DIR/usr/local/bin
+mkdir -p $CHROOT_DIR/usr/local/src/opencog
+
+ln -f -P /etc/mtab $CHROOT_DIR/etc/mtab
+
+mount -o bind /dev $CHROOT_DIR/dev
+mount -o bind /proc $CHROOT_DIR/proc
+mount -o bind /sys $CHROOT_DIR/sys
+mount -o bind /tmp $CHROOT_DIR/tmp
+mount -o bind /dev/pts $CHROOT_DIR/dev/pts
+mount -o bind /var/cache/apt/archives $CHROOT_DIR/var/cache/apt/archives
+mount -o bind /var/lib/apt/lists $CHROOT_DIR/var/lib/apt/lists
+mount -o bind /usr/local/src/opencog $CHROOT_DIR/usr/local/src/opencog
+
+echo "deb $DISTRO_MIRROR $CHROOT_DISTRO main universe" > $CHROOT_DIR/etc/apt/sources.list
+
+chroot $CHROOT_DIR /usr/bin/apt-get update
+chroot $CHROOT_DIR /usr/bin/apt-get -y install python-software-properties git sudo
+chroot $CHROOT_DIR /bin/mkdir -p /usr/local/lib/opencog/ocpkg
+chroot $CHROOT_DIR /usr/bin/git clone git://github.com/opencog/ocpkg /usr/local/lib/opencog/ocpkg
+chroot $CHROOT_DIR /bin/chmod ugo+rx /usr/local/lib/opencog/ocpkg/*
+chroot $CHROOT_DIR ln -s /usr/local/lib/opencog/ocpkg/ocpkg /usr/local/bin
+chroot $CHROOT_DIR /usr/local/bin/ocpkg -j$MAKE_JOBS

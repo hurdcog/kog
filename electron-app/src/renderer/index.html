@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+    <title>OpenCog Inferno AGI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1>🧠 OpenCog Inferno AGI</h1>
+                <span class="subtitle">Kernel-Based Cognitive Operating System</span>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Initializing...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-view="atomspace">
+                        <span class="icon">🔷</span>
+                        <span>AtomSpace</span>
+                    </button>
+                    <button class="nav-item" data-view="attention">
+                        <span class="icon">👁️</span>
+                        <span>Attention</span>
+                    </button>
+                    <button class="nav-item" data-view="inference">
+                        <span class="icon">🧩</span>
+                        <span>Inference</span>
+                    </button>
+                    <button class="nav-item" data-view="pattern">
+                        <span class="icon">🔍</span>
+                        <span>Pattern Match</span>
+                    </button>
+                    <button class="nav-item" data-view="visualization">
+                        <span class="icon">📊</span>
+                        <span>Visualization</span>
+                    </button>
+                    <button class="nav-item" data-view="console">
+                        <span class="icon">💻</span>
+                        <span>Console</span>
+                    </button>
+                </nav>
+
+                <!-- Stats Panel -->
+                <div class="stats-panel">
+                    <h3>AtomSpace Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Atoms:</span>
+                        <span class="stat-value" id="stat-total-atoms">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nodes:</span>
+                        <span class="stat-value" id="stat-nodes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Links:</span>
+                        <span class="stat-value" id="stat-links">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">In Focus:</span>
+                        <span class="stat-value" id="stat-focus">0</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                <!-- AtomSpace View -->
+                <section class="view-panel active" id="view-atomspace">
+                    <div class="panel-header">
+                        <h2>AtomSpace Explorer</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-primary" id="btn-create-atom">Create Atom</button>
+                            <button class="btn btn-secondary" id="btn-refresh-atoms">Refresh</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="atom-creator" id="atom-creator" style="display: none;">
+                            <h3>Create New Atom</h3>
+                            <div class="form-group">
+                                <label>Type:</label>
+                                <select id="atom-type">
+                                    <option value="ConceptNode">ConceptNode</option>
+                                    <option value="PredicateNode">PredicateNode</option>
+                                    <option value="VariableNode">VariableNode</option>
+                                    <option value="InheritanceLink">InheritanceLink</option>
+                                    <option value="SimilarityLink">SimilarityLink</option>
+                                    <option value="EvaluationLink">EvaluationLink</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Name:</label>
+                                <input type="text" id="atom-name" placeholder="Enter atom name">
+                            </div>
+                            <div class="form-group">
+                                <label>Strength:</label>
+                                <input type="range" id="atom-strength" min="0" max="1" step="0.01" value="0.8">
+                                <span id="strength-value">0.8</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Confidence:</label>
+                                <input type="range" id="atom-confidence" min="0" max="1" step="0.01" value="0.9">
+                                <span id="confidence-value">0.9</span>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-primary" id="btn-submit-atom">Create</button>
+                                <button class="btn btn-secondary" id="btn-cancel-atom">Cancel</button>
+                            </div>
+                        </div>
+                        <div class="atom-list" id="atom-list">
+                            <p class="placeholder">No atoms loaded. Create an atom to get started.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Attention View -->
+                <section class="view-panel" id="view-attention">
+                    <div class="panel-header">
+                        <h2>Attention Allocation</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-primary" id="btn-refresh-attention">Refresh Focus</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="attention-focus" id="attention-focus">
+                            <p class="placeholder">Loading attentional focus...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Inference View -->
+                <section class="view-panel" id="view-inference">
+                    <div class="panel-header">
+                        <h2>Inference Engine</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-primary" id="btn-run-pln">Run PLN</button>
+                            <button class="btn btn-primary" id="btn-run-ure">Run URE</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="inference-results" id="inference-results">
+                            <p class="placeholder">Run inference to see results.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Pattern Match View -->
+                <section class="view-panel" id="view-pattern">
+                    <div class="panel-header">
+                        <h2>Pattern Matcher</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-primary" id="btn-execute-query">Execute Query</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label>Pattern Query (Atomese):</label>
+                            <textarea id="pattern-query" rows="5" placeholder="(BindLink $X (InheritanceLink $X (ConceptNode &quot;mammal&quot;)))"></textarea>
+                        </div>
+                        <div class="query-results" id="query-results">
+                            <p class="placeholder">Enter a query and execute to see results.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Visualization View -->
+                <section class="view-panel" id="view-visualization">
+                    <div class="panel-header">
+                        <h2>Cognitive Visualization</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="visualization-container" id="visualization-container">
+                            <p class="placeholder">Visualization coming soon...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Console View -->
+                <section class="view-panel" id="view-console">
+                    <div class="panel-header">
+                        <h2>System Console</h2>
+                        <div class="panel-actions">
+                            <button class="btn btn-secondary" id="btn-clear-console">Clear</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="console-output" id="console-output">
+                            <div class="console-line">OpenCog Inferno AGI - System Console</div>
+                            <div class="console-line">Type 'help' for available commands</div>
+                        </div>
+                        <div class="console-input-container">
+                            <span class="console-prompt">></span>
+                            <input type="text" id="console-input" class="console-input" placeholder="Enter command...">
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <span id="system-info">Loading system info...</span>
+            </div>
+            <div class="footer-right">
+                <span>OpenCog Inferno AGI v1.0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

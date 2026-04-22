@@ -1,0 +1,235 @@
+[[!meta copyright="Copyright © 2005, 2006, 2007, 2008, 2010, 2012, 2013, 2014,
+2016 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_gnumach]]
+
+# Restructure the tree in a sane way
+
+Merge `linux/src` and `linux/dev`.  But only if using a sane RCS, so leave it
+as-is for now.  Also, a bunch of (header) files from there may probably be
+discarded.
+
+
+# Remove dead files from the GNU Mach source tree
+
+For *exported* files (via `make install`), the plan is to first stick some
+`#error This file is scheduled for removal.  Write to <bug-hurd@gnu.org> if you
+have a reason to have it kept available.` into them, and then actually remove
+them after some months.
+
+For some of the internal header files (containing function prototypes and the
+like), it might actually be useful to use them.  (And then get rid of a bunch
+of `extern ...` statements in other files.)
+
+This following list was assembled by putting such a `#error ...` line into each
+of the `gnumach-1-branch`'s header files (exported and internal; save the
+`linux/` ones (only internal) for simplicity), and then trying to build GNU
+Mach until this would succeed again (by removing offending `#error ...`s), and
+afterwards using the set of exported files for building a cross toolchain
+(again still removing offending `#error ...`s).  A very crude and imprecise
+method.
+
+So, additionally to the list given below, there may actually be a bunch of
+further files (also exported ones) that serve no real value, but are being
+`#include`d through one way or another.
+
+* [[!source_gnumach-1-branch ddb/db_expr.h]]
+
+    Currently used, but copyright violation?  Rewrite?
+
+* [[!source_gnumach-1-branch ddb/db_print.h]]
+
+    Copyright violation?  Currently unused, but could be used in principle (or
+    be rewritten, to avoid the copyright oddity).
+
+* [[!source_gnumach-1-branch ddb/tr.h]]
+
+    Copyright violation.  Unused.  Remove.
+
+* [[!source_gnumach-1-branch device/dev_master.h]]
+
+    Might be usable for SMP?  Remove otherwise.
+
+* [[!source_gnumach-1-branch i386/i386/kttd_machdep.h]]
+
+* [[!source_gnumach-1-branch i386/i386/sched_param.h]]
+
+* [[!source_gnumach-1-branch i386/include/mach/i386/cthreads.h]]
+
+    Was probably once exported, but is no longer.
+
+* [[!source_gnumach-1-branch i386/include/mach/i386/ioccom.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/device/audio_status.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/device/tape_status.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/alert.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/boot.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/macro_help.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/multiboot.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/profil.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/profilparam.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach/exec/a.out.h]]
+
+    Exported.
+
+* [[!source_gnumach-1-branch include/mach_debug/pc_info.h]]
+
+    Currently not exported, but was probably once meant to be.
+
+* [[!source_gnumach-1-branch kern/act.h]]
+
+* [[!source_gnumach-1-branch kern/refcount.h]]
+
+* [[!source_gnumach-1-branch kern/shuttle.h]]
+
+
+# Remove dead functions, variables, etc. from source files
+
+
+# Rewrite ugly code
+
+
+# IRC, freenode, #hurd, 2012-09-06
+
+    <mcsim> hello. Why size parameter of rpc device_read has type
+      "mach_msg_type_number_t *"? Why not just "vm_size_t *"?
+    <mcsim> this parameter has name data_count
+    <braunr> that's one of the reasons mach is confusing
+    <braunr> i can't really tell you why, it's messy :/
+
+
+# [[open_issues/Code_Analysis]], *Coverity*
+
+## IRC, freenode, #hurd, 2014-02-03
+
+    <teythoon> braunr: at the end of kmem_cache_error the comment says 'never
+      reached'. i do not believe that to be true...
+    <braunr> teythoon: yes, this is a mistake
+    <braunr> those kmem_error calls were panics in the original version
+    <braunr> the comment was left over
+    <braunr> or rather, the panic equivalent not added
+
+
+### IRC, freenode, #hurd, 2014-02-04
+
+    <teythoon> braunr: but the code relies uppon the fact that kmem_cache_error
+      does not return
+    <teythoon> the fact that it doesn't upsets static analysis tools
+    <teythoon>
+      http://darnassus.sceen.net/~teythoon/qa/gnumach/scan-build/2014-01-17/report-DfjC43.html#Path9
+    <braunr> 21:20 < braunr> or rather, the panic equivalent not added
+    <braunr> teythoon: you're right
+    <braunr> it needs to be fixed
+    <teythoon> i setup a coverity project for gnu mach
+    <teythoon> it's interesting
+    <teythoon> very enterprisy >,<
+    <braunr> teythoon: heh
+    <teythoon> braunr: i assume kmem_error is supposed to panic
+    <teythoon> if so, i'd propose to use panic instead of printf in that macro
+      definition
+    <braunr> yes
+    <braunr> teythoon: again, that's how it's done in the original
+      implementation
+    <teythoon> and fix kmem_cache_error to use kmem_warn near the top of the
+      function
+    <braunr> teythoon: i suggest you use the x15 variant as a reference
+      (https://git.sceen.net/rbraun/x15.git/plain/kern/kmem.c)
+    <teythoon> right
+
+
+### IRC, OFTC, #debian-hurd, 2014-02-05
+
+    <pere> ah, cool.  <URL: https://scan.coverity.com/projects/1307 >
+      is now in place. :)
+    <teythoon> pere: it was you who made me create the coverity project
+    <teythoon> and it was most fruitful already
+    <pere> glad to hear that. :)
+    <pere> while the mach thread made me discover scan-build, which
+      seem promising but have way to few rules.
+    <pere> teythoon: btw, could I get access to the mach coverity
+      status?
+    <teythoon> pere: sure
+    <pere> I've used up all my 'join project' slots, so I suspect you
+      have to invite me.  try pere@hungry.com
+    <teythoon> pere: ok
+    <teythoon> pere: i'm fuzzy about the roles
+    <teythoon> what kind of invite shall i send you ?
+    <pere> not sure either.
+    <teythoon> ok
+    <pere> contributor/* would be fine for me.  want to check the
+      details, not just the overview.
+    <teythoon> oh
+    * pere looked up the role description
+    <teythoon> do you have a link ?
+    <teythoon> i can always change the role afaics
+    <pere> go to the member list, found it there.
+    <pere> (the link is project specific, it seem.
+    <teythoon> right, found it
+    <pere> gah, it gave me a new user. :(
+    <pere> I assumed I would be allowed to accept the invite using my
+      normal user.
+    <pere> can you try again with pere-github@hungry.com, which
+      hopefully will hook the invite to my github authenticated user?
+    <teythoon> sure
+    <pere> were you allowed to invite that address?
+    <pere> ah, I got it in my dashboard without having to do anything
+      more.
+    <pere> heh, the email I got claimed the user would not be created
+      unless I provided a password, but given the member list for mach,
+      I fail to see how that could be true.
+
+
+### IRC, OFTC, #debian-hurd, 2014-02-06
+
+    <teythoon> pere: your coverity invitations are still saying 'not
+      accepted', did neither work ?
+    <pere> teythoon: one worked just fine.  I got access.  the other I
+      did not accept.
+    <teythoon> pere: good :)
+
+
+### IRC, OFTC, #debian-hurd, 2014-02-25
+
+    <pere> I am quite impressed with the defect density of Mach, <URL:
+      https://scan.coverity.com/projects/1307 >. :)
+    <pere> 12 outstanding issues (but 54 dismissed was surprisingly
+      high :).
+    <youpi> pere: 54 dismissed because that's a pattern generated by
+      mig
+    <youpi> repeated dozens of times
+
+[[!tag open_issue_mig]]

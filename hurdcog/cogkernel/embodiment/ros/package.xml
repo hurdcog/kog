@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>hurdcog_ros</name>
+  <version>1.0.0</version>
+  <description>HurdCog ROS integration for cognitive robotic planning</description>
+  
+  <maintainer email="dev@hurdcog.org">HurdCog Development Team</maintainer>
+  <license>GPL-3.0</license>
+  
+  <url type="website">https://github.com/rzonedevops/hurdcog</url>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  
+  <exec_depend>python3-requests</exec_depend>
+  <exec_depend>python3-websockets</exec_depend>
+  
+  <export>
+  </export>
+</package>

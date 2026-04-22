@@ -1,0 +1,81 @@
+Upper_Gimbal_L_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: Upper-Gimbal-L_joint
+    joint_speed: 1
+    motor:
+        id: 4
+        init: 2178
+        min: 1787
+        max: 2568
+        acceleration: 10
+
+Upper_Gimbal_R_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: Upper-Gimbal-R_joint
+    joint_speed: 1
+    motor:
+        id: 3
+        init: 3026
+        min: 2635
+        max: 3416
+        acceleration: 10
+
+Lower_Gimbal_L_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: Lower-Gimbal-L_joint
+    joint_speed: 1
+    motor:
+        id: 2
+        init: 2173
+        min: 1509
+        max: 2514
+        acceleration: 10
+
+Lower_Gimbal_R_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: Lower-Gimbal-R_joint
+    joint_speed: 1
+    motor:
+        id: 1
+        init: 1647
+        min: 1304
+        max: 2219
+        acceleration: 10
+
+Neck_Rotation_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: Neck-Rotation_joint
+    joint_speed: 1.1
+    motor:
+        id: 0
+        init: 2000
+        min: 1370
+        max: 2730
+        acceleration: 20
+
+# Robot voice
+voice: giles
+lipsync: True
+
+#Pau2Motors config
+pau2motors:
+    topics:
+        neck_pau: Upper-Gimbal-L;Upper-Gimbal-R;Lower-Gimbal-L;Lower-Gimbal-R;Neck-Rotation
+        head_pau: Eyes_Pitch;Eye_L;Eye_R;EyeLid_U_L;EyeLid_L_L;Eyelid_U_R;EyeLid_L_R;Inner_Brow_R_UD;Sneer_L;Brow_Inner_L;Outer_Brow_L;Brow_Outer_R
+        no_pau: Eyes_Pitch;Eye_L;Eye_R;EyeLid_U_L;EyeLid_L_L;Eyelid_U_R;EyeLid_L_R;Jaw_open;Smile2_L;Smile_R;Smile_L
+        lips_pau: Jaw_open;Lower_Lip_C;Lower_lip_L;Lower_Lip_R;Lip_Upper_L;Lip_Upper_C;Sneer_R;Smile2_L;Smile_R;Smile_L

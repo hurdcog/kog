@@ -1,0 +1,214 @@
+[[!meta copyright="Copyright © 2023 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Porting Rust"]]
+
+[[!template id=highlight text="""/!\ Obsolete /!\
+
+---
+
+Vedant Tewari has been working on this as a Google Summer of Code 2023 project."""]]
+
+The goal of this project is to make the [Rust
+language](https://www.rust-lang.org/) available on GNU/Hurd.
+
+Presumably less work will be needed on the language's frontend itself, but
+rather on the supporting libraries.
+
+
+The Rust language is being used more and more widely, and notably in
+rather fundamental libraries such as librsvg or python-cryptography. It
+is thus more and more pressing for GNU/Hurd to have a compiler for Rust.
+
+The Rust compiler itself is quite portable, but its runtime library, libstd,
+needs to be ported to the GNU/Hurd system. This essentially consists in telling
+Rust how the standard C library functions can be called, i.e. the C ABI.
+
+There as an [initial attempt against rustc 1.30](https://people.debian.org/~sthibault/hurd-i386/rustc-1.30-patch) that was enough to get rustc
+to crossbuild, but it was missing most of what libstd needs. It is most probably
+very outdated nowadays, but that gives an idea.
+
+An example of the main part of the libstd port can be seen for the [VxWorks
+port](https://github.com/rust-lang/libc/blob/master/src/vxworks/mod.rs)
+
+The bulk of such a file can be mostly generated from the libc C
+headers thanks to the bindgen tool, it then needs to be cleaned up and
+integrated into the Rust build infrastructure, some preliminary work had
+already been investigated in that part.
+
+A good level of C programming will be welcome to understand the
+questions of ABI and the libc C functions being bound.
+
+Knowing the Rust language is not required: it can be learnt along the
+way, this can be a good occasion.
+
+Possible mentors: [[Samuel Thibault (youpi)|samuelthibault]] samuel.thibault@gnu.org
+
+For somebody who has already a very good level of C programming and good Rust
+programming skills, this can probably be a 175-hour project. Otherwise it will
+be a good occasion to learn, and can then be a 350-hour project.
+
+It is expected to be of medium difficulty: a fair part of the port is about
+mimicing other ports. Deciding how to mimic can be discussed with the community
+anyway. The other part is about expressing the C ABI. This requires to properly
+understand what that means, but once that is understood, it should be relatively
+straightforward to implement.
+
+You can contact the bug-hurd@gnu.org mailing list to discuss about this project.
+
+Bonding exercise: Building the Debian rustc package on Debian GNU/Linux.
+Building some Debian package (not rustc) on Debian GNU/Hurd.
+Have a look at the [initial attempt against rustc 1.30](https://people.debian.org/~sthibault/hurd-i386/rustc-1.30-patch) to get an idea how it looks like, how the ABI gets expressed in Rust.
+Then one builds the cross-compiler with
+
+    DEB_BUILD_OPTIONS=parallel=8 dpkg-buildpackage -B -ahurd-i386 -Ppkg.rustc.dlstage0,nocheck -nc
+
+[Rust language](https://www.rust-lang.org/)
+
+[How to build and run Rust](https://rustc-dev-guide.rust-lang.org/building/how-to-build-and-run.html)
+
+
+---
+
+One can check out the result with:
+
+    git clone https://github.com/sthibaul/getrandom.git
+    git clone https://github.com/sthibaul/nix.git -b r0.26-hack
+    git clone https://github.com/sthibaul/rust_libloading.git -b v0.7-hack
+    git clone https://github.com/sthibaul/rust_libloading.git -b hack rust_libloading-0.8.0
+    git clone https://github.com/sthibaul/socket2.git -b v0.4.x
+    git clone https://github.com/Vtewari2311/libc.git -b libc-hurd-latest-hack
+    git clone https://github.com/Vtewari2311/rust.git -b mod-hurd-latest-hack
+
+(yes, rust imposes checking out libloading several times...)
+
+---
+
+To build from GNU/Hurd, you will need existing `rustc`/`cargo`/`rustfmt`, you
+can e.g. fetch the tarball
+[from Samuel](https://people.debian.org/~sthibault/hurd-i386/rust-hurd.tar.xz).
+Then you can add the following to `rust/config.toml`
+
+    [build]
+    rustc = "/path/to/your/rust-hurd/usr/local/bin/rustc"
+    rustfmt = "/path/to/your/rust-hurd/usr/local/bin/rustfmt"
+    cargo = "/path/to/your/rust-hurd/usr/local/bin/cargo"
+
+And then run from `rust/`
+
+    ./x build
+    DESTDIR=/where/you/want ./x install
+    DESTDIR=/where/you/want ./x install cargo rustfmt
+
+Expect about 20GB disk usage and several hours duration. You also need quite
+some ram, 4GB may be needed.
+
+One can run the basic testsuites with
+
+    ./x test tests/ui
+    ./x test library/core
+    ./x test library/std
+
+One [can run tests remotely](https://rustc-dev-guide.rust-lang.org/tests/running.html#running-tests-on-a-remote-machine),
+to test with crossbuilding:
+
+    ./x build src/tools/remote-test-server --target i686-unknown-hurd-gnu
+
+One can run it on the target:
+
+    ./remote-test-server  -v --bind 0.0.0.0:12345
+
+and run the testsuite with
+
+    export TEST_DEVICE_ADDR="1.2.3.4:12345"
+    ./x test tests/ui --target i686-unknown-hurd-gnu
+
+Currently these tests are known to fail:
+
+tests/ui:
+
+    [ui] tests/ui/abi/homogenous-floats-target-feature-mixup.rs
+    [ui] tests/ui/associated-consts/issue-93775.rs
+    [ui] tests/ui/env-funky-keys.rs
+    [ui] tests/ui/issues/issue-74564-if-expr-stack-overflow.rs
+    [ui] tests/ui/macros/macros-nonfatal-errors.rs
+    [ui] tests/ui/modules/path-no-file-name.rs
+    [ui] tests/ui/parser/mod_file_with_path_attr.rs
+    [ui] tests/ui/process/no-stdio.rs#mir
+    [ui] tests/ui/process/no-stdio.rs#thir
+    [ui] tests/ui/process/println-with-broken-pipe.rs
+    [ui] tests/ui/sse2.rs
+    [ui] tests/ui/traits/object/print_vtable_sizes.rs
+
+notably because we have not enabled SSE2 by default, and we have errno values that are different from Linux etc.,
+
+library/std:
+
+    net::tcp::tests::double_bind
+    net::tcp::tests::test_read_timeout
+    net::tcp::tests::test_read_with_timeout
+    net::tcp::tests::timeouts
+    net::udp::tests::test_read_timeout
+    net::udp::tests::test_read_with_timeout
+    net::udp::tests::timeouts
+    os::unix::net::tests::basic
+    os::unix::net::tests::test_read_timeout
+    os::unix::net::tests::test_read_with_timeout
+    os::unix::net::tests::test_unix_datagram_connect_to_recv_addr
+
+because pfinet currently lets double-bind on IPv6 addresses, doesn't currently support `SO_SNDTIMEO` / `SO_RCVTIMEO`, and pflocal doesn't support getpeername.
+
+---
+
+To cross-build (e.g. from Linux), you need to set up a cross build toolchain
+; a simple way is to use the `build-many-glibcs.py` script as described on
+[[hurd/glibc]]. Note that to produce something that can be run even on current
+latest Debian, you should be using the `2.37/master` branch. You also need to
+comment the `#define ED` from `sysdeps/mach/hurd/bits/errno.h`.
+
+You also need to unpack a Hurd build of openssl ; a simple way is to take the
+debian packages from debian-ports:
+[libssl3](http://deb.debian.org/debian-ports/pool-hurd-i386/main/o/openssl/libssl3_3.0.10-1_hurd-i386.deb)
+and
+[libssl-dev](http://deb.debian.org/debian-ports/pool-hurd-i386/main/o/openssl/libssl-dev_3.0.10-1_hurd-i386.deb)
+and unpack them with:
+
+    dpkg-deb -x libssl3_3.0.10-1_hurd-i386.deb /where/you/want
+    dpkg-deb -x libssl-dev_3.0.10-1_hurd-i386.deb /where/you/want
+    mv /where/you/want/usr/include/i386-gnu/openssl/* /where/you/want/usr/include/openssl/
+    mv /where/you/want/usr/lib/i386-gnu/* /where/you/want/usr/lib/
+
+Then you can add the following to `rust/config.toml`
+
+    [llvm]
+    download-ci-llvm = false
+
+    [target.i686-unknown-hurd-gnu]
+    cc = "/path/to/your/build-glibc/install/compilers/i686-gnu/bin/i686-glibc-gnu-gcc"
+    cxx = "/path/to/your/build-glibc/install/compilers/i686-gnu/bin/i686-glibc-gnu-g++"
+    linker = "/path/to/your/build-glibc/install/compilers/i686-gnu/bin/i686-glibc-gnu-gcc"
+
+And then run from `rust/`
+
+    export I686_UNKNOWN_HURD_GNU_OPENSSL_DIR=/where/you/want/usr
+    ./x build --stage 0 compiler library
+    ./x build --host i686-unknown-hurd-gnu --target i686-unknown-hurd-gnu compiler library cargo rustfmt
+    DESTDIR=/where/you/want ./x install --host i686-unknown-hurd-gnu --target i686-unknown-hurd-gnu
+    DESTDIR=/where/you/want ./x install --host i686-unknown-hurd-gnu --target i686-unknown-hurd-gnu cargo rustfmt
+
+Expect about 25GB disk usage and several hours duration. You also need quite
+some ram, 4GB may be needed. Take care if you have many cores and threads, the
+parallel build of llvm can be quite demanding, you may want to reduce the number
+of available processors (e.g. disabling SMT by prefixing your commands with
+`hwloc-bind --no-smt all -- `), so you have more memory per core.
+
+Note that you will have a usable cross-compiler in
+`rust/build/x86_64-unknown-linux-gnu/stage1/bin/rustc` and a native Hurd compiler in
+`rust/build/i686-unknown-hurd-gnu/stage2/bin/rustc`

@@ -1,0 +1,46 @@
+Source: cognumach
+Section: kernel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11), build-essential, gcc-multilib, mig, binutils, autoconf, automake, texinfo, bison, flex
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ/tree/main/cognumach
+
+Package: cognumach
+Architecture: i386
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Enhanced GNU Mach microkernel with cognitive features
+ Cognumach is an enhanced version of the GNU Mach microkernel, designed to
+ serve as the foundation for the HurdCog cognitive operating system and the
+ broader AGI-OS stack.
+ .
+ This microkernel provides advanced features including improved memory
+ management, symmetric multiprocessing (SMP) enhancements, virtual memory
+ optimizations, and modernized PCI support. These enhancements enable
+ efficient execution of cognitive computing workloads and support the
+ distributed hypergraph processing required by the OpenCog framework.
+ .
+ Key features include:
+  - Advanced memory management with copy-on-write optimization
+  - SMP support for parallel cognitive processing
+  - Enhanced virtual memory system for large knowledge bases
+  - Modernized device driver infrastructure
+  - Kernel debugger support for development
+  - Message-passing IPC optimized for cognitive agents
+ .
+ Cognumach serves as Layer 1 in the three-layer AGI-OS architecture,
+ providing the foundational primitives upon which HurdCog (Layer 2) and
+ the OpenCog Collection (Layer 3) are built.
+
+Package: cognumach-dev
+Architecture: i386
+Depends: ${misc:Depends}, cognumach (= ${binary:Version})
+Description: Development files for Cognumach microkernel
+ This package contains the header files and development libraries needed
+ to build kernel modules and system servers for the Cognumach microkernel.
+ .
+ It includes the Mach Interface Generator (MIG) definitions, kernel headers,
+ and documentation necessary for developing Hurd translators and other
+ system-level components that interact with the microkernel.

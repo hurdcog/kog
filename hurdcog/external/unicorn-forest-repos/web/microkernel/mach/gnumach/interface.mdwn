@@ -1,0 +1,60 @@
+[[!meta copyright="Copyright © 2013, 2014 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Interfaces"]]
+
+/!\ Incomplete.
+
+[[!map pages="microkernel/mach/gnumach/interface/*"
+show=title]]
+
+
+# Proposed
+
+## <a name="futex">Futex</a>
+
+Add a futex kernel trap to GNU Mach.
+This can be useful for nicer locking
+primitives, including inter-process primitives. `vm_allocate` can be used as an
+example in the `gnumach` source tree for how to add a kernel trap. 
+
+
+### [[!GNU_Savannah_task 6231]]
+
+### Patches on bug-hurd
+
+### IRC, freenode, #hurd, 2014-01-20
+
+    <teythoon> braunr: i meant to ask about the futex stuff
+    <teythoon> what do you mean when you talk about the interface ?
+    <teythoon> i imagined something like this
+    <braunr> more precisely ?
+    <teythoon> for shared futexes, do not use a pointer, but a right
+      referencing a memory object, and the offset ?
+    <braunr> why not a pointer ?
+    <braunr> well, an address
+    <teythoon> that's how it's currently done, right ?
+    <teythoon> in marins prototype i mean
+    <braunr> yes
+    <braunr> it's a task/address pair
+    <teythoon> so the only concern is the access in the kernel ?
+    <braunr> hum not only no
+    <braunr> or yes, but there are multiple ways to access
+    <teythoon> i meant to say this, for me, it would be very helpful if you
+      were more explicit when you describe how you picture something
+    <braunr> i thought i did it clearly
+    <braunr> i even agree with what roland describes
+    <braunr> which looks even clearer
+    <braunr> also, i said i didn't picture it completely
+    <braunr> :)
+    <braunr> i didn't want to work on that, only review
+    <teythoon> sure, but what might be clear to you is most likely not that
+      clear to me
+    <braunr> ok

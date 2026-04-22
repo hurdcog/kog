@@ -1,0 +1,6167 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Language Learning Diary - Part Six
+\end_layout
+
+\begin_layout Date
+Feb 2022 - March 2022
+\end_layout
+
+\begin_layout Author
+Linas Vepštas
+\end_layout
+
+\begin_layout Abstract
+The language-learning effort involves research and software development
+ to implement the ideas concerning unsupervised learning of grammar, syntax
+ and semantics from corpora.
+ This document contains supplementary notes and a loosely-organized semi-chronol
+ogical diary of results.
+ The notes here might not always makes sense; they are a short-hand for
+ my own benefit, rather than aimed at you, dear reader!
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+Part Six of the diary on the language-learning effort re-examines some older
+ data from a physical-science, graph-theoretic, information-theoretic viewpoint.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+older data
+\begin_inset Quotes erd
+\end_inset
+
+ here is primarily the data for word-pairs.
+ The first section defines the 
+\begin_inset Quotes eld
+\end_inset
+
+density of states
+\begin_inset Quotes erd
+\end_inset
+
+ in terms of the 
+\begin_inset Quotes eld
+\end_inset
+
+energy
+\begin_inset Quotes erd
+\end_inset
+
+.
+ These are fundamental physics concepts appearing in thermodynamics; they're
+ mapped onto the analogous word-pair statistics concepts.
+ The second section examines a number of other quantities in this same conceptua
+l framework.
+ Some of this repeats results reported earlier; here, a more comprehensive
+ approach is taken.
+ 
+\end_layout
+
+\begin_layout Standard
+There is an implicit meta-goal, which is not achieved: to provide a statistical-
+mechanical, field-theoretic framework for the language data.
+ This is explored only at a rather superficial level.
+ It feels like deeper analogies are certainly possible, but it is not clear
+ how these could offer insight.
+ 
+\end_layout
+
+\begin_layout Section*
+Summary Conclusions
+\end_layout
+
+\begin_layout Standard
+The most important result presented here is an analysis of the word-pair
+ MI distribution.
+ For the first time, it becomes clear that it factors into two parts: a
+ Gaussian distribution, arising from randomly-paired words, and a log-normal
+ distribution, arising from word-pairs that carry actual syntactic information.
+ This is obvious, in retrospect, and was always visible; just that now,
+ we have an rough explanation for the shape.
+ Here's the relevant graph, in full glory; it is explained towards the end
+ of the chapter.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-fmi-signal.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This chapter starts with definitions of some abstract concepts, followed
+ by some data analysis.
+ In order of appearance (and not in order of importance):
+\end_layout
+
+\begin_layout Itemize
+The product topology.
+ The space of natural-language sentences is simply the collection of ordered
+ strings of words.
+ A 
+\begin_inset Quotes eld
+\end_inset
+
+sentence
+\begin_inset Quotes erd
+\end_inset
+
+ is just the Cartesian product of words in a vocabulary.
+ As a Cartesian-product space, it has a natural 
+\begin_inset Quotes eld
+\end_inset
+
+topology
+\begin_inset Quotes erd
+\end_inset
+
+, the 
+\begin_inset Quotes eld
+\end_inset
+
+product topology
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The basis of product topologies are called 
+\begin_inset Quotes eld
+\end_inset
+
+cylinder sets
+\begin_inset Quotes erd
+\end_inset
+
+; these are just sequences of specific words, interspersed with wild-cards.
+ Word-pairs are just specific cylinder sets: two words, with zero or more
+ wild-cards between them, and an arbitrary number of wild-cards before and
+ after them.
+\end_layout
+
+\begin_layout Itemize
+Density of states, theoretical definition.
+ A 
+\begin_inset Quotes eld
+\end_inset
+
+state
+\begin_inset Quotes erd
+\end_inset
+
+ can be identified with a cylinder set in the product topology.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+energy
+\begin_inset Quotes erd
+\end_inset
+
+ of a state can be identified with the log of the probability of that state
+ (equivalently, the log of the measure of the cylinder set).
+ The density of states is then simply the distribution of the states, as
+ a function of their energy.
+ That is, for a given small but fixed interval of energy, how many states
+ are there in that interval? This is the density of states.
+ In thermodynamics and chemistry, this is a fundamental concept; for natural
+ language, it is novel, but worth asking about to see if any analogies hold.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+For example, in chemistry, there are lots of low-energy states at low temperatur
+es; it is hard to have many high-energy states at low temperatures.
+ Typical distributions are the Maxwell-Boltzmann distribution for an ideal
+ gas; the Fermi-Dirac distribution for fermions, and the Bose-Einstein distribut
+ion for supercooled quantum states.
+ The first is conventionally taught in college chemistry.
+ Is there anything analogous in natural language?
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Density of states, experimental result.
+ Consider the collection of all observed word-pairs 
+\begin_inset Formula $\left(w_{j},w_{k}\right)$
+\end_inset
+
+.
+ The frequency with which some word-pair is observed is 
+\begin_inset Formula $p\left(w_{j},w_{k}\right)$
+\end_inset
+
+ and the energy is 
+\begin_inset Formula $E=-\log_{2}p$
+\end_inset
+
+.
+ The density of states 
+\begin_inset Formula $\rho\left(E\right)$
+\end_inset
+
+ is then just a histogram: how many word-pairs were observed in a small,
+ finite-sized interval of energy? Making this histogram, one easily finds
+ that, to first order, its a nice straight line (on a semi-log graph), so
+ that the density of states is 
+\begin_inset Formula $\rho\left(E\right)\sim2^{-E}$
+\end_inset
+
+ over a wide range, dropping off at the low and the high end due to under-sampli
+ng effects.
+ This is, more or less, with some twists, a rephrasing of the old and well-known
+ result that the Zipfian distribution applies to word-pairs.
+\end_layout
+
+\begin_layout Itemize
+The Zipf graph goes very nearly as 1/rank i.e.
+ as the classical Zipf with exponent 1.
+ However, it has a bit of a hump, as does 
+\begin_inset Formula $\rho\left(E\right)$
+\end_inset
+
+.
+ Looking more closely, at the top-1200 ranked pairs, the Zipf exponent is
+ 3/4 (almost exactly) and not 1.
+ This is a so-called 
+\begin_inset Quotes eld
+\end_inset
+
+small-world
+\begin_inset Quotes erd
+\end_inset
+
+ exponent.
+ The open-world exponent of 1 kicks in above 1200.
+ This suggests that all word-pairs above 1200 are under-sampled.
+ This is out of a total of 
+\begin_inset Formula $10^{7}$
+\end_inset
+
+distinct word-pairs that were observed.
+ The small world is indeed small, the provinces vast.
+ 
+\end_layout
+
+\begin_layout Itemize
+The 
+\begin_inset Formula $\rho\left(E\right)$
+\end_inset
+
+ has a similar hump.
+ The constant slope can be removed by rescaling to 
+\begin_inset Formula $2^{E}\rho\left(E\right)$
+\end_inset
+
+ which revels the precise form of the hump: it is exactly a (log-normal)
+ Gaussian! 
+\end_layout
+
+\begin_layout Itemize
+Closer examination reveals that the idea of a measure on a product topology
+ is naive and incorrect.
+ The first problem is that the size of the vocabulary is not fixed; the
+ larger the corpus, the more new words are found (proper names, geographical
+ place-names, slang, marketing terms, technical terms...) In the limit of infinite
+ vocabulary, this would imply that the measure is log-divergent, i.e.
+ is not a measure.
+ 
+\end_layout
+
+\begin_layout Itemize
+A better theoretical foundation is needed.
+ (None is proposed here) Such a foundation would need to explain and characteriz
+e:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The under-sampling effect, and the location of the large-world to small-world
+ cross-over.
+\end_layout
+
+\begin_layout Itemize
+The effect of human-scale finite sentence lengths on punctuation and determiners.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+The under-sampling effect is foundational, and affects the graphed distributions
+ in all graphs in all chapters of this diary.
+ It's pervasive, and confounding, and makes it difficult to understand 
+\begin_inset Quotes eld
+\end_inset
+
+what's actually happening
+\begin_inset Quotes erd
+\end_inset
+
+.
+ A preliminary sketch is made for how to untangle sample-size effects is
+ given.
+\end_layout
+
+\begin_layout Itemize
+Earlier chapters explored marginal probabilities, fractional entropies,
+ mutual information, marginal MI and so on.
+ These are re-examined again here, this time as functions of 
+\begin_inset Formula $E$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Vertex-degree graphs are presented.
+ Vertex-degree graphs are commonplace in network analysis; it seems fitting
+ to do that here.
+ A vertex is a word, and it's degree is the number of (distinct, unique)
+ word-pairs it occurs in.
+ For the range of 
+\begin_inset Formula $10\apprle D\apprle1200$
+\end_inset
+
+, the probability 
+\begin_inset Formula $p\left(D\right)$
+\end_inset
+
+ of observing a word-vertex with degree 
+\begin_inset Formula $D$
+\end_inset
+
+ goes as 
+\begin_inset Formula $p\left(D\right)\sim D^{-1.6}$
+\end_inset
+
+.
+ This is a small-world scaling exponent; it is far away from being a scale-free
+ network exponent.
+ Note that this is a statement about infrequent words; common words, like
+ 
+\begin_inset Quotes eld
+\end_inset
+
+the
+\begin_inset Quotes erd
+\end_inset
+
+ will have a degree in the millions.
+\end_layout
+
+\begin_layout Itemize
+The word-pair MI distribution is composed of two parts.
+ One part is a Gaussian, centered more or less on an MI of zero.
+ This Gaussian is purely due to selections of word-pairs having no syntactic
+ relationships, and contains no syntactic information.
+ Subtracting this leaves behind the word-pairs with the actual syntactic
+ information.
+ That distribution seems to be log-normal, i.e has strictly-positive MI.
+\end_layout
+
+\begin_layout Itemize
+Distributions of the word-disjunct MI are presented.
+ They vaguely resemble the word-pair MI graphs, but are dirtier/uglier.
+ No particular insight is gained.
+\end_layout
+
+\begin_layout Itemize
+The ranked-MI looks vaguely like a Laplacian.
+ Two ideas are developed: a fibered-Laplacian, and a Hamming-Laplacian.
+ Experimental data is shown for the Hamming-Laplacian.
+ It's curious, but provides no particular insight.
+ 
+\end_layout
+
+\begin_layout Standard
+That's it.
+ Now on with the main text.
+\end_layout
+
+\begin_layout Section*
+Field Theory Models and Statistical Mechanics
+\end_layout
+
+\begin_layout Standard
+Field theory models applied to statistics and language have surely been
+ thrashed to death in the literature (of which I am only dimly aware; thus,
+ no bibliography.).
+ The below is an attempted recap of some basic ideas, recast into the notation
+ used locally in this diary.
+ After a few basic initial definitions, it rapidly devolves into a presentation
+ of experimental results (for word-pairs).
+\end_layout
+
+\begin_layout Subsection*
+Density of States
+\end_layout
+
+\begin_layout Standard
+Starting point is a discrete linear lattice of words in a sentence.
+ Associated to each sentence is a probability 
+\begin_inset Formula $p\left(w_{1},\cdots,w_{n}\right)$
+\end_inset
+
+ for words 
+\begin_inset Formula $w_{k}$
+\end_inset
+
+ and a sentence of length 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ We do not know that probability; we just assume it exists 
+\emph on
+a priori
+\emph default
+.
+ We can make experimental pair-wise observations of word-pairs as 
+\begin_inset Formula $\left(*,*,\cdots,*,w_{i},*,\cdots,*,w_{j},*,\cdots,*\right)$
+\end_inset
+
+ of pairs of words 
+\begin_inset Formula $\left(w_{i},w_{j}\right)$
+\end_inset
+
+ within the full sentence.
+ Note the former is a cylinder set, 
+\emph on
+i.e.
+
+\emph default
+ an element of the product topology on strings.
+ 
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $\sigma=\left(w_{1},\cdots,w_{n}\right)$
+\end_inset
+
+ be a string (the sentence).
+ Define the energy of a string as 
+\begin_inset Formula $E\left(\sigma\right)=-\log_{2}p\left(\sigma\right)$
+\end_inset
+
+ and define the energy density as 
+\begin_inset Formula 
+\begin{align*}
+\rho\left(E\right)= & \sum_{\sigma}\delta\left(E-E\left(\sigma\right)\right)\\
+=C & \sum_{w_{i},w_{j}}\delta\left(E+\log_{2}p\left(w_{i},w_{j}\right)\right)
+\end{align*}
+
+\end_inset
+
+where 
+\begin_inset Formula $\delta\left(x\right)$
+\end_inset
+
+ is the Dirac delta function (in principle) or just a finite–width, but
+ thin Gaussian in practice, or, more plainly, just a box filter, so that
+ we can do histogram counting.
+ The constant 
+\begin_inset Formula $C$
+\end_inset
+
+ appears because the sum over pairs is a multiple of the sum over all states;
+ it over-counts (since 
+\begin_inset Formula $\sum_{\sigma}=\sum_{w_{1},w_{2},\cdots,w_{n}}$
+\end_inset
+
+ counts all words at all word-positions.) A formal derivation of the value
+ of 
+\begin_inset Formula $C$
+\end_inset
+
+ from first principles seems tedious and unenlightening.
+ Not to worry, we can force it experimentally simply by requiring that 
+\begin_inset Formula 
+\[
+\int\rho\left(E\right)dE=1
+\]
+
+\end_inset
+
+I honestly do not recall if any of the prior diary entries ever supplied
+ a graph of 
+\begin_inset Formula $\rho\left(E\right)$
+\end_inset
+
+.
+ Better late than never?
+\end_layout
+
+\begin_layout Subsection*
+Interpretation
+\end_layout
+
+\begin_layout Standard
+The above definition of the density of states is motivated by the Boltzmann
+ distribution 
+\begin_inset Formula $p=e^{-\beta E}$
+\end_inset
+
+.
+ Taking the log of both sides and setting 
+\begin_inset Formula $\beta=1$
+\end_inset
+
+ gives 
+\begin_inset Formula $E=-\log p$
+\end_inset
+
+.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See Wikipedia, 
+\begin_inset CommandInset href
+LatexCommand href
+name "Boltzmann distribution"
+target "https://en.wikipedia.org/wiki/Boltzmann_distribution"
+literal "false"
+
+\end_inset
+
+ for additional details.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Density of States - Experimental Result
+\end_layout
+
+\begin_layout Standard
+Working with the Run-1 dataset `
+\family sans
+run-1-en_pairs-tranche-123.rdb
+\family default
+`.
+ This dataset is characterized in the subsection below.
+ To generate the histogram, simply create N bins, and increment by one whenever
+ 
+\begin_inset Formula $-\log_{2}p\left(w_{i},w_{j}\right)$
+\end_inset
+
+ lies within the bin boundaries.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Use the script in `
+\family sans
+utils/density-of-states.scm
+\family default
+`
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+The graph below uses 200 bins, running between a lower bound of 7.0 and upper
+ bound of 30.0.
+ Thus, the width of each bin is 
+\begin_inset Formula $dh=23/200$
+\end_inset
+
+.
+ The data is as marked, and, to provide a sense of scale, the line 
+\begin_inset Formula $2^{E-30}$
+\end_inset
+
+ is graphed.
+ Note that there is a scattering of dots at the upper-right and lower left
+ (zoom in to see them).
+ Dots correspond to non-empty bins in the histogram, with empty neighbors.
+ These dots have a special significance.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/density.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This graph can be understood as a kind-of upside-down Zipfian distribution.
+ The scatter of dots at the top-right are the pairs that were seen only
+ a handful of times.
+ The topmost, rightmost dot corresponds to the word-pairs that were observed
+ only once, and thus have a very high 
+\begin_inset Formula $E$
+\end_inset
+
+.
+ Specifically, 
+\begin_inset Formula $E_{1}=\log_{2}985483375\approx29.8763$
+\end_inset
+
+ for this point, as there was a grand total of 985 million pairs observed.
+ The density here is a Dirac delta spike, since there were 9215082 distinct,
+ unique word-pairs observed exactly once; thus 
+\begin_inset Formula $\rho\left(E_{1}\right)$
+\end_inset
+
+ is normalized to 
+\begin_inset Formula $985483375/9215082/dh$
+\end_inset
+
+.
+ The next dots correspond to the number of distinct word-pairs that were
+ observed only twice, then three times,
+\emph on
+ etc.
+
+\emph default
+ until they run together into common bins in the histogram.
+ The dots at the bottom-left correspond to word-pairs there are extremely
+ common (typically involving the words 
+\begin_inset Quotes eld
+\end_inset
+
+the
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+, punctuation.) These would be ranked first in a Zipfian distribution, thus
+ the bottom-left of this graph corresponds to the top-left of a Zipf graph.)
+\end_layout
+
+\begin_layout Standard
+Note that if the counts in the right-most bins are smeared, so that they
+ are not delta functions, but smooth, then the right side of the graph would
+ twist down sharply.
+ It appears that it could be approximated by 
+\begin_inset Formula $(30-E)2^{E-30}$
+\end_inset
+
+.
+ Not shown; it would be nice to show this graph.
+\end_layout
+
+\begin_layout Standard
+For comparison, below left is the conventional Zipf distribution graph,
+ and, on the right, the same graph flipped along the diagonal, together
+ with density of states from above.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-rank.eps
+	width 50col%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename p6-density/pair-rank-flip.eps
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Under-sampling
+\end_layout
+
+\begin_layout Standard
+The humpback shape appears to be due to an under-sampling effect.
+ This is exposed and explained in the next few sections.
+ Due to a finite sample size, it appears that the only pairs that are sufficient
+ly sampled are those up to a rank of about 1200.
+ After that, pairs are under-sampled.
+ The result of that under-sampling is a humpback shape, as seen above; the
+ top of the hump is where the under-sampling begins.
+ This suggests that the eyeballed fit is incorrect, and that the Rank distributi
+on should be considered only up to 1200.
+ This is shown below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-rank-cut.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This time, the slope is different: it is 0.75, which is, umm, err, I guess
+ its a 
+\begin_inset Quotes eld
+\end_inset
+
+small world
+\begin_inset Quotes erd
+\end_inset
+
+ slope.
+ This is no longer the canonical Zipf slope of 1.0.
+ This raises the question: how many of the graphs in the earlier parts of
+ the diary are compromised, as being mixtures of under-sampling and 
+\begin_inset Quotes eld
+\end_inset
+
+actual effects
+\begin_inset Quotes erd
+\end_inset
+
+? This also raises the question: aren't all learning effects always driven
+ by an under-sampling? That is, isn't one always doomed to under-sample?
+ How can one know this, and how can one take this into account?
+\end_layout
+
+\begin_layout Standard
+Whence this magic number 1200?
+\end_layout
+
+\begin_layout Subsubsection*
+Top-ten Word Pairs
+\end_layout
+
+\begin_layout Standard
+Given the above discussion about under-sampling, it is hard to avoid noticing
+ that the top-ten word-pairs appear to follow an eve flatter slope.
+ What does this mean? Clearly, they are not under-sampled, and so the flatter
+ slope needs to have some more sophisticated explanation.
+ 
+\end_layout
+
+\begin_layout Standard
+The top-ten most frequently observed word-pairs are shown in the table below:
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="11" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Rank
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Pair (word <<> word)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+4765096
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+, <<>> and
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4254477
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+###LEFT-WALL### <<>> ,
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3714944
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+###LEFT-WALL### <<>> .
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3705739
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+of <<>> the
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3141824
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+- <<>> -
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2951005
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+###LEFT-WALL### <<>> the
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2603823
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+, <<>> the
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2177390
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+the <<>> of
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1926906
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+in <<>> the
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1915335
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+, <<>> ,
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+more sophisticated
+\begin_inset Quotes erd
+\end_inset
+
+ explanation might be this: this is a finite-sentence-length effect.
+ That is, the nature of human understanding is that we have a limited attention
+ span, and a limited short-term memory.
+ Sentence lengths, and the use of punctuation must accommodate these limits.
+ Thus, sentence starters and sentence enders, and commas, for phrase identificat
+ion, should appear at a constant rate, rather than at a Zipfian rate.
+ And that is indeed what the above seems to confirm.
+ OK, so that's an interesting discovery, its new to me.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Relative Density of States
+\end_layout
+
+\begin_layout Standard
+OK, so, due to under-sampling effects, there is a hump.
+ Let's look at the hump more closely.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See `
+\family sans
+p6-density/density.gplot
+\family default
+`.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/density-relative.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The above shows 
+\begin_inset Formula $\rho\left(E\right)\times2^{E-26}$
+\end_inset
+
+ and an eyeballed Gaussian.
+ The relative factor of 
+\begin_inset Formula $2^{E-26}$
+\end_inset
+
+ removes the dominant slope.
+ It's 
+\begin_inset Formula $E-26$
+\end_inset
+
+ instead of 
+\begin_inset Formula $E-30$
+\end_inset
+
+ so that we can draw the Gaussian without any normalization.
+ That is, the Gaussian is just 
+\begin_inset Formula 
+\[
+G\left(\mu,\sigma\right)=\frac{1}{\sqrt{2\pi\sigma}}\exp-\frac{\left(E-\mu\right)^{2}}{2\sigma^{2}}
+\]
+
+\end_inset
+
+without any further normalization.
+ It's drawn for 
+\begin_inset Formula $\mu=18$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma=6$
+\end_inset
+
+.
+ There is no theoretical reason (that I am aware of) to expect a Gaussian
+ here.
+ 
+\end_layout
+
+\begin_layout Standard
+Properly, we should be fitting to a log-normal distribution, since 
+\begin_inset Formula $E$
+\end_inset
+
+ is necessarily positive-definite.
+ However, this far from the origin, the log-normal and the normal distributions
+ look almost identical.
+ Whatever, its an OK fit to a bulging, noisy graph.
+ 
+\end_layout
+
+\begin_layout Standard
+What does it mean? I dunno.
+ It means that we need a theoretical framework for handling the under-counting
+ phenomenon above.
+ 
+\end_layout
+
+\begin_layout Standard
+This Gaussian is probably (almost surely) related to the Gaussian appearing
+ in the MI scores, below.
+ But I do not know how to derive one from the other.
+ (Too lazy to figure it out.)
+\end_layout
+
+\begin_layout Subsection*
+Physical Interpretation
+\end_layout
+
+\begin_layout Standard
+Clearly, the density graph suggests that the total energy
+\begin_inset Formula 
+\[
+\int E\rho\left(E\right)dE
+\]
+
+\end_inset
+
+is unbounded.
+ Of course, it is finite for this particular dataset, but the trend suggests
+ that if a trillion word-pairs were observed, then the high-end of the graph
+ would be at 
+\begin_inset Formula $E=40$
+\end_inset
+
+ instead of at 
+\begin_inset Formula $E=30$
+\end_inset
+
+.
+ Thus, this is not a 
+\begin_inset Quotes eld
+\end_inset
+
+physical
+\begin_inset Quotes erd
+\end_inset
+
+ system of finite energy, in the conventional sense.
+ 
+\end_layout
+
+\begin_layout Standard
+The root cause of this is that the vocabulary is unbounded.
+ As more and more text is observed, more and more vocabulary words are encounter
+ed, and there appears to be no upper limit (geographical place-names, foreign
+ loan-words, given names, imaginative sales terms, children's nonsense words,
+ portmanteaus, ...) As a result, the number of distinct word pairs also grows,
+ in an unbounded fashion, as the number of observations increase.
+ 
+\end_layout
+
+\begin_layout Standard
+Thus we take the size of the vocabulary to be countable infinity and denote
+ it as 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+ the natural numbers.
+ The space of all strings (sentences) of length 
+\begin_inset Formula $n$
+\end_inset
+
+ is then the Cartesian product 
+\begin_inset Formula 
+\[
+\mathbb{N}\times\cdots\times\mathbb{N}=\mathbb{N}^{n}
+\]
+
+\end_inset
+
+It would be nice to be able to assign a measure 
+\begin_inset Formula $\mu$
+\end_inset
+
+ to this space, but even this is problematic.
+ Consider the cylinder set 
+\begin_inset Formula $\left(*,\cdots,*,w_{k},*,\cdots,*\right)$
+\end_inset
+
+ of a word 
+\begin_inset Formula $w_{k}$
+\end_inset
+
+ at location 
+\begin_inset Formula $j$
+\end_inset
+
+ in the middle of all sentences of length 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ Denote the probability as 
+\begin_inset Formula $\mu_{j}\left(w_{k}\right)$
+\end_inset
+
+.
+ For English, and for many languages, the probability of observing a word
+ is mostly independent of it's location in the sentence, so drop the subscript
+ 
+\begin_inset Formula $j$
+\end_inset
+
+ and just write 
+\begin_inset Formula $\mu\left(w_{k}\right)$
+\end_inset
+
+ as the probability of observing a word (or just define 
+\begin_inset Formula $\mu\left(w_{k}\right)$
+\end_inset
+
+ as the average over 
+\begin_inset Formula $j$
+\end_inset
+
+.) This is the measure of the cylinder set 
+\begin_inset Formula $\left(*,\cdots,*,w_{k},*,\cdots,*\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+For this to be a proper probability, we expect that we should be able to
+ write 
+\begin_inset Formula 
+\[
+1=\sum_{k}\mu\left(w_{k}\right)
+\]
+
+\end_inset
+
+which is an eminently desirable property of any measure.
+ But we are not so lucky: the distribution of words is Zipfian, with exponent
+ 1, and so this sum is logarithmically divergent.
+ That is, the Zipfian distribution of individual words tells us that 
+\begin_inset Formula 
+\[
+\mu\left(w_{k}\right)\approx\frac{1}{k^{s}}
+\]
+
+\end_inset
+
+for exponent 
+\begin_inset Formula $s$
+\end_inset
+
+, and experimentally, it is well-known that for natural language, 
+\begin_inset Formula $s\approx1$
+\end_inset
+
+ and is typically measured to be 1.01 to 1.05 for datasets with millions or
+ billions of words.
+ For the infinite vocabulary 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+, we are forced to take the value of 
+\begin_inset Formula $s=1$
+\end_inset
+
+ and thus end up with a topological space without a conventional measure
+ on it.
+\end_layout
+
+\begin_layout Standard
+The only good news here is that it is only weakly divergent.
+\end_layout
+
+\begin_layout Standard
+Except the above conceptualization is wrong.
+ Based on the revised results, taking into account the limited sample size
+ (as discussed above, and further below) we have to conclude that in the
+ limit of large sample size, that 
+\begin_inset Formula $s\approx0.75$
+\end_inset
+
+.
+ In addition to this, sentences are not unbounded in length (German philosophers
+ proving the rule) and so the actual normalization requirement is 
+\begin_inset Formula 
+\[
+1=\sum_{k<N}\mu\left(w_{k}\right)
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $N$
+\end_inset
+
+ is an upper bound on 
+\begin_inset Quotes eld
+\end_inset
+
+realistic
+\begin_inset Quotes erd
+\end_inset
+
+ sentence lengths.
+ 
+\end_layout
+
+\begin_layout Standard
+What all this points at is the lack of a theory that takes into account
+ limited sample sizes, as well as taking into account human cognitive effects
+ such as finite sentence lengths, driven by attention span and the limits
+ of short-term memory.
+ Developing such a theory appears to require considerable effort.
+ 
+\end_layout
+
+\begin_layout Standard
+The above density-of-states results for word-pairs indicates that the same
+ applies for 
+\begin_inset Formula $\mu\left(w_{i},w_{j}\right)$
+\end_inset
+
+.
+ This is the same as 
+\begin_inset Formula $p\left(w_{i},w_{j}\right)$
+\end_inset
+
+, we're just bouncing around in notation, so that 
+\begin_inset Formula $\mu$
+\end_inset
+
+ is the formal measure on the Cartesian product space, for given cylinder
+ sets, while 
+\begin_inset Formula $p$
+\end_inset
+
+ is the experimentally observed frequentist probability (the Bayesian probabilit
+y with the trivial prior.)
+\end_layout
+
+\begin_layout Subsubsection*
+Dataset Notes
+\end_layout
+
+\begin_layout Standard
+This part is too big to fit in a footnote, so I put it here.
+ At first, attempted to work with the Run-1 dataset `
+\family sans
+run-1-marg-tranche-1234.rdb
+\family default
+` which contains the marginals.
+ This dataset is painfully large, taking too long to load.
+ It was using 50 GB and swapping like mad after loading 29M of the total
+ 38M pairs.
+ Ouch.
+ Try again with `
+\family sans
+run-1-en_pairs-tranche-123.rdb
+\family default
+` which should not have any marginals, just the raw counts ...
+ Hopefully, skipping the marginals takes less time to load (?).
+ The dataset stats appear in Diary Part Two, at the very end.
+\end_layout
+
+\begin_layout Standard
+Nope.
+ We really want to have marginals, for assorted reasons.
+ Try again with `
+\family sans
+run-1-marg-tranche-123.rdb
+\family default
+`.
+\end_layout
+
+\begin_layout Standard
+Config files are in `
+\family sans
+Experiment-13
+\family default
+`.
+ 
+\end_layout
+
+\begin_layout Standard
+Dataset summary:
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="11" columns="2">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Property
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Value
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Filename
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+run-1-marg-tranche-123.rdb
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Dimensions
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+304085 
+\begin_inset Formula $\times$
+\end_inset
+
+ 306920
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}$
+\end_inset
+
+ Dimensions
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.214
+\begin_inset Formula $\times$
+\end_inset
+
+18.228
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Num Pairs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28184319
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}$
+\end_inset
+
+ Num Pairs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24.7484
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Total Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+985483375
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}$
+\end_inset
+
+ Total Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+29.8763
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RAM Usage to Load
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+49.7 GB
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RAM Usage to Run
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+62.6 GB
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Entropy Total
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.378
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The above dataset summary agrees with what is reported at the very end of
+ Diary Part Two (
+\emph on
+i.e.
+
+\emph default
+ during load, the same numbers are reported.) The 
+\begin_inset Quotes eld
+\end_inset
+
+Entropy Total
+\begin_inset Quotes erd
+\end_inset
+
+ is the same as defined in earlier diaries: 
+\begin_inset Formula 
+\[
+\mbox{Entropy Total}=-\sum_{i,j}p\left(w_{i},w_{j}\right)\log_{2}p\left(w_{i},w_{j}\right)
+\]
+
+\end_inset
+
+Recall, as always, that 
+\begin_inset Quotes eld
+\end_inset
+
+Num Pairs
+\begin_inset Quotes erd
+\end_inset
+
+ is the number of distinct, unique pairs that were observed, while 
+\begin_inset Quotes eld
+\end_inset
+
+Total Count
+\begin_inset Quotes erd
+\end_inset
+
+ is the how many times those pairs were observed.
+\end_layout
+
+\begin_layout Subsection*
+Other Densities
+\end_layout
+
+\begin_layout Standard
+Well, OK, so we've done Zipf graphs of all kinds before, but somewhat haphazardl
+y.
+ It's worth redoing these as densities: i.e.
+ bin-counting, with the horizontal axis being 
+\begin_inset Formula $E=-\log_{2}p\left(w_{i},w_{j}\right)$
+\end_inset
+
+ and the vertical axis being other assorted quantities.
+ All of these graphs will suffer from the under-sampling issues described
+ above.
+ We don't yet have a good theoretical foundation to deal with the under-sampling.
+ So damn the torpedoes, full speed ahead.
+\end_layout
+
+\begin_layout Standard
+Suitable quantities to plot: 
+\end_layout
+
+\begin_layout Itemize
+The pair MI.
+\end_layout
+
+\begin_layout Itemize
+The left and right marginal probabilities 
+\begin_inset Formula $p\left(w_{i},*\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $p\left(*,w_{j}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The log left marginal probability 
+\begin_inset Formula $-\log_{2}p\left(w_{i},*\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The left fractional marginal entropy 
+\begin_inset Formula $-\frac{1}{p\left(w,*\right)}\sum_{v}p\left(w,v\right)\log_{2}p\left(w,v\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The left fractional marginal MI.
+\end_layout
+
+\begin_layout Standard
+These all seem to be pretty, um, boring.
+ I've graphed them all as absolute densities.
+ Perhaps they should be graphs as relative densities.
+ Yet doing so does not seem all that promising; they'll be horizontal lines,
+ right?
+\end_layout
+
+\begin_layout Subsubsection*
+Left and Right Marginal Probabilities
+\end_layout
+
+\begin_layout Standard
+First up: the left and right marginal probabilities 
+\begin_inset Formula $p\left(w_{i},*\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $p\left(*,w_{j}\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/density-marg.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Slope is same as before.
+\end_layout
+
+\begin_layout Subsubsection*
+Log Marginal Probability, Entropy and MI
+\end_layout
+
+\begin_layout Standard
+A three-in-one chart:
+\end_layout
+
+\begin_layout Itemize
+The left log marginal probability 
+\begin_inset Formula $\log_{2}p\left(w_{i},*\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The left fractional marginal entropy 
+\begin_inset Formula $-\left[p\left(w_{i},*\right)\right]^{-1}\sum_{v}p\left(w_{i},v\right)\log_{2}p\left(w_{i},v\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The left marginal MI.
+\end_layout
+
+\begin_layout Standard
+Skip exploring the right, based on the above.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/density-lmarg-logli.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+
+\end_layout
+
+\begin_layout Standard
+Slopes are muddled.
+ Neither here nor there.
+ Of course, these have to differ slightly in the slopes.
+\end_layout
+
+\begin_layout Subsubsection*
+Pair MI Density
+\end_layout
+
+\begin_layout Standard
+The pair MI density 
+\begin_inset Formula $p\left(w_{i},w_{j}\right)$
+\end_inset
+
+.
+ This is 
+\emph on
+NOT
+\emph default
+ a marginal! 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/density-fmi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+
+\end_layout
+
+\begin_layout Standard
+Slope seems to be nailed exactly.
+ Remarkable.
+ None of the fiddle-faddle of before.
+ Recall as always that the 30 comes from 
+\begin_inset Formula $30\approx\log_{2}\mbox{Total Count}$
+\end_inset
+
+ for this dataset.
+\end_layout
+
+\begin_layout Section*
+Word-Pair Vertex Degree Distributions
+\end_layout
+
+\begin_layout Standard
+Vertex-degree graphs are commonplace in network analysis.
+ Oddly enough, I never really characterized the word-pair sets using more
+ conventional graph-theoretic concepts.
+ Time to make amends.
+ 
+\end_layout
+
+\begin_layout Standard
+The collection of word-pairs can be taken to define a set of edges, thus
+ defining a graph.
+ This is a directed graph, but I think this doesn't matter, so will mostly
+ pretend it is undirected.
+ The collection of vertexes will be taken as the left-element of each pair.
+ The edges will be the pairs going from left to right.
+\end_layout
+
+\begin_layout Standard
+The (out-)degree of a vertex is just the number of edges leaving it.
+ We work with out-degrees exclusively, except for a few spot-checks.
+ Basically, the word-pair graph should be approximately symmetric, so there
+ should not be much of a difference in distributions.
+\end_layout
+
+\begin_layout Standard
+The results of this section:
+\end_layout
+
+\begin_layout Itemize
+The scaling of frequency vs.
+ degree goes with a power law of 
+\begin_inset Formula $\gamma\approx1.6$
+\end_inset
+
+.
+ This is a 
+\begin_inset Quotes eld
+\end_inset
+
+small world
+\begin_inset Quotes erd
+\end_inset
+
+ scaling exponent.
+ Under-sampled, infrequent word-pairs belong to a small world!
+\end_layout
+
+\begin_layout Itemize
+There is an interesting sample-size effect, which prevents naive scaling
+ of histogram bin-widths!
+\end_layout
+
+\begin_layout Itemize
+There is no theory to guide one through the sample-size effect, and it is
+ clearly pervasive, affecting pretty much every graph ever drawn, ever,
+ in this diary.
+ It's a foundational effect, that cannot be escaped.
+ Its inherent in this kind of data.
+\end_layout
+
+\begin_layout Itemize
+One can graph all sorts of quantities as functions of the vertex degree.
+ Does not seem to reveal anything noteworthy.
+\end_layout
+
+\begin_layout Standard
+To recap: A vertex is a word, and it's degree is the number of (distinct,
+ unique) word-pairs it occurs in.
+ For the range of 
+\begin_inset Formula $10\apprle D\apprle1200$
+\end_inset
+
+, the probability 
+\begin_inset Formula $p\left(D\right)$
+\end_inset
+
+ of observing a word-vertex with degree 
+\begin_inset Formula $D$
+\end_inset
+
+ goes as 
+\begin_inset Formula $p\left(D\right)\sim D^{-1.6}$
+\end_inset
+
+.
+ This is a small-world scaling exponent; it is far away from being a scale-free
+ network exponent.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that this is a direct measurement of the under-sampled parts of the
+ graph.
+ That is, a word that has a small degree is necessarily a word that is observed
+ infrequently.
+ It cannot be a word like 
+\begin_inset Quotes eld
+\end_inset
+
+the
+\begin_inset Quotes erd
+\end_inset
+
+, which will have a degree of approx 100K (for this dataset).
+ It cannot be a preposition, as these will also have degrees of 50K or more.
+ Even common verbs and nouns are expected to have a gigantic degree.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Vertex Degree
+\end_layout
+
+\begin_layout Standard
+The first conventional question is 
+\begin_inset Quotes eld
+\end_inset
+
+what is the vertex degree distribution?
+\begin_inset Quotes erd
+\end_inset
+
+ This is shown below, a graph of the normalized frequency of a word, and
+ it's out-degree.
+ The degree ranges as high as 300K with significant counts up to 50K.
+ The graph only shows degree up to 1200.
+ There are 1200 bins in this graph, so each different degree gets it's own
+ bin.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-fine.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The eyeballed fit has 
+\begin_inset Formula $\mbox{frequency}=\left(1.1/\mbox{degree}\right)^{1.6}$
+\end_inset
+
+ and so that exponent is well below typical scale-free networks.
+ The raw counts are shown on the right y-axis,
+\emph on
+ i.e.
+
+\emph default
+ un-normalized.
+ The point of drawing it this way is that we see on the right where the
+ count drops to one (and to zero).
+\end_layout
+
+\begin_layout Standard
+Something unexpected happens if we go deeper.
+ There are gaps between words with high degrees, and it seems like it should
+ be reasonable to bin them together.
+ The graph below shows degree out to 50K, collected into 200 bins.
+ Thus, each bin is 250 degrees wide.
+ The slope is remarkably different:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I think this is purely an sampling effect.
+ In principle, the slope should not have changed.
+ Here's a quick sketch.
+ If the original distribution is 
+\begin_inset Formula 
+\[
+f_{n}=\left(\frac{a}{n}\right)^{\gamma}
+\]
+
+\end_inset
+
+then a re-binning into constant-sized bins of size 
+\begin_inset Formula $k$
+\end_inset
+
+ is given by 
+\begin_inset Formula 
+\begin{align*}
+g_{m}= & \sum_{m\left(k-1\right)<n\le mk}f_{n}\\
+= & \left(\frac{a}{k\left(m-1\right)+1}\right)^{\gamma}+\cdots+\left(\frac{a}{k\left(m-1\right)+k}\right)^{\gamma}\\
+= & \left(\frac{a}{k\left(m-1\right)}\right)^{\gamma}\left[\frac{1}{\left(1+\frac{1}{k\left(m-1\right)}\right)^{\gamma}}+\frac{1}{\left(1+\frac{2}{k\left(m-1\right)}\right)^{\gamma}}+\cdots+\frac{1}{\left(1+\frac{k}{k\left(m-1\right)}\right)^{\gamma}}\right]\\
+\approx & \left(\frac{a}{k\left(m-1\right)}\right)^{\gamma}\left[k-\frac{\gamma}{k\left(m-1\right)}\left[1+2+\cdots+k\right]\right]\\
+\approx & \left(\frac{a}{k\left(m-1\right)}\right)^{\gamma}k\left[1-\frac{\gamma}{2\left(m-1\right)}\right]\\
+\approx & Cm^{-\gamma}
+\end{align*}
+
+\end_inset
+
+where the approximations 
+\begin_inset Formula $k\gg1,m\gg1$
+\end_inset
+
+ are made.
+ That is, there is a change in the overall normalization, and the early
+ part of the slope, for small 
+\begin_inset Formula $m$
+\end_inset
+
+ is reduced, but the overall exponent is not affected.
+ Yet this is given lie to by the figure above.
+ So what goes wrong? It is an sampling effect.
+ For large 
+\begin_inset Formula $n$
+\end_inset
+
+, most of the 
+\begin_inset Formula $f_{n}$
+\end_inset
+
+ are not as given above, but are zero.
+ The fraction of the time that they are zero is determined by the sample
+ size, and they are zero often enough that the overall slope is changed.
+ The net effect of sample size could be computed.
+ Just right now, it does not seem to be a worthwhile exercise.
+ XXX TODO.
+ Do this anyway.
+ This should be done.
+ This seems like a foundational part of the overall theory.
+\end_layout
+
+\begin_layout Standard
+Let's repeat the calculation above with an explicit log scale.
+ This gives
+\begin_inset Formula 
+\begin{align*}
+g_{m}= & \sum_{m\le\log_{2}n<m+1}f_{n}\\
+= & \sum_{2^{m}\le n<2^{m}}\left(\frac{a}{n}\right)^{\gamma}\\
+= & a^{\gamma}\sum_{1\le j<2^{m}}\frac{1}{\left(2^{m}+j\right)^{\gamma}}\\
+\approx & \frac{a^{\gamma}}{2^{m\gamma}}\cdot2^{m}\left(1-\frac{\gamma}{2}\right)\\
+= & C2^{m\left(1-\gamma\right)}
+\end{align*}
+
+\end_inset
+
+Thus, since we saw 
+\begin_inset Formula $\gamma\approx1.6$
+\end_inset
+
+ in the earliest figure, we expect a slope of 
+\begin_inset Formula $\gamma=1\approx0.6$
+\end_inset
+
+ in the equivalent log figure.
+ This is shown below.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/log2-degree.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+That initial slope is valid up to 
+\begin_inset Formula $n\approx1200$
+\end_inset
+
+ or 
+\begin_inset Formula $\log-\frac{1}{p\left(w,*\right)}\sum_{v}p\left(w,v\right)\log_{2}p\left(w,v\right)_{2}n\approx10$
+\end_inset
+
+, after which a sharper slope sets in due to the sample-size effect.
+ This gives the figure an overall hump-back shape.
+ 
+\end_layout
+
+\begin_layout Subsection*
+High Degree Vertexes
+\end_layout
+
+\begin_layout Standard
+Where is this effect coming from? The table below shows the 60 words with
+ the highest out-degree.
+ This offers a glimpse of what is going on at the other end of the vertex-degree
+ scale.
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="22" columns="6">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<row>
+<cell multicolumn="1" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1-20
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+21-40
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+41-60
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Degree
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Degree
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Degree
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LEFT-WALL
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+269970
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+is
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+45618
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+her
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+31763
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+,
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+169643
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+for
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+44599
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+are
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30478
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+the
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+127386
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+on
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+44496
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+all
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30246
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+of
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+107029
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+I
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+43449
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+one
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30035
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+and
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+96207
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+"
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+43411
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+their
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+29283
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+to
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+79874
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+he
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+42884
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+they
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+29031
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+a
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+77490
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+at
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+42390
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28581
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+75847
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+from
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+41338
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+him
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28338
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+in
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+71456
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+it
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+41000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+you
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28166
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+was
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+55051
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+had
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+39295
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+been
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+27532
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+that
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+54780
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+be
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+37145
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+who
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+26380
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+;
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+53249
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+or
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+36689
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+so
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+26314
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+The
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+52418
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+:
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+36647
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+He
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25543
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+_
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+51059
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+which
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+35451
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+my
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25535
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+with
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50988
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+not
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+34088
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+when
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25177
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+49642
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+but
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33683
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+”
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25160
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+“
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+48150
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+were
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33675
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+—
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25054
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+as
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+47770
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+this
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+32726
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+she
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24973
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+by
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+47135
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+have
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+32202
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+up
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24385
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+his
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+46552
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+an
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+31814
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+into
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24374
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Clearly, there are large gaps in degree between each of these.
+ Clearly, as the size of the corpus is increased, the degree of each of
+ these will increase, and the size of the gaps between them will also increase.
+ The overall order and distribution should not substantially change.
+\end_layout
+
+\begin_layout Standard
+In short: attempting to bin-count the above leads to misleading confusion.
+ Naively, bin-counting is about smoothing variation.
+ But, as this table makes clear, such 
+\begin_inset Quotes eld
+\end_inset
+
+smoothing
+\begin_inset Quotes erd
+\end_inset
+
+ is actually averaging in empties.
+ It's not 
+\begin_inset Quotes eld
+\end_inset
+
+smoothing
+\begin_inset Quotes erd
+\end_inset
+
+, its altering the slope.
+\end_layout
+
+\begin_layout Standard
+Here is the table above, directly visualized:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/count-degree.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This shows the frequency with which a word was observed, vs.
+ it's out-degree, which is exactly what the table is depicting.
+ Note the 
+\begin_inset Quotes eld
+\end_inset
+
+reversed
+\begin_inset Quotes erd
+\end_inset
+
+ x-axis.
+ Two eyeballed fits are presented: 
+\begin_inset Formula $D^{3/2}$
+\end_inset
+
+ and 
+\begin_inset Formula $D^{5/3}$
+\end_inset
+
+ for the out-degree 
+\begin_inset Formula $D$
+\end_inset
+
+.
+ The frequency is, as always, the total number of observations of that particula
+r word, normalized by the total number of observed words.
+ The integral under the curve is one.
+ 
+\end_layout
+
+\begin_layout Standard
+For completeness, here's a traditional degree vs.
+ rank graph:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/rank-degree.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Notice that initially, the vertex degree falls off as 
+\begin_inset Formula $1/\sqrt{\mbox{rank}}$
+\end_inset
+
+, which seems to be a very traditional slope for this kind of graph of network
+ degrees.
+ I still don't understand why, despite a half-a-decade of seeing this one-over-s
+qrt distribution.
+ It's everywhere: see the wikipedia page rank, see the agi-bio genome and
+ reactome distributions I've graphed elsewhere.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Weighted Vertex Degree
+\end_layout
+
+\begin_layout Standard
+Same as above, but showing the weighted vertex degree, i.e.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+with multiplicity
+\begin_inset Quotes erd
+\end_inset
+
+.
+ That is, if each edge was observed 
+\begin_inset Formula $N$
+\end_inset
+
+ times, then it is treated as if there were 
+\begin_inset Formula $N$
+\end_inset
+
+ distinct edges.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-m-fine-raw.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There is a distinct oscillatory behavior at the center-left.
+ It is perhaps some strange artifact, having to do with the fact that 24
+ parse-trees are sampled, given that the first, most prominent peak occurs
+ at 24, and later peaks are perhaps at multiples of 24.
+\end_layout
+
+\begin_layout Subsection*
+Other weighting schemes
+\end_layout
+
+\begin_layout Standard
+The following sequence of graphs use weighting schemes that are perhaps
+ difficult to understand, but seem worth exploring.
+ Their physical interpretation is challenging and the significance is unclear.
+ Do it anyway, just to say we covered all the bases.
+\end_layout
+
+\begin_layout Standard
+In all of these, the horizontal axis shows the edge degree of the word,
+ without multiplicity, so, the number of unique word-pairs that a word participa
+tes in.
+ The y-axis, however, uses weighted counting, with different weights.
+ That is, if a word has an edge degree of 42, then instead of counting it
+ exactly once, it is counted with a weight (mass) 
+\begin_inset Formula $m\ne1$
+\end_inset
+
+.
+ Graphs are shown for 
+\end_layout
+
+\begin_layout Itemize
+Mass 
+\begin_inset Formula $m=p\left(w,*\right)$
+\end_inset
+
+ the right marginal probability for word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+Mass 
+\begin_inset Formula $m=p\left(*,w\right)$
+\end_inset
+
+ the left marginal probability for word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Mass 
+\begin_inset Formula $m=\log_{2}p\left(w,*\right)$
+\end_inset
+
+ the right marginal log-probability for word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Mass 
+\begin_inset Formula $m=\sum_{v}p\left(w,v\right)\log_{2}p\left(w,v\right)$
+\end_inset
+
+ the right marginal entropy for word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Mass 
+\begin_inset Formula $m=MI\left(w,*\right)$
+\end_inset
+
+ the right marginal MI for word 
+\begin_inset Formula $w$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
+Weighted by Marginal Probability
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-p-fine.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The vertical axis totals the marginal probability for that word.
+ That is, instead of adding 1 for each observed edge (the support), it adds
+ 
+\begin_inset Formula $p\left(w,*\right)$
+\end_inset
+
+, the left-marginal probability, or 
+\begin_inset Formula $p\left(*,w\right)$
+\end_inset
+
+, the right marginal probability.
+ So, for example, consider a vertex of degree 5.
+ There might be 10K such vertexes in this dataset.
+ However, each such vertex might be observed 30 or 50 times, and so (for
+ left-marginal counts) we would see 300K or 500K on the y-axis here.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Weighted by Marginal Log Probability 
+\end_layout
+
+\begin_layout Standard
+Weighting by the marginal log probability straightens things out:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-rlogp-fine.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The vertical axis totals the log marginal probability for that word.
+ The weight is 
+\begin_inset Formula $-\log_{2}p\left(w,*\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
+Weighted by Marginal Entropy
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-rfent-fine.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The vertical axis totals the marginal fractional entropy for that word.
+ The weight is 
+\begin_inset Formula 
+\[
+-\frac{1}{p\left(w,*\right)}\sum_{v}p\left(w,v\right)\log_{2}p\left(w,v\right)
+\]
+
+\end_inset
+
+Clearly, this graph is nearly identical to the above; it is shifted ever
+ so slightly upwards.
+\end_layout
+
+\begin_layout Subsubsection*
+Weighted by Marginal MI
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/degree-rfmi-fine.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The vertical axis totals the marginal fractional MI for that word.
+ The weight is 
+\begin_inset Formula 
+\[
+\frac{1}{p\left(w,*\right)}\sum_{v}p\left(w,v\right)\log_{2}\frac{p\left(w,v\right)}{p\left(w,*\right)p\left(*,v\right)}
+\]
+
+\end_inset
+
+This graph has the same general shape as the earlier ones, but has a distinctly
+ different slope: its 1.9 instead of 1.6.
+\end_layout
+
+\begin_layout Section*
+Word-Pair MI Distribution
+\end_layout
+
+\begin_layout Standard
+We've graphed the MI distribution many times before.
+ Notably, the 
+\begin_inset Quotes eld
+\end_inset
+
+Word-Pair Distributions
+\begin_inset Quotes erd
+\end_inset
+
+ document details these.
+ But since we're on a roll here, lets redo it with the same dataset as all
+ the other graphs.
+ 
+\end_layout
+
+\begin_layout Standard
+The big new news for this section is that I think I finally understand the
+ nature of this distribution.
+ It is composed of two parts.
+ One part is a Gaussian, centered more or less on an MI of zero.
+ This Gaussian is purely due to selections of word-pairs that contain no
+ syntactic information.
+ Subtracting this leaves behind the word-pairs with the actual syntactic
+ information.
+ That distribution seems to be log-normal, i.e has strictly-positive MI.
+ 
+\end_layout
+
+\begin_layout Standard
+The distribution of word-pair MI is shown below.
+ As before, this is for dataset 3, which contains 28 million pairs.
+ The MI is sorted into 500 histogram bins.
+ 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-fmi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The distribution is clearly not symmetric.
+ The two sides appear to be bounded by straight lines, with slopes as in
+ the legend.
+ Pairs with the highest MI are observed very infrequently.
+\end_layout
+
+\begin_layout Standard
+Here's the same data, but with a different fit: 
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-fmi-signal.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Why this shape? Here's a guess.
+ If word-pairs are chosen completely at random, and the number of sampled
+ pairs is much smaller than the total possible pairs, then one obtains a
+ Gaussian distribution.
+ Such a distribution is centered on a small but positive MI, due to sample-size
+ effects.
+ For larger samples, the mean tends to zero.
+ Thus, perhaps the left-hand-side of this figure is just a Gaussian.
+\end_layout
+
+\begin_layout Standard
+Now, we are not selecting word-pairs 
+\begin_inset Quotes eld
+\end_inset
+
+at random
+\begin_inset Quotes erd
+\end_inset
+
+, but we are sampling all possible word-pairs over a short region of text.
+ These are sampled uniformly, by uniform selection of random MST trees.
+ Many of the sampled word pairs will not be linguistically-related, but
+ instead just accidentally near each other; they are near each-other for
+ semantic reasons, not syntactic reasons.
+\end_layout
+
+\begin_layout Standard
+Taking this Gaussian to be 
+\begin_inset Quotes eld
+\end_inset
+
+common-mode noise
+\begin_inset Quotes erd
+\end_inset
+
+, and subtracting it, leaves an excess of word pairs with positive MI, having
+ a peak near 
+\begin_inset Formula $MI\sim4$
+\end_inset
+
+.
+ The straight-line slope on the right suggests that the excess can be described
+ by a log-normal distribution.
+ Again, an eye-balled, imprecise fit is shown.
+ These two, summed together, model the observed distribution almost perfectly.
+ Perhaps a formal expression for the common-mode noise is easily derived,
+ given a fixed vocabulary size and number of samples.
+ An attempt to get this is made further below.
+\end_layout
+
+\begin_layout Standard
+Theories of why the remainder would be a log-normal distribution are unknown
+ to the author.
+\end_layout
+
+\begin_layout Standard
+Pairs with the highest MI are observed very infrequently.
+ The highest observable MI value is directly related to the sample size:
+ it is a bit below the log of the number of observations.
+ Thus, the sharp drop on the right side is purely a sample-size effect.
+ Trimming does not appreciably change the shape of this distribution, other
+ than to eliminate the very highest MI values.
+\end_layout
+
+\begin_layout Standard
+This distribution is not language-specific; a nearly identical distribution
+ is seen for Chinese Mandarin Hanzi pairs.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See 
+\begin_inset Quotes eld
+\end_inset
+
+Word-Pair Distributions
+\begin_inset Quotes erd
+\end_inset
+
+, page 18.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+FWIW, note that the left-hand-side slope might be more linear than it is
+ parabolic.
+ In this case, the left-hand side might also be modelled with a log-normal
+ distribution, this time, mirrored.
+ In this case, the whole idea becomes a bit more of a mirage: we have two
+ straight lines, and the interpolation between them is accomplished by combining
+ a pair of offset and mirrored log-normals.
+ This does not change the overall conclusion: the bulk of the low-MI pairs
+ are due to random noise from sampling, while the high-MI pairs encode syntactic
+ information.
+\end_layout
+
+\begin_layout Standard
+In practice, when given any particular word pair, how can we know which
+ group it belongs to? Is it syntactic, or not? The old rule of thumb was
+ that pairs with MI=4 or greater were meaningful, and those below were junk.
+ The graphs above validate this rule of thumb.
+ Forcing a hard-cut at MI=4 removes most of the zero-mode Gaussian.
+ But we've known for eons that MI=4 is somehow magical; now we finally have
+ insight as to why.
+\end_layout
+
+\begin_layout Subsection*
+Ranked-MI Distribution
+\end_layout
+
+\begin_layout Standard
+Just for giggles, here's the ranked-MI distribution:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-density/pair-rmi.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Recall the ranked-MI is defined as
+\begin_inset Formula 
+\[
+MI_{\mbox{ranked}}\left(w,v\right)=\log_{2}\frac{p\left(w,v\right)}{\sqrt{p\left(w,*\right)p\left(*,v\right)}}
+\]
+
+\end_inset
+
+Superimposed on this graph is the distribution of the regular MI, multiplied
+ by 1.5 to get the width correct, and shifted by 10 to the left, to get the
+ zero correct.
+ Apparently, ranked-MI does not alter the distribution.
+ I wonder what it does, if it were used for MST/MPG parsing ...
+\end_layout
+
+\begin_layout Standard
+Oh, hang on.
+ the Ranked-MI is just 1/2 of the 
+\begin_inset Quotes eld
+\end_inset
+
+variation of information
+\begin_inset Quotes erd
+\end_inset
+
+, see Diary Part Two, page 54.
+ Oh huh.
+ OK, so I have to go back into the diary, and amend all of the entries to
+ reflect this conventional name.
+ Yow!
+\end_layout
+
+\begin_layout Subsection*
+Neutral MI Distribution
+\end_layout
+
+\begin_layout Standard
+Attempted theoretical calculation of the MI distribution that would result
+ if word pairs were chosen at completely at random.
+ There are two distributions of interest.
+ One uses a uniform distribution of the vocabulary words, the other a Zipfian
+ distribution.
+ 
+\end_layout
+
+\begin_layout Standard
+XXX FIXME Everything below is incomplete, incorrect, wrong.
+ I'm too lazy to figure out why.
+\end_layout
+
+\begin_layout Subsubsection*
+Uniform distribution
+\end_layout
+
+\begin_layout Standard
+Assume a vocabulary size of 
+\begin_inset Formula $N$
+\end_inset
+
+.
+ A random word-pair consists of two random, uniformly-weighted draws from
+ this vocabulary.
+ We take the order of the draws as being important; thus, any given word-pair
+ has a chance of 
+\begin_inset Formula $1/N^{2}$
+\end_inset
+
+ of being drawn.
+ Consider 
+\begin_inset Formula $M$
+\end_inset
+
+ pair draws, with 
+\begin_inset Formula $N\ll M\ll N^{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The chance of a given pair being drawn once is 
+\begin_inset Formula $CM/N^{2}$
+\end_inset
+
+ with 
+\begin_inset Formula $C$
+\end_inset
+
+ a normalization constant to be determined.
+ Basically, it can be drawn the first time, or the second time, or the third
+ time ...
+ etc.
+ but never twice.
+ The chance of it being drawn twice is 
+\begin_inset Formula $CM\left(M-1\right)/2N^{4}$
+\end_inset
+
+ and so now we have the usual combinatorics.
+ The chance of observing a word-pair 
+\begin_inset Formula $\left(a,b\right)$
+\end_inset
+
+ a total of 
+\begin_inset Formula $K$
+\end_inset
+
+ times is
+\begin_inset Formula 
+\[
+p\left(K\vert a,b\right)=\frac{C}{N^{2K}}{M \choose K}
+\]
+
+\end_inset
+
+Right(?) 
+\end_layout
+
+\begin_layout Subsubsection*
+Zipfian distribution
+\end_layout
+
+\begin_layout Standard
+Repeat the above, with a non-uniform distribution.
+ Each word is distinguished by it's ordinal 
+\begin_inset Formula $k$
+\end_inset
+
+ so that we have words 
+\begin_inset Formula $w_{k}$
+\end_inset
+
+ for 
+\begin_inset Formula $1\le k\le N$
+\end_inset
+
+.
+ The probability of drawing word 
+\begin_inset Formula $w_{k}$
+\end_inset
+
+ is then 
+\begin_inset Formula $p\left(w_{k}\right)=Ak^{-\gamma}$
+\end_inset
+
+ for 
+\begin_inset Formula $\gamma\approx1$
+\end_inset
+
+ and 
+\begin_inset Formula $A$
+\end_inset
+
+ a normalization constant, so that 
+\begin_inset Formula $1=\sum_{k=1}^{\infty}p\left(w_{k}\right)$
+\end_inset
+
+.
+ The probability of drawing a pair 
+\begin_inset Formula $\left(w_{i},w_{j}\right)$
+\end_inset
+
+ is then 
+\begin_inset Formula $p\left(w_{i},w_{j}\right)=p\left(w_{i}\right)p\left(w_{j}\right)$
+\end_inset
+
+ since the probabilities are completely independent of one-another.
+\end_layout
+
+\begin_layout Standard
+Now we have to iterate this experiment 
+\begin_inset Formula $M$
+\end_inset
+
+ times.
+ The probability of drawing a given pair 
+\begin_inset Formula $K$
+\end_inset
+
+ times is then 
+\begin_inset Formula 
+\[
+p\left(K\vert j,k\right)=C\left(p\left(w_{i},w_{j}\right)\right)^{K}{M \choose K}
+\]
+
+\end_inset
+
+Write 
+\begin_inset Formula $x=p\left(w_{i},w_{j}\right)$
+\end_inset
+
+ for short, then the normalization is 
+\begin_inset Formula 
+\[
+f\left(w_{i},w_{j}\right)=C\sum_{K=0}^{M}x^{K}{M \choose K}=C\left(1+x\right)^{M}
+\]
+
+\end_inset
+
+Right??? I'm confused.
+ Now, since 
+\begin_inset Formula $\epsilon=Mx\ll1$
+\end_inset
+
+ we can write
+\begin_inset Formula 
+\[
+f\left(w_{i},w_{j}\right)=C\left(1+Mp_{i}p_{j}+\mathcal{O}\left(\epsilon^{2}\right)\right)\approx C\left(1+Mp_{i}p_{j}\right)
+\]
+
+\end_inset
+
+and so the marginal is 
+\begin_inset Formula 
+\[
+f\left(w_{i},*\right)=\sum_{j}f\left(w_{i},w_{j}\right)\approx CN+CMp_{i}
+\]
+
+\end_inset
+
+but 
+\begin_inset Formula $N\gg Mp_{i}$
+\end_inset
+
+ by assumption, so 
+\begin_inset Formula $f\left(*,*\right)=1\approx CN^{2}$
+\end_inset
+
+ and so 
+\begin_inset Formula 
+\[
+f\left(w_{i},*\right)=\frac{1}{N}
+\]
+
+\end_inset
+
+which seems wrong, so I made a mistake above!?
+\end_layout
+
+\begin_layout Section*
+Word-Disjunct MI Distribution
+\end_layout
+
+\begin_layout Standard
+This revisits earlier results on connector-set MI distributions; see page
+ 22 of the 
+\begin_inset Quotes eld
+\end_inset
+
+Connector Sets Distributions
+\begin_inset Quotes erd
+\end_inset
+
+ document.
+ 
+\end_layout
+
+\begin_layout Standard
+This revisit will work with `
+\family sans
+r4-mpg-marg.rdb
+\family default
+` which appears on page 4 of Diary Part Three.
+ Actually, this is just a copy of `
+\family sans
+run-1-en_mpg-tranche-123.rdb
+\family default
+` with marginals in it.
+\end_layout
+
+\begin_layout Standard
+Although the older `
+\family sans
+r4-trim-*.rdb
+\family default
+` were 
+\begin_inset Quotes eld
+\end_inset
+
+trimmed
+\begin_inset Quotes erd
+\end_inset
+
+, the self-consistency checks were crappier.
+ So we re-do the final self-consistency checks, using the code in `
+\family sans
+scm/gram-class/cleanup.scm
+\family default
+` to get fully consistent results.
+ The updated dimensions are in the table below.
+ The files are `
+\family sans
+r4-trim-10-4-2-djmi.rdb
+\family default
+`, etc.
+ but are shortened in the column labels.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="15" columns="6">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+full
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+1-1-1-djmi
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+2-2-2-djmi
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+5-2-2-djmi
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+10-4-2-djmi
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{L}$
+\end_inset
+
+= words
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+377553
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+47708
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12800
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7586
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4867
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{R}$
+\end_inset
+
+= dj
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+25698949
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1587889
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+414713
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+357457
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+169277
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $D_{\mbox{Tot}}$
+\end_inset
+
+= size
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+28436901
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2049074
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+622378
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+556413
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+356298
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $N_{\mbox{Tot}}$
+\end_inset
+
+= obs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+36389195
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9736866
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6496202
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6128265
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5279297
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{word}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.5263
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15.5419
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13.6439
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12.8891
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12.2488
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{dj}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24.6152
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+20.5987
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.6618
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.4474
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.3690
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}D_{\mbox{Tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24.7613
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+20.9665
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.2474
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.0858
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.4427
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+sparsity
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.3803
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15.1741
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+13.0582
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12.2507
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+11.1751
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+rarity
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.19050
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.89623
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.09463
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.41753
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.6338
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\log_{2}N_{\mbox{Tot}}/D_{\mbox{Tot}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.35575
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.24849
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.38373
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.46125
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3.8892
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Entropy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24.1003
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.4863
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.7107
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.5078
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.8745
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Left Entropy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+23.4936
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18.3455
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.4170
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.1626
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+15.3793
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Right Entropy
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10.1570
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7.93672
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7.28017
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7.26809
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7.25804
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+MI(w,dj)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9.5504
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6.7959
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5.9865
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5.9228
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5.7628
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What do the distributions look like? Here they are, all plotted on a single
+ graph.
+ These are histograms.
+ There are 200 bins grand-total.
+ First graph weights each Section equally.
+ 
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-djmi/r4-djmi.eps
+	width 80col%
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A generic Gaussian is superimposed on the image, centered at about the average
+ MI of each of these.
+ Clearly visible is an excess of counts at high MI values.
+ Clearly, the more one trims, the more of these are removed.
+\end_layout
+
+\begin_layout Standard
+Earlier disjunct graphs, namely in the 
+\begin_inset Quotes eld
+\end_inset
+
+Connector Set Distributions
+\begin_inset Quotes erd
+\end_inset
+
+ document.
+ page 22, were pure Gaussian, without the excess.
+ Why? Is the excess due to some of the garbage (the failed quote-escapes)
+ in this dataset? Or is it real? 
+\end_layout
+
+\begin_layout Standard
+Earlier, for the word-pairs graph, the Gaussian was interpreted as the zero-mode
+, and was centered at more-or-less zero.
+ But what is this beast? Is it a zero-mode? Is it meaningful data? Or is
+ just the high-MI stuff 
+\begin_inset Quotes eld
+\end_inset
+
+meaningful
+\begin_inset Quotes erd
+\end_inset
+
+? How can we know?
+\end_layout
+
+\begin_layout Standard
+Again, below, this time each Section is weighted according to it's frequency.
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-djmi/r4-djmi-weighted.eps
+	width 80col%
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In what sense is this weighted distribution 
+\begin_inset Quotes eld
+\end_inset
+
+more accurate
+\begin_inset Quotes erd
+\end_inset
+
+ than the unweighted one?
+\end_layout
+
+\begin_layout Section*
+Mutual Information vs.
+ Laplacian
+\end_layout
+
+\begin_layout Standard
+The discrete Laplacian on a 1-dimensional grid is a tri-diagonal matrix
+ of the form
+\begin_inset Formula 
+\[
+\Delta x_{i}=2x_{i}-x_{i-1}-x_{i+1}
+\]
+
+\end_inset
+
+The pair-wise mutual information 
+\begin_inset Formula 
+\[
+MI\left(u,v\right)=\log_{2}p\left(u,v\right)-\log_{2}p\left(u,*\right)-\log_{2}p\left(*,v\right)
+\]
+
+\end_inset
+
+Inserting a factor of 1/2 gives the ranked-MI
+\begin_inset Formula 
+\[
+MI_{\mbox{ranked}}\left(u,v\right)=\log_{2}\frac{p\left(u,v\right)}{\sqrt{p\left(u,*\right)p\left(*,v\right)}}
+\]
+
+\end_inset
+
+The discrete Laplacian somehow feels 
+\begin_inset Quotes eld
+\end_inset
+
+similar
+\begin_inset Quotes erd
+\end_inset
+
+ to the ranked-MI, but how? Can this be developed?
+\end_layout
+
+\begin_layout Subsection*
+(Dead-end?) Ideas
+\end_layout
+
+\begin_layout Standard
+Here are some suggestive ideas that don't sem to quite get traction.
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $MI$
+\end_inset
+
+ 
+\begin_inset Quotes eld
+\end_inset
+
+feels like
+\begin_inset Quotes erd
+\end_inset
+
+ some kind of re-normalized propagator, where the 
+\begin_inset Formula $\log_{2}p\left(u,*\right)$
+\end_inset
+
+ feel like vacuum corrections; but how this could be is opaque.
+\end_layout
+
+\begin_layout Standard
+The point 
+\begin_inset Formula $\left(u,v\right)$
+\end_inset
+
+ feels like a point in a base-space, and the 
+\begin_inset Formula $\left(u,*\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(*,v\right)$
+\end_inset
+
+ feel like two different fibers above the point in the base space.
+ The summation is happening on the fibers.
+ That is, we've defined 
+\begin_inset Formula 
+\[
+p\left(u,*\right)=\sum_{w}p\left(u,w\right)
+\]
+
+\end_inset
+
+so that, first, we take the fiber sum, then the log, and then compare a
+ point in base-space to it's two fiber-sums.
+ That is, the ranked-MI 
+\emph on
+is
+\emph default
+ a kind of discrete Laplacian, but it's over a weird fibered space; its
+ a comparison over fibers.
+ The generalization of this would be a funky Hamming-fibered Laplacian,
+ so that, for triples,
+\begin_inset Formula 
+\[
+\nabla\left(u,v,w\right)=\log_{2}p\left(u,v,w\right)-\frac{1}{3}\left[\log_{2}p\left(u,v,*\right)+\log_{2}p\left(u,*,w\right)+\log_{2}p\left(*,v,w\right)\right]
+\]
+
+\end_inset
+
+and so on.
+ (For one-dimensional fibers).
+ So, conceptually, MI and ranked-MI are a kind of difference equation; they
+ are kind of like fibered Laplacians, but ...
+ what can we do with this insight? What can be constructed?
+\end_layout
+
+\begin_layout Subsection*
+Hamming Laplacian
+\end_layout
+
+\begin_layout Standard
+Consider the very high-dimensional difference equation
+\begin_inset Formula 
+\[
+-\Delta E\left(u,v\right)=\log_{2}p\left(u,v\right)-\frac{1}{2\left(N-1\right)}\sum_{w\ne v}\log_{2}p\left(u,w\right)-\frac{1}{2\left(N-1\right)}\sum_{w\ne u}\log_{2}p\left(w,v\right)
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $N$
+\end_inset
+
+ is the size of the vocabulary, viz.
+ 
+\begin_inset Formula $N=\sum_{w}1$
+\end_inset
+
+.
+ Using terminology from Chapter 6, this was being called 
+\begin_inset Quotes eld
+\end_inset
+
+the energy
+\begin_inset Quotes erd
+\end_inset
+
+, via analogy to the Boltzmann distribution.
+ That is, 
+\begin_inset Formula 
+\[
+E\left(u,v\right)=-\log_{2}p\left(u,v\right)
+\]
+
+\end_inset
+
+and so the difference eqn is 
+\begin_inset Formula 
+\[
+\Delta E\left(u,v\right)=E\left(u,v\right)-\frac{1}{2\left(N-1\right)}\left[\sum_{w\ne v}E\left(u,w\right)+\sum_{w\ne u}E\left(w,v\right)\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This difference equation is rightfully called a discrete Laplacian on a
+ high-dimensional space.
+ That this is the correct name can be seen as follows.
+\end_layout
+
+\begin_layout Standard
+Basically, we're fixing a point 
+\begin_inset Formula $\left(u,v\right)$
+\end_inset
+
+ in the high-dimensional space 
+\begin_inset Formula $N\times N$
+\end_inset
+
+ and then we are differencing to all of it's nearest neighbors.
+ This is confusing because we really should have started with single words.
+ Consider the observation frequency of a single word 
+\begin_inset Formula $p\left(w\right)$
+\end_inset
+
+ and define 
+\begin_inset Formula $E\left(w\right)=-\log_{2}p\left(w\right)$
+\end_inset
+
+.
+ Experimentally, we don't track these values (why not? they've never seemed
+ useful.
+ But perhaps we should revisit.) A single word 
+\begin_inset Formula $w$
+\end_inset
+
+ can be thought of as a coordinate or direction in a high-dimensional space,
+ so that that 
+\begin_inset Formula $\left(w\right)\in N$
+\end_inset
+
+ is a location, a single point in that space.
+ All the other words provide the other coordinates, so that the 
+\begin_inset Formula $\left(u\right)$
+\end_inset
+
+'s are all of the nearest-neighbors of 
+\begin_inset Formula $\left(w\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+In this case, the Laplacian really is clear and unambiguous: it is
+\begin_inset Formula 
+\[
+\Delta E\left(w\right)=E\left(w\right)-\frac{1}{N-1}\sum_{u\ne w}E\left(u\right)
+\]
+
+\end_inset
+
+This is the conventional 
+\begin_inset Formula $N$
+\end_inset
+
+-dimensional finite-difference Laplacian
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See Wikipedia, 
+\begin_inset CommandInset href
+LatexCommand href
+name "Discrete Laplace Operator"
+target "https://en.wikipedia.org/wiki/Discrete_Laplace_operator"
+literal "false"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, where we've taken the liberty of dividing by 
+\begin_inset Formula $N$
+\end_inset
+
+ because it is so large.
+ If this still feels odd: bear in mind that all points 
+\begin_inset Formula $\left(u\right)$
+\end_inset
+
+ are nearest neighbors of the point 
+\begin_inset Formula $\left(w\right)$
+\end_inset
+
+.
+ The space itself is a simplex: all 
+\begin_inset Formula $N$
+\end_inset
+
+ points are equidistant from all the others.
+ This is just Hamming distance one for a string of symbols that is one symbol
+ long.
+\end_layout
+
+\begin_layout Standard
+For word-pairs, fixing a word-pair 
+\begin_inset Formula $\left(u,v\right)$
+\end_inset
+
+ and then asking what all the Hamming distance-one pairs are, these are
+ precisely 
+\begin_inset Formula $\left\{ \left(u,w\right):w\ne v\right\} \cup\left\{ \left(w,v\right):w\ne u\right\} $
+\end_inset
+
+.
+ That is the set involved in the definition of the pair-Laplacian.
+ Should we call this the Hamming-Laplacian? The generalization to N-grams
+ is obvious; we don't need this generalization (yet; we'll need something
+ like of for the disjuncts! As disjuncts are just skip-grams in disguise.)
+ 
+\end_layout
+
+\begin_layout Standard
+Still, worth formalizing it.
+ Given a 
+\begin_inset Formula $k$
+\end_inset
+
+-gram 
+\begin_inset Formula $\sigma=\left(w_{1},\cdots,w_{k}\right)$
+\end_inset
+
+, define the set of all 
+\begin_inset Formula $k$
+\end_inset
+
+-grams that are Hamming-distance zero or one from 
+\begin_inset Formula $\sigma$
+\end_inset
+
+ as
+\begin_inset Formula 
+\[
+\left\{ s\right\} =\left(*,w_{2},\cdots,w_{k}\right)\cup\left(w_{1},*,w_{3},\cdots,w_{k}\right)\cup\left(w_{1},\cdots,*\right)
+\]
+
+\end_inset
+
+The Hamming-Laplacian is then 
+\begin_inset Formula 
+\[
+\Delta E\left(\sigma\right)=E\left(\sigma\right)-\frac{1}{k\left(N-1\right)}\sum_{\tau\in\left\{ s\right\} ;\tau\ne\sigma}E\left(\tau\right)
+\]
+
+\end_inset
+
+The denominator is simply the number of terms in the summation.
+\end_layout
+
+\begin_layout Standard
+Note that nothing specifically calls out for 
+\begin_inset Formula $E$
+\end_inset
+
+ in the above definition: the Hamming-Laplacian can be applied to any function
+ 
+\begin_inset Formula $f\left(\sigma\right)$
+\end_inset
+
+.
+ Also, note that this extends to the entire sigma-algebra.
+ The Hamming distance provides a graph structure to the sigma algebra, indicatin
+g which elements of the algebra are nearest-neighbors.
+ I am not aware of any theoretical results on Hamming Laplacians on sigma
+ algebras.
+ Save one, an obvious one: 
+\begin_inset Formula $\Delta\mu=0$
+\end_inset
+
+ where 
+\begin_inset Formula $\mu$
+\end_inset
+
+ is a measure on the sigma-algebra.
+ Now that I see this, this is definitely a very interesting and curious
+ thing to explore!
+\end_layout
+
+\begin_layout Standard
+Caution about notation.
+ Note that
+\begin_inset Formula 
+\[
+E\left(u,*\right)=\sum_{w}E\left(u,w\right)=-\sum_{w}\log_{2}p\left(u,w\right)\ne-\log_{2}\sum_{w}p\left(u,w\right)=-\log_{2}p\left(u,*\right)
+\]
+
+\end_inset
+
+Obviously, the log and the sum cannot be interchanged, but using the star
+ notation for wild-card sums makes it tempting to do so.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Experimental exploration
+\end_layout
+
+\begin_layout Standard
+We've not looked at this beastie before.
+ Let's take a look now.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+The graphs are constructed from the datasets located in the directory `
+\family sans
+p6-lapalce
+\family default
+`.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The dataset being used is `
+\family sans
+run-1-marg-tranche-123.rdb
+\family default
+` – this is well-described elsewhere.
+ It's untrimmed, its got a vocabulary of N=391548 words and a total of 28184319
+ unique word pairs.
+ These were observed a total of 985483375 times.
+ The graph below shows a histogram of the distribution of 
+\begin_inset Formula $\Delta E\left(u,v\right)$
+\end_inset
+
+ of word-pairs 
+\begin_inset Formula $\left(u,v\right)$
+\end_inset
+
+.
+ There are 400 buckets in the histogram.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-laplace/laplace.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The fit curve is exactly given by 
+\begin_inset Formula $2^{3\Delta E/4}/N_{\mbox{pairs}}$
+\end_inset
+
+ .
+ That is, the slope is 0.75.
+ Note that 
+\begin_inset Formula $2^{0.75}\approx1.682$
+\end_inset
+
+.
+ As usual, the line is bowed, but we don't know why.
+ Just for grins, there is a second fit: some numerology: 
+\begin_inset Formula $\varphi^{\Delta}$
+\end_inset
+
+ where 
+\begin_inset Formula $\varphi\approx1.618$
+\end_inset
+
+ the golden mean.
+ This probably doesn't mean anything, though.
+\end_layout
+
+\begin_layout Standard
+How does the data lead to this graph? Note that 
+\begin_inset Formula $\log_{2}N=18.58$
+\end_inset
+
+ and that 
+\begin_inset Formula $\log_{2}N_{\mbox{pairs}}=24.75$
+\end_inset
+
+ and finally 
+\begin_inset Formula $\log_{2}T=29.88$
+\end_inset
+
+.
+ The far-right hand side tells us that almost all word-pairs are observed
+ once
+\emph on
+ i.e.
+
+\emph default
+ 
+\begin_inset Formula $E=-\log_{2}p=29.88$
+\end_inset
+
+ or maybe twice: 
+\begin_inset Formula $E=29.88-1$
+\end_inset
+
+ or three times: 
+\begin_inset Formula $E=29.88-\log_{2}3$
+\end_inset
+
+.
+ At the same time, these words are observed with a far more frequent neighbor:
+ 
+\emph on
+e.g.
+
+\emph default
+ 
+\begin_inset Formula $\left(\mbox{the},X\right)$
+\end_inset
+
+ for some obscure word 
+\begin_inset Formula $X$
+\end_inset
+
+(maybe a typo?), so that although the pair 
+\begin_inset Formula $\left(\mbox{the},X\right)$
+\end_inset
+
+ is observed only once, the marginal sum 
+\begin_inset Formula $\sum_{w\ne X}E\left(\mbox{the},w\right)$
+\end_inset
+
+ is small.
+ Much of this graph is effectively just a reproduction of the earlier 
+\begin_inset Formula $E\left(u,v\right)$
+\end_inset
+
+ graph, including the bow in the middle.
+\end_layout
+
+\begin_layout Standard
+The fiber sums are ..
+ curious.
+ These are (with mild abuse of notation) 
+\begin_inset Formula $E\left(u,*\right)+E\left(*,v\right)$
+\end_inset
+
+ or, more precisely,
+\begin_inset Formula 
+\[
+SE\left(u,v\right)=-\frac{1}{2\left(N-1\right)}\left[\sum_{w\ne v}E\left(u,w\right)+\sum_{w\ne u}E\left(w,v\right)\right]
+\]
+
+\end_inset
+
+This is shown in the figure below.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename p6-laplace/sum-dist.eps
+	width 80col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+That is, most of the differential corrections are small; the vast majority
+ of them are less than one.
+ So, indeed, we can safely conclude that the distribution of 
+\begin_inset Formula $\Delta E\left(u,v\right)$
+\end_inset
+
+ is indeed very nearly the same as that of 
+\begin_inset Formula $E\left(u,v\right)$
+\end_inset
+
+, as the fiber-sum corrections are small.
+\end_layout
+
+\begin_layout Standard
+This graph looks messy, until one notes that it is approximately self-similar:
+ the right-most limb is repeated on the left, getting progressively smaller;
+ the right-most limb recapitulates the entire graph.
+ I think the cause for this involves words that are see only once, twice,
+ three times.
+ Due to the pair sampling, if a word is seen only once, it will still appear
+ in many pairs: it will be paired with other nearby words.
+\end_layout
+
+\begin_layout Standard
+Conclusion: what have we learned? Nothing really.
+ Interesting ideas, but they don't seem to offer insight that wasn't already
+ there.
+ Nor can I find any useful application for them.
+ What further can be built from this? 
+\end_layout
+
+\begin_layout Section*
+The End
+\end_layout
+
+\begin_layout Standard
+This is the end of Part Six of the diary.
+ 
+\end_layout
+
+\end_body
+\end_document

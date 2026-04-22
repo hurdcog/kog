@@ -1,0 +1,990 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass llncs
+\begin_preamble
+\usepackage{url} 
+\usepackage{slashed}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "cmtt" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style splncs04
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\branch long-version
+\selected 0
+\filename_suffix 0
+\color #faf0e6
+\end_branch
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 11page%
+\topmargin 8pheight%
+\rightmargin 11page%
+\bottommargin 10pheight%
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\listings_params "basicstyle={\ttfamily},basewidth={0.45em}"
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Underexplored Ideas
+\end_layout
+
+\begin_layout Author
+Linas Vepštas 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+orcidID{0000-0002-2557-740X}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Institute
+BrainyBlaze, OpenCog Foundation 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+email{<linasvepstas@gmail.com>}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+This paper presents a collection of ideas that appear to be commonly neglected
+ or underappreciated in AGI systems thinking.
+ They deserve a broader understanding and a broader audience.
+ Most of these ideas are foundational; forward progress on any of them require
+ far more than a few years by small research teams.
+ I think they are all exciting.
+\end_layout
+
+\begin_layout Abstract
+Version of 9 April 2025
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+Most or perhaps all the ideas described here are not original, and the careful,
+ plugged–in attentive reader is likely to have heard of many of these in
+ assorted forums.
+ The goal here is to pull them all together into one place, to examine the
+ relationships and connections.
+ 
+\end_layout
+
+\begin_layout Standard
+Because the thoughts presented here are both disconnected and yet inter–connecte
+d, the introductory overview is best served by an outline:
+\end_layout
+
+\begin_layout Itemize
+Panpsychism vs.
+ percolation as a model of intelligence as a phase transition.
+\end_layout
+
+\begin_layout Itemize
+Changes in network topologies cause phase transitions and social media is
+ a radical change in network topology.
+\end_layout
+
+\begin_layout Itemize
+Agency, sensorimotor interfaces, world models and self–awareness.
+\end_layout
+
+\begin_layout Itemize
+Hierarchical control structures, speed of changes, ecology and shocks.
+ Temes
+\end_layout
+
+\begin_layout Itemize
+Collective behavior of agents as a phase transition whose parameter is food/reso
+urce availability.
+ So *if* I had a mathematical model of agency, then I could study collective
+ behaavior in that model.
+ But I don't so I can't.
+\end_layout
+
+\begin_layout Itemize
+Inhibitory/excitatory upregulate/downregulate Aristotole law of excluded
+ middle
+\end_layout
+
+\begin_layout Itemize
+PLN criticism
+\end_layout
+
+\begin_layout Itemize
+genetics in Prusinkiewicz reaction-diffusion
+\end_layout
+
+\begin_layout Itemize
+Hierarchical evidence and not just fuzziness.
+\end_layout
+
+\begin_layout Itemize
+Levin's Ingress idea
+\end_layout
+
+\begin_layout Itemize
+Here and now.
+\end_layout
+
+\begin_layout Itemize
+Free will.
+\end_layout
+
+\begin_layout Standard
+Maybe
+\end_layout
+
+\begin_layout Itemize
+Uncle Miltie's tale of the thermostat
+\end_layout
+
+\begin_layout Section*
+Panpsychism or Percolation?
+\end_layout
+
+\begin_layout Standard
+Many philosophical thinkers first approaching the question of intelligence
+ and AGI soon find that the question is difficult enough, and the evidence
+ so ambiguous and scattered that panpsychism becomes not just an appealing
+ viewpoint, but even seems to get cemented into place with each new piece
+ of evidence.
+ There are various other ways; the one I wish to draw attention to comes
+ from statistical mechanics and the idea of phase transitions.
+\end_layout
+
+\begin_layout Standard
+The simplest example has the name 
+\begin_inset Quotes eld
+\end_inset
+
+percolation
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The idea is simple: a fluid can flow through a solid, if the solid has
+ enough pores and cavities to connect up and let it through.
+ Dip a piece of tissue in water: the water will wick up and 
+\begin_inset Quotes eld
+\end_inset
+
+percolate
+\begin_inset Quotes erd
+\end_inset
+
+ through.
+ Hold a sponge under a water tap: the water will fall in, seep through and
+ come out the bottom.
+ That there is a phase transition is illustrated by fraking in the petroleum
+ industry.
+ If a rock is 
+\begin_inset Quotes eld
+\end_inset
+
+tight
+\begin_inset Quotes erd
+\end_inset
+
+, old/gas will not flow.
+ But if you break it, fracture it, open up cracks, then it will.
+ 
+\end_layout
+
+\begin_layout Standard
+That there is a phase transition is seen in the mathematical models of percolati
+on.
+ Imagine a square grid of points, disconnected.
+ Now, randomly sprinkle edges onto that grid: if two points are connected
+ by an edge then a 
+\begin_inset Quotes eld
+\end_inset
+
+fluid
+\begin_inset Quotes erd
+\end_inset
+
+ can flow between them.
+ How many edges have to be randomly sprinkled before two distant points
+ are connected? Quite a lot: it turns out to be precisely 0.221...
+ (ref Achim Klenke 
+\begin_inset Quotes eld
+\end_inset
+
+probability
+\begin_inset Quotes erd
+\end_inset
+
+ book) Before this critical value, there simply is no flow.
+ Above it, there is.
+ This is a phase transition, and it is a first–order phase transition: it
+ is sharp, going from off to on quite suddenly.
+\end_layout
+
+\begin_layout Standard
+Perhaps the appearance of intelligence in nature works the same way? Below
+ a certain threshold, we have dumb rocks and murmuring creeks; above the
+ threshold, we have things the respond to stimuli, adapt and move.
+ Of course, there won't be just one transition between smart and not–smart.
+ A glance at the phase diagram for water shows dozens of phase transitions.
+ For carbon, thousands and arguably infinite (diamond, graphite, sheets,
+ buckyballs, ribbons...).
+\end_layout
+
+\begin_layout Standard
+Is this a useful idea? Perhaps.
+ If nothing else, it throws up a roadblock to the idea that even atoms are
+ intelligent, and thus cuts off a line of research that seems fruitless.
+ Is it difficult? Well, yes.
+ We've had many decades of work on scale–free networks and self–organizing
+ criticality, but very few of those touched on intelligence until Tononi
+ and Tegmark raised the idea to prominence(ref here).
+ Fine.
+ But we seem to lack a network model, even a simple one, where, on one side,
+ we can say 
+\begin_inset Quotes eld
+\end_inset
+
+not intelligent
+\begin_inset Quotes erd
+\end_inset
+
+ and on the other 
+\begin_inset Quotes eld
+\end_inset
+
+yes, at least in this one specially defined way
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This network could be a Markov logic network, a deep–learning neural net;
+ don't care.
+ Does it demonstrate phase transitions? 
+\end_layout
+
+\begin_layout Subsection*
+Social Media and Topology
+\end_layout
+
+\begin_layout Standard
+Phase transitions typically arise when the network topology changes.
+ Before the advent of social media, the human brain–to–brain interconnection
+ topology was hub–and–spoke.
+ At the center, a single TV station, the hub.
+ Around the edges, millions of viewers: the spokes.
+ Mainstream media did not talk about flat–earth, because publishers and
+ editors were too smart for that: they suppressed rank stupidity.
+ Crazy uncle Don's audience was limited to the captive family at Thanksgiving.
+ Social media changed how minds are connected to minds: it changed the wiring
+ diagram.
+ The endless list of current–day craziness issues can be traced back to
+ this rapid, sudden change in the network topology.
+\end_layout
+
+\begin_layout Standard
+This has happened before.
+ Gutenberg's printing press ushered in the hub–and–spoke model.
+ The ability of one author to sway the thoughts of thousands ushered in
+ a civilizational boom.
+ There was another phase transition before that: about three millennia ago,
+ with the invention of the phonetic alphabet.
+ Before that, learning to write in hieroglyphics meant being the smart kid
+ in the village kidnapped by priests, and being force to learn to read and
+ write for the next 10–15 years.
+ After that, any shmuck of mildly above–average intelligence could memorize
+ a mere 24 symbols, and the sounds associated with them.
+ The ability to read and write created an economic boom in the Ancient Mediterra
+nean.(ref meaning crisis on youtube) Will the present phase–change in network
+ topology be a boon? I hope so.
+ But the point here is to realize that 
+\emph on
+**this is what's going on**
+\emph default
+, instead of being perennially mystified by the situation.
+\end_layout
+
+\begin_layout Section*
+Agency and Perception
+\end_layout
+
+\begin_layout Standard
+Agency is a hot buzzword as I write this.
+ Everybody thinks they know what perception is, and sensori–motor interfaces
+ are the dry stuff of robotics textbooks.
+ Saying 
+\begin_inset Quotes eld
+\end_inset
+
+autopoesis
+\begin_inset Quotes erd
+\end_inset
+
+ is a social signal that says 
+\begin_inset Quotes eld
+\end_inset
+
+I'm smart
+\begin_inset Quotes erd
+\end_inset
+
+.
+ A short review of these concepts is in order.
+ The review is relevant because despite the obviousness, **
+\emph on
+no
+\emph default
+** present–day AI system is conceptualized this way; this includes self–driving
+ cars and cruise missiles.
+\end_layout
+
+\begin_layout Standard
+Agents have an 
+\begin_inset Quotes eld
+\end_inset
+
+inside
+\begin_inset Quotes erd
+\end_inset
+
+ and an 
+\begin_inset Quotes eld
+\end_inset
+
+outside
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The inside is bounded, limited, finite.
+ The outside is unbounded: the whole universe.
+ In between these two is a sensory system: a way of perceiving the outside,
+ and using that perception to update a world model.
+ Going the other way, agents have a motor system, allowing them to move.
+\end_layout
+
+\begin_layout Standard
+Sight and sound are obvious forms of perception.
+ A more basic model is listing a directory in a file system, and moving
+ to a different directory.
+ Such an agent 
+\begin_inset Quotes eld
+\end_inset
+
+sees
+\begin_inset Quotes erd
+\end_inset
+
+ the file time–stamps, perhaps the file types.
+ Maybe even the file contents.
+ A smart agent might memorize some of this structure, add it to its world–model.
+ Like a web–crawler, it could 
+\begin_inset Quotes eld
+\end_inset
+
+think
+\begin_inset Quotes erd
+\end_inset
+
+ to itself: 
+\begin_inset Quotes eld
+\end_inset
+
+why, I've seen this before, it was over there
+\begin_inset Quotes erd
+\end_inset
+
+ and even: 
+\begin_inset Quotes eld
+\end_inset
+
+this place looks awfully familiar
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+when was a last here?
+\begin_inset Quotes erd
+\end_inset
+
+ Motion here is not motion in a 3D space, but in an abstract, hierarchical
+ tree structured universe.
+ For a web crawler, its a network graph of directed links.
+ Without memory, one can only follow a link.
+ With memory, one can 
+\begin_inset Quotes eld
+\end_inset
+
+go anywhere
+\begin_inset Quotes erd
+\end_inset
+
+, but only if one has committed locations (URL's) to the agent's world–model
+ of 
+\begin_inset Quotes eld
+\end_inset
+
+the world out there
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Perception is tied to decision making: the agent decides where to look.
+ If the agent is being force–fed data, such as an LLM training run, this
+ is not 
+\begin_inset Quotes eld
+\end_inset
+
+perception
+\begin_inset Quotes erd
+\end_inset
+
+, this is forced updates.
+ Agency requires the ability to decide where to go next.
+ We are not ready to talk about free will; the decision of what to do next
+ could be algorithmically driven.
+ Before such discussions can start, there needs to be a locus point at which
+ other actions could have been taken, at lest in principle.
+\end_layout
+
+\begin_layout Standard
+The update of the agent's world–model requires a bit of perception and action
+ itself: asking 
+\begin_inset Quotes eld
+\end_inset
+
+do I have this item in my memory?
+\begin_inset Quotes erd
+\end_inset
+
+ is a form of perception.
+ Placing it in memory, committing it, is a form of action.
+ One even has to 
+\begin_inset Quotes eld
+\end_inset
+
+move
+\begin_inset Quotes erd
+\end_inset
+
+ to the right place, to put it there.
+ This feels a bit recursive, but eventually it bottoms out: somewhere, there
+ is a hard–coded system that actually places bits and bytes somewhere.
+\end_layout
+
+\begin_layout Subsection*
+Models of Agency
+\end_layout
+
+\begin_layout Standard
+What's the point of this simplistic talk of agency? Three–fold.
+ First, abstraction.
+ The above description is so simplistic that perhaps a category–theoretic
+ description of it can be created.
+ Category theory has a remarkably good fit with software development (ref
+ book cat theory for comp sci) Once one has such a description, one can
+ reason over it: A theory is itself a network of interrelations that can
+ be crawled, expanded, unpacked: in model theory, one has duality between
+ collections of axioms and the languages they express (ref book on model
+ theory) What is the unpacking of agency?
+\end_layout
+
+\begin_layout Standard
+Having an abstract symbolic framework for talking about perception allows
+ different forms of perception to be classified according to structure and
+ type.
+ It allows an agent to attach itself to a sensory organ.
+ Given a syntactic description of the sensory device, that description can
+ be parsed, the agent knows what kind of data will come in, the agent will
+ know how to 
+\begin_inset Quotes eld
+\end_inset
+
+move
+\begin_inset Quotes erd
+\end_inset
+
+ it's brand–new eyeball and look at things in the world.
+ To the agent, its like being given the owners manual to a brand–new microscope,
+ written in a language the agent can read.
+ It's good to go; no need to wait for a software programmer to stop by and
+ surgically attach a youtube video scraper to some diffusion model.
+\end_layout
+
+\begin_layout Standard
+Having an abstract symbolic framework for agency provides concrete footing
+ for answering the earlier models of phase transitions and intelligence.
+ Lets try to create a collection of simple agents, perhaps the simplest
+ possible, throw them into a tank, and see what happens: is there a phase
+ transition in behavior? Can one side of it be called 
+\begin_inset Quotes eld
+\end_inset
+
+dumb
+\begin_inset Quotes erd
+\end_inset
+
+ and the other side 
+\begin_inset Quotes eld
+\end_inset
+
+well, that's interesting!
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Is this a new idea? No; the a–life community has been poking at this for
+ decades.
+ Is the a–life community sufficiently coordinated and coherent to present
+ novel discoveries? I don't know.
+\end_layout
+
+\begin_layout Standard
+The goal here is to arrive at a minimal model, some basic algebraic description
+ of pieces–parts that at least plausibly might be assembled into a system
+ that one could call 
+\begin_inset Quotes eld
+\end_inset
+
+intelligent
+\begin_inset Quotes erd
+\end_inset
+
+.
+ And then explore, at a low level, how such systems might interact, what
+ the ecology is, and where the behavioral boundaries are.
+\end_layout
+
+\begin_layout Subsection*
+Self–Awareness
+\end_layout
+
+\begin_layout Standard
+A precise articulation of awareness should help advance the contentious
+ debate about self–awareness and consciousness.
+ If one can give a precise syntactic expression to the act of perception,
+ and how the act of perception is tied to active updates of the world–model,
+ then perhaps this same formalism can be used to have the agent examine
+ it's own internals, it's own world model, it's own belief structures.
+\end_layout
+
+\begin_layout Standard
+This is not the same as a cruise–missile knowing it's own position or the
+ temperature of it's exhaust.
+ Those feedback elements are hard–coded, much like adding a centrifugal
+ governor to a steam engine does not make it self–aware.
+ A part of perception is the choice–point of what to focus on: the attention.
+ Naively, one might imagine that self–consciousness is merely self–awareness
+ with the freedom to chose what to pay attention to.
+ Default mode day–dreaming might be randomly wandering attention.
+ Rather than debating with words and opinions, a debate involving formal
+ models would be better.
+ If those formal models can be used to build networks showing phase transitions
+ and self–organized criticality, all the better.
+\end_layout
+
+\begin_layout Standard
+This does not need to be all computer science and mathematics: it is well
+ known that ant colonies exhibit a variety of functional states.
+ And interesting mode of collapse is when most of the ants decide they want
+ to be queen; yes, this happens, but what is the agent–theoretic statistical
+ mechanics description of this sudden change in behavior?
+\end_layout
+
+\begin_layout Standard
+Ants, one might say, have a very simply psychological profile.
+ Would a proper agent–theoretic formulation allow the description of more
+ complex psychological states? That is, to examine the question: 
+\begin_inset Quotes eld
+\end_inset
+
+what is going on inside the agent's world–model, such that it reacts in
+ these ways to these conditions?
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+what predisposes it to act this way?
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Of course, both Pavlov and B.F.
+ Skinner looked for mechanistic explanations of psychology.
+ Having algebraic formalisms of agency should allow experimental explorations
+ of topics that have been heretofore only been raised in the Stanford Encycloped
+ia of Philosophy.
+\end_layout
+
+\begin_layout Section*
+Hierarchical Control and Time
+\end_layout
+
+\begin_layout Standard
+Nature, as it evolved brains, created a stack of hierarchical control structures.
+ The jellyfish neuronal system works: the jellyfish can feed itself, and
+ it can flee predators.
+ Unfortunately, it is too stupid to stop eating while it's fleeing.
+ To fix this problem, nature does not so much replace the network, as to
+ add a control layer on top.
+ This first shows in the bilaterians (ref good design paper).
+ The brain stem is enough to guide invertebrates, but to do better, the
+ cerebellum is added on top of the brain stem as a controller.
+ That is, the basic architecture is not discarded; it is kept, with a new
+ piece introduced to provide finer control.
+ This proceeds apace: the cerebrum, cortex, neocortex.
+ The spinal cord and cerebellum continue to dominate those functions that
+ require millisecond reaction times.
+\end_layout
+
+\begin_layout Standard
+We do not yet see this kind of functional layering in LLM's.
+ Presumably this is because no one knows how to do it yet.
+ But we may be at a watershed moment: a kind of 
+\begin_inset Quotes eld
+\end_inset
+
+microscope
+\begin_inset Quotes erd
+\end_inset
+
+ for observing LLM internals has been described (ref Haiku anthropic paper).
+ That neuroscope has outputs that seem to be symbolic, corresponding to
+ what GOFAI would call 
+\begin_inset Quotes eld
+\end_inset
+
+concepts
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Is there enough there, to be able to attach the observed items to classical
+ symbolic AI systems? Is this perhaps an avenue for rational control? This
+ is a hot take as this letter is being written; it may be old news by the
+ time it is published.
+\end_layout
+
+\begin_layout Subsection*
+Time Scales and Shocks
+\end_layout
+
+\begin_layout Standard
+A characteristic of control systems is that they work at different time
+ scales.
+ One reason that nicotine addiction is hard to quit is because there are
+ five distinct control systems, tied in feedback loops, each reinforcing
+ the last.
+ The fastest ones are purely chemical, involving just neurotransmitters
+ and their re–uptake mechanisms.
+ These operate at the ten–minute timescale and drive craving at that scale.
+ Higher layers tie into neuronal circuits: even if you've resisted a cigarette
+ for hours, these circuits pump the neurons to keep the craving alive.
+ Deeper circuits operate at the multi–day, multi–week and multi–month time–frame
+s.
+ Even if you've successfully busted the lowest, fastest layers, a well–placed
+ magazine advertisement can reignite the system.
+\end_layout
+
+\begin_layout Standard
+Multi–timescale systems provide stability and control against excursions.
+ They are widespread in biological nature, and also in economic & political
+ systems: corporate plankton go to work every day, but meetings are weekly,
+ and corporate reviews are quarterly.
+ Each corrects for excursions in the last.
+ The system is hierarchical not just in organizational structure, but also
+ in time–scale.
+\end_layout
+
+\begin_layout Standard
+Multi–timescale systems are also prone to disregulation by shocks.
+ The prototypical one is the economic shock: a disruption of supply cannot
+ be instantly counter–acted by increased production.
+ The system, knocked out of balance, usually functions poorly until balance
+ is regained.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Temes and super–human AGI
+\end_layout
+
+\begin_layout Standard
+It is sometimes said that corporations are a weak form of super–human AGI:
+ they never sleep, they operate 24x7, are far more powerful than most humans
+ (the oligarchs are exceptional) and can have lifetimes in excess of a hundred
+ years.
+ There is a notion of a 
+\begin_inset Quotes eld
+\end_inset
+
+teme
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\begin_inset Quotes eld
+\end_inset
+
+technological meme
+\begin_inset Quotes erd
+\end_inset
+
+, of which nicotine forms the prototypical example.
+ Nicotine is not just a neurotransmitter; it is also a multi–billion dollar
+ industry built to manufacture and deliver nicotine to those who want it.
+ As an industry, it has existed for more than 400 years.
+ It can be and should be thought of as a super–human feedback loop, operating
+ at the dendritic, synaptic level at its lowest reaches, and as a complex
+ network of banking and commerce at the highest level.
+ In a certain sense, one could say that it does not care about humans: the
+ profit motive long overwhelmed concerns about lung cancer.
+\end_layout
+
+\begin_layout Standard
+Some super–human functional structures are wildly harmful to humans: World
+ War One was an industrial killing machine that shut down only when the
+ supply of raw materials ran out: there were no more young men left to kill.
+ Despite the best efforts of politicians and generals, no one could seem
+ to find the off–switch, even as the machine hummed along in a collection
+ of feedback loops that guaranteed a continuous supply of young men and
+ bullets.
+\end_layout
+
+\begin_layout Standard
+The point of this story is that it is often imagined that 
+\begin_inset Quotes eld
+\end_inset
+
+true AGI
+\begin_inset Quotes erd
+\end_inset
+
+ will somehow magically decide to be beneficial and friendly.
+ There is foundation for this belief is due to a misperception of mammalian
+ traits.
+ Babies love their mothers, not just in humans, but in all mammals.
+ Birds, too.
+ This is innate, biological, presumably an artifact of evolution.
+ There's more: the famous Capuchin monkey cucumber–grape experiment (ref
+ youtube) shows that the sense of justice and fairness is not a uniquely
+ human trait.
+ Silicon intelligences do not have this wired in, as a fail–safe fallback
+ mechanism.
+ You won't find a youtube video of a cute fuzzy furball of an LLM bouncing
+ around.
+ There's nothing identifiable as 
+\begin_inset Quotes eld
+\end_inset
+
+love
+\begin_inset Quotes erd
+\end_inset
+
+ engineered into transformers.
+ there are texts that speak of love in the training set, but these texts
+ do not have some exalted status or primordial priority.
+\end_layout
+
+\begin_layout Subsection*
+Social media and algorithms
+\end_layout
+
+\begin_layout Standard
+The other point of this story is that all work on LLMs, AI and AGI is being
+ integrated into the fabric of brain–to–brain communications as quickly
+ as that technology becomes stable and usable.
+ I was in attendance at one AGI conference near the start of the Putin's
+ attack on Ukraine.
+ I kept saying 
+\begin_inset Quotes eld
+\end_inset
+
+Ukraine
+\begin_inset Quotes erd
+\end_inset
+
+ throughout the conference, with those words falling on deaf ears.
+ If Putin could get his hands on advanced AI, of course he would use it
+ as a weapon against the Ukrainians.
+ Whatever safety and control modules were in there, it does not seem like
+ it would be a stretch to subvert and jail–break them in order to kill Ukrainian
+s.
+ There is already a eugenics experiment underway: the Silovoki: the intentional
+ inter–breeding of police officers, military officers and FSB (ex-KGB/Checka)
+ operatives it is about three or four generations in.
+ We breed dogs and horses for traits, and it does not take that many generations
+, either.
+ There's no reason to think it doesn't work in humans.
+ Some fraction of that mammalian love and cute–furball fuzziness is being
+ bred out with each generation.
+ Add access to sophisticated AI to such a social network, and you have a
+ recipe for disaster.
+ Our work on AGI does not take place on Block Island, behind three layers
+ of security.
+ Its perhaps a bit more like Wuhan.
+ If this sound political, that is because it is: AGI won't be integrated
+ into the net as some kind of better search engine.
+ It will be integrated at the political level, and will exhibit all the
+ features that we already worry about in the algorithmic control of social
+ media.
+\end_layout
+
+\begin_layout Standard
+So far, these topics are discussed by a relatively small group of social
+ scientists.
+ The technology blogeratti appear to be blissfully unaware of the issue,
+ much as AGI conference attendees from prior years seems unaware and uncaring
+ of the rather direct interconnections between the War in Ukraine and the
+ social media algorithms.
+ AGI super–intelligence will be integrated into the fabric of humanity much
+ like how nicotine is integrated in.
+ And it won't have mammalian love instincts unless we figure out how that
+ actually works.
+\end_layout
+
+\begin_layout Standard
+Could an algebraic formalization of agency and the ecology (statistical
+ mechanics) of such systems provide enlightenment into the mechanism of
+ love? Sounds like a far–fetched day–dream, but its perhaps more realistic
+ than thinking that a bunch of prompts will solve the problem.
+ Or worse: simply taking it as an article of faith that AGI will be benevolent.
+ Large superhuman ecosystems: jungles and forests are not benevolent.
+ I doubt AGI would be some exception.
+ Even supposedly benevolent systems, such as the Catholic Church, have been
+ found to have some nasty failings.
+\end_layout
+
+\begin_layout Section*
+Aristotle
+\end_layout
+
+\begin_layout Standard
+xx
+\end_layout
+
+\begin_layout Standard
+x
+\end_layout
+
+\begin_layout Standard
+x
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "../lang"
+options "splncs04"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

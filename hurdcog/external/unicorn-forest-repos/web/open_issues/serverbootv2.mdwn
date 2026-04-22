@@ -1,0 +1,899 @@
+[[!meta copyright="Copyright © 2024 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+
+# ServerBootV2 RFC Draft
+
+[[!inline pagenames=hurd/what_is_an_os_bootstrap raw=yes feeds=no]]
+
+Sergey Bugaev proposed:
+
+The Hurd's current bootstrap, [[Quiet-Boot|hurd/bootstrap]] (a biased
+and made-up name), is fragile, hard to debug, and complicated:
+
+* `Quiet-boot` chokes on misspelled or missing boot arguments.  When
+  this happens, the Hurd bootstrap will likely hang and display
+  nothing. This is tricky to debug.
+* `Quiet-Boot` is hard to change. For instance, when the Hurd
+  developers added `acpi`, the `pci-arbiter`, and `rumpdisk`, they
+  struggled to get `Quiet-Boot` working again.
+* `Quiet-Boot` forces each bootstrap task to include special bootstrap
+  logic to work.  This limits what is possible during the
+  bootstrap. For instance, it should be trivial for the Hurd to
+  support netboot, but `Quiet-Boot` makes it hard to add `nfs`,
+  `pfinet`, and `isofs` to the bootstrap.
+* `Quiet-Boot` hurts other Hurd distributions too. When Guix
+  developers updated their packaged version of the Hurd, that included
+  support for SATA drives, a simple misspelled boot argument halted
+  their progress for a few weeks.
+
+The alternative `ServerBoot V2` proposal (which was discussed on
+[irc](https://logs.guix.gnu.org/hurd/2023-07-18.log) and is similar to
+the previously discussed [bootshell
+proposal](https://mail-archive.com/bug-hurd@gnu.org/msg26341.html))
+aims to code all or most of the bootstrap specific logic into one
+single task (`/hurd/serverboot`).  `Serverboot V2` has a number
+of enticing advantages:
+
+* It simplifies the hierarchical dependency of translators during
+  bootstrap. Developers should be able to re-order and add new
+  bootstrap translators with minimal work.
+* It gives early bootstrap translators like `auth` and `ext2fs`
+  standard input and output which lets them display boot errors.  It
+  also lets signals work.
+* One can trivially use most Hurd translators during the
+  bootstrap. You just have to link them statically.
+* `libmachdev` could be simplified to only expose hardware to
+  userspace; it might even be possible to remove it entirely.  Also
+  the `pci-arbiter`, `acpi`, and `rumpdisk` could be simplified.
+* Developers could remove any bootstrap logic from `libdiskfs`, which
+  detects the bootstrap filesystem, starts the `exec` server, and
+  spawns `/hurd/startup`.  Instead,`libdiskfs` would only focus on
+  providing filesystem support.
+* If an error happens during early boot, the user could be dropped
+  into a REPL or mini-console, where he can try to debug the issue.
+  We might call this `Bootshell V2`, in reference to the original
+  proposal.  This could be written in lisp.  Imagine having an
+  extremely powerful programming language available during bootstrap
+  that is only [436 bytes!](https://justine.lol/sectorlisp2)
+* It would simplify the code for subhurds by removing the logic from
+  each task that deals with the OS bootstrap.
+
+Now that you know why we should use `Serverboot V2`, let's get more
+detailed.  What is `Serverboot V2` ?
+
+`Serverboot V2` would be an empty filesystem dynamically populated
+during bootstrap.  It would use a `netfs` like filesystem that will
+populate as various bootstrap tasks are started.  For example,
+`/servers/socket2` will be created once `pfinet` starts.  It also
+temporarily pretends to be the Hurd process server, `exec`, and `/`
+filesystem while providing signals and `stdio`.  Let's explain how
+`Serverboot V2` will bootstrap the Hurd.
+
+**FIXME The rest of this needs work.**
+
+Any bootstrap that the Hurd uses will probably be a little odd,
+because there is an awkward and circular startup-dance between
+`exec`, `ext2fs`, `startup`, `proc`, `auth`, the `pci-arbiter`,
+`rumpdisk`, and `acpi` in which each translator oddly depends on the
+other during the bootstrap, as this ascii art shows.
+
+
+       pci-arbiter
+           |
+          acpi
+           |
+        rumpdisk
+           |
+         ex2fs  -- storeio
+        /     \
+     exec     startup
+      /          \
+    auth         proc
+
+
+This means that there is no *perfect* Hurd bootstrap design.  Some
+designs are better in some ways and worse in others.  `Serverboot V2`
+would simplify other early bootstrap tasks, but all that complicated
+logic would be in one binary. One valid criticism of `Serverboot V2`
+is that it will may be a hassle to develop and maintain. In any case,
+trying to code the *best* Hurd bootstrap may be a waste of time. In
+fact, the Hurd bootstrap has been rewritten several times already.
+Our fearless leader, Samuel, feels that rewriting the Hurd bootstrap
+every few years may be a waste of time.  Now that you understand why
+Samuel's discourages a Hurd bootstrap rewrite, let's consider why we
+should develop `Serverboot V2`.
+
+# How ServerBoot V2 will work
+
+Bootstrap begins when Grub and GNU Mach start some tasks, and then GNU
+Mach resumes the not-yet-written
+`/hurd/serverboot`. `/hurd/serverboot` is the only task to accept
+special ports from the kernel via command line arguments like
+`--kernel-task`; `/hurd/serverboot` tries to implement/emulate as much
+of the normal Hurd environment for the other bootstrap translators.
+In particular, it provides the other translators with `stdio`, which
+lets them read/write without having to open the Mach console device.
+This means that the various translators will be able to complain about
+their bad arguments or other startup errors, which they cannot
+currently do.
+
+`/hurd/serverboot` will provide a basic filesystem with netfs, which
+gives the other translators a working `/` directory and `cwd`
+ports. For example, `/hurd/serverboot`, would store its port at
+`/dev/netdde`.  When `/hurd/netdde` starts, it will reply to its
+parent with `fsys_startup ()` as normal.
+
+`/hurd/serverboot` will also emulate the native Hurd process server to
+early bootstrap tasks.  This will allow early bootstrap tasks to get
+the privileged (device master and kernel task) ports via the normal
+glibc function `get_privileged_ports (&host_priv, &device_master).`
+Other tasks will register their message ports with the emulated
+process server.  This will allow signals and messaging during the
+bootstrap. We can even use the existing mechanisms in glibc to set and
+get init ports.  For example, when we start the `auth` server, we will
+give every task started thus far, their new authentication port via
+glibc's `msg_set_init_port ()`.  When we start the real proc server,
+we query it for proc ports for each of the tasks, and set them the
+same way. This lets us migrate from the emulated proc server to the
+real one.
+
+**Fix me: Where does storeio (storeio with**
+`device:@/dev/rumpdisk:wd0`**), rumpdisk, and the pci-arbiter come
+in?**
+
+Next, we start `ext2fs`.  We reattach all the running translators from
+our `netfs` bootstrap filesystem onto the new root.  We then send
+those translators their new root and cwd ports.  This should happen
+transparently to the translators themselves!
+
+# Supporting Netboot
+
+`Serverboot V2` could trivially support netboot by adding `netdde`,
+`pfinet` (or `lwip`), and `isofs` as bootstrap tasks. The bootstrap
+task will start the `pci-arbiter`, and `acpi` (FIXME add some more
+detail to this sentence). The bootstrap task starts `netdde`, which
+will look up any `eth` devices (using the device master port, which it
+queries via the fake process server interface), and sends its fsys
+control port to the bootstrap task in the regular `fsys_startup
+()`. The bootstrap task sets the fsys control port as the translator
+on the `/dev/netdde` node in its `netfs` bootstrap fs. Then
+`/hurd/serverboot` resumes `pfinet`, which looks up
+`/dev/netdde`. Then `pfinet` returns its `fsys` control port to the
+bootstrap task, which it sets on `/servers/socket/2`. Then bootstrap
+resumes `nfs`, and `nfs` just creates a socket using the regular glibc
+socket () call, and that looks up `/servers/socket/2`, and it just
+works. **FIXME where does isofs fit in here?**
+
+Then `nfs` gives its `fsys` control port to `/hurd/serverboot`, which
+knows it's the real root filesystem, so it take the netdde's and
+pfinet's fsys control ports.  Then it calls `file_set_translator ()`
+on the nfs on the same paths, so now `/dev/netdde` and
+`/servers/socket/2` exist and are accessible both on our bootstrap fs,
+and on the new root fs. The bootstrap can then take the root fs to
+broadcast a root and cwd port to all other tasks via a
+`msg_set_init_port ()`. Now every task is running on the real root fs,
+and our little bootstrap fs is no longer used.
+
+`/hurd/serverboot` can resume the exec server (which is the first
+dynamically-linked task) with the real root fs.  Then we just
+`file_set_translator ()` on the exec server to `/servers/exec`, so
+that `nfs` doesn't have to care about this. The bootstrap can now
+spawn tasks, instead of resuming ones loaded by Mach and grub, so it
+next spawns the `auth` and `proc` servers and gives everyone their
+`auth` and `proc` ports. By that point, we have enough of a Unix
+environment to call `fork()` and `exec()`. Then the bootstrap tasks
+would do the things that `/hurd/startup` used to do, and finally
+spawns (or execs) `init / PID 1`.
+
+With this scheme you will be able to use ext2fs to start to your root
+fs via as `/hurd/ext2fs.static /dev/wd0s1`.  This eliminates boot
+arguments like `--magit-port` and `--next-task`.
+
+This also simplifies `libmachdev`, which exposes devices to userspace
+via some Mach `device_*` RPC calls, which lets the Hurd contain device
+drivers instead of GNU Mach. Everything that connects to hardware can
+be a `machdev`.
+
+Additionally, during the `Quiet Boot` bootstrap,`libmachdev` awkwardly
+uses `libtrivfs` to create a transient `/` directory, so that the
+`pci-arbiter` can mount a netfs on top of it at bootstrap.
+`libmachdev` needs `/servers/bus` to mount `/pci,`and it also
+needs `/servers` and `/servers/bus` (and `/dev`, and
+`/servers/socket`). That complexity could be moved to `ServerbootV2`,
+which will create directory nodes at those locations.
+
+`libmachdev` provides a trivfs that intercepts the `device_open` rpc,
+which the `/dev` node uses. It also fakes a root filesystem node, so
+you can mount a `netfs` onto it. You still have to implement
+`device_read` and `device_write` yourself, but that code runs in
+userspace.  An example of this can be found in
+`rumpdisk/block-rump.c`.
+
+`libpciaccess` is a special case: it has two modes, the first time it
+runs via `pci-arbiter`, it acquires the pci config IO ports and runs
+as x86 mode. Every subsequent access of pci becomes a hurdish user of
+pci-arbiter.
+
+`rumpdisk` exposes `/dev/rumpdisk`:
+
+    $ showtrans /dev/rumpdisk
+      /hurd/rumpdisk
+
+
+# FAQ
+
+## `Server Boot V2` looks like a ramdisk + a script...?
+
+Its not quite a ramdisk, its more a netfs translator that
+creates a temporary `/`.  Its a statically linked binary. I don't
+think it differs from a multiboot module.
+
+## How are the device nodes on the bootstrap netfs attached to each translator?
+## How does the first non-bootstrap task get invoked?
+## does bootstrap resume it?
+## Could we just use a ram disk instead?
+## One could stick an unionfs on top of it to load the rest of the system after bootstrap.
+
+It looks similar to a ramdisk in principle, i.e. it exposes a fs which
+lives only in ram, but a ramdisk would not help with early bootstrap.
+Namely during early bootstrap, there are no signals or console.
+Passing control from from one server to the next via a bootstrap port
+is a kludge at best. How many times have you seen the bootstrap
+process hang and just sit there?  `Serverboot V2` would solve that.
+Also, it would allow subhurds to be full hurds without special casing
+each task with bootstrap code.  It would also clean up `libmachdev`,
+and Damien, its author, is in full support.
+
+## A ramdisk could implement signals and stdio.  Isn't that more flexible?
+
+But if its a ramdisk essentially you have to provide it with a tar
+image.  Having it live inside a bootstrap task only is
+preferable. Also the task could even exit when its done whether you
+use an actual ramdisk or not. You still need to write the task that
+boots the system.  That is different than how it works currently. Also
+a ramdisk would have to live in mach, and we want to move things out
+of mach.
+
+Additionally, the bootstrap task will be loaded as the first multiboot
+module by grub.  It's not a ramdisk, because a ramdisk has to contain
+some fs image (with data), and we'd need to parse that format.  It
+might make sense to steer it more into that direction (and Samuel
+seems to have preferred it), because there could potentially be some
+config files, or other files that the servers may need to run. I'm not
+super fond of that idea. I'd prefer the bootstrap fs to be just a
+place where ports (translators) can be placed and looked up. Actually
+in my current code it doesn't even use `netfs`, it just implements the
+RPCs directly.  I'll possibly switch to `netfs` later, or if the
+implementation stays simple, I won't use `netfs`.
+
+## Serverboot V2 just rewrites proc and exec.  Why reimplement so much code?
+
+I don't want to exactly reimplement full `proc` and `exec` servers in the
+bootstrap task, it's more of providing very minimal emulation of some
+of their functions.  I want to implement the two RPCs from the
+`proc` interface, one to give a task the privileged ports on request and
+one to let the task give me its msg port.  That seems fairly simple to
+me.
+
+While we were talking of using netfs, my actual implementation doesn't
+even use that, it just implements the RPCs directly (not to suggest I
+have anything resembling a complete implementation). Here's some
+sample code to give you an idea of what it is like
+
+
+	error_t
+	S_proc_getprivports (struct bootstrap_task *task,
+                     mach_port_t *host_priv,
+                     mach_port_t *device_master)
+	{
+ 		if (!task)
+         return EOPNOTSUPP;
+
+      if (bootstrap_verbose)
+        fprintf (stderr, "S_proc_getprivports from %s\n", task->name);
+
+      *host_priv = _hurd_host_priv;
+      *device_master = _hurd_device_master;
+
+      return 0;
+    }
+
+	error_t
+	S_proc_setmsgport (struct bootstrap_task *task,
+                   mach_port_t reply_port,
+                   mach_msg_type_name_t reply_portPoly,
+                   mach_port_t newmsgport,
+                   mach_port_t *oldmsgport,
+                   mach_msg_type_name_t *oldmsgportPoly)
+	{
+		if (!task)
+			return EOPNOTSUPP;
+
+	    if (bootstrap_verbose)
+			fprintf (stderr, "S_proc_setmsgport for %s\n", task->name);
+
+	    *oldmsgport = task->msgport;
+	    *oldmsgportPoly = MACH_MSG_TYPE_MOVE_SEND;
+
+	    task->msgport = newmsgport;
+
+	    return 0;
+	    }
+
+Yes, it really is just letting tasks fetch the priv ports (so
+`get_privileged_ports ()` in glibc works) and set their message ports.
+So much for a slippery slope of reimplementing the whole process
+server :)
+
+
+## Let's bootstrap like this: initrd, proc, exec, acpi, pci, drivers,
+## unionfs+fs with every server executable included in the initrd tarball?
+
+I don't see how that's better, but you would be able to try something
+like that with my plan too.  The OS bootstrap needs to start servers
+and integrate them into the eventual full hurd system later when the
+rest of the system is up.  When early servers start, they're running
+on bare Mach with no processes, no `auth`, no files or file
+descriptors, etc.  I plan to make files available immediately (if not
+the real fs), and make things progressively more "real" as servers
+start up.  When we start the root fs, we send everyone their new root
+`dir` port.  When we start `proc`, we send everyone their new `proc`
+port.  and so on.  At the end, all those tasks we have started in
+early boot are full real hurd proceses that are not any different to
+the ones you start later, except that they're statically linked, and
+not actually `io map`'ed from the root fs, but loaded by Mach/grub
+into wired memory.
+
+# IRC Logs
+
+    <damo22> showtrans /dev/wd0 and you can open() that node and it will
+    act as a device master port, so you can then `device_open` () devices
+    (like wd0) inside of it, right?
+
+    oh it's a storeio, that's… cute. that's another translator we'd need
+    in early boot if we want to boot off /hurd/ext2fs.static /dev/wd0
+
+    <damo22> We implemented it as a storeio with
+	device:@/dev/rumpdisk:wd0
+
+	so the `@` sign makes it use the named file as the device master, right?
+
+	<damo22> the `@` symbol means it looks up the file as the device
+	master yes.  Instead of mach, but the code falls back to looking up
+	mach, if it cant be found.
+
+	I see it's even implemented in libstore, not in storeio, so it just
+	does `file_name_lookup ()`, then `device_open` on that.
+
+	<damo22> pci-arbiter also needs acpi because the only way to know the
+	IRQ of a pci device reliably is to use ACPI parser, so it totally
+	implements the Mach `device_*` functions. But instead of handling the
+	RPCs directly, it sets the callbacks into the
+	`machdev_device_emulations_ops` structure and then libmachdev calls
+	those. Instead of implementing the RPCs themselves, It abstracts them,
+	in case you wanted to merge drivers. This would help if you wanted
+	multiple different devices in the same translator, which is of course
+	the case inside Mach, the single kernel server does all the devices.
+
+	but that shouldn't be the case for the Hurd translators, right? we'd
+	just have multiple different translators like your thing with rumpdisk
+	and rumpusb.
+
+	`<damo22>`	i dont know
+
+	ok, so other than those machdev emulation dispatch, libmachdev uses
+	trivfs and does early bootstrap. pci-arbiter uses it to centralize the
+	early bootstrap so all the machdevs can use the same code. They chain
+	together. pci-arbiter creates a netfs on top of the trivfs. How
+	well does this work if it's not actually used in early bootstrap?
+
+	<damo22> and rumpdisk opens device ("pci"), when each task is resumed,
+	it inherits a bootstrap port
+
+	and what does it do with that? what kind of device "pci" is?
+
+	<damo22> its the device master for pci, so rumpdisk can call
+	pci-arbiter rpcs on it
+
+	hm, so I see from the code that it returns the port to the root of its
+	translator tree actually. Does pci-arbiter have its own rpcs? does it
+	not just expose an fs tree?
+
+	<damo22> it has rpcs that can be called on each fs node called
+	"config" per device: hurd/pci.defs. libpciaccess uses these.
+
+	how does that compare to reading and writing the fs node with regular read and write?
+
+	<damo22> so the second and subsequent instances of pciaccess end up
+	calling into the fs tree of pci-arbiter. you can't call read/write on
+	pci memory its MMIO, and the io ports need `inb`, `inw`, etc. They
+	need to be accessed using special accessors, not a bitstream.
+
+	but I can do $ hexdump /servers/bus/pci/0000/00/02/0/config
+
+	<damo22> yes you can on the config file
+
+	how is that different from `pci_conf_read` ?  it calls that.
+
+	<damo22> the `pci fs` is implemented to allow these things.
+
+	why is there a need for `pci_conf_read ()` as an RPC then, if you can
+	instead use `io_read` on the "config" node?
+
+	<damo22> i am not 100% sure. I think it wasn't fully implemented from
+	the beginning, but you definitely cannot use `io_read ()` on IO
+	ports. These have explicit x86 instructions to access them
+	MMIO. maybe, im not sure, but it has absolute physical addressing.
+
+	I don't see how you would do this via `pci.defs` either?
+
+	<damo22> We expose all the device tree of pci as a netfs
+	filesystem. It is a bus of devices. you may be right. It would be best
+	to implement pciaccess to just read/write from the filesystem once its
+	exposed on the netfs.
+
+	yes, the question is:
+
+	1 is there anything that you can do by using the special RPCs from
+	pci.defs that you cannot do by using the regular read/write/ls/map
+	on the exported filsystem tree,
+	2 if no, why is there even a need for `pci.defs`, why not always use
+	the fs? But anyway, that's irrelevant for the question of bootstrap
+	and libmachdev
+
+	<damo22> There is a need for rpcs for IO ports.
+
+	Could you point me to where rumpdisk does `device_open ("pci")`? grep
+	doesn't show anything. which rpcs are for the IO ports?
+
+	<damo22> They're not implemented yet we are using raw access I
+	think. The way it works, libmachdev uses the next port, so it all
+	chains together: `libmachdev/trivfs_server.c`.
+
+	but where does it call `device_open ("pci")` ?
+
+	<damo22> when the pci task resumes, it has a bootstrap port, which is
+	passed from previous task. There is no `device_open ("pci")`.  or if
+	its the first task to be resumed, it grabs a bootstrap port from
+	glibc? im not sure
+
+	ok, so if my plan is implemented how much of `libmachdev` functionality
+	will still be used / useful?
+
+	<damo22> i dont know.  The mach interface? device interface\*. maybe
+	it will be useless.
+
+	I'd rather you implemented the Mach device RPCs directly, without the
+	emulation structure, but that's an unrelated change, we can leave that
+	in for now.
+
+	<damo22> I kind of like the emulation structure as a list of function
+	pointers, so i can see what needs to be implemented, but that's
+	neither here nor there.  `libmachdev` was a hack to make the bootstrap
+	work to be honest.…and we'd no longer need that. I would be happy if
+	it goes away.  the new one would be so much better.
+
+	is there anything else I should know about this all? What else could
+	break if there was no libmachdev and all that?
+
+	<damo22> acpi, pci-arbiter, rumpdisk, rumpusbdisk
+
+	right, let's go through these
+
+	<damo22> The pci-arbiter needs to start first to claim the x86 config
+	io ports.  Then gnumach locks these ports.  No one else can use them.
+
+	so it starts and initializes **something** what does it need?  the
+	device master port, clearly, right?  that it will get through the
+	glibc function / the proc API
+
+	<damo22> it needs a /servers/bus and the device master
+
+	<solid_black>
+	right, so then it just does fsys_startup, and the bootstrap task
+	places it onto `/servers/bus` (it's not expected to do
+	`file_set_translator ()` itself, just as when running as a normal
+	translator)
+
+	<damo22> it exposes a netfs on `/servers/bus/pci`
+
+	<solid_black> so will pci-arbiter still expose mach devices? a mach
+	device master?  or will it only expose an fs tree + pci.defs?
+
+	<damo22> i think just fs tree and pci.defs. should be enough
+
+	<solid_black> ok, so we drop mach dev stuff from pci-arbiter
+	completely. then acpi starts up, right? what does it need?
+
+	<damo22> It needs access to `pci.defs` and the pci tree. It
+	accesses that via libpciaccess, which calls a new mode that
+	accesses the fstree. It looks up `servers/bus/pci`.
+
+	ok, but how does that work now then?
+
+	<damo22> It looks up the right nodes and calls pci.defs on them.
+
+	<solid_black> looks up the right node on what? there's no root
+	filesystem at that point (in the current scheme)
+
+	`<damo22>` It needs pci access
+
+	that's why I was wondering how it does `device_open ("pci")`
+
+	<damo22> I think libmachdev from pci gives acpi the fsroot. there is a
+	doc on this.
+
+	so does it set the root node of pci-arbiter as the root dir of acpi?
+	as in, is acpi effectively chrooted to `/servers/bus/pci`?
+
+	<damo22> i think acpi is chrooted to the parent of /servers. It shares
+	the same root as pci's trivfs.
+
+	i still don't quite understand how netfs and trivfs within pci-arbiter interact.
+
+	<damo22> you said there would be a fake /. Can't acpi use that?
+
+	<solid_black> yeah, in my plan / the new bootstrap scheme, there'll be
+	a / from the very start.
+
+	<damo22> ok so acpi can look up /servers/bus/pci, and it will exist.
+
+	and pci-arbiter can really sit on `/servers/bus/pci` (no need for
+	trivfs there at all) and acpi will just look up
+	`/servers/bus/pci`. And we do not need to change anything in acpi to
+	get it to do that.
+
+	And how does it do it now? maybe we'd need to remove some
+	no-longer-required logic from acpi then?
+
+	<damo22> it looks up device ("pci") if it exists, otherwise it falls
+	back to `/servers/bus/pci`.
+
+	Ah hold on, maybe I do understand now.  currently pci-arbiter exposes
+	its mach dev master as acpi-s mach dev master. So it looks up
+	device("pci") and finds it that way.
+
+	<damo22> correct, but it doesnt need that if the `/` exists.
+
+	yeah, we could remove this in the new bootstrap scheme, and just
+	always open the fs node (or leave it in for compatibility, we'll see
+	about that). acpi just sits on `/servers/acpi/tables`.
+
+	`rumpdisk` runs next and it needs `/servers/bus/pci`, `pci.defs`, and
+	`/servers/acpi/tables`, and `acpi.defs`. It exposes `/dev/rumpdisk`.
+
+	Would it make sense to make rumpdisk expose a tree/directory of Hurd
+	files and not Mach devices?  This is not necessary for anything, but
+	just might be a nice little cleanup.
+
+	<damo22> well, it could expose a tree of block devices, like
+	`/dev/rumpdisk/ide/1`.
+
+	<solid_black> and then `ln -s /rumpdisk/ide/1 /dev/wd1`.  and no need
+	for an intermediary storeio.  plus the Hurd file interface is much
+	richer than Mach device, you can do fsync for instance.
+
+	<damo22> the rump kernel is bsd under the hood, so needs to be
+	`/dev/rumpdisk/ide/wd0`
+
+	<solid_black> You can just convert "ide/0" to "/dev/wd0" when
+	forwarding to the rump part. Not that I object to ide/wd0, but we can
+	have something more hierarchical in the exposed tree than old-school
+	unix device naming?  Let's not have /dev/sda1.  Instead let's have
+	/dev/sata/0/1, but then we'd still keep the bsd names as symlinks into
+	the *dev/rumpdisk*…  tree
+
+	<damo22> sda sda1
+
+	<solid_black> good point
+
+	<damo22> 0 0/1
+
+	<solid_black> well, you can on the Hurd :D and we won't be doing that
+	either, rumpdisk only exposes the devices, not partitions
+
+	<damo22> well you just implement a block device on the directory?  but
+	that would be confusing for users.
+
+	<solid_black> I'd expect rumpdisk to only expose device nodes, like
+	/dev/rumpdisk/ide/0, and then we'd have /dev/wd0 being a symlink to
+	that. And /dev/wd0s1 being a storeio of type part:1:/dev/wd0 or
+	instead of using that, you could pass that as an option to your fs,
+	like ext2fs -T typed part:1/dev/wd0
+
+	<damo22> where is the current hurd bootstrap (QuietBoot) docs hosted?
+	here:
+	https://git.savannah.gnu.org/cgit/hurd/web.git/plain/hurd/bootstrap.mdwn
+
+	<solid_black> so yeah, you could do the device tree thing I'm
+	proposing in rumpdisk, or you could leave it exposing Mach devices and
+	have a bunch of storeios pointing to that. So anyway, let's say
+	rumpdisk keeps exposing a single node that acts as a Mach device
+	master and it sits on /dev/rumpdisk.
+
+	<solid_black> Then we either need a storeio, or we could make ext2fs
+	use that directly. So we start `/hurd/ext2fs.static -T typed
+	part:1:@/dev/rumpdisk:wd0`.
+
+	<solid_black> I'll drop all the logic in libdiskfs for detecting if
+	it's the bootstrap filesystem, and starting the exec server, and
+	spawning /hurd/startup. It'll just be a library to help create
+	filesystems.
+
+	<solid_black> After that the bootstrap task migrates all those
+	translator nodes from the temporary / onto the ext2fs, broadcasts the
+	root and cwd ports to everyone, and off we go to starting auth and
+	proc and unix.  sounds like it all would work indeed.  so we're just
+	removing libmachdev completely, right?
+
+	<damo22> netdde links to it too. I think it has libmachdevdde
+
+	<solid_black> Also how would you script this thing. Like ideally we'd
+	want the bootstrap task to follow some sort of script which would say,
+	for example,
+
+	mkdir /servers
+	mkdir /servers/bus
+	settrans /servers/bus/pci ${pci-task} --args-to-pci
+	mkdir /dev
+	settrans /dev/netdde ${netdde-task} --args-to-netdde
+	setroot ${ext2fs-task} --args-to-ext2fs
+
+	<solid_black> and ideally the bootstrap task would implement a REPL
+	where you'd be able to run these commands interactively (if the
+	existing script fails for instance). It can be like grub, where it has
+	a predefined script, and you can do something (press a key combo?) to
+	instead run your own commands in a repl.  or if it fails, it bails out
+	and drops you into the repl, yes. this gives you **so much more**
+	visibility into the boot process, because currently it's all scattered
+	across grub, libdiskfs (resuming exec, spawning /hurd/startup),
+	/hurd/startup, and various tricky pieces of logic in all of these
+	servers.
+
+	<solid_black> We could call the mini-repl hurdhelper? If something
+	fails, you're on your own, at best it prints an error message (if the
+	failing task manages to open the mach console at that point) Perhaps
+	we call the new bootstrap proposal Bootstrap.
+
+	<solid_black> When/if this is ready, we'll have to remove libmachdev
+	and port everything else to work without it.
+
+	<damo22> yes its a great idea.  I'm not a fan of lisp either.  If i
+	keep in mind that `/` is available early, then I can just clean up the
+	other stuff.  and assume i have `/`, and the device master can be
+	accessed with the regular glibc function, and you can printf freely
+	(no need to open the console). Do i need to run `fsys_startup` ?
+
+	yes, exactly like all translators always do. Well you probably run
+	netfs_startup or whatever, and it calls that. you're not supposed to
+	call fsys_getpriv or fsys_init
+
+	<damo22> i think my early attempts at writing translators did not use
+	these, because i assumed i had `/`. Then i realised i didn\`t. And
+	libmachdev was born.
+
+	<solid-black> Yes, you should assume you have /, and just do all the
+	regular things you would do. and if something that you would usually
+	do doesn't work, we should think of a way to make it work by adding
+	more stuff in the bootstrap task when it's reasonable to, of
+	course. and please consider exposing the file tree from rumpdisk,
+	though that's orthogonal.
+
+	<damo22> you mean a tree of block devices?
+
+	<solid_black> Yes, but each device node would be just a Hurd (device)
+	file, not a Mach device.  i.e. it'd support io_read and io_write, not
+	device_read and device_write.  well I guess you could make it support
+	both.
+
+	<damo22>	isnt that storeio's job?
+
+	<solid_black> if a node only implements the device RPCs, we need a
+	storeio to turn it into a Hurd file, yes.  but if you would implement
+	the file RPCs directly, there wouldn't be a need for the intermediary
+	storeio, not that it's important.
+
+	<damo22> but thats writing storeio again.  thing is, i dont know at
+	runtime which devices are exposed by rump.  It auto probes them and
+	prints them out but i cant tell programmatically which ones were
+	detected, becuause rump knows which devices exist but doesn't expose
+	it over API in any way. Because it runs as a kernel would with just
+	one driver set.
+
+	<damo22> Rump is a decent set of drivers. It does not have better
+	hardware support than Linux drivers (of modern Linux)? Instead Rump is
+	netbsd in a can, and it's essentially unmaintained upstream
+	too. However, it still is used it to test kernel modules, but it lacks
+	makefiles to separate all drivers into modules. BUT using rump is
+	better than updating / redoing the linux drivers port of DDE, because
+	netbsd internal kernel API is much much more stable than linux. We
+	would fall behind in a week with linux.  No one would maintain the
+	linux driver -> hurd port.  Also, there is a framework that lets you
+	compile the netbsd drivers as userspace unikernels: rump.  Such a
+	thing only does not exist for modern Linux. Rump is already good
+	enough for some things. It could replace netdde. It already works for
+	ide/sata.
+
+	<damo22> Rump it has its own /dev nodes on a rumpfs, so you can do
+	something like `rump_ls` it.
+
+	<damo22> Rump is a minimal netbsd kernel. It is just the device
+	drivers, and a bit of pthreading, and has only the drivers that you
+	link. So rumpdisk only has the ahci and ide drivers and nothing
+	else. Additionally rump can detect them off the pci bus.
+
+	<damo22> I will create a branch on
+	<http://git.zammit.org/hurd-sv.git> with cleaned translators.
+
+	<damo22> solid_black: i almost cleaned up acpi and pci-arbiter but
+	realised they are missing the shutdown notification when i strip out
+	libmachdev.
+
+	<solid-black>: "how are the device nodes on the bootstrap netfs attached to
+	each translator?" – I don't think I understand the question, please
+	clarify.
+
+	<damo22> I was wondering if the new bootstrap process can resume a fs
+	task and have all the previous translators wake up and serve their
+	rpcs.  without needing to resume them.  we have a problem with the
+	current design, if you implement what we discussed yesterday, the IO
+	ports wont work because they are not exposed by pci-arbiter yet.  I am
+	working on it, but its not ready.
+
+	<solid_black> I still don't understand the problem.  the bootstrap
+	task resumes others in order.  the root fs task too, eventually, but
+	not before everything that hash to come up before the root fs task is
+	ready.
+
+	<damo22> I don't think it needs to be a disk. Literally a trivfs is enough.
+
+	<solid_black> why are I/O ports not exposed by pci-arbiter? why isn't
+	that in issue with how it works currently then?
+
+	<damo22> solid_black: we are using ioperm() in userspace, but i want
+	to refactor the io port usage to be granularly accessed.  so one day
+	gnumach can store a bitmap of all io ports and reject more than one
+	range that overlaps ports that are in use.  since only one user of any
+	port at any time is allowed.  i dont know if that will allow users to
+	share the same io ports, but at least it will prevent users from
+	clobbering each others hw access.
+
+	<solid_black> damo22: (again, sorry for not understanding the hardware
+	details), so what would be the issue? when the pci arbiter starts,
+	doesn't it do all the things it has to do with the I/O ports?
+
+	<damo22> io ports are only accessed in raw method now. Any user can do
+	ioperm(0, 0xffff, 1) and get access to all of them
+
+	<solid_black> doesn't that require host priv or something like that?
+
+	<damo22> yeh probably.  maybe only root can.  But i want to allow
+	unprivileged users to access io ports by requesting exclusive access
+	to a range.
+
+	<solid_black> I see that ioperm () in glibc uses the device master
+	port, so yeah, root-only (good)
+
+	`<damo22>` first in locks the port range
+
+	<solid_black> but you're saying that there's someting about these I/O
+	ports that works today, but would break if we implemented what we
+	discussed yeasterday? what is it, and why?
+
+	`<damo22>` well it might still work.  but there's a lot of changes to
+	be done in general
+
+	<solid_black> let me try to ask it in a different way then
+
+	<damo22> i just know a few of the specifics because i worked on them.
+
+	<solid_black> As I understand it, you're saying that 1: currently any
+	root process can request access to any range of I/O ports, and you
+	also want to allow **unprivileged** processes to get access to ranges
+	of I/O ports, via a new API of the PCI arbiter (but this is not
+	implemented yet, right?)
+
+	<damo22> yes
+
+	<solid_black> 2: you're saying that something about this would break /
+	be different in the new scheme, compared to the current scheme.  i
+	don't understand the 2, and the relation between 1 and 2.
+
+	<damo22> 2 not really, I may have been mistaken it probably will
+	continue working fine.  until i try to implement 1.  ioperm calls
+	`i386_io_perm_create` and `i386_io__perm_modify` in the same system
+	call. I want to seperate these into the arbiter so the request goes
+	into pci-arbiter and if it succeeds, then the port is returned to the
+	caller and the caller can change the port access.
+
+	<solid_black> yes, so what about 2 will break 1 when you try to implement it?
+
+	<damo22> with your new bootstrap, we need `i386_io_perm_*` to be
+	accessible.  im not sure how.  is that a mach rpc?
+
+	<solid_black> these are mach rpcs. i386_io_perm_create is an rpc that
+	you do on device master.
+
+	<damo22> should be ok then
+
+	<solid_black> i386_io_perm_modify you do on you task port.  yes, I
+	don't see how this would be problematic.
+
+	<damo22>: you might find this branch useful
+	<http://git.zammit.org/hurd-sv.git/log/?h=feat-simplify-bootstrap>
+
+	<solid_black> although:
+
+	1. I'm not sure whether the task itself should be wiring its memory,
+	or if the bootstrap task should do it.
+	2. why do you request startup notifications if you then never do
+	anything in `S_startup_dosync`?
+
+	<solid_black> same for essential tasks actaully, that should probably
+	be done by the bootstrap task and not the translator itself (but we'll
+	see)
+
+	<solid_black> 1. don't `mach_print`, just `fprintf (stderr, "")`
+	<solid_black> 2. please always verify the return result of
+	`mach_port_deallocate` (and similar functions),
+	typically like this:
+
+	err = mach_port_deallocate (…);
+	assert_perror_backtrace (err);
+
+	this helps catch nasty bugs.
+
+	<solid_black> 3. I wonder why both acpi and pci have their own
+	`pcifs_startup` and `acpifs_startup`; can't they use `netfs_startup
+	()`?
+
+	`<damo22>` 1. no idea, 2. rumpdisk needed it, but these might
+	not 3. ACK, 4.ACK, 5. I think they couldnt use the `netfs_startup ()`
+	before but might be able to now.  Anyway, this should get you booting
+	with your bootstrap translator (without rumpdisk).  Rumpdisk seems to
+	use the `device_* RPC` from `libmachdev` to expose its device.
+	whereas pci and acpi dont use them for anything except `device_open`
+	to pass their port to the next translator.  I think my latest patch
+	for io ports will work.  but i need to rebuild glibc and libpciaccess
+	and gnumach. Why does libhurduser need to be in glibc?  It's quite
+	annoying to add an rpc.
+
+	I think i have done gnumach io port locking, and pciaccess, but hurd
+	part needs work and then to merge it needs a rebuild of glibc because
+	of hurduser
+
+	<damo22> Why cant libhurduser be part of the hurd package?
+
+	I don't think I understnad enough of this to do a review, but I'd
+	still like to see the patch if it's available anywhere.
+
+	<damo22> ok i can push to my repos
+
+	<solid_black> glibc needs to use the Hurd RPCs (and implement some,
+	too), and glibc cannot depend on the Hurd package because the Hurd
+	package depends on glibc.
+
+	<damo22> lol ok
+
+	<solid_black> As things currently stand, glibc depends on the Hurd
+	**headers** (including mig defs), but not any Hurd binaries.  still,
+	the cross build process is quite convoluted.  I posted about it
+	somewhere: https://floss.social/@bugaevc/109383703992754691
+
+	<jpoiret> the manual patching of the build system that's needed to
+	bootstrap everything is a bit suboptimal.
+
+	<damo22> what if you guys submit patches upstream to glibc to add a
+	build target to copy the headers or whatever is needed?  solid_black:
+	see
+	[http://git.zammit.org/{libpciaccess.git,gnumach.git](http://git.zammit.org/%7Blibpciaccess.git,gnumach.git)}
+	on fix-ioperm branches

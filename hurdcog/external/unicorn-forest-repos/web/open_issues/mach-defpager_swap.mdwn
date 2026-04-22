@@ -1,0 +1,57 @@
+[[!meta copyright="Copyright © 2012,2025 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_gnumach]]
+
+[[!toc]]
+
+
+# Out of memory situations
+
+GNU Mach currently does not know how much room mach-defpager has. When it is
+full, mach-defpager will start not being able to write data and thus just
+lose it. The corresponding object will trigger SIGBUS on access to lost data
+(hopefully killing the corresponding process, thus releasing memory).
+
+GNU Mach should be aware of how much is left, to better manage paging out,
+possibly throttling some processes. Hopefully ext2fs will be able to page out
+dirty data and release memory. With overcommit control we can then avoid one
+process filling the whole memory+swap with anonymous data. If several processes
+cooperate in sucking memory, we'd have to OOM some of them.
+
+E.g. `vm_page_evict` would know not to try to evict an internal page, and just
+wait for the external pages to get paged out and get released.
+
+# IRC, OFTC, #debian-hurd, 2012-06-16
+
+    <lifeng> I allocated a 5GB partition as swap, but hurd only found 1GB
+    <youpi> use 2GiB swaps only, >2Gib are not supported
+    <youpi> (and apparently it just truncates the size, to be investigated)
+
+## IRC, freenode, #hurd, 2013-10-25
+
+    <C-Keen> mkswap truncated the swap partiton to 2GB
+    <teythoon> :/
+    <teythoon> have you checked with 'free' ?
+    <teythoon> I have a 4gb swap partition on one of my boxes
+    <C-Keen> how did you create it?
+    <C-Keen> 2gig swap alright
+    <C-Keen> according to free
+
+
+# Swap Files
+
+## IRC, freenode, #hurd, 2013-10-25
+
+    <braunr> C-Keen: swapfiles are not to work very badly on the hurd
+    <braunr> swapfiles cause recursion and reservation problems on every system
+      but on the hurd, we just never took the time to fix the swap code
+
+Same issues as we generally would have with `hurd-defpager`?

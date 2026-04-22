@@ -1,0 +1,51 @@
+Source: atomspace-storage
+Section: devel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11), build-essential, cmake, cxxtest, libboost-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-regex-dev, libboost-serialization-dev, libboost-system-dev, libboost-thread-dev, unixodbc-dev, libzmq3-dev, libprotobuf-dev, libpq-dev, guile-3.0-dev, patchelf, libcogutil-dev, opencog-atomspace, cython3, python3-dev, valgrind, doxygen, graphviz, protobuf-compiler
+Standards-Version: 4.6.2
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/opencog/atomspace-storage.git
+Vcs-Browser: https://github.com/opencog/atomspace-storage
+
+Package: atomspace-storage
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libcogutil-dev, opencog-atomspace, python3, guile-3.0
+Description: AtomSpace I/O and StorageNode API for OpenCog
+ The atomspace-storage module provides the base StorageNode API for moving
+ Atoms into, out of, and between AtomSpaces. This is the foundational I/O
+ layer required by all AtomSpace storage backends including RocksDB,
+ PostgreSQL, and CogServer network storage.
+ .
+ The StorageNode API provides a mature, stable, and full-featured interface
+ for persistent storage and distributed knowledge representation. It serves
+ as the mandatory foundation for:
+  - RocksStorageNode (disk-based storage via RocksDB)
+  - CogStorageNode (network-distributed AtomSpaces)
+  - ProxyNodes (mirroring, routing, caching, filtering)
+  - PostgreSQL storage backend
+ .
+ Key components include:
+  - Generic StorageNode API with open, close, load, store primitives
+  - CSV/TSV file loading for tabular data
+  - File-based Atomese s-expression I/O
+  - JSON import/export for web applications
+  - MeTTa and Prolog fragment conversion
+  - Proxy nodes for complex I/O pipelines
+  - S-expression command interface for high-speed network I/O
+  - Type lookup table (TLB) for integer ID mapping
+ .
+ This package is essential for the OpenCog dependency chain and must be
+ installed before cogserver, atomspace-rocks, or atomspace-pgres. It
+ provides Layer 2.5 functionality in the OpenCog stack, bridging the core
+ AtomSpace with all storage and network backends.
+
+Package: atomspace-storage-dev
+Architecture: any
+Depends: ${misc:Depends}, atomspace-storage (= ${binary:Version}), libcogutil-dev, opencog-atomspace
+Description: Development files for atomspace-storage
+ This package contains the header files and development libraries for
+ building applications and storage backends that use the StorageNode API.
+ .
+ Install this package if you need to develop custom storage backends or
+ applications that directly use the atomspace-storage API.

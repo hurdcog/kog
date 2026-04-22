@@ -1,0 +1,120 @@
+[[!meta copyright="Copyright © 2012, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="libpthread: CLOCK_MONOTONIC"]]
+
+[[!tag open_issue_glibc open_issue_libpthread]]
+
+[[!message-id "201204220058.37328.toscano.pino@tiscali.it"]]
+
+
+# IRC, freenode, #hurd, 2012-04-22
+
+    <pinotree> youpi: what i thought would be creating a
+      glib/hurd/hurdtime.{c,h}, adding _hurd_gettimeofday and
+      _hurd_clock_{gettime,settime,getres} to it and making the current .c in
+      sysdeps call those
+    <youpi> yep
+    <youpi> that's unfortunate, but that's what nptl actually does
+    <pinotree> this way we could add inside hurdtime.c the mapped time stuff
+      too
+
+[[Mapped-time_interface|microkernel/mach/gnumach/interface/device/time]].
+
+    <pinotree> most probably a noobish question, but why does rt link to
+      pthread?
+    <youpi> no idea :)
+    <youpi> possibly due to aio implementation
+    <youpi> ./sysdeps/pthread/aio_cancel.c
+    <youpi> probably due to that
+    <youpi> (and others)
+
+
+## IRC, freenode, #hurd, 2012-04-23
+
+    <youpi> pinotree: about librt vs libpthread, don't worry too much for now
+    <youpi> libpthread can lib against the already-installed librt
+    <youpi> it does work
+    <pinotree> youpi: wouldn't that cause a dependency loop?
+    <youpi> pinotree: what dependency loop?
+    <pinotree> youpi: librt wouldd link to pthread, no?
+    <youpi> and ?
+    <youpi> I don't think it's an issue that .so link with each other
+    <pinotree> it isn't?
+    <youpi> well, try
+    * pinotree never did that
+    <youpi> but I don't think it will pose problem
+    <youpi> well, perhaps initialization order
+    <youpi> anyway, I now have packages built, I'll test that
+    <youpi> pinotree: ok, it seems it doesn't work indeed :)
+    <youpi> early in initialization
+    <youpi> pinotree: the initialization bug might actually not be due to librt
+      at all
+    <youpi> pinotree: yes, things work even with -lrt
+    <pinotree> wow
+
+
+## IRC, OFTC, #debian-hurd, 2012-06-04
+
+    <youpi> pinotree: -lrt in libpthread is what is breaking glib2.0
+    <youpi> during ./configure it makes clock_gettime linked in, while at
+      library link it doesn't
+    <youpi> probably for obscure reasons
+    <youpi> I'll have to disable it in debian
+
+
+### IRC, OFTC, #debian-hurd, 2012-06-05
+
+    <pinotree> youpi: i saw your message about the linking issues with
+      pthread/rt; do you want me to provide a patch to switch clock_gettime →
+      gettimeofday in libpthread?
+    <youpi> you mean switch it back as it was previously?
+    <pinotree> kind of, yes
+    <youpi> I have reverted the change in libc for now
+    <pinotree> ok
+
+
+## IRC, freenode, #hurd, 2012-07-22
+
+    <tschwinge> pinotree, youpi: I once saw you discussing issue with librt
+      usage is libpthread -- is it this issue?  http://sourceware.org/PR14304
+    <youpi> tschwinge: (librt): no
+    <youpi> it's the converse
+    <pinotree> tschwinge: kind of
+    <youpi> unexpectedly loading libpthread is almost never a problem
+    <youpi> it's unexpectedly loading librt which was a problem for glib
+    <youpi> tschwinge: basically what happened with glib is that at configure
+      time, it could find clock_gettime without any -lrt, because of pulling
+      -lpthread, but at link time that wouldn't happen
+
+
+## IRC, freenode, #hurd, 2012-07-23
+
+    <braunr> pinotree: oh, i see you changed __pthread_timedblock to use
+      clock_gettime
+    <braunr> i wonder if i should do the same in libthreads
+    <pinotree> yeah, i realized later it was a bad move
+    <braunr> ok
+    <braunr> i'll stick to gettimeofday for now
+    <pinotree> it'll be safe when implementing some private
+      __hurd_clock_get{time,res} in libc proper, making librt just forward to
+      it and adapting the gettimeofday to use it
+
+
+## IRC, freenode, #hurd, 2012-10-22
+
+    <pinotree> youpi: apparently somebody in glibc land is indirectly solving
+      our "libpthread needs lirt which pulls libphtread" circular issue by
+      moving the clock_* functions to libc proper
+    <youpi> I've seen that yes :)
+
+[[!sourceware_PR 14304]], [[!sourceware_PR 14743]], [[!message-id
+"CAH6eHdQRyTgkXE7k+UVpaObNTOZf7QF_fNoU-bqbMhfzXxXUDg@mail.gmail.com"]], commit
+6e6249d0b461b952d0f544792372663feb6d792a (2012-10-24).

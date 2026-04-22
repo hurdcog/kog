@@ -1,0 +1,29 @@
+[[!meta title="Arch Hurd Live CD"]]
+
+[[Arch Hurd|hurd/running/arch_hurd/]] offers Hurd LiveCDs at <http://www.archhurd.org/download/>.
+
+A less recent Live CD can be found at <http://teythoon.cryptobitch.de/hurd/livecd/hurd-live-install-1273300101.iso.xz>. 
+
+Arch Hurd also offers a QEMU image. It can be run with QEMU via 
+
+    $ wget https://files.archhurd.org/iso/2018.09.28/archhurd-2018.09.28.img.xz
+    $ xz -d archhurd-2018.09.28.img.xz
+    $ kvm -m 1G -drive cache=writeback,file=archhurd-2018.09.28.img
+
+The .img file is useful for running Arch Hurd in a virtual machine. For hardware installations,
+ use the Live CD. When using Arch Hurd in QEMU, the command 'hurd-halt' safely stops the 
+emulation (removing the need for '-no-reboot')
+
+To install the Live CD ISO file in QEMU (instead of using the .img file):
+
+    $ wget http://teythoon.cryptobitch.de/hurd/livecd/hurd-live-install-1273300101.iso.xz
+    $ xz -d hurd-live-install-1273300101.iso.xz
+    $ qemu -m 512 -cdrom hurd-live-install-1273300101.iso
+
+The [[!wikipedia LiveCD]] should be useful for those who want to try out the
+Hurd before they commit to installing it on their hard disks.  In addition to
+that, the bootable Hurd CDs should enable us to have a native installer instead
+of relying on Linux.
+
+* [[RequirementsForLiveCD]]
+* [[BuildingHurdLiveCD]]

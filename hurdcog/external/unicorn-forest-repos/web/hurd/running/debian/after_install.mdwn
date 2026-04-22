@@ -1,0 +1,22 @@
+First steps after installation.
+
+See <http://www.debian.org/ports/hurd/hurd-install> for configuration bits and
+tips and tricks.
+
+
+# Setup GRUB
+
+You surely want grub to have a nice menu entry able to boot GNU, instead of
+typing a boring arcane.  There are Debian-specific scripts that may help
+you.  See [[GRUB]]'s page for this.
+
+
+# Setup `apt
+
+Installing packages without having a network connection is described
+[[DebianAptOffline]].
+
+# Setting up mDNS responder
+
+To get `ssh <hostname>.local` working, you can set up the
+[[hurd/terrible-mdns-responder]].

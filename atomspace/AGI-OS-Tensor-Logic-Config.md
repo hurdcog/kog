@@ -1,0 +1,77 @@
+-- Tensor Logic Configuration:
+-- ========================================
+-- Multi-Entity AtomSpace: enabled
+-- Multi-Scale Analysis: enabled
+-- Network-Aware DAS: enabled
+-- ESN Reservoir Computing: enabled
+-- Tensor-Enhanced AtomSpace: enabled
+-- ========================================
+-- 
+-- AGI-OS Configuration Summary:
+-- ========================================
+-- Build type: Release
+-- 
+-- AGI-OS Stack:
+-- Layer 1 - Cognumach (Microkernel): OFF
+-- Layer 2 - HurdCog (OS + Cognitive): OFF
+-- Layer 3 - OCC (AGI Framework): enabled
+-- 
+-- Core Components:
+-- CogUtil: ON
+-- AtomSpace: ON
+-- CogServer: OFF
+-- Matrix: OFF
+-- Learn: OFF
+-- Agents: OFF
+-- Sensory: OFF
+-- 
+-- Cognitive Architecture Components:
+-- CogGML Microkernel (self-aware shards): ON
+-- CogSelf AGI Framework: OFF
+-- Ontogenetic Entelechy (Civic Angel / AFI): OFF
+-- AtomSpace Accelerator (inference engine): ON
+-- Agentic Chatbots: OFF
+-- 
+-- Tensor Logic Components:
+-- ATen Tensor Library: ON
+-- ATenSpace (AtomSpace + Tensors): ON
+-- Tensor Logic Integration: ON
+-- 
+-- Extended Components:
+-- AtomSpace Storage: OFF
+-- AtomSpace Extensions: OFF
+-- 
+-- AGI-OS Integration:
+-- Integration Layer: OFF
+-- AGI-OS Integration Components: ON
+-- 
+-- External Integration Packages:
+-- Gnucash (cognitive accounting): OFF
+-- KoboldCpp (story/world modeling): OFF
+-- Aphrodite Engine (LLM inference): OFF
+-- 
+-- ========================================
+-- Cognitive Synergy Architecture:
+-- 
+--   ┌─────────────────────────────────────┐
+--   │ Layer 3: OCC (OpenCog Collection)  │
+--   │ AtomSpace, PLN, ECAN, URE, Learn   │
+--   ├─────────────────────────────────────┤
+--   │ Integration Bridges                 │
+--   │ AtomSpace↔MachSpace, ECAN↔Scheduler│
+--   ├─────────────────────────────────────┤
+--   │ Layer 2: HurdCog (Cognitive OS)    │
+--   │ MachSpace, CogKernel, Translators  │
+--   ├─────────────────────────────────────┤
+--   │ Layer 1: Cognumach (Cognitive μK)  │
+--   │ Enhanced Mach, Cognitive Scheduler │
+--   └─────────────────────────────────────┘
+-- 
+-- For detailed build instructions, see:
+--   - BUILD_DEPENDENCY_ORDER.md
+--   - INTEGRATION_ANALYSIS.md
+--   - opencog-debian/BUILD_ORDER_ENHANCED.md
+-- 
+-- Configuring done (3.3s)
+-- Generating done (0.8s)
+-- Build files written to: /home/{{user}}/occ/build

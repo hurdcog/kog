@@ -1,0 +1,75 @@
+2005-02-23  Dawid Gajownik  <gajownik@gmail.com>
+
+	* README: Correct options passed to configure script.
+
+2005-02-06  Marcus Brinkmann  <marcus@gnu.org>
+
+	* patches/09-sysdeps-generic-lseek.patch: New file.
+	* Makefile.am (patch_files): Add 09-sysdeps-generic-lseek.patch.
+
+	* Makefile.am (hurd_l4_sysdeps_l4_hurd): Add Makeconfig.
+
+	* Makefile.am (patch_files): Add 08-sysdeps-generic-dl-sysdep.patch
+	and 51-nptl-hurd-l4-tls.patch.
+
+2005-02-05  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (hurd_l4_sysdeps_l4_hurd): Update the file list.
+	(hurd_l4_sysdeps_l4): New variable.
+	(hurd_l4): Add hurd_l4_sysdeps_l4.
+
+2005-02-02  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (glibc_version): Fix date.
+
+2005-01-31  Marcus Brinkmann  <marcus@gnu.org>
+
+	* hurd-l4/sysdeps/l4/getclktck.c: New file.
+
+	* hurd-l4/sysdeps/l4/hurd/isatty.c: New file.
+	* hurd-l4/sysdeps/l4/hurd/fxstat64.c (__fxstat64): Fake a
+	character device for fds 0 to 2.
+
+2005-01-30  Marcus Brinkmann  <marcus@gnu.org>
+
+	* hurd-l4/sysdeps/l4/gettimeofday.c,
+	hurd-l4/sysdeps/l4/nanosleep.c, hurd-l4/sysdeps/l4/sleep.c,
+	hurd-l4/sysdeps/l4/sched_yield.c, hurd-l4/sysdeps/l4/usleep.c:
+	New files.
+
+	* hurd-l4/sysdeps/l4/hurd/read.c: New file.
+	* hurd-l4/sysdeps/l4/hurd/write.c: New file.
+
+2005-01-28  Marcus Brinkmann  <marcus@gnu.org>
+
+	* gcc-3.4.3-i686-gnu.dpatch: New file.
+	* Makefile.am (EXTRA_DIST): Add gcc-3.4.3-i686-gnu.dpatch.
+
+2005-01-27  Marcus Brinkmann  <marcus@gnu.org>
+
+	* hurd-l4/sysdeps/l4/hurd/i386: New directory.
+	* hurd-l4/sysdeps/l4/hurd/i386/static-start.S: New file.
+	* hurd-l4/sysdeps/l4/hurd/i386/init-first.c: New file.
+	* hurd-l4/sysdeps/l4/hurd/init-first.c: Removed.
+	* hurd-l4/sysdeps/l4/hurd/enbl-secure.c: New file.
+	* hurd-l4/sysdeps/l4/hurd/brk.c: New file.
+	* hurd-l4/sysdeps/l4/hurd/Makeconf: New file.
+	* hurd-l4/sysdeps/l4/hurd/Makefile [$(subdir) eq csu]:
+	(crt0): New target.
+	(extra-objs): Add static-start.o.
+
+	* patches/51-nptl-hurd-l4-tls.patch: New file.
+	
+	* patches/08-sysdeps-generic-dl-sysdep.patch: New file.
+
+	* hurd-l4/sysdeps/l4/hurd/getpagesize.c: Removed.
+	* hurd-l4/sysdeps/l4/getpagesize.c: New file.
+
+	* hurd-l4/sysdeps/l4/hurd/sigaction.c: New dummy file to prevent
+	including recursive dependencies from the BSD implementation.
+	* hurd-l4/sysdeps/l4/hurd/sigprocmask.c: Likewise.
+
+2005-01-23  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.
+

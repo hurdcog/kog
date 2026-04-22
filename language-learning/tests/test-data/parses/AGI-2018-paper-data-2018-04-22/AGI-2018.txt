@@ -1,0 +1,19 @@
+	Parsing/MI counting	Connectors/DRK/Connectors	Connectors/DRK/Disjuncts	Disjuncts/DRK/Disjuncts	Disjuncts/ILE/Disjuncts	Connectors/DRK/Connectors	Connectors/DRK/Disjuncts	Disjuncts/DRK/Disjuncts	Disjuncts/ILE/Disjuncts
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A	N/A
+

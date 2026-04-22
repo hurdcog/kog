@@ -1,0 +1,66 @@
+Source: hurdcog
+Section: admin
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11), build-essential, gcc-multilib, mig, autoconf, automake, libtool, texinfo, bison, flex, libcogutil-dev, opencog-atomspace, guile-3.0-dev, libboost-dev, libboost-system-dev, libboost-filesystem-dev, pkg-config, cmake
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ/tree/main/hurdcog
+
+Package: hurdcog
+Architecture: i386
+Depends: ${shlibs:Depends}, ${misc:Depends}, cognumach, libcogutil-dev, opencog-atomspace, guile-3.0
+Recommends: opencog-pln, opencog-ure, opencog-attention
+Description: OpenCog-powered GNU Hurd cognitive operating system
+ HurdCog is a cognitive operating system built on the GNU Hurd architecture,
+ enhanced with OpenCog AGI capabilities. It integrates the Cognumach
+ microkernel with cognitive computing primitives to create an operating
+ system that can learn, reason, and adapt.
+ .
+ This package represents Layer 2 of the three-layer AGI-OS architecture,
+ sitting between the Cognumach microkernel (Layer 1) and the OpenCog
+ Collection AGI framework (Layer 3). HurdCog provides cognitive services
+ at the operating system level, enabling distributed reasoning, attention
+ allocation, and knowledge management across system processes.
+ .
+ Key features include:
+  - Cognitive Fusion Reactor for multi-paradigm AI integration
+  - Master Control Dashboard for real-time system monitoring
+  - AtomSpace integration at the OS level (MachSpace)
+  - Cognitive-grip abstraction for hypergraph operations
+  - Learning and adaptation capabilities in system services
+  - Distributed cognitive processing across Hurd translators
+  - Integration with Plan 9 and Inferno distributed systems
+ .
+ HurdCog enables the operating system itself to participate in cognitive
+ processes, creating a foundation for truly intelligent system behavior
+ and autonomous operation.
+
+Package: hurdcog-dev
+Architecture: i386
+Depends: ${misc:Depends}, hurdcog (= ${binary:Version}), libcogutil-dev, opencog-atomspace, cognumach-dev
+Description: Development files for HurdCog cognitive OS
+ This package contains the header files, libraries, and development tools
+ needed to build cognitive translators and system servers for HurdCog.
+ .
+ It includes the cognitive-grip API, MachSpace integration headers,
+ and documentation for developing cognitive system components that
+ integrate with the HurdCog operating system.
+
+Package: hurdcog-dashboard
+Architecture: all
+Depends: ${misc:Depends}, hurdcog, python3, python3-flask, python3-websockets
+Description: Master Control Dashboard for HurdCog
+ This package provides a web-based dashboard for monitoring and controlling
+ the HurdCog cognitive operating system. The dashboard offers real-time
+ visualization of cognitive processes, attention allocation, knowledge
+ graph evolution, and system resource usage.
+ .
+ Features include:
+  - Real-time AtomSpace visualization
+  - Cognitive process monitoring
+  - Attention allocation heatmaps
+  - System performance metrics
+  - Interactive query interface
+  - Cognitive synergy analysis

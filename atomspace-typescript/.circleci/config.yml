@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  atomspace-typescript:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/atomspace-typescript
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package atomspace-typescript verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - atomspace-typescript

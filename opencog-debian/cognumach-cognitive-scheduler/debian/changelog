@@ -1,0 +1,7 @@
+cognumach-cognitive-scheduler (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of cognumach-cognitive-scheduler
+  * Implements AGI-OS integration features
+  * Enables cognitive synergy across system layers
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Fri, 06 Dec 2025 12:00:00 +0000

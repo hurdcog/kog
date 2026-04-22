@@ -1,0 +1,155 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc open_issue_libpthread]]
+
+This basically means to get rid of `sysdeps/mach/hurd/bits/libc-tsd.h` (and
+thus the `_HURD_THREADVAR_*`/`_hurd_threadvar_location` interface), and
+directly use `__thread` instead.
+
+[[!toc]]
+
+
+# IRC, freenode, #hurd, 2011-10-23
+
+    <tschwinge> youpi: If we want to replace threadvars with TLS, there is one
+      problem: the threadvars interface is publically exported:
+      /usr/include/hurd/threadvar.h.
+    <tschwinge> youpi: But I am somewhat inclined to say that the only user of
+      this is libthreads/libpthread.  Do you think differently?
+    <youpi> tschwinge: that's very probable
+    <youpi> so I think we can just drop it
+    <youpi> (people should use TLS anyway)
+
+[[libpthread_set_stack_size]].
+
+After this has been done, probably the whole `__libc_tsd_*` stuff can be
+dropped altogether, and `__thread` directly be used in glibc.
+
+
+# IRC, freenode, #hurd, 2012-08-07
+
+    <tschwinge> r5219: Update libpthread patch to replace threadvar with tls
+      for pthread_self
+    <tschwinge> r5224: revert r5219 too, it's not ready either
+    <youpi> as the changelog says, the __thread revertal is because it posed
+      problems
+    <youpi> and I just didn't have any time to check them while the freeze was
+      so close
+    <tschwinge> OK.  What kind of problems?  Should it be reverted upstream,
+      too?
+    <youpi> I don't remember exactly
+    <youpi> it should just be fixed
+    <youpi> we can revert it upstream, but it'd be good that we manage to
+      progress, at some point...
+    <tschwinge> Of course -- however as long as we don't know what kind of
+      problem, it is a bit difficult.  ;-)
+    <youpi> since I didn't left a note, it was most probably a mere glibc run,
+      or boot with the patched libpthread
+    <youpi> *testsuite run
+    <tschwinge> OK.
+    <tschwinge> The libpthread testsuite doesn't show any issues with that
+      patch applied, though.  But I didn'T test anything else.
+    <tschwinge> youpi: Also, you have probably seen my glibc __thread errno
+      email -- rmcgrath wanted to find some time this week to comment/help, and
+      I take it you don't have any immediate comments to that issue?
+    <youpi> I saw the mails, but didn't investigate at all
+
+[[!message-id "878vdyqht3.fsf@kepler.schwinge.homeip.net"]].
+
+
+# IRC, freenode, #hurd, 2013-07-08
+
+    <youpi> tschwinge: apparently there were a lot of changes missing in the
+      threadvars branch I had commited long time ago
+    <youpi> I'm gathering things
+    <tschwinge> youpi: t/tls-threadvar you mean?
+    <youpi> yes
+    <youpi> tschwinge: yes, there were a lot other occurences of threadvars
+      stuff in various places
+    <youpi> I'm building libc again, and will see what issue would remain
+
+
+## IRC, freenode, #hurd, 2013-07-12
+
+    <youpi> braunr: about the per-thread ports, there is also the mig reply
+      port
+    <youpi> (stored in _HURD_THREADVAR_MIG_REPLY)
+
+
+## IRC, freenode, #hurd, 2013-07-15
+
+    <braunr> and with the branch youpi pushed where he removes threadvars, it
+      shouldn't get "too" hard
+    <braunr> (save for the tricky bugs you may encounter)
+    <youpi> well, that branch is not working yet
+
+
+## IRC, OFTC, #debian-hurd, 2013-09-22
+
+    <youpi> I'm currently tracking bugs with my threadvars changes
+    <youpi> some of them seem fine, others, not
+    <youpi> of course the most complex ones are the most probable culprits for
+      the issues I'm getting
+    <youpi> fortunately they're after the process bootstrap
+    <youpi> so basically that works
+    <youpi> just a few dozen tests fail
+    <youpi> mostly about loading .so  or raising signals
+    <youpi> dlopen("bug-dlsym1-lib1.so"): bug-dlsym1-lib1.so: cannot open
+      shared object file: Function not implemented
+    <youpi> after having changed errno a bit
+    <youpi> doesn't that look odd ? :)
+    <youpi> good, I found an issue with the sigstate
+    <youpi> now running testsuite again, to see whether there are other issues
+      with it :)
+    <youpi> s/sigstate/reply_port/ actually
+
+
+## IRC, OFTC, #debian-hurd, 2013-09-23
+
+    <youpi> yay, errno threadvar conversion success
+
+
+## IRC, OFTC, #debian-hurd, 2013-10-05
+
+    <gg0_> youpi: any ETA for tls?
+    <youpi> gg0_: one can't have an ETA for bugfixing
+    <gg0_> i don't call them bugs if there's something missing to implement btw
+    <youpi> no, here it's bugs
+    <youpi> the implementation is already in the glibc branches in our
+      repository
+    <youpi> it just makes some important regressions
+
+
+## IRC, OFTC, #debian-hurd, 2013-10-07
+
+    <youpi> about tls, I've made some "progress": now I'm wondering how raise()
+      has ever been working before :)
+
+
+## IRC, OFTC, #debian-hurd, 2013-10-15
+
+    <youpi> good, reply_port tls  is now ok
+    <youpi> last but not least, sigstate
+
+
+## IRC, OFTC, #debian-hurd, 2013-10-21
+
+    <youpi> started testsuite with threadvars dropped completely
+    <youpi> so far so good
+
+
+## IRC, OFTC, #debian-hurd, 2013-10-24
+
+    <youpi> ok, hurd boots with full-tls libc, no threadvars at all any more
+    <gg0> \o/
+    <gg0> good bye threadvars bugs, welcome tls ones ;)
+    <youpi> now I need to check that threads can really use another stack :)

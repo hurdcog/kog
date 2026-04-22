@@ -1,0 +1,72 @@
+opencog-cogutil (2.0.3~git20240329.c12f884-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Fri, 29 Mar 2024 18:48:35 +0900
+
+opencog-cogutil (2.0.3~git20240226.c12f884-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Mon, 26 Feb 2024 11:33:51 +0900
+
+opencog-cogutil (2.0.3~git20201222.d1f3df0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 22 Dec 2020 12:58:26 +0900
+
+opencog-cogutil (2.0.3~git20201201.d1f3df0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 01 Dec 2020 18:26:24 +0900
+
+opencog-cogutil (2.0.3~git20200823.d1f3df0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 02:43:09 +0900
+
+opencog-cogutil (2.0.3~git20200817.d1f3df0-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Mon, 17 Aug 2020 05:44:06 +0900
+
+opencog-cogutil (2.0.3~git20200817.742dcc9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Mon, 17 Aug 2020 05:32:46 +0900
+
+opencog-cogutil (2.0.3~git20200404.742dcc9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 06:20:59 +0900
+
+opencog-cogutil (2.0.3~git20200402.742dcc9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 03:19:42 +0900
+
+opencog-cogutil (2.0.3~git20200402.742dcc9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 03:18:52 +0900
+
+opencog-cogutil (2.0.3~git20200402.742dcc9-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 03:18:22 +0900
+
+opencog-cogutil (2.0.3~git20200330.99ad9df-1) mhatta-unstable; urgency=medium
+
+  * Initial release (well, not really...).
+  * Renamed opencog-cogutils to opencog-cogutil (followed the upstream).
+
+ -- Masayuki Hatta <mhatta@debian.org>  Mon, 30 Mar 2020 00:55:05 +0900

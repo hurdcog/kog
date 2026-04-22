@@ -1,0 +1,844 @@
+
+Measurement results
+-------------------
+Performed on `fanny`, a circa-2015 vintage AMD Opteron 6344 (Abu Dhabi)
+
+14 January 2020
+---------------
+Got this with ordinary pages (not hugetlb):
+
+Analyzed 681 genes in 137.09 seconds
+Analyzed 681 genes in 141.01 seconds
+Analyzed 681 genes in 141.91 seconds
+
+Got this w/ hugetlb: (2MB pagesize)
+
+Analyzed 681 genes in 106.90 seconds
+Analyzed 681 genes in 105.89 seconds
+Analyzed 681 genes in 107.60 seconds
+
+This is using the AtomSpace of the day.
+
+The above are the triangle-dataset, only. Repeat, with hugetlb, for the
+combined dataset, triangles and pentagons:
+
+Triangle relations for 681 genes in 131.95 seconds
+Triangle relations for 681 genes in 141.52 seconds
+Triangle relations for 681 genes in 141.10 seconds
+Protein expression for 12 pathways in 101.21 seconds
+Protein expression for 12 pathways in 105.71 seconds
+Protein expression for 12 pathways in 107.90 seconds
+Protein expression for 704 pathways in 4895.7 seconds
+
+Wow!  Looks like loading up all that additional data slowed down
+the triangle-search by 30%!  That's not ... good.
+
+Memory usage, w/4K pages, from `ps aux`
+This holds more-or-less steady for all of the benchmarks.
+    VSZ   RSS
+2013500 1706312
+
+i.e. 2GB virtual size, 1.6GB working-set size.
+
+25 November 2021
+----------------
+Hmm. Things slowed down... No hugetlb, and combined dataset:
+
+Triangle relations for 681 genes in 211.70 seconds
+Triangle relations for 681 genes in 204.04 seconds
+Triangle relations for 681 genes in 204.16 seconds
+Protein expression for 12 pathways in 136.37 seconds
+Protein expression for 12 pathways in 136.18 seconds
+Protein expression for 12 pathways in 138.09 seconds
+
+This is with
+gcc version 10.2.1 20210110 (Debian 10.2.1-6)
+ldd (Debian GLIBC 2.31-13+deb11u2) 2.31
+guile (GNU Guile) 3.0.7.6-22120
+
+--------
+Repeat with
+HUGETLB_MORECORE=yes LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libhugetlbfs.so.0 guile -l bio-loop.scm
+is faster, but not hitting the previous scores.
+
+Triangle relations for 681 genes in 155.17 seconds
+Triangle relations for 681 genes in 154.98 seconds
+Triangle relations for 681 genes in 157.30 seconds
+Protein expression for 12 pathways in 110.82 seconds
+Protein expression for 12 pathways in 112.45 seconds
+Protein expression for 12 pathways in 111.80 seconds
+
+================================================================
+OK. Here's the deal. The bio-loop3.scm benchmark measures parallelism.
+It appears that parallelism results are highly dependent on the CPU
+atomics implementation. The AtomSpace uses std::shared_ptr very heavily
+for refernce counting, and this appears to use CPU atomics to maintain
+the use counts. This results in very heavy contention for the atomics
+implemented in the CPU. Older CPU's fare poorly on this benchmark!
+
+And now for loop3 ... see if anything seems changed.
+Triangle relations for 1 threads in 188.01 seconds
+Rate 3.6222 genes/sec Rate per thread: 3.6222 genes/sec ... 3.4676 genes/sec
+Threads: 2  speedup vs 1x = 1.4336 ... 1.4128
+Threads: 3  speedup vs 1x = 1.7775 ... 1.7056
+Threads: 4  speedup vs 1x = 2.0705 ... 2.0470
+Threads: 6  speedup vs 1x = 2.5702 ... 2.5773
+Threads: 8  speedup vs 1x = 2.7884 ... 2.8340
+Threads: 12  speedup vs 1x = 2.7377 ... 2.9228
+Threads: 16  speedup vs 1x = 2.8052 ... 2.9195
+
+So above is two runs with the #2907 pull req.
+
+----------
+Below takes this, and tightens the locks slightly in TypeIndex.h
+Triangle relations for 1 threads in 190.55 seconds
+Rate 3.5739 genes/sec Rate per thread: 3.5739 genes/sec
+Threads: 2  speedup vs 1x = 1.3757
+Threads: 3  speedup vs 1x = 1.7257
+Threads: 4  speedup vs 1x = 2.0463
+Threads: 6  speedup vs 1x = 2.5495
+Threads: 8  speedup vs 1x = 2.8462
+Threads: 12  speedup vs 1x = 2.9247
+Threads: 16  speedup vs 1x = 2.8963
+
+Hmm. No noticable difference. So, whatever the bottlenecks are,
+It doesn't seem to be in the atomspace typeindex locking.
+
+---------
+Travelling back 3 days earlier, before the sequence of pull reqs
+reorganizing the locks, I get this:
+
+Triangle relations for 1 threads in 184.39 seconds
+Rate 3.6932 genes/sec Rate per thread: 3.6932 genes/sec
+Threads: 2  speedup vs 1x = 1.3905
+Threads: 3  speedup vs 1x = 1.7089
+Threads: 4  speedup vs 1x = 2.0388
+Threads: 6  speedup vs 1x = 2.6780
+Threads: 8  speedup vs 1x = 2.9725
+Threads: 12  speedup vs 1x = 3.3356
+Threads: 16  speedup vs 1x = 3.3057
+
+Well, crap. That's margially better than the new code. This may be
+explainable by the fact that the new code is grabbing and releasing
+locks more frequently.  If so, then the good news is that a lockless
+design really should make things better. Hmmm...
+
+---------
+Try again, using facebook folly F14ValueSet in TypeIndex.
+
+Triangle relations for 1 threads in 192.40 seconds
+Rate 3.5395 genes/sec Rate per thread: 3.5395 genes/sec
+Threads: 2  speedup vs 1x = 1.4063
+Threads: 3  speedup vs 1x = 1.8001
+Threads: 4  speedup vs 1x = 2.1576
+Threads: 6  speedup vs 1x = 2.6433
+Threads: 8  speedup vs 1x = 3.0247
+Threads: 12  speedup vs 1x = 3.2299
+Threads: 16  speedup vs 1x = 3.3724
+
+Maybe a hair faster, but the speedup is mostly lost in the noise.
+
+---------
+Try again, with no lock at all for the type index. This won't pass unit
+tests but it tells us about the parallelism bottleneck.
+
+Triangle relations for 1 threads in 185.30 seconds
+Rate 3.6752 genes/sec Rate per thread: 3.6752 genes/sec
+Threads: 2  speedup vs 1x = 1.3970
+Threads: 3  speedup vs 1x = 1.7669
+Threads: 4  speedup vs 1x = 2.1386
+Threads: 6  speedup vs 1x = 2.6839
+Threads: 8  speedup vs 1x = 3.0602
+Threads: 12  speedup vs 1x = 3.5631
+Threads: 16  speedup vs 1x = 3.6043
+
+OK, well, that's interesting. Seems that the TypeIndex lock has more
+or less no effect at all on the parallelism.
+
+---------
+Try again, but with no lock on the incoming set.
+
+Triangle relations for 1 threads in 185.99 seconds
+Rate 3.6615 genes/sec Rate per thread: 3.6615 genes/sec
+Threads: 2  speedup vs 1x = 1.4067
+Threads: 3  speedup vs 1x = 1.7198
+Threads: 4  speedup vs 1x = 2.0300
+Threads: 6  speedup vs 1x = 2.5332
+Threads: 8  speedup vs 1x = 2.7638
+Threads: 12  speedup vs 1x = 2.9036
+Threads: 16  speedup vs 1x = 2.9048
+
+Holy cow! No effect at all on the parallelism. So ... where is the
+bottleneck, then?
+
+---------
+Try again, with two differences:
+1) data loaded from rocksdb
+2) Both atom and type index running on f14:F14ValueNode
+
+Triangle relations for 1 threads in 204.67 seconds  ... 200.54
+Rate 3.3273 genes/sec Rate per thread: 3.3273 genes/sec  ... 3.3957 genes/sec
+Threads: 2  speedup vs 1x = 1.5502 ... 1.5636
+Threads: 3  speedup vs 1x = 1.9024 ... 1.8774
+Threads: 4  speedup vs 1x = 2.2616 ... 2.1812
+Threads: 6  speedup vs 1x = 2.9206 ... 2.8736
+Threads: 8  speedup vs 1x = 3.3731 ... 3.3156
+Threads: 12  speedup vs 1x = 3.8862 ... 3.7239
+Threads: 16  speedup vs 1x = 3.7935 ... 3.7622
+
+So .. speedups are quite significant... underwhelming, but significant.
+
+---------
+Try again, with three differences:
+1) data loaded from rocksdb
+2) Type index running on f14:F14ValueNode
+3) Incoming index running on std::unordered_set
+
+
+Triangle relations for 1 threads in 200.97 seconds
+Rate 3.3885 genes/sec Rate per thread: 3.3885 genes/sec
+Threads: 2  speedup vs 1x = 1.5644
+Threads: 3  speedup vs 1x = 1.8654
+Threads: 4  speedup vs 1x = 2.2194
+Threads: 6  speedup vs 1x = 2.9437
+Threads: 8  speedup vs 1x = 3.3309
+Threads: 12  speedup vs 1x = 3.7352
+Threads: 16  speedup vs 1x = 3.7741
+
+conclude: incoming index on unordered_set is same as f14
+We cannot use the F14 on the type index due to some bug.
+
+---------
+Try again, with three differences:
+1) data loaded from rocksdb
+2) f14 disabled entirely.
+
+Triangle relations for 1 threads in 219.24 seconds ... 216.71 seconds
+Rate 3.1062 genes/sec Rate per thread: 3.1062 genes/sec ... 3.1424 genes/sec
+Threads: 2  speedup vs 1x = 1.5547 ... 1.5845
+Threads: 3  speedup vs 1x = 1.8071 ... 1.8550
+Threads: 4  speedup vs 1x = 2.1617 ... 2.2281
+Threads: 6  speedup vs 1x = 2.8369 ... 2.9055
+Threads: 8  speedup vs 1x = 3.3070 ... 3.4421
+Threads: 12  speedup vs 1x = 3.8141 ... 3.8943
+Threads: 16  speedup vs 1x = 3.9205 ... 3.9716
+
+I'm confused. The speedups are bettter than before. But the baseline
+is a lot lower, so ... ??
+
+---------
+Try again, with three differences:
+1) data loaded from rocksdb
+2) f14 only in incoming, where it's allowable
+   (cannot use it on type index due to bug.)
+
+Triangle relations for 1 threads in 208.79 seconds
+Rate 3.2617 genes/sec Rate per thread: 3.2617 genes/sec
+Threads: 2  speedup vs 1x = 1.5522
+Threads: 3  speedup vs 1x = 1.9315
+Threads: 4  speedup vs 1x = 2.2490
+Threads: 6  speedup vs 1x = 3.0139
+Threads: 8  speedup vs 1x = 3.5071
+Threads: 12  speedup vs 1x = 3.9536
+Threads: 16  speedup vs 1x = 3.9083
+
+Conclude, comparing to earlier: guile gc interferes with
+parallelizability; loading from rocksdb shrinks the hit
+on guile.
+
+---------
+Lets check above conclusion: try again
+1) data loaded from rocksdb
+2) locks removed from TypeIndex.
+
+Triangle relations for 1 threads in 211.25 seconds
+Rate 3.2237 genes/sec Rate per thread: 3.2237 genes/sec
+Threads: 2  speedup vs 1x = 1.4585
+Threads: 3  speedup vs 1x = 1.6676
+Threads: 4  speedup vs 1x = 2.0075
+Threads: 6  speedup vs 1x = 2.5982
+Threads: 8  speedup vs 1x = 3.0789
+Threads: 12  speedup vs 1x = 3.3719
+Threads: 16  speedup vs 1x = 3.3396
+
+I'm confused: how is it that the code without locks is slower
+than the code with locks? Is this a cache-line issue?
+
+mutrace is not providing adequate insight.
+
+---------
+Check standard AtomSpace on aimdee. Wow!
+
+Triangle relations for 1 threads in 63.278 seconds
+Rate 10.762 genes/sec Rate per thread: 10.762 genes/sec
+Threads: 2  speedup vs 1x = 1.8702
+Threads: 3  speedup vs 1x = 2.6588
+Threads: 4  speedup vs 1x = 3.3858
+Threads: 6  speedup vs 1x = 3.9591
+Threads: 8  speedup vs 1x = 4.4759
+Threads: 12  speedup vs 1x = 4.4349
+Threads: 16  speedup vs 1x = 4.4185
+
+This is an 4-core AMD Ryzen 5 3400G with 8 hypercores, I guess
+
+Same benchmark, under load from other computes is even more revealing:
+
+Triangle relations for 1 threads in 116.41 seconds
+Rate 5.8500 genes/sec Rate per thread: 5.8500 genes/sec
+Threads: 2  speedup vs 1x = 1.9469
+Threads: 3  speedup vs 1x = 2.9243
+Threads: 4  speedup vs 1x = 3.6402
+Threads: 6  speedup vs 1x = 5.7024
+Threads: 8  speedup vs 1x = 7.2898
+Threads: 12  speedup vs 1x = 7.3245
+Threads: 16  speedup vs 1x = 7.2369
+
+So, under load this scales nicely all the way to 8 threads! Wow!
+
+---------
+But we cannot always be this lucky.
+On a different machine:
+AMD Ryzen 9 3900X 12-Core Processor
+24 hyperthreads the gain is more modest:
+
+Under load:
+Triangle relations for 1 threads in 92.526 seconds
+Rate 7.3601 genes/sec Rate per thread: 7.3601 genes/sec
+Threads: 2  speedup vs 1x = 1.5080
+Threads: 3  speedup vs 1x = 1.9066
+Threads: 4  speedup vs 1x = 2.2924
+Threads: 6  speedup vs 1x = 3.0969
+Threads: 8  speedup vs 1x = 3.7011
+Threads: 12  speedup vs 1x = 4.6900
+Threads: 16  speedup vs 1x = 5.6154
+Threads: 24  speedup vs 1x = 6.9823
+
+so that is underwhelming; not as good as above.
+Even more so without a load:
+
+Triangle relations for 1 threads in 47.933 seconds
+Rate 14.207 genes/sec Rate per thread: 14.207 genes/sec
+Threads: 2  speedup vs 1x = 1.2938
+Threads: 3  speedup vs 1x = 1.5265
+Threads: 4  speedup vs 1x = 1.7072
+Threads: 6  speedup vs 1x = 2.1583
+Threads: 8  speedup vs 1x = 2.4231
+Threads: 12  speedup vs 1x = 2.8141
+Threads: 16  speedup vs 1x = 3.1561
+Threads: 24  speedup vs 1x = 3.7539
+
+so single-thread serial is much better; but even with two threads,
+the speedup is terrible.
+
+====================================================================
+
+7 March 2022
+------------
+Journal of unreproducible results.
+
+Measure, on idle system, with folly::f14 on the incoming set.
+This should be comparable to results circa line 232
+... and it is.
+
+Get:
+Triangle relations for 1 threads in 197.11 seconds ... 192.79
+Rate 3.4549 genes/sec Rate per thread: 3.4549 genes/sec ... 3.5323
+Threads: 2  speedup vs 1x = 1.5254 ... 1.6268
+Threads: 3  speedup vs 1x = 1.9677 ... 1.9960
+Threads: 4  speedup vs 1x = 2.3023 ... 2.4006
+Threads: 6  speedup vs 1x = 2.9911 ... 2.9598
+Threads: 8  speedup vs 1x = 3.3716 ... 3.3521
+Threads: 12  speedup vs 1x = 3.8588 ... 3.8260
+Threads: 16  speedup vs 1x = 3.9424 ... 3.9028
+Threads: 24  speedup vs 1x = 3.9508 ... 3.8655
+
+Again, with plain incoming set, no folly at all.
+
+Triangle relations for 1 threads in 196.98 seconds ... 201.34
+Rate 3.4573 genes/sec Rate per thread: 3.4573 genes/sec ... 3.3823
+Threads: 2  speedup vs 1x = 1.5895 ... 1.7299
+Threads: 3  speedup vs 1x = 2.0656 ... 1.9955
+Threads: 4  speedup vs 1x = 2.4520 ... 2.5332
+Threads: 6  speedup vs 1x = 3.1063 ... 3.1841
+Threads: 8  speedup vs 1x = 3.5496 ... 3.6384
+Threads: 12  speedup vs 1x = 4.0472 ... 4.1234
+Threads: 16  speedup vs 1x = 4.0785 ... 4.1596
+Threads: 24  speedup vs 1x = 3.9279 ... 4.0170
+
+Conclusion: it makes no difference at all.
+
+--------------------------
+What about bare incoming-set pointers? lets try that...
+This is pull-req #2920
+
+Triangle relations for 1 threads in 202.93 seconds ... 203.57
+Rate 3.3558 genes/sec Rate per thread: 3.3558 genes/sec ... 3.3452
+Threads: 2  speedup vs 1x = 1.6500 ... 1.6877
+Threads: 3  speedup vs 1x = 1.9948 ... 2.0584
+Threads: 4  speedup vs 1x = 2.4073 ... 2.4808
+Threads: 6  speedup vs 1x = 3.0849 ... 3.0947
+Threads: 8  speedup vs 1x = 3.5881 ... 3.5483
+Threads: 12  speedup vs 1x = 4.0420 ... 4.0933
+Threads: 16  speedup vs 1x = 3.9790 ... 3.9960
+Threads: 24  speedup vs 1x = 3.7931 ... 3.8176
+
+Conclusion: bare pointers for the incoming set might actually be
+a bit slower, maybe.  Due to need to cast to handle.
+
+====================================================================
+30 July 2022
+
+On Yippie laptop:
+Intel celeron J4125 CPU @ 2.00GHz  4 core 4MB cache
+12GB RAM
+
+Triangle relations for 1 threads in 161.72 seconds
+Rate 4.2110 genes/sec Rate per thread: 4.2110 genes/sec
+Threads: 2  speedup vs 1x = 1.6621
+Threads: 3  speedup vs 1x = 2.0724
+Threads: 4  speedup vs 1x = 2.3941
+Threads: 6  speedup vs 1x = 2.3814
+Threads: 8  speedup vs 1x = 2.3802
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2 c5a.8xlarge $1.23/hour   On Demand Instance
+16 cores, 32 hyperthreads AMD EPYC Rome (2nd Gen, circa 2019)
+
+model name	: AMD EPYC 7R32
+microcode	: 0x8301055
+cpu MHz		: 2800.000
+cache size	: 512 KB
+cpu cores	: 16
+bugs		: sysret_ss_attrs null_seg spectre_v1 spectre_v2 spec_store_bypass
+TLB size	: 3072 4K pages
+
+MemTotal:       65145424 kB
+
+[    1.242854] Last level iTLB entries: 4KB 1024, 2MB 1024, 4MB 512
+[    1.246257] Last level dTLB entries: 4KB 2048, 2MB 2048, 4MB 1024, 1GB 0
+[    1.394812] smpboot: CPU0: AMD EPYC 7R32 (family: 0x17, model: 0x31, stepping: 0x0)
+[    1.798426] smp: Brought up 1 node, 32 CPUs
+
+Per interwebs:
+L3 cache:192MB
+This is supposed to be a 48-core CPU, so why is amazon report 32?
+
+Unloaded:
+Triangle relations for 1 threads in 72.559 seconds
+Rate 9.3855 genes/sec Rate per thread: 9.3855 genes/sec
+Threads: 2  speedup vs 1x = 1.3057 ... 1.3897
+Threads: 3  speedup vs 1x = 1.5819 ... 1.7270
+Threads: 4  speedup vs 1x = 1.8101 ... 2.0023
+Threads: 6  speedup vs 1x = 2.3583 ... 2.6869
+Threads: 8  speedup vs 1x = 2.7198 ... 3.1757
+Threads: 12  speedup vs 1x = 3.3655 ... 4.0215
+Threads: 16  speedup vs 1x = 3.8791 ... 4.7175
+Threads: 24  speedup vs 1x = 4.6457 ...  5.6166
+Threads: 32  speedup vs 1x = 6.3661
+
+
+Loaded: (run the 32-thread benchmark continuously in other process)
+Triangle relations for 1 threads in 92.725 seconds
+Rate 7.3443 genes/sec Rate per thread: 7.3443 genes/sec
+Threads: 2  speedup vs 1x = 1.3411
+Threads: 3  speedup vs 1x = 1.6349
+Threads: 4  speedup vs 1x = 1.9566
+Threads: 6  speedup vs 1x = 2.5010
+Threads: 8  speedup vs 1x = 3.0488
+
+Conclusion: Well, that's pretty underwhelming, compared to the Ryzen 5
+This is virtualized, so maybe something funny due to that??
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2 m6l.8xlarge $1.54/hour On Demand Instance
+16 cores 32 hyperthreads
+
+model name      : Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz
+stepping        : 6
+microcode       : 0xd000331
+cpu MHz         : 2899.986
+cache size      : 55296 KB
+cpu cores       : 16
+bugs            : spectre_v1 spectre_v2 spec_store_bypass swapgs
+
+MemTotal:       129831476 kB
+
+[    0.000000] Linux version 5.15.0-1011-aws
+[    1.414854] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
+[    1.414854] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
+[    1.414854] smpboot: CPU0: Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz (family: 0x6, model: 0x6a, stepping: 0x6)
+[    1.710915] smp: Brought up 1 node, 32 CPUs
+
+Triangle relations for 1 threads in 66.187 seconds
+Rate 10.289 genes/sec Rate per thread: 10.289 genes/sec
+Threads: 2  speedup vs 1x = 1.5862 ... 1.6152
+Threads: 3  speedup vs 1x = 2.0658 ... 2.0667
+Threads: 4  speedup vs 1x = 2.4009 ... 2.4241
+Threads: 6  speedup vs 1x = 2.8334 ... 2.8710
+Threads: 8  speedup vs 1x = 3.0821 ... 3.0527
+Threads: 12  speedup vs 1x = 3.2982 ... 3.3013
+Threads: 16  speedup vs 1x = 3.3852 ... 3.4080
+Threads: 24  speedup vs 1x = 3.6343 ... 3.6838
+Threads: 32  speedup vs 1x = 3.8220 ... 3.9173
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2 m6a.8xlarge $1.38/hour On Demand Instance
+
+16 cpus, 32 cores, this should be 3rd gen "Milan" Epyc
+
+model name      : AMD EPYC 7R13 Processor
+stepping        : 1
+microcode       : 0xa001173
+cpu MHz         : 2649.992
+cache size      : 512 KB
+cpu cores       : 16
+bugs            : sysret_ss_attrs null_seg spectre_v1 spectre_v2 spec_store_bypass
+TLB size        : 2560 4K pages
+
+
+MemTotal:       129221008 kB
+
+[    0.000000] Linux version 5.15.0-1011-aws
+[    0.000000] DMI: Amazon EC2 m6a.8xlarge/, BIOS 1.0 10/16/2017
+[    1.251353] Last level iTLB entries: 4KB 512, 2MB 512, 4MB 256
+[    1.255134] Last level dTLB entries: 4KB 2048, 2MB 2048, 4MB 1024, 1GB 0
+[    1.405304] smpboot: CPU0: AMD EPYC 7R13 Processor (family: 0x19, model: 0x1, stepping: 0x1)
+[    1.787361] smp: Brought up 2 nodes, 32 CPUs
+
+Triangle relations for 1 threads in 77.377 seconds
+Rate 8.8010 genes/sec Rate per thread: 8.8010 genes/sec
+Threads: 2  speedup vs 1x = 1.8365 ... 2.0280
+Threads: 3  speedup vs 1x = 2.7406 ... 2.6298
+Threads: 4  speedup vs 1x = 3.7080 ... 3.7149
+Threads: 6  speedup vs 1x = 3.3628 ... 3.6945
+Threads: 8  speedup vs 1x = 3.4183 ... 4.2943
+Threads: 12  speedup vs 1x = 4.1625 ... 5.3211
+Threads: 16  speedup vs 1x = 4.6568 ... 5.9770
+Threads: 24  speedup vs 1x = 5.5649 ... 6.8186
+
+Again, a different instance.
+Triangle relations for 1 threads in 67.110 seconds
+Rate 10.147 genes/sec Rate per thread: 10.147 genes/sec
+Threads: 2  speedup vs 1x = 1.8333
+Threads: 3  speedup vs 1x = 2.6088
+Threads: 4  speedup vs 1x = 3.3166
+Threads: 6  speedup vs 1x = 2.9872
+Threads: 8  speedup vs 1x = 3.2127
+Threads: 12  speedup vs 1x = 3.6668
+
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2
+Dedicated instance c6a $8.078/hour
+2 sockets, 96 cores (so c6a.48xlarge to get all of them)
+
+Again, with hugepages
+
+sudo echo 1536 > /proc/sys/vm/nr_hugepages
+HUGETLB_MORECORE=yes LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libhugetlbfs.so.0 guile -l bio-loop3.scm
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2 c6g.8xlarge  On Demand Instance
+arm64 Graviton2
+
+BogoMIPS        : 243.75
+Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp ssbs
+CPU implementer : 0x41
+CPU architecture: 8
+CPU variant     : 0x3
+CPU part        : 0xd0c
+CPU revision    : 1
+
+MemTotal:       64656148 kB
+
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x413fd0c1]
+[    0.000000] Linux version 5.15.0-1009-aws
+[    0.032154] CPU: All CPU(s) started at EL1
+
+Triangle relations for 1 threads in 104.01 seconds
+Rate 6.5477 genes/sec Rate per thread: 6.5477 genes/sec
+Threads: 2  speedup vs 1x = 1.6260 ... 1.6070
+Threads: 3  speedup vs 1x = 2.2536 ... 2.2249
+Threads: 4  speedup vs 1x = 2.8543 ... 2.8123
+Threads: 6  speedup vs 1x = 3.9244 ... 3.8024
+Threads: 8  speedup vs 1x = 4.6499 ... 4.6243
+Threads: 12  speedup vs 1x = 5.7179 ... 5.6701
+Threads: 16  speedup vs 1x = 5.8009 ... 6.0555
+Threads: 24  speedup vs 1x = 6.2407 ... 6.5405
+Threads: 32  speedup vs 1x = 6.7004
+
+
+====================================================================
+11 Sept 2022
+
+Amazon AWS EC2 c7g.x8large $1.16/hour On Demand Instance
+arm64 Graviton3
+
+BogoMIPS        : 2100.00
+Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve asimdfhm dit uscat ilrcpc flagm ssbs paca pacg dcpodp svei8mm svebf16 i8mm bf16 dgh rng
+CPU implementer : 0x41
+CPU architecture: 8
+CPU variant     : 0x1
+CPU part        : 0xd40
+CPU revision    : 1
+
+MemTotal:       64656148 kB
+
+Triangle relations for 1 threads in 82.384 seconds
+Rate 8.2662 genes/sec Rate per thread: 8.2662 genes/sec
+Threads: 2  speedup vs 1x = 1.5674 ... 1.6096
+Threads: 3  speedup vs 1x = 2.1055 ... 2.2068
+Threads: 4  speedup vs 1x = 2.6202 ... 2.7185
+Threads: 6  speedup vs 1x = 3.4087 ... 3.4742
+Threads: 8  speedup vs 1x = 4.0460 ... 4.1769
+Threads: 12  speedup vs 1x = 4.7508 ... 4.9655
+Threads: 16  speedup vs 1x = 5.1419 ... 5.4379
+Threads: 24  speedup vs 1x = 5.4990 ... 5.8274
+Threads: 32  speedup vs 1x = 5.8125
+
+====================================================================
+11 Sept 2022
+
+Summary, including Amazon AWS EC2 Summary
+
+Single Thread total time, seconds:
+circa-2015 AMD Opteron 6344 (Abu Dhabi) (fanny) : 190.55 seconds
+                     AMD Ryzen 5 3400G (aimdee) : 63.278 seconds
+                     AMD Ryzen 9 3900X (major)  : 47.933 seconds
+            Celeron J4125 CPU @ 2.00GHz (yippe) : 161.72
+circa-2019        AMD EPYC 7R32 Rome  @ 2.80GHz : 72.559 seconds
+circa-2021        AMD EPYC 7R13 Milan @ 2.65GHz : 67.110
+                  Xeon Platinum 8375C @ 2.90GHz : 66.187
+                                arm64 Graviton2 : 104.01
+                                arm64 Graviton3 : 82.384
+
+4-thread speedup (multiplier):
+circa-2015 AMD Opteron 6344 (Abu Dhabi) (fanny) : 2.0470
+                     AMD Ryzen 5 3400G (aimdee) : 3.3858
+                     AMD Ryzen 9 3900X (major)  : 1.7072
+            Celeron J4125 CPU @ 2.00GHz (yippe) : 2.3941
+circa-2019        AMD EPYC 7R32 Rome  @ 2.80GHz : 2.0023
+circa-2021        AMD EPYC 7R13 Milan @ 2.65GHz : 3.3166
+                  Xeon Platinum 8375C @ 2.90GHz : 2.4241
+                                arm64 Graviton2 : 2.8123
+                                arm64 Graviton3 : 2.7185
+
+The problem is the above is measuring single-process AtomSpace threaded
+performance; it is not comparing multi-process dispatching. Also, its
+not stressing the RAM/memory bandwidth all that much... That would be
+a more interesting evaluation.
+
+====================================================================
+26 Aug 2025
+
+Fanny -- with Atom MutexPool, sparse_hash_set<WinkPtr> and TypeIndex
+AtomPtr Pool
+Debian Stable from 2022 aka Bookworm
+
+w/o HugeTLB or any other tuning; just the stock default:
+$ guile -l bio-loop.scm
+Triangle relations for 681 genes in 237.13 seconds
+Triangle relations for 681 genes in 244.77 seconds
+Triangle relations for 681 genes in 245.88 seconds
+Protein expression for 12 pathways in 138.46 seconds
+Protein expression for 12 pathways in 134.80 seconds
+Protein expression for 12 pathways in 140.34 seconds
+skip long pentagaon
+
+-- Ouch Triangle is twice as slow as Jan 2020 a bit worse than Nov 2021
+
+$ guile -l bio-loop2.scm
+Crashes with  (LinkValue
+  (GeneNode "MAVS")
+  (GeneNode "MAVS"))
+Probably because MeetLink QueueValue blah blah, bad port. Ignore this
+test. It needs fixing though. Per README, there's no measureable
+difference from plain bio-loop
+
+$ guile -l bio-loop3.scm
+Triangle relations for 1 threads in 248.69 seconds
+Rate 2.7384 genes/sec Rate per thread: 2.7384 genes/sec
+Threads: 2  speedup vs 1x = 1.6387
+Threads: 3  speedup vs 1x = 2.1904
+Threads: 4  speedup vs 1x = 2.5456
+Threads: 6  speedup vs 1x = 3.1094
+Threads: 8  speedup vs 1x = 3.5178
+Threads: 12  speedup vs 1x = 3.7197
+Threads: 16  speedup vs 1x = 3.6943
+
+So that is better than before. Comparing to Nov 2021, the 3-thread
+speedup is finally larger than 2. But reviewing the diary entries from
+that era, it seems that removing the Incoming and TypeSet locks back
+then did not improve performance, suggesting bottleneck was elsewhere.
+Yet here, things got better.
+
+Lets see: Current git, above, has three significant changes:
+* Use of sparse_has_set<WinkPtr> for IncomingSet
+* Use of MutexPool for Atom mutexes.
+* Use of pool in AtomSpace TypeIndex.
+
+Commit with mutex-pool and sparse_hash but NOT TypeIndex:
+c048fc468651a0c80c0522358134d25b342e02f0 mutex-pool (pre typeindex)
+
+The sparse_hash only commit is:
+9baf1bf04ce857dbf1cad5f2c1b95b8d1d077b4f spareshash (pre mutex-pool)
+
+A recent commit without any of these is:
+e585cf3c45cde2b9eb7c6534c3054e804bf32a72 untruth (pre sparse-hash)
+
+XXX Using ccache causes misleading results!! Below had to be measured
+twice; reported results are w/o using ccache.
+
+Results for sparsehash plus Atom MutexPool: (64)
+Clean build, NOT ccache:
+Triangle relations for 1 threads in 239.65 seconds
+Threads: 2  speedup vs 1x = 1.4669
+Threads: 3  speedup vs 1x = 1.9203
+Threads: 4  speedup vs 1x = 2.0638
+Threads: 6  speedup vs 1x = 2.7616
+Threads: 8  speedup vs 1x = 3.3458
+Threads: 12  speedup vs 1x = 3.5655
+
+-- Conclude: The pool in the TypeIndex has a significant impact.
+   Assuming, that is, the above is not some cache aliasing effect.
+
+Results for sparsehash only: (no Atom MutexPool)
+Clean build, NOT ccache:
+Triangle relations for 1 threads in 240.87 seconds
+Threads: 2  speedup vs 1x = 1.5863
+Threads: 3  speedup vs 1x = 2.0475
+Threads: 4  speedup vs 1x = 2.4617
+Threads: 6  speedup vs 1x = 3.1035
+Threads: 8  speedup vs 1x = 3.4842
+Threads: 12  speedup vs 1x = 3.6639
+
+Results without any of these:
+Triangle relations for 1 threads in 220.13 seconds
+Threads: 2  speedup vs 1x = 1.5470
+Threads: 3  speedup vs 1x = 1.8680
+Threads: 4  speedup vs 1x = 2.2145
+Threads: 6  speedup vs 1x = 2.7239
+Threads: 8  speedup vs 1x = 2.9669
+Threads: 12  speedup vs 1x = 3.1519
+
+Conclusion:
+-- sparsehash on the IncomingSet improves parallelism.
+   But does not account for all improvemenets.
+-- Adding the MutexPool causes some set-associative caching collision.
+   All performance gains are reverted. WTF but .. interesting.
+
+Lets try again: current master, enable bare pointers:
+Clean build, NOT ccache:
+Triangle relations for 1 threads in 251.90 seconds
+Threads: 2  speedup vs 1x = 1.5692
+Threads: 3  speedup vs 1x = 2.0713
+Threads: 4  speedup vs 1x = 2.4561
+Threads: 6  speedup vs 1x = 3.0862
+Threads: 8  speedup vs 1x = 3.4744
+Threads: 12  speedup vs 1x = 3.6851
+
+Wow. Loss of performance, compared to WinkPtr. This confirms that it's
+some set-associative cache aliasing problem, because the only thing
+that changes here is the size of the Atom.
+
+Lets try again: current master, disable sparshash, enable bare pointers:
+Clean build, NOT ccache:
+Triangle relations for 1 threads in 227.44 seconds
+Threads: 2  speedup vs 1x = 1.5941
+Threads: 3  speedup vs 1x = 1.9225
+Threads: 4  speedup vs 1x = 2.2610
+Threads: 6  speedup vs 1x = 2.8270
+Threads: 8  speedup vs 1x = 3.1316
+double free or corruption (out)
+
+So, curiously, sparsehash improves performance slightly over std::set,
+even for bare pointers, where std::set<Atom*> has a size advantage.
+The aliasing effect still sees to be at play.
+And one memory corruption for bare pointers. So ...
+
+Lets try again: current master, disable sparshash, keep smart WinkPtrs
+Clean build, NOT ccache:
+Triangle relations for 1 threads in 232.66 seconds
+Threads: 2  speedup vs 1x = 1.4368
+Threads: 3  speedup vs 1x = 1.8510
+Threads: 4  speedup vs 1x = 2.2372
+Threads: 6  speedup vs 1x = 2.7923
+Threads: 8  speedup vs 1x = 3.1236
+Threads: 12  speedup vs 1x = 3.3076
+
+-- Result: Slightly slower than bare pointers.
+-- A LOT slower than sparsehash.
+   I doubt this is spareshash itself; I think its a cache aliasing
+   effect.
+
+Validate the above results: retest on pure master:
+Triangle relations for 1 threads in 237.14 seconds
+Threads: 2  speedup vs 1x = 1.6166
+Threads: 3  speedup vs 1x = 2.0998
+Threads: 4  speedup vs 1x = 2.4543
+Threads: 6  speedup vs 1x = 2.9742
+Threads: 8  speedup vs 1x = 3.3629
+Threads: 12  speedup vs 1x = 3.5927
+
+OK, so results reproduce. Earlier runs had ccache insanity in them.
+(Erased from this diary; I won't memorialize the insane results.)
+(Look at earlier git commits if its important.)
+rm -r and rebuild:
+
+Triangle relations for 1 threads in 245.14 seconds
+Threads: 2  speedup vs 1x = 1.6556
+Threads: 3  speedup vs 1x = 2.1622
+Threads: 4  speedup vs 1x = 2.6445
+Threads: 6  speedup vs 1x = 3.1359
+Threads: 8  speedup vs 1x = 3.4929
+
+So, this looks like natural variability.
+Conclude:
+-- cache-line aliasing is a huge issue.
+-- sparasehash for incoming set makes a big difference,
+   but this might be a cache-line aliasing issue.
+-- The other optimizations help.
+   But the true effects are swamped by aliasing.
+
+--------------------------
+How about sparsehash used in the TypeIndex? This decreases per-Atom
+RAM use by 24 Bytes. Slows Atom insert by 10%
+
+Triangle relations for 1 threads in 244.49 seconds
+Threads: 2  speedup vs 1x = 1.6279
+Threads: 3  speedup vs 1x = 2.1285
+Threads: 4  speedup vs 1x = 2.4566
+Threads: 6  speedup vs 1x = 3.1817
+Threads: 8  speedup vs 1x = 3.5761
+Threads: 12  speedup vs 1x = 3.8390
+
+-- No significant change for 2,3,4 threads.
+-- Sets an all-time record for 6,8 and 12 threads.
+
+--------------------------
+How about an IncomingIndex with
+struct InSet : std::map<Handle, InSetMap>
+
+Triangle relations for 1 threads in 250.54 seconds
+Threads: 2  speedup vs 1x = 1.6570
+Threads: 3  speedup vs 1x = 1.9774
+Threads: 4  speedup vs 1x = 2.3217
+Threads: 6  speedup vs 1x = 2.9759
+Threads: 8  speedup vs 1x = 3.4174
+Threads: 12  speedup vs 1x = 3.8679
+
+This is mediocre, surprisingly so. ... Well, in retrospect, no. Turns
+out this "improvement" saves no space, due to extra required pointers.
+See notes in IncomeIndex.h for details.
+
+--------------------------

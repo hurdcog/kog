@@ -1,0 +1,74 @@
+[[!meta copyright="Copyright © 2000, 2008, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+The implementation of the `pflocal` server is in the `pflocal` directory, and
+uses [[`libpipe`|libpipe]] (shared code with the [[named_pipe|fifo]]
+implementation).
+
+
+# Open Issues
+
+## `SO_REUSEADDR`
+
+### IRC, freenode, #hurd, 2013-09-19
+
+    <gnu_srs> Hi, is SO_REUSEADDR supported at all on Hurd? I can only find two
+      entries: 
+    <gnu_srs> in libdde-linux26 and pfinet/linux-src, and the functionality
+      seems to be unimplemented.
+    <pinotree> gnu_srs: pfinet supports it
+    <youpi> gnu_srs: grep talks about  pfinet/linux-src/net/core/sock.c:
+      case SO_REUSEADDR:
+    <youpi> two times
+    <gnu_srs> Yes, and that is the implementation?
+    <gnu_srs> I wrote a test for AF_INET and it works, but not for AF_UNIX
+      (maybe not so interesting case).
+    <pinotree> pflocal does not support it
+    <gnu_srs> Is that of interest at all?
+
+
+## IRC, freenode, #hurd, 2014-01-14
+
+    <braunr> sudo -s eats 100 cpu :/
+    <braunr> possibly because of pflocal
+    <braunr> only change on pflocal (notwithstanding the libraries) is
+      "pflocal: improve the demuxer functions"
+    <braunr> teythoon: why did you change the order of the function calls in
+      sock_demuxer ?
+    <youpi> for efficiency iirc
+    <braunr> yes, looks reasonable
+
+
+### IRC, freenode, #hurd, 2014-01-16
+
+    <braunr> i suspect the "improve the demuxer functions" changes may have
+      hard-to-understand side effects 
+    <teythoon> yes, mostly being faster
+    <braunr> ah, the latest sudo has been fixed
+    <braunr> haha :)
+    <teythoon> ^^
+    <braunr> that one is easy to understand :)
+    <braunr> sudo was looping around calls to pflocal
+    <braunr> and exim crashed because of pfinet
+    <braunr> and those servers were only affected by these changes, other than
+      the library ones which don't seem to apply at all
+    <braunr> but with sudo being fixed, i'm not sure it's relevant any more
+    <teythoon> i'd say being faster could easily cause hard-to-understand side
+      effects
+    <braunr> ah, yes
+    <braunr> being faster isn't the side effect itself ;p
+    <braunr> nice, sudo was bugged on linux too, its behaviour matched its hurd
+      version perfectly
+
+
+## [[hurd/fsysopts]]
+
+Doesn't support [[hurd/fsysopts]].

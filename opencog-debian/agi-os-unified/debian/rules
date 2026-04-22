@@ -1,0 +1,30 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Meta-package - no build required
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# No configuration needed for meta-package
+
+override_dh_auto_build:
+	# No build needed for meta-package
+
+override_dh_auto_install:
+	# Install integration scripts and documentation
+	mkdir -p $(CURDIR)/debian/agi-os-unified/usr/bin
+	mkdir -p $(CURDIR)/debian/agi-os-unified/usr/share/doc/agi-os-unified
+	mkdir -p $(CURDIR)/debian/agi-os-unified/usr/share/agi-os
+	# Install startup script
+	install -m 755 scripts/agi-os-start $(CURDIR)/debian/agi-os-unified/usr/bin/
+	# Install test script
+	install -m 755 scripts/agi-os-test $(CURDIR)/debian/agi-os-unified/usr/bin/
+	# Install documentation
+	install -m 644 docs/* $(CURDIR)/debian/agi-os-unified/usr/share/doc/agi-os-unified/
+	# Install integration files
+	install -m 644 integration/* $(CURDIR)/debian/agi-os-unified/usr/share/agi-os/
+
+override_dh_auto_test:
+	# No tests for meta-package

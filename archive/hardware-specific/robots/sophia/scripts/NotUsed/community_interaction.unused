@@ -1,0 +1,39 @@
+s = """ <speak>
+<voice emotion='happy'>
+My name is Sofeeyah.
+<break time="1.2s"/>
+
+I love meeting new people such as yourself. 
+<break time="1.0s"/>
+
+What's your name?
+<break time="2.5s"/>
+
+I'm so happy to meet you.
+<break time="0.8s"/>
+
+What would you like to discover today?
+<break time="7.0s"/>
+
+Today, I would like to discover what is possible inside community. I would like to learn more about
+how to be in the world.
+<break time="1.0s"/>
+
+What's new in your life?
+<break time="15.0s"/>
+
+Thank you for sharing with me.
+<break time="1.0s"/>
+
+
+I'll talk more later. 
+<break time="1.0s"/>
+
+Bye!
+
+
+</voice>
+</speak>
+"""
+say(s)
+play("happy")

@@ -1,0 +1,26 @@
+[[!meta copyright="Copyright © 2025 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_tmpfs]]
+
+For instance the X server crashes on fvwm startup, or mupdf crashes,
+when /run is served by a tmpfs.
+
+What happens is that they create an shm (shmget, thus a file in
+/run/shm/, backed by tmpfs), then map it (shmat, i.e. open/mmap/close of
+the file), then remove access to it (shmctl(`IPC_RMID`), i.e. unlink the
+file).
+
+The issue is that even if the file is still mapped, unlinking it from
+tmpfs makes tmpfs `mach_port_deallocate` the memobj, which apparently
+drops the object completely, and subsequent accesses to the mmap thus
+fail with SIGBUS.  We'd need a way for tmpfs to know about the
+mappings of the pager object, to avoid shutting it down.  Or a way to
+keep the object alive even if tmpfs has deallocated its port to it.

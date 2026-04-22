@@ -1,0 +1,62 @@
+[[!meta copyright="Copyright © 2011, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc]]
+
+
+# `sudo`
+
+`sudo [task]` hands after finishing `[task]`.
+
+IRC, freenode, #hurd, 2011-04-02
+
+    <youpi> the sudo bug is select() not being able to get interrupted by
+      signals
+
+
+# IRC, freenode, #hurd, 2013-01-05
+
+In context of [[alarm_setitimer]].
+
+    <youpi> it's a know issue in select
+    <youpi> it's not interruptible by a SIGALRM for instance
+    <youpi> which is what ntpdate uses
+    <youpi> when __io_select is used, it *is* interruptible
+    <youpi> but when __mach_msg is used, it is *not* interruptible
+    <youpi> it happens that by luck, ntpdate uses just one fd, and thus it's
+      __io_select which is used, and thus it gets an interruption after 1s
+      (instead of after 60s, the timeout)
+    <youpi> with braunr's patch, it's __mach_msg which is used to wait, and
+      thus the interruption doesn't happen, and we have to wait  60s, the
+      timeout...
+    <youpi> so braunr's patch is still correct, it's the __mach_msg call which
+      we do need to make interruptible (it was already on the todolist)
+
+Proposed patch: [[!message-id
+"20130105162817.GW5965@type.youpi.perso.aquilenet.fr"]].
+
+
+## IRC, freenode, #hurd, 2013-01-15
+
+    <_d3f> Hello, any one else having problems with git?
+    <braunr> _d3f: yes
+    <braunr> _d3f: it will be fixed in the next glibc release
+    <_d3f> oh thx. what was the problem?
+    <braunr> http://lists.gnu.org/archive/html/bug-hurd/2013-01/msg00005.html
+    <WhiteKIBA> exactly this problem is preventing us building glibc
+    <braunr> it's indeed very annoying
+    <braunr> and this fix will probably have a visible and positive effect on
+      other issues
+    <_d3f> let's hope so. 
+    <braunr> well, i'm already using it and see the difference
+
+---
+
+See also [[select]] and [[select_bogus_fd]].

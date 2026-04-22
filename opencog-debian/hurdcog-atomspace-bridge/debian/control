@@ -1,0 +1,63 @@
+Source: hurdcog-atomspace-bridge
+Section: devel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11),
+               cmake,
+               build-essential,
+               libcogutil-dev,
+               opencog-atomspace,
+               hurdcog,
+               hurdcog-dev,
+               guile-3.0-dev,
+               libboost-dev,
+               libboost-system-dev,
+               libboost-thread-dev,
+               pkg-config
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: hurdcog-atomspace-bridge
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         hurdcog,
+         opencog-atomspace,
+         libcogutil-dev,
+         guile-3.0
+Description: Direct AtomSpace integration at HurdCog kernel level
+ This package provides the MachSpace abstraction layer, enabling direct
+ AtomSpace hypergraph integration within the HurdCog cognitive operating
+ system kernel layer.
+ .
+ MachSpace implements an AtomSpace-compatible interface that allows
+ kernel-level services and system translators to participate in cognitive
+ operations without requiring full application-level AtomSpace instantiation.
+ .
+ Key features include:
+  - Shared memory hypergraph storage for efficient knowledge sharing
+  - Copy-on-write atom management for large knowledge bases
+  - Message-passing integration through Mach IPC mechanism
+  - Kernel-level attention allocation and propagation
+  - Zero-copy atom transfer between processes
+  - Efficient serialization for cross-layer communication
+ .
+ This package is essential for the AGI-OS architecture, providing the
+ critical bridge between microkernel primitives and hypergraph knowledge
+ representation.
+
+Package: hurdcog-atomspace-bridge-dev
+Architecture: any
+Depends: ${misc:Depends},
+         hurdcog-atomspace-bridge (= ${binary:Version}),
+         hurdcog-dev,
+         opencog-atomspace,
+         libcogutil-dev
+Description: Development files for HurdCog AtomSpace Bridge
+ This package contains header files, libraries, and documentation for
+ developing cognitive system components that use the MachSpace abstraction.
+ .
+ Includes API documentation, example code, and development tools for
+ building kernel-level cognitive services.

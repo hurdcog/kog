@@ -1,0 +1,2 @@
+# OpenCog GNN Module Requirements
+numpy>=1.20.0

@@ -1,0 +1,245 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/thread.h (VG_READ): Define.
+	(VG_WRITE): Define.
+	(VG_EXECUTE): Likewise.
+	(VG_ACTIVATION_FAULT_INFO_PRINTF): Use them.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/cap.h (object_discarded_clear): Take additional
+	parameter count.  Take multiple object addresses.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/misc.h (vg_method_id_string): Handle VG_messenger_id.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/rpc.h (RPC_SEND_UNMARSHAL): Don't error out if there is
+	more data than we strictly require.
+	(RPC_REPLY_UNMARSHAL): Likewise.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/message.h (vg_message_space): New function.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/rpc.h (RPC_SEND_MARSHAL): Make the reply messenger the
+	first capability.
+	(RPC_SEND_UNMARSHAL): Likewise.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* RPC: Move here from ../hurd.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/activity.h (struct activity_memory_policy): Rename from
+	this...
+	(struct vg_activity_memory_policy): ... to this.  Update users.
+	(struct activity_policy): Rename from this...
+	(struct vg_activity_policy): ... to this.  Update users.
+	(ACTIVITY_STATS_PERIODS): Rename from this...
+	(VG_ACTIVITY_STATS_PERIODS): ... to this.  Update users.
+	(struct activity_stats): Rename from this...
+	(struct vg_activity_stats): ... to this.  Update users.
+	(struct activity_info): Rename from this...
+	(struct vg_activity_info): ... to this.  Update users.
+	* viengoos/addr.h (struct addr): Rename from this...
+	(struct vg_addr): ... to this.  Update users.
+	* viengoos/cap.h (struct object_policy): Rename from this...
+	(struct vg_object_policy): ... to this.  Update users.
+	(struct object_name): Rename from this...
+	(struct vg_object_name): ... to this.  Update users.
+	(struct object): Rename from this...
+	(struct vg_object): ... to this.  Update users.
+	* viengoos/folio.h (struct folio_policy): Rename from this...
+	(struct vg_folio_policy): ... to this.  Update users.
+	(struct folio): Rename for this...
+	(struct vg_folio): ... to this.  Update users.
+	* viengoos/thread.h
+	(HURD_EXREGS_SET_UTCB): Rename from this...
+	(VG_EXREGS_SET_UTCB): ... to this.  Update users.
+	(HURD_EXREGS_SET_EXCEPTION_MESSENGER): Rename from this...
+	(VG_EXREGS_SET_EXCEPTION_MESSENGER): ... to this.  Update users.
+	(HURD_EXREGS_SET_ASPACE): Rename from this...
+	(VG_EXREGS_SET_ASPACE): ... to this.  Update users.
+	(HURD_EXREGS_SET_ACTIVITY): Rename from this...
+	(VG_EXREGS_SET_ACTIVITY): ... to this.  Update users.
+	(HURD_EXREGS_SET_SP): Rename from this...
+	(VG_EXREGS_SET_SP): ... to this.  Update users.
+	(HURD_EXREGS_SET_IP): Rename from this...
+	(VG_EXREGS_SET_IP): ... to this.  Update users.
+	(HURD_EXREGS_SET_SP_IP): Rename from this...
+	(VG_EXREGS_SET_SP_IP): ... to this.  Update users.
+	(HURD_EXREGS_SET_EFLAGS): Rename from this...
+	(VG_EXREGS_SET_EFLAGS): ... to this.  Update users.
+	(HURD_EXREGS_SET_USER_HANDLE): Rename from this...
+	(VG_EXREGS_SET_USER_HANDLE): ... to this.  Update users.
+	(HURD_EXREGS_SET_REGS): Rename from this...
+	(VG_EXREGS_SET_REGS): ... to this.  Update users.
+	(HURD_EXREGS_GET_REGS): Rename from this...
+	(VG_EXREGS_GET_REGS): ... to this.  Update users.
+	(HURD_EXREGS_START): Rename from this...
+	(VG_EXREGS_START): ... to this.  Update users.
+	(HURD_EXREGS_STOP): Rename from this...
+	(VG_EXREGS_STOP): ... to this.  Update users.
+	(HURD_EXREGS_ABORT_SEND): Rename from this...
+	(VG_EXREGS_ABORT_SEND): ... to this.  Update users.
+	(HURD_EXREGS_ABORT_RECEIVE): Rename from this...
+	(VG_EXREGS_ABORT_RECEIVE): ... to this.  Update users.
+	(HURD_EXREGS_ABORT_IPC): Rename from this...
+	(VG_EXREGS_ABORT_IPC): ... to this.  Update users.
+	(struct hurd_thread_exregs_in): Rename form this...
+	(struct vg_thread_exregs_in): ... to this.  Update users.
+	(struct hurd_thread_exregs_out): Rename form this...
+	(struct vg_thread_exregs_out): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg_activation.  Update users.
+	(RPC_ID_PREFIX): Define to VG_ACTIVATION.  Update users.
+	(ACTIVATION_fault): Rename from this...
+	(VG_ACTIVATION_fault): ... to this.  Update users.
+	
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/futex.h (vg_futex_using): Rename from this...
+	(futex_using): ... to this.  Update users.  Use vg_futex_using,
+	not rm_futex_using.
+	(vg_futex): Rename from this...
+	(futex): ... to this.  Update users.
+	(vg_futex_wait_using): Rename from this...
+	(futex_wait_using): ... to this.  Update users.
+	(vg_futex_wake_using): Rename from this...
+	(futex_wake_using): ... to this.  Update users.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/cap.h (vg_cap_copy): Rename from this...
+	(vg_cap_copy_simple): ... to this.  Update users.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/activity.h (RM_activity_policy): Rename from this...
+	(VG_activity_policy): ... to this.  Update users.
+	(RM_activity_info): Rename from this...
+	(VG_activity_info): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+	* viengoos/cap.h
+	(RM_cap_copy): Rename from this...
+	(VG_cap_copy): ... to this.  Update users.
+	(RM_cap_rubout): Rename from this...
+	(VG_cap_rubout): ... to this.  Update users.
+	(RM_cap_read): Rename from this...
+	(VG_cap_read): ... to this.  Update users.
+	(RM_object_discarded_clear): Rename from this...
+	(VG_object_discarded_clear): ... to this.  Update users.
+	(RM_object_discard): Rename from this...
+	(VG_object_discard): ... to this.  Update users.
+	(RM_object_status): Rename from this...
+	(VG_object_status): ... to this.  Update users.
+	(RM_object_reply_on_destruction): Rename from this...
+	(VG_object_reply_on_destruction): ... to this.  Update users.
+	(RM_object_name): Rename from this...
+	(VG_object_name): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+	* viengoos/folio.h (RM_folio_alloc): Rename from this...
+	(VG_folio_alloc): ... to this.  Update users.
+	(RM_folio_free): Rename from this...
+	(Vg_folio_free): ... to this.  Update users.
+	(RM_folio_object_alloc): Rename from this...
+	(VG_folio_object_alloc): ... to this.  Update users.
+	(RM_folio_policy): Rename from this...
+	(VG_folio_policy): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+	* viengoos/futex.h (RM_futex): Rename from this...
+	(VG_futex): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+	* viengoos/misc.h (RM_write): Rename from this...
+	(VG_write): ... to this.  Update users.
+	(RM_read): Rename from this...
+	(VG_read): ... to this.  Update users.
+	(RM_as_dump): Rename from this...
+	(VG_as_dump): ... to this.  Update users.
+	(RM_fault): Rename from this...
+	(VG_fault): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+	* viengoos/thread.h (RM_thread_exregs): Rename from this...
+	(RM_thread_exregs): ... to this.  Update users.
+	(RM_thread_id): Rename from this...
+	(RM_thread_id): ... to this.  Update users.
+	(RM_thread_activation_collect): Rename from this...
+	(RM_thread_activation_collect): ... to this.  Update users.
+	(RPC_STUB_PREFIX): Define to vg.
+	(RPC_ID_PREFIX): Define to VG.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/misc.h: Don't include <hurd/exceptions.h>.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/activity.h: Add a "vg_" to public viengoos identifiers.
+	Update users.
+	* viengoos/addr-trans.h: Likewise.
+	* viengoos/addr.h: Likewise.
+	* viengoos/cap.h: Likewise.
+	* viengoos/folio.h: Likewise.
+	* viengoos/futex.h: Likewise.
+	* viengoos/rpc.h: Likewise.
+	* viengoos/thread.h: Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.h: Include <viengoos/activity.h>, <viengoos/addr.h>,
+	<viengoos/addr-trans.h>, <viengoos/cap.h>, <viengoos/folio.h>,
+	<viengoos/futex.h>, <viengoos/ipc.h>, <viengoos/math.h>,
+	<viengoos/message.h>, <viengoos/messenger.h>, and
+	<viengoos/misc.h>.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* ../hurd/exceptions.h (ACTIVATION_fault, activation_method_id_string)
+	(struct activation_fault_info, ACTIVATION_FAULT_INFO_FMT)
+	(ACTIVATION_FAULT_INFO_PRINTF, fault): Move from here...
+	* viengoos/thread.h: ... to here.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* t-addr.c: Don't include <l4/math.h>.  Include <viengoos/math.h>.
+	(main): Use vg_msb64 instead of l4_msb64 and vg_lsb64 instead of
+	l4_lsb64.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/math.h: Move from ../hurd.  Rewrite to use gcc builtin
+	functions.
+	* Makefile.am (viengoos_headers): Add math.h.
+	* headers.m4: Link viengoos/math.h.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am: New file.
+	* headers.m4: Likewise.
+	* t-addr-trans.c: Move from ../hurd.
+	* t-addr.c: Likewise.
+	* t-rpc.c: Likewise.
+	* viengoos.h: Likewise.
+	* viengoos/activity.h: Likewise.
+	* viengoos/addr-trans.h: Likewise.
+	* viengoos/addr.h: Likewise.
+	* viengoos/cap.h: Likewise.
+	* viengoos/folio.h: Likewise.
+	* viengoos/futex.h: Likewise.
+	* viengoos/ipc.h: Likewise.
+	* viengoos/message.h: Likewise.
+	* viengoos/messenger.h: Likewise.
+	* viengoos/rpc.h: Likewise.
+	* viengoos/misc.h: Moved from ../viengoos/rm.h.
+	* viengoos/thread.h: New file split from ../hurd/thread.h.
+

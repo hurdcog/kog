@@ -1,0 +1,120 @@
+[[!meta copyright="Copyright © 2013, 2014 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+
+# IRC, freenode, #hurd, 2013-01-18
+
+    <braunr> youpi: what would you think of adding a debug-related syscall to
+      gnumach so that we have a printf-like tool even in situations where the
+      code can't perform an rpc (i.e. glibc)
+    <youpi> could be useful indeed
+    <youpi> I've found myself having a hard time making some printfs from odd
+      places of glibc :)
+    <braunr> i also suggest we make it unprivileged
+    <youpi> not enabled by default then
+    <youpi> otherwise it's an easy DoS
+    <braunr> well, for now, we don't care much about DoS, but we do care about
+      debugging
+    <braunr> at least until the very core issues we have are understood and
+      resolved
+    <youpi> I usually frown on debugging feature being too open
+    <braunr> me too
+    <youpi> you would always forget dropping one
+    <braunr> that's why i didn't suggest it earlier
+    <braunr> but i'm wasting too much time finding other decently effective
+      ways
+
+
+## IRC, freenode, #hurd, 2013-01-19
+
+    <braunr> youpi: how about we build this debugging system call in debugging
+      versions only ?
+    <braunr> i suppose you already use such versions for buildds anyway
+    <braunr> MACH_DEBUG is always enabled
+    <braunr> the debugging version only adds --enable-kdb if i'm right
+    <pinotree> check debian/rules
+    <braunr> that, and -fno-omit-frame-pointer
+
+
+## IRC, freenode, #hurd, 2013-01-21
+
+    <braunr> youpi: concerning gnumach, i've added a mach_print system call,
+      with one argument (a null terminated string) to -dbg kernels
+      (--enable-kbd)
+    <youpi> k
+    <braunr> if it's fine with you, i'll commit it too
+    <youpi> I'm fine
+
+
+## IRC, freenode, #hurd, 2013-04-07
+
+    <braunr> see http://www.sceen.net/~rbraun/mach_print/ for an example to use
+      it
+
+[[Makefile]], [[mach_print.S]], [[main.c]].
+
+
+## IRC, freenode, #hurd, 2013-07-01
+
+    <youpi> braunr: btw, we are missing the symbol in mach/Versions
+    <braunr> youpi: what symbol ?
+    <youpi> so the libc-provided RPC stub is not available
+    <youpi> mach_printf
+    <youpi> -f
+    <braunr> it's a system calll
+    <braunr> not exported
+    <youpi> s/RPC/system call/
+    <braunr> that's expected
+    <youpi> libc does provide stubs for system calls too
+    <braunr> yes but not for this one
+    <youpi> I don't see why we wouldn't want to include it
+    <youpi> ?! it does
+    <braunr> it's temporary
+    <braunr> oh
+    <braunr> there must be automatic parsing during build
+    <youpi> sure
+    <braunr> nice
+
+    <braunr> youpi: if we're going to make this system call exported by glibc,
+      i should change its interface first
+    <braunr> it was meant as a very quick-and-dirty hack and directly accesses
+      the caller's address space without going through a special copy-from-user
+      function
+    <braunr> not very portable
+
+
+## IRC, freenode, #hurd, 2013-11-25
+
+    <teythoon> can we get the mach_printf function somewhere so that it's
+      easier to use please ?
+    <braunr> well
+    <braunr> i'm not comfortable with that
+    <teythoon> y not ?
+    <braunr> i don't consider mach_print being part of the interface yet
+    <teythoon> ...
+    <braunr> it's really a debugging call
+    <braunr> not always available
+    <teythoon> so what, let it fail if it is not
+    <braunr> ok
+    <braunr> i should change it first
+    <braunr> pass a size argument
+    <braunr> and do a proper copyin
+    <teythoon> cool, thanks :)
+    <braunr> then we could add that printf function in libshouldbeinlibc i
+      guess
+    <teythoon> that'd be nice, yes
+    <braunr> hm
+    <braunr> that would make only hurd servers able to use it though
+    <braunr> unless we preload it
+    <teythoon> well, i thought it's a staging area for libc ?
+    <braunr> in theory yes, in practice some functions have been stuck there
+      for ages
+    <braunr> we'll discuss that with youpi and tschwinge 
+    <braunr> and pinotree 

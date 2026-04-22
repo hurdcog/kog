@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	# Install core Scheme modules
+	install -d $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel
+	install -m 644 hurdcog-bootstrap.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 microkernel-integration.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 namespace-minimal.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 plan9-namespace.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 scheme-adapters.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	
+	# Install cognitive interface components
+	install -d $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/cognitive-interface
+	cp -r cognitive-interface/* $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/cognitive-interface/
+	
+	# Install phase integration modules
+	install -m 644 phase1-integration.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 phase2-integration.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	install -m 644 phase3-full-integration.scm $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/guile/site/3.0/hurdcog/cogkernel/
+	
+	# Install examples
+	install -d $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/doc/hurdcog-cogkernel-core/examples
+	cp -r examples/* $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/doc/hurdcog-cogkernel-core/examples/ || true
+	
+	# Install documentation
+	install -d $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/doc/hurdcog-cogkernel-core
+	install -m 644 README.md $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/doc/hurdcog-cogkernel-core/
+	cp -r docs/* $(CURDIR)/debian/hurdcog-cogkernel-core/usr/share/doc/hurdcog-cogkernel-core/ || true

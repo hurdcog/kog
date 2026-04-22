@@ -1,0 +1,592 @@
+name: VCpkg Prebuild Cache
+
+# Standalone workflow that prebuilds vcpkg dependencies in stages
+# Each stage caches independently - no more losing 2+ hours on late failures
+# Run weekly, on vcpkg.json changes, or manually
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild all packages (ignore cache)'
+        required: false
+        default: 'false'
+        type: boolean
+      tier:
+        description: 'Which tier to build (all, tier1, tier2, tier3)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - tier1
+          - tier2
+          - tier3
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+  push:
+    paths:
+      - 'vcpkg.json'
+      - 'vcpkg-configuration.json'
+      - '.github/workflows/vcpkg-prebuild.yml'
+
+concurrency:
+  group: vcpkg-prebuild-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel - we want to complete
+
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_binary_cache
+  VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+
+jobs:
+  # =============================================================================
+  # TIER 1: Quick packages (~5-10 min)
+  # Boost headers, cmake tools, header-only libs
+  # =============================================================================
+  tier1-quick:
+    if: ${{ github.event.inputs.tier == 'all' || github.event.inputs.tier == 'tier1' || github.event.inputs.tier == '' }}
+    runs-on: windows-latest
+    name: "Tier 1: Quick Packages"
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Cache Key
+        id: cache-key
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path vcpkg.json -Algorithm SHA256).Hash.Substring(0, 12)
+          $key = "vcpkg-tier1-x64-windows-$hash"
+          echo "key=$key" >> $env:GITHUB_OUTPUT
+          Write-Host "Cache key: $key" -ForegroundColor Cyan
+
+      - name: Setup Cache Directories
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_INSTALLED_DIR" | Out-Null
+
+      # Export GitHub Actions cache environment for vcpkg
+
+      - name: Restore Tier 1 Cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+            ${{ env.VCPKG_INSTALLED_DIR }}
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            vcpkg-tier1-x64-windows-
+
+      - name: Setup vcpkg
+        id: vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '11bbc873e00e9e58d4e9dffb30b7a5493a030e0b'
+
+      - name: Verify vcpkg Setup
+        shell: pwsh
+        run: |
+          # Determine vcpkg root - action stores it in VCPKG_ROOT or github workspace
+          $vcpkgRoot = $env:VCPKG_ROOT
+          if (-not $vcpkgRoot) {
+            $vcpkgRoot = "${{ github.workspace }}/vcpkg"
+          }
+
+          Write-Host "VCPKG_ROOT: $vcpkgRoot" -ForegroundColor Cyan
+
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+          if (Test-Path $vcpkgExe) {
+            Write-Host "vcpkg.exe found at: $vcpkgExe" -ForegroundColor Green
+            & $vcpkgExe --version
+          } else {
+            Write-Host "ERROR: vcpkg.exe not found at $vcpkgExe" -ForegroundColor Red
+            Write-Host "Searching for vcpkg.exe..." -ForegroundColor Yellow
+            Get-ChildItem -Path "${{ github.workspace }}" -Recurse -Filter "vcpkg.exe" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+            exit 1
+          }
+
+          # Export for subsequent steps
+          echo "VCPKG_ROOT=$vcpkgRoot" >> $env:GITHUB_ENV
+
+      - name: Build Tier 1 Packages
+        if: steps.restore-cache.outputs.cache-hit != 'true' || github.event.inputs.force_rebuild == 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "=== Building All Packages from vcpkg.json ===" -ForegroundColor Cyan
+          Write-Host "Using manifest mode - vcpkg will install all dependencies from vcpkg.json" -ForegroundColor Gray
+
+          # Ensure VCPKG_ROOT is set
+          $vcpkgRoot = $env:VCPKG_ROOT
+          if (-not $vcpkgRoot) {
+            $vcpkgRoot = "${{ github.workspace }}/vcpkg"
+          }
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+
+          Write-Host "Using vcpkg at: $vcpkgExe" -ForegroundColor Cyan
+          Write-Host "Installing to: $env:VCPKG_INSTALLED_DIR" -ForegroundColor Cyan
+
+          # In manifest mode, just run vcpkg install with triplet
+          # It will read vcpkg.json and install all dependencies
+          # Retry up to 3 times to handle transient download failures (e.g. HTTP 502)
+          $maxRetries = 3
+          $success = $false
+          for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            Write-Host "vcpkg install attempt $attempt of $maxRetries..." -ForegroundColor Yellow
+            & $vcpkgExe install --triplet x64-windows --x-install-root="$env:VCPKG_INSTALLED_DIR"
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "All packages installed successfully!" -ForegroundColor Green
+              $success = $true
+              break
+            }
+            Write-Host "Attempt $attempt failed (exit code $LASTEXITCODE)." -ForegroundColor Yellow
+            if ($attempt -lt $maxRetries) {
+              Write-Host "Retrying in 30 seconds..." -ForegroundColor Yellow
+              Start-Sleep -Seconds 30
+            }
+          }
+          if (-not $success) {
+            Write-Host "All $maxRetries vcpkg install attempts failed. Continuing to verification — missing packages will be reported below." -ForegroundColor Yellow
+          }
+
+      - name: Verify Tier 1 Installation
+        shell: pwsh
+        run: |
+          Write-Host "=== Verifying Tier 1 Installation ===" -ForegroundColor Cyan
+
+          $requiredDirs = @(
+            "$env:VCPKG_INSTALLED_DIR/x64-windows/include/boost",
+            "$env:VCPKG_INSTALLED_DIR/x64-windows/include/asio.hpp",
+            "$env:VCPKG_INSTALLED_DIR/x64-windows/include/nlohmann",
+            "$env:VCPKG_INSTALLED_DIR/x64-windows/include/Eigen"
+          )
+
+          $allGood = $true
+          foreach ($dir in $requiredDirs) {
+            if (Test-Path $dir) {
+              Write-Host "  OK: $dir" -ForegroundColor Green
+            } else {
+              Write-Host "  MISSING: $dir" -ForegroundColor Red
+              $allGood = $false
+            }
+          }
+
+          if (-not $allGood) {
+            Write-Host "`nSome packages missing - will rebuild on next run" -ForegroundColor Yellow
+          } else {
+            Write-Host "`nAll Tier 1 packages verified!" -ForegroundColor Green
+          }
+
+      - name: Save Tier 1 Cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+            ${{ env.VCPKG_INSTALLED_DIR }}
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Upload Tier 1 Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-tier1-installed
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          retention-days: 30
+          if-no-files-found: warn
+
+  # =============================================================================
+  # TIER 2: Medium packages (~15-20 min)
+  # Boost compiled libs, catch2, spdlog, fmt, zeromq, curl
+  # =============================================================================
+  tier2-medium:
+    if: ${{ github.event.inputs.tier == 'all' || github.event.inputs.tier == 'tier2' || github.event.inputs.tier == '' }}
+    runs-on: windows-latest
+    name: "Tier 2: Medium Packages"
+    needs: tier1-quick
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Cache Key
+        id: cache-key
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path vcpkg.json -Algorithm SHA256).Hash.Substring(0, 12)
+          $key = "vcpkg-tier2-x64-windows-$hash"
+          echo "key=$key" >> $env:GITHUB_OUTPUT
+
+      - name: Setup Cache Directories
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_INSTALLED_DIR" | Out-Null
+
+      - name: Download Tier 1 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vcpkg-tier1-installed
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+
+      - name: Restore Tier 2 Cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            vcpkg-tier2-x64-windows-
+            vcpkg-tier1-x64-windows-
+
+      - name: Setup vcpkg
+        id: vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '11bbc873e00e9e58d4e9dffb30b7a5493a030e0b'
+
+      - name: Verify vcpkg Setup
+        shell: pwsh
+        run: |
+          $vcpkgRoot = $env:VCPKG_ROOT
+          if (-not $vcpkgRoot) { $vcpkgRoot = "${{ github.workspace }}/vcpkg" }
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+          if (Test-Path $vcpkgExe) {
+            Write-Host "vcpkg.exe found: $vcpkgExe" -ForegroundColor Green
+            echo "VCPKG_ROOT=$vcpkgRoot" >> $env:GITHUB_ENV
+          } else {
+            Write-Host "ERROR: vcpkg.exe not found" -ForegroundColor Red
+            exit 1
+          }
+
+      - name: Build Tier 2 Packages
+        if: steps.restore-cache.outputs.cache-hit != 'true' || github.event.inputs.force_rebuild == 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "=== Building Tier 2 Packages from vcpkg.json ===" -ForegroundColor Cyan
+
+          $vcpkgRoot = $env:VCPKG_ROOT
+          if (-not $vcpkgRoot) { $vcpkgRoot = "${{ github.workspace }}/vcpkg" }
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+
+          # Manifest mode - just run vcpkg install
+          # Retry up to 3 times to handle transient download failures (e.g. HTTP 502)
+          $maxRetries = 3
+          $success = $false
+          for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            Write-Host "vcpkg install attempt $attempt of $maxRetries..." -ForegroundColor Yellow
+            & $vcpkgExe install --triplet x64-windows --x-install-root="$env:VCPKG_INSTALLED_DIR"
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Tier 2 packages installed!" -ForegroundColor Green
+              $success = $true
+              break
+            }
+            Write-Host "Attempt $attempt failed (exit code $LASTEXITCODE)." -ForegroundColor Yellow
+            if ($attempt -lt $maxRetries) {
+              Write-Host "Retrying in 30 seconds..." -ForegroundColor Yellow
+              Start-Sleep -Seconds 30
+            }
+          }
+          if (-not $success) {
+            Write-Host "All $maxRetries vcpkg install attempts failed. Continuing to verification — missing packages will be reported below." -ForegroundColor Yellow
+          }
+
+      - name: Verify Tier 2 Installation
+        shell: pwsh
+        run: |
+          Write-Host "=== Verifying Tier 2 Installation ===" -ForegroundColor Cyan
+
+          $libs = @(
+            "boost_system",
+            "boost_filesystem",
+            "boost_thread",
+            "boost_program_options",
+            "boost_serialization",
+            "fmt",
+            "spdlog",
+            "libzmq"
+          )
+
+          foreach ($lib in $libs) {
+            $found = Get-ChildItem -Path "$env:VCPKG_INSTALLED_DIR/x64-windows/lib" -Filter "*$lib*" -ErrorAction SilentlyContinue
+            if ($found) {
+              Write-Host "  OK: $lib" -ForegroundColor Green
+            } else {
+              Write-Host "  MISSING: $lib" -ForegroundColor Yellow
+            }
+          }
+
+      - name: Save Tier 2 Cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Upload Tier 2 Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-tier2-installed
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          retention-days: 30
+
+  # =============================================================================
+  # TIER 3: Heavy packages (~100 min)
+  # grpc, rocksdb, protobuf, openssl, libpq, hwloc
+  # These are built INDIVIDUALLY with checkpoints
+  # =============================================================================
+  tier3-heavy:
+    if: ${{ github.event.inputs.tier == 'all' || github.event.inputs.tier == 'tier3' || github.event.inputs.tier == '' }}
+    runs-on: windows-latest
+    name: "Tier 3: Heavy Packages"
+    needs: tier2-medium
+    timeout-minutes: 180  # 3 hours max
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Cache Directories
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_INSTALLED_DIR" | Out-Null
+
+      - name: Download Tier 2 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vcpkg-tier2-installed
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+
+      # Restore binary cache from previous runs
+      - name: Restore Heavy Packages Cache
+        id: restore-heavy
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-tier3-heavy-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-tier3-heavy-
+            vcpkg-tier2-
+            vcpkg-tier1-
+
+      - name: Setup vcpkg
+        id: vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '11bbc873e00e9e58d4e9dffb30b7a5493a030e0b'
+
+      - name: Verify vcpkg Setup
+        shell: pwsh
+        run: |
+          $vcpkgRoot = $env:VCPKG_ROOT
+          if (-not $vcpkgRoot) { $vcpkgRoot = "${{ github.workspace }}/vcpkg" }
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+          if (Test-Path $vcpkgExe) {
+            Write-Host "vcpkg.exe found: $vcpkgExe" -ForegroundColor Green
+            echo "VCPKG_ROOT=$vcpkgRoot" >> $env:GITHUB_ENV
+          } else {
+            Write-Host "ERROR: vcpkg.exe not found" -ForegroundColor Red
+            exit 1
+          }
+
+      # =========== BUILD ALL HEAVY PACKAGES ===========
+      - name: "Build: All Heavy Packages"
+        id: heavy-build
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "=== Building All Heavy Packages from vcpkg.json ===" -ForegroundColor Cyan
+          Write-Host "This includes: OpenSSL, Protobuf, gRPC, RocksDB, libpq, etc." -ForegroundColor Yellow
+          $vcpkgRoot = $env:VCPKG_ROOT; if (-not $vcpkgRoot) { $vcpkgRoot = "${{ github.workspace }}/vcpkg" }
+          $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+          $startTime = Get-Date
+
+          # Manifest mode - install all packages from vcpkg.json
+          # Retry up to 3 times to handle transient download failures (e.g. HTTP 502)
+          $maxRetries = 3
+          $success = $false
+          for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            Write-Host "vcpkg install attempt $attempt of $maxRetries..." -ForegroundColor Yellow
+            & $vcpkgExe install --triplet x64-windows --x-install-root="$env:VCPKG_INSTALLED_DIR"
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              break
+            }
+            Write-Host "Attempt $attempt failed (exit code $LASTEXITCODE)." -ForegroundColor Yellow
+            if ($attempt -lt $maxRetries) {
+              Write-Host "Retrying in 30 seconds..." -ForegroundColor Yellow
+              Start-Sleep -Seconds 30
+            }
+          }
+
+          $elapsed = (Get-Date) - $startTime
+          if ($success) {
+            Write-Host "All packages completed in $([math]::Round($elapsed.TotalMinutes, 1)) minutes" -ForegroundColor Green
+          } else {
+            Write-Host "All $maxRetries vcpkg install attempts failed after $([math]::Round($elapsed.TotalMinutes, 1)) minutes. Continuing to verification — missing packages will be reported below." -ForegroundColor Yellow
+          }
+
+          # Verify key packages
+          $verified = $true
+          if (Test-Path "$env:VCPKG_INSTALLED_DIR/x64-windows/lib/libssl.lib") {
+            Write-Host "OpenSSL verified!" -ForegroundColor Green
+          } else { $verified = $false; Write-Host "OpenSSL missing" -ForegroundColor Red }
+
+          if (Test-Path "$env:VCPKG_INSTALLED_DIR/x64-windows/lib/rocksdb.lib") {
+            Write-Host "RocksDB verified!" -ForegroundColor Green
+          } else { $verified = $false; Write-Host "RocksDB missing" -ForegroundColor Red }
+
+          if ($verified) {
+            echo "status=success" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "status=partial" >> $env:GITHUB_OUTPUT
+          }
+
+      # =========== FINAL SAVE ===========
+      - name: Save Final Tier 3 Cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-tier3-heavy-${{ hashFiles('vcpkg.json') }}
+
+      - name: Upload Tier 3 Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-tier3-installed
+          path: ${{ env.VCPKG_INSTALLED_DIR }}
+          retention-days: 30
+
+      - name: Tier 3 Summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "`n========================================" -ForegroundColor Cyan
+          Write-Host "    TIER 3 HEAVY PACKAGES SUMMARY" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          $status = "${{ steps.heavy-build.outputs.status }}"
+          if ($status -eq "success") {
+            Write-Host "  All packages installed successfully!" -ForegroundColor Green
+          } elseif ($status -eq "partial") {
+            Write-Host "  Some packages may be missing - check logs" -ForegroundColor Yellow
+          } else {
+            Write-Host "  Build status unknown - check logs" -ForegroundColor Yellow
+          }
+
+          Write-Host "`nBinary cache saved - next run will be MUCH faster!" -ForegroundColor Magenta
+
+  # =============================================================================
+  # FINAL: Consolidate and create release artifact
+  # =============================================================================
+  consolidate:
+    runs-on: windows-latest
+    name: "Consolidate All Packages"
+    needs: [tier1-quick, tier2-medium, tier3-heavy]
+    if: always()
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download All Tier Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-tiers
+
+      - name: Consolidate Installed Packages
+        shell: pwsh
+        run: |
+          Write-Host "=== Consolidating All Tiers ===" -ForegroundColor Cyan
+
+          New-Item -ItemType Directory -Force -Path "vcpkg_installed_complete/x64-windows" | Out-Null
+
+          # Merge all tiers (later tiers include earlier ones)
+          $tiers = @("vcpkg-tier1-installed", "vcpkg-tier2-installed", "vcpkg-tier3-installed")
+
+          foreach ($tier in $tiers) {
+            $tierPath = "all-tiers/$tier"
+            if (Test-Path $tierPath) {
+              Write-Host "Merging $tier..." -ForegroundColor Yellow
+              Copy-Item -Path "$tierPath/*" -Destination "vcpkg_installed_complete/" -Recurse -Force
+            }
+          }
+
+          # Count what we have
+          $includeCount = (Get-ChildItem -Path "vcpkg_installed_complete/x64-windows/include" -Directory -ErrorAction SilentlyContinue).Count
+          $libCount = (Get-ChildItem -Path "vcpkg_installed_complete/x64-windows/lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+
+          Write-Host "`nConsolidated package stats:" -ForegroundColor Cyan
+          Write-Host "  Include directories: $includeCount" -ForegroundColor Green
+          Write-Host "  Library files: $libCount" -ForegroundColor Green
+
+      - name: Create Package Manifest
+        shell: pwsh
+        run: |
+          $manifest = @{
+            "created" = (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+            "vcpkg_baseline" = "11bbc873e00e9e58d4e9dffb30b7a5493a030e0b"
+            "triplet" = "x64-windows"
+            "tiers" = @{
+              "tier1" = "${{ needs.tier1-quick.result }}"
+              "tier2" = "${{ needs.tier2-medium.result }}"
+              "tier3" = "${{ needs.tier3-heavy.result }}"
+            }
+            "packages" = @{
+              "boost" = "installed"
+              "grpc" = "installed"
+              "rocksdb" = "installed"
+              "protobuf" = "installed"
+              "openssl" = "installed"
+            }
+          }
+
+          $manifest | ConvertTo-Json -Depth 4 | Out-File "vcpkg_installed_complete/manifest.json"
+
+          Write-Host "Manifest created:" -ForegroundColor Cyan
+          Get-Content "vcpkg_installed_complete/manifest.json"
+
+      - name: Upload Complete vcpkg Installation
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-complete-x64-windows
+          path: vcpkg_installed_complete/
+          retention-days: 90
+          compression-level: 9
+
+      - name: Final Summary
+        shell: pwsh
+        run: |
+          Write-Host "`n" -ForegroundColor Cyan
+          Write-Host "================================================" -ForegroundColor Cyan
+          Write-Host "     VCPKG PREBUILD COMPLETE" -ForegroundColor Green
+          Write-Host "================================================" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Tier Results:" -ForegroundColor Yellow
+          Write-Host "  Tier 1 (Quick):  ${{ needs.tier1-quick.result }}"
+          Write-Host "  Tier 2 (Medium): ${{ needs.tier2-medium.result }}"
+          Write-Host "  Tier 3 (Heavy):  ${{ needs.tier3-heavy.result }}"
+          Write-Host ""
+          Write-Host "Artifact: vcpkg-complete-x64-windows" -ForegroundColor Cyan
+          Write-Host "Retention: 90 days" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Next Steps:" -ForegroundColor Yellow
+          Write-Host "  1. Download artifact for local use, OR"
+          Write-Host "  2. Reference in occ-win-build.yml workflow"
+          Write-Host ""
+          Write-Host "Future runs will use GitHub Actions cache" -ForegroundColor Magenta
+          Write-Host "(binary packages cached - no rebuild needed)" -ForegroundColor Magenta

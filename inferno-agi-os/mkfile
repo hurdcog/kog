@@ -1,0 +1,61 @@
+# Mkfile for OpenCog Inferno AGI Operating System
+#
+# This builds the complete cognitive operating system including:
+# - Kernel modules (AtomSpace, PLN, MOSES, URE, ECAN)
+# - Cognitive file systems
+# - Limbo language bindings
+# - Example applications
+
+</$objtype/mkfile
+
+# Subdirectories to build
+DIRS=\
+kernel/atomspace\
+kernel/pln\
+kernel/moses\
+kernel/ure\
+kernel/ecan\
+fs/atoms\
+fs/reasoning\
+fs/learning\
+fs/attention\
+fs/perception\
+fs/action\
+limbo/atomspace\
+limbo/pln\
+limbo/moses\
+limbo/attention\
+limbo/examples\
+
+all:V:
+echo "Building OpenCog Inferno AGI Operating System"
+for(dir in $DIRS) {
+g $dir..."
+stall:V:
+echo "Installing OpenCog Inferno"
+for(dir in $DIRS) {
+stalling $dir..."
+stall
+stallation complete"
+
+clean:V:
+echo "Cleaning OpenCog Inferno"
+for(dir in $DIRS) {
+
+ complete"
+
+nuke:V:
+echo "Nuking OpenCog Inferno"
+for(dir in $DIRS) {
+uke
+uke complete"
+
+test:V:
+echo "Testing OpenCog Inferno"
+cd tests && mk test
+echo "Tests complete"
+
+bench:V:
+echo "Benchmarking OpenCog Inferno"
+cd tests && mk bench
+echo "Benchmarks complete"

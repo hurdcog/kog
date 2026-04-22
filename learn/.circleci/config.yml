@@ -1,0 +1,72 @@
+version: 2.0 
+
+jobs:
+  build:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+        environment:
+          PGHOST: opencog-postgres
+          PGUSER: opencog_user
+          PGPASSWORD: cheese
+          CCACHE_DIR: /ws/ccache
+      - image: opencog/postgres
+        name: opencog-postgres
+    working_directory: /ws/learn
+    steps:
+      - attach_workspace:
+          at: /ws
+      - run:
+          name: Start restoring ccache
+          command: date +%d-%m-%Y > /tmp/date
+      - restore_cache:
+          keys:
+            - ccache-{{ checksum "/tmp/date" }}
+            - ccache-
+      - run:
+          name: Install cogutil
+          command: |
+            git clone --depth 1 https://github.com/opencog/cogutil /ws/cogutil
+            mkdir -p /ws/cogutil/build
+            cd /ws/cogutil/build && cmake .. && make -j2 && make -j2 install
+            ldconfig
+      - run:
+          name: Checkout AtomSpace
+          command: git clone --depth 1 https://github.com/opencog/atomspace /ws/atomspace
+          name: Install AtomSpace
+          command: |
+            mkdir -p /ws/atomspace/build
+            cd /ws/atomspace/build && cmake .. && make -j4 && make -j4 install
+            ldconfig
+      - run:
+          name: Checkout CogServer
+          command: git clone --depth 1 https://github.com/opencog/cogserver /ws/cogserver
+      - run:
+          name: Install CogServer
+          command: |
+            mkdir -p /ws/cogserver/build
+            cd /ws/cogserver/build && cmake .. && make -j4 && make -j4 install
+            ldconfig
+      - run:
+          name: CMake Configure
+          command: mkdir build && cd build && cmake ..
+      - run:
+          name: Build
+          command: cd build && make -j2
+      - run:
+          name: Run tests
+          command: cd build && make test
+      - run:
+          name: Install learn
+          command: cd build && make -j2 install && ldconfig
+      - run:
+          name: Print test log
+          command: cat build/Testing/Temporary/LastTest.log
+          when: always
+      - persist_to_workspace:
+          root: /ws/
+          paths:
+            - cogutil
+            - atomspace
+            - opencog
+            - ccache

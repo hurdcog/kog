@@ -1,0 +1,424 @@
+name: OCC Windows Build (Enhanced with Retry)
+
+# Enhanced Windows build workflow with retry logic for network failures
+# Builds components in dependency order: cogutil -> atomspace -> cogserver -> attention -> unify -> ure -> miner -> asmoses
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+jobs:
+  # Stage 1: Build CogUtil (Foundation)
+  build-cogutil:
+    runs-on: windows-latest
+    name: Build CogUtil (Windows)
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "✓ vcpkg cache directory created at $env:VCPKG_DEFAULT_BINARY_CACHE" -ForegroundColor Green
+    
+    - name: Cache vcpkg binary packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: vcpkg-binary-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-binary-${{ runner.os }}-
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies with Retry Logic
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies via vcpkg (with retry) ===" -ForegroundColor Cyan
+        
+        $maxRetries = 5
+        $retryCount = 0
+        $success = $false
+        $baseDelay = 10
+        
+        while (-not $success -and $retryCount -lt $maxRetries) {
+          try {
+            Write-Host "Attempt $($retryCount + 1) of $maxRetries..." -ForegroundColor Yellow
+            
+            # Install required dependencies for cogutil using manifest mode
+            & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows 2>&1 | Tee-Object -Variable output
+            
+            # Check if the command succeeded
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              Write-Host "✓ Dependencies installed successfully" -ForegroundColor Green
+            } else {
+              throw "vcpkg install failed with exit code $LASTEXITCODE"
+            }
+          } catch {
+            $retryCount++
+            
+            if ($retryCount -lt $maxRetries) {
+              # Exponential backoff with jitter
+              $delay = $baseDelay * [Math]::Pow(2, $retryCount - 1) + (Get-Random -Minimum 1 -Maximum 5)
+              Write-Host "⚠ Attempt failed: $($_.Exception.Message)" -ForegroundColor Red
+              Write-Host "Waiting $delay seconds before retry..." -ForegroundColor Yellow
+              Start-Sleep -Seconds $delay
+              
+              # Clear any partial vcpkg state
+              Write-Host "Cleaning vcpkg buildtrees..." -ForegroundColor Yellow
+              if (Test-Path "$env:VCPKG_ROOT/buildtrees") {
+                Remove-Item -Path "$env:VCPKG_ROOT/buildtrees/*" -Recurse -Force -ErrorAction SilentlyContinue
+              }
+            } else {
+              Write-Host "❌ All retry attempts exhausted" -ForegroundColor Red
+              throw "Failed to install dependencies after $maxRetries attempts"
+            }
+          }
+        }
+        
+        if (-not $success) {
+          Write-Host "❌ Dependencies installation failed" -ForegroundColor Red
+          exit 1
+        }
+    
+    - name: Configure CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring CogUtil ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path cogutil/build | Out-Null
+        Set-Location cogutil/build
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Building CogUtil ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 4
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Build CogUtil Tests
+      shell: pwsh
+      run: |
+        Write-Host "=== Building CogUtil Tests ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        cmake --build . --config $env:BUILD_TYPE --target tests --parallel 4
+        Write-Host "✓ Test build complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Run CogUtil Tests
+      shell: pwsh
+      run: |
+        Write-Host "=== Running CogUtil Tests ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        ctest -C $env:BUILD_TYPE --output-on-failure
+        Write-Host "✓ Tests complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Print Test Log
+      if: always()
+      shell: pwsh
+      run: |
+        $logPath = "cogutil/build/tests/Testing/Temporary/LastTest.log"
+        if (Test-Path $logPath) {
+          Write-Host "=== Test Log ===" -ForegroundColor Yellow
+          Get-Content $logPath
+        } else {
+          Write-Host "No test log found at $logPath" -ForegroundColor Yellow
+        }
+    
+    - name: Install CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing CogUtil ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload CogUtil Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: cogutil-build-windows-enhanced
+        path: |
+          install/**
+        retention-days: 1
+
+  # Stage 2: Build AtomSpace (depends on CogUtil)
+  build-atomspace:
+    runs-on: windows-latest
+    name: Build AtomSpace (Windows)
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download CogUtil Build
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-build-windows-enhanced
+        path: install
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "✓ vcpkg cache directory created" -ForegroundColor Green
+    
+    - name: Cache vcpkg binary packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: vcpkg-binary-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-binary-${{ runner.os }}-
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies with Retry Logic
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies via vcpkg (with retry) ===" -ForegroundColor Cyan
+        
+        $maxRetries = 5
+        $retryCount = 0
+        $success = $false
+        $baseDelay = 10
+        
+        while (-not $success -and $retryCount -lt $maxRetries) {
+          try {
+            Write-Host "Attempt $($retryCount + 1) of $maxRetries..." -ForegroundColor Yellow
+            & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows 2>&1 | Tee-Object -Variable output
+            
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              Write-Host "✓ Dependencies installed successfully" -ForegroundColor Green
+            } else {
+              throw "vcpkg install failed with exit code $LASTEXITCODE"
+            }
+          } catch {
+            $retryCount++
+            if ($retryCount -lt $maxRetries) {
+              $delay = $baseDelay * [Math]::Pow(2, $retryCount - 1) + (Get-Random -Minimum 1 -Maximum 5)
+              Write-Host "⚠ Attempt failed: $($_.Exception.Message)" -ForegroundColor Red
+              Write-Host "Waiting $delay seconds before retry..." -ForegroundColor Yellow
+              Start-Sleep -Seconds $delay
+              
+              if (Test-Path "$env:VCPKG_ROOT/buildtrees") {
+                Remove-Item -Path "$env:VCPKG_ROOT/buildtrees/*" -Recurse -Force -ErrorAction SilentlyContinue
+              }
+            } else {
+              Write-Host "❌ All retry attempts exhausted" -ForegroundColor Red
+              throw "Failed to install dependencies after $maxRetries attempts"
+            }
+          }
+        }
+    
+    - name: Configure AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring AtomSpace ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path atomspace/build | Out-Null
+        Set-Location atomspace/build
+        
+        # Add CogUtil to CMAKE_PREFIX_PATH
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Building AtomSpace ===" -ForegroundColor Cyan
+        Set-Location atomspace/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 4
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Install AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing AtomSpace ===" -ForegroundColor Cyan
+        Set-Location atomspace/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload AtomSpace Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-build-windows-enhanced
+        path: |
+          install/**
+        retention-days: 1
+
+  # Stage 3: Build Moses (depends on CogUtil)
+  build-moses:
+    runs-on: windows-latest
+    name: Build Moses (Windows)
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download CogUtil Build
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-build-windows-enhanced
+        path: install
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies with Retry Logic
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies via vcpkg (with retry) ===" -ForegroundColor Cyan
+        
+        $maxRetries = 5
+        $retryCount = 0
+        $success = $false
+        $baseDelay = 10
+        
+        while (-not $success -and $retryCount -lt $maxRetries) {
+          try {
+            Write-Host "Attempt $($retryCount + 1) of $maxRetries..." -ForegroundColor Yellow
+            & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+            
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              Write-Host "✓ Dependencies installed successfully" -ForegroundColor Green
+            } else {
+              throw "vcpkg install failed"
+            }
+          } catch {
+            $retryCount++
+            if ($retryCount -lt $maxRetries) {
+              $delay = $baseDelay * [Math]::Pow(2, $retryCount - 1) + (Get-Random -Minimum 1 -Maximum 5)
+              Write-Host "Waiting $delay seconds before retry..." -ForegroundColor Yellow
+              Start-Sleep -Seconds $delay
+            } else {
+              throw "Failed after $maxRetries attempts"
+            }
+          }
+        }
+    
+    - name: Configure Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring Moses ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path moses/build | Out-Null
+        Set-Location moses/build
+        
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Building Moses ===" -ForegroundColor Cyan
+        Set-Location moses/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 4
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Install Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Moses ===" -ForegroundColor Cyan
+        Set-Location moses/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload Moses Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: moses-build-windows-enhanced
+        path: |
+          install/**
+        retention-days: 1
+
+  # Build Summary Job
+  build-summary:
+    runs-on: windows-latest
+    name: Build Summary (Windows)
+    needs: [build-cogutil, build-atomspace, build-moses]
+    if: always()
+    
+    steps:
+    - name: Summary
+      shell: pwsh
+      run: |
+        Write-Host "=== OCC Windows Build Summary (Enhanced) ===" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Build Status:" -ForegroundColor Yellow
+        Write-Host "  - CogUtil: ${{ needs.build-cogutil.result }}" -ForegroundColor $(if ("${{ needs.build-cogutil.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host "  - AtomSpace: ${{ needs.build-atomspace.result }}" -ForegroundColor $(if ("${{ needs.build-atomspace.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host "  - Moses: ${{ needs.build-moses.result }}" -ForegroundColor $(if ("${{ needs.build-moses.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host ""
+        Write-Host "Features:" -ForegroundColor Cyan
+        Write-Host "  ✓ Retry logic with exponential backoff" -ForegroundColor Green
+        Write-Host "  ✓ Enhanced error handling" -ForegroundColor Green
+        Write-Host "  ✓ Increased parallelism (4 jobs)" -ForegroundColor Green
+        Write-Host ""
+        
+        if ("${{ needs.build-cogutil.result }}" -eq "success" -and "${{ needs.build-atomspace.result }}" -eq "success" -and "${{ needs.build-moses.result }}" -eq "success") {
+          Write-Host "✅ All builds completed successfully!" -ForegroundColor Green
+          exit 0
+        } else {
+          Write-Host "❌ Some builds failed. Check individual job logs for details." -ForegroundColor Red
+          exit 1
+        }

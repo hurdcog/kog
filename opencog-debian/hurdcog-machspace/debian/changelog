@@ -1,0 +1,11 @@
+hurdcog-machspace (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of MachSpace - OS-level AtomSpace integration
+  * Implements distributed hypergraph memory for Mach microkernel
+  * Provides 5-finger cognitive grip mechanism
+  * Integrates with Mach IPC for cognitive routing
+  * Solves GNU Hurd's 5 fundamental problems through cognitive architecture
+  * Enables bidirectional synchronization with OpenCog AtomSpace
+  * Foundation for HurdCog cognitive operating system capabilities
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2025 00:00:00 +0000

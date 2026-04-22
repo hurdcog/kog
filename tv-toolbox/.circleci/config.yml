@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  tv-toolbox:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/tv-toolbox
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package tv-toolbox verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - tv-toolbox

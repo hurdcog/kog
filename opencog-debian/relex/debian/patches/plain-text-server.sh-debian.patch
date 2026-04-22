@@ -1,0 +1,13 @@
+--- a/plain-text-server.sh
++++ b/plain-text-server.sh
+@@ -20,9 +20,7 @@
+ 
+ VM_OPTS="-Xmx1024m"
+ 
+-RELEX_OPTS="\
+-	-Djava.library.path=/usr/lib:/usr/lib/jni:/usr/local/lib:/usr/local/lib/jni \
+-	"
++RELEX_OPTS="-Dwordnet.configfile=/usr/share/relex/data/wordnet/file_properties.xml"
+ 
+ CLASSPATH='-classpath ./target/classes:./target/lib/*'
+ # java $VM_OPTS $RELEX_OPTS $CLASSPATH relex.PlainTextServer --port 3333 --lang ru

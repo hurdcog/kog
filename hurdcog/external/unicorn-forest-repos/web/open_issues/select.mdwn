@@ -1,0 +1,2440 @@
+[[!meta copyright="Copyright © 2010, 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc]]
+
+There are a lot of reports about this issue, but no thorough analysis.
+
+
+# Short Timeouts
+
+## `elinks`
+
+IRC, unknown channel, unknown date:
+
+    <paakku> This is related to ELinks... I've looked at the select()
+      implementation for the Hurd in glibc and it seems that giving it a short
+      timeout could cause it not to report that file descriptors are ready.
+    <paakku> It sends a request to the Mach port of each file descriptor and
+      then waits for responses from the servers.
+    <paakku> Even if the file descriptors have data for reading or are ready
+      for writing, the server processes might not respond immediately.
+    <paakku> So if I want ELinks to check which file descriptors are ready, how
+      long should the timeout be in order to ensure that all servers can
+      respond in time?
+    <paakku> Or do I just imagine this problem?
+
+
+## [[dbus]]
+
+
+## IRC
+
+### IRC, freenode, #hurd, 2012-01-31
+
+    <braunr> don't you find vim extremely slow lately ?
+    <braunr> (and not because of cpu usage but rather unnecessary sleeps)
+    <jkoenig> yes.
+    <braunr> wasn't there a discussion to add a minimum timeout to mach_msg for
+      select() or something like that during the past months ?
+    <youpi> there was, and it was added
+    <youpi> that could be it
+    <youpi> I don't want to drop it though, some app really need it
+    <braunr> as a debian patch only iirc ?
+    <youpi> yes
+    <braunr> ok
+    <braunr> if i'm right, the proper solution was to fix remote servers
+      instead of client calls
+    <youpi> (no drop, unless the actual bug gets fixed of course)
+    <braunr> so i'm guessing it's just a hack in between
+    <youpi> not only
+    <youpi> with a timeout of zero, mach will just give *no* time for the
+      servers to give an answer
+    <braunr> that's because the timeout is part of the client call
+    <youpi> so the protocol has to be rethought, both server/client side
+    <braunr> a suggested solution was to make it a parameter
+    <braunr> i mean, part of the message
+    <braunr> not a mach_msg parameter
+    <jkoenig> OTOH the servers should probably not be trusted to enforce the
+      timeout.
+    <braunr> why ?
+    <jkoenig> they're not necessarily trusted. (but then again, that's not the
+      only circumstances where that's a problem)
+    <braunr> there is a proposed solution for that too (trust root and self
+      servers only by default)
+    <jkoenig> I'm not sure they're particularily easy to identify in the
+      general case
+    <braunr> "they" ? the solutions you mean ?
+    <braunr> or the servers ?
+    <youpi> jkoenig: you can't trust the servers in general to provide an
+      answer, timeout or not
+    <jkoenig> yes the root/self servers.
+    <braunr> ah
+    <youpi> jkoenig: you can stat the actual node before dereferencing the
+      translator
+    <jkoenig> could they not report FD activity asynchronously to the message
+      port? libc would cache the state
+    <youpi> I don't understand what you mean
+    <youpi> anyway, really making the timeout part of the message is not a
+      problem
+    <braunr> 10:10 < youpi> jkoenig: you can't trust the servers in general to
+      provide an answer, timeout or not
+    <youpi> we already trust everything (e.g. read() ) into providing an answer
+      immediately
+    <braunr> i don't see why
+    <youpi> braunr: put sleep(1) in S_io_read()
+    <youpi> it'll not give you an immediate answer, O_NODELAY being set or not
+    <braunr> well sleep is evil, but let's just say the server thread blocks
+    <braunr> ok
+    <braunr> well fix the server
+    <youpi> so we agree
+    <braunr> ?
+    <youpi> in the current security model, we trust the server into achieve the
+      timeout
+    <braunr> yes
+    <youpi> and jkoenig's remark is more global than just select()
+    <braunr> taht's why we must make sure we're contacting trusted servers by
+      default
+    <youpi> it affects read() too
+    <braunr> sure
+    <youpi> so there's no reason not to fix select()
+    <youpi> that's the important point
+    <braunr> but this doesn't mean we shouldn't pass the timeout to the server
+      and expect it to handle it correctly
+    <youpi> we keep raising issues with things, and not achieve anything, in
+      the Hurd
+    <braunr> if it doesn't, then it's a bug, like in any other kernel type
+    <youpi> I'm not the one to convince :)
+    <braunr> eh, some would say it's one of the goals :)
+    <braunr> who's to be convinced then ?
+    <youpi> jkoenig: 
+    <youpi> who raised the issue
+    <braunr> ah
+    <youpi> well, see the irc log :)
+    <jkoenig> not that I'm objecting to any patch, mind you :-)
+    <braunr> i didn't understand it that way
+    <braunr> if you can't trust the servers to act properly, it's similar to
+      not trusting linux fs code
+    <youpi> no, the difference is that servers can be non-root
+    <youpi> while on linux they can't
+    <braunr> again, trust root and self
+    <youpi> non-root fuse mounts are not followed by default
+    <braunr> as with fuse
+    <youpi> that's still to be written
+    <braunr> yes
+    <youpi> and as I said, you can stat the actual  node and then dereference
+      the translator afterwards
+    <braunr> but before writing anything, we'd better agree on the solution :)
+    <youpi> which, again, "just" needs to be written
+    <antrik> err... adding a timeout to mach_msg()? that's just wrong
+    <antrik> (unless I completely misunderstood what this discussion was
+      about...)
+
+
+#### IRC, freenode, #hurd, 2012-02-04
+
+    <youpi> this is confirmed: the select hack patch hurts vim performance a
+      lot
+    <youpi> I'll use program_invocation_short_name to make the patch even more
+      ugly
+    <youpi> (of course, we really need to fix select somehow)
+    <pinotree> could it (also) be that vim uses select() somehow "badly"?
+    <youpi> fsvo "badly", possibly, but still
+    <gnu_srs1> Could that the select() stuff be the reason for a ten times
+      slower ethernet too, e.g. scp and apt-get?
+    <pinotree> i didn't find myself neither scp nor apt-get slower, unlike vim
+    <youpi> see strace: scp does not use select
+    <youpi> (I haven't checked  apt yet)
+
+
+### IRC, freenode, #hurd, 2012-02-14
+
+    <braunr> on another subject, I'm wondering how to correctly implement
+      select/poll with a timeout on a multiserver system :/
+    <braunr> i guess a timeout of 0 should imply a non blocking round-trip to
+      servers only
+    <braunr> oh good, the timeout is already part of the io_select call
+
+
+### IRC, freenode, #hurdfr, 2012-02-22
+
+    <braunr> le gros souci de notre implé, c'est que le timeout de select est
+      un paramètre client
+    <braunr> un paramètre passé directement à mach_msg
+    <braunr> donc si tu mets un timeout à 0, y a de fortes chances que mach_msg
+      retourne avant même qu'un RPC puisse se faire entièrement (round-trip
+      client-serveur donc)
+    <braunr> et donc quand le timeout est à 0 pour du non bloquant, ben tu
+      bloques pas, mais t'as pas tes évènements ..
+    <abique|work> peut-être que passer le timeout de 10ms à 10 us améliorerait
+      la situation.
+    <abique|work> car 10ms c'est un peut beaucoup :)
+    <braunr> c'est l'interval timer système historique unix
+    <braunr> et mach n'est pas préemptible
+    <braunr> donc c'est pas envisageable en l'état
+    <braunr> ceci dit c'est pas complètement lié
+    <braunr> enfin si, il nous faudrait qqchose de similaire aux high res
+      timers de linux
+    <braunr> enfin soit des timer haute résolution, soit un timer programmable
+      facilement
+    <braunr> actuellement il n'y a que le 8254 qui est programmé, et pour
+      assurer un scheduling à peu près correct, il est programmé une fois, à
+      10ms, et basta
+    <braunr> donc oui, préciser 1ms ou 1us, ça changera rien à l'interval
+      nécessaire pour déterminer que le timer a expiré
+
+
+### IRC, freenode, #hurd, 2012-02-27
+
+    <youpi> braunr: extremely dirty hack
+    <youpi> I don't even want to detail :)
+    <braunr> oh
+    <braunr> does it affect vim only ?
+    <braunr> or all select users ?
+    <youpi> we've mostly seen it with vim
+    <youpi> but possibly fakeroot has some issues too
+    <youpi> it's very little probable that only vim has the issue :)
+    <braunr> i mean, is it that dirty to switch behaviour depending on the
+      calling program ?
+    <youpi> not all select users
+    <braunr> ew :)
+    <youpi> just those which do select({0,0})
+    <braunr> well sure
+    <youpi> braunr: you guessed right :)
+    <braunr> thanks anyway
+    <braunr> it's probably a good thing to do currently
+    <braunr> vim was getting me so mad i was using sshfs lately
+    <youpi> it's better than nothing yes
+
+
+### IRC, freenode, #hurd, 2012-07-21
+
+    <braunr> damn, select is actually completely misdesigned :/
+    <braunr> iiuc, it makes servers *block*, in turn :/
+    <braunr> can't be right
+    <braunr> ok i understand it better
+    <braunr> yes, timeouts should be passed along with the other parameters to
+      correctly implement non blocking select
+    <braunr> (or the round-trip io_select should only ask for notification
+      requests instead of making a server thread block, but this would require
+      even more work)
+    <braunr> adding the timeout in the io_select call should be easy enough for
+      whoever wants to take over a not-too-complicated-but-not-one-liner-either
+      task :)
+    <antrik> braunr: why is a blocking server thread a problem?
+    <braunr> antrik: handling the timeout at client side while server threads
+      block is the problem
+    <braunr> the timeout must be handled along with blocking obviously
+    <braunr> so you either do it at server side when async ipc is available,
+      which is the case here
+    <braunr> or request notifications (synchronously) and block at client side,
+      waiting forthose notifications
+    <antrik> braunr: are you saying the client has a receive timeout, but when
+      it elapses, the server thread keeps on blocking?...
+    <braunr> antrik: no i'm referring to the non-blocking select issue we have
+    <braunr> antrik: the client doesn't block in this case, whereas the servers
+      do
+    <braunr> which obviously doesn't work ..
+    <braunr> see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=79358
+    <braunr> this is the reason why vim (and probably others) are slow on the
+      hurd, while not consuming any cpu
+    <braunr> the current work around is that whenevever a non-blocking select
+      is done, it's transformed into a blocking select with the smallest
+      possible timeout
+    <braunr> whenever*
+    <antrik> braunr: well, note that the issue only began after fixing some
+      other select issue... it was fine before
+    <braunr> apparently, the issue was raised in 2000
+    <braunr> also, note that there is a delay between sending the io_select
+      requests and blocking on the replies
+    <braunr> when machines were slow, this delay could almost guarantee a
+      preemption between these steps, making the servers reply soon enough even
+      for a non blocking select
+    <braunr> the problem occurs when sending all the requests and checking for
+      replies is done before servers have a chance the send the reply
+    <antrik> braunr: I don't know what issue was raised in 2000, but I do know
+      that vim worked perfectly fine until last year or so. then some select
+      fix was introduced, which in turn broke vim
+    <braunr> antrik: could be the timeout rounding, Aug 2 2010
+    <braunr> hum but, the problem wasn't with vim
+    <braunr> vim does still work fine (in fact, glibc is patched to check some
+      well known process names and selectively fix the timeout)
+    <braunr> which is why vim is fast and view isn't
+    <braunr> the problem was with other services apparently
+    <braunr> and in order to fix them, that workaround had to be introduced
+    <braunr> i think it has nothing to do with the timeout rounding
+    <braunr> it must be the time when youpi added the patch to the debian
+      package
+    <antrik> braunr: the problem is that with the patch changing the timeout
+      rounding, vim got extremely slow. this is why the ugly hacky exception
+      was added later...
+    <antrik> after reading the report, I agree that the timeout needs to be
+      handled by the server. at least the timeout=0 case.
+    <pinotree> vim uses often 0-time selects to check whether there's input
+    <antrik> client-side handling might still be OK for other timeout settings
+      I guess
+    <antrik> I'm a bit ambivalent about that
+    <antrik> I tend to agree with Neal though: it really doesn't make much
+      sense to have a client-side watchdog timer for this specific call, while
+      for all other ones we trust the servers not to block...
+    <antrik> or perhaps not. for standard sync I/O, clients should expect that
+      an operation could take long (though not forever); but they might use
+      select() precisely to avoid long delays in I/O... so it makes some sense
+      to make sure that select() really doesn't delay because of a busy server
+    <antrik> OTOH, unless the server is actually broken (in which anything
+      could happen), a 0-time select should never actually block for an
+      extended period of time... I guess it's not wrong to trust the servers on
+      that
+    <antrik> pinotree: hm... that might explain a certain issue I *was*
+      observing with Vim on Hurd -- though I never really thought about it
+      being an actual bug, as opposed to just general Hurd sluggishness...
+    <antrik> but it makes sense now
+    <pinotree> antrik:
+      http://patch-tracker.debian.org/patch/series/view/eglibc/2.13-34/hurd-i386/local-select.diff
+    <antrik> so I guess we all agree that moving the select timeout to the
+      server is probably the most reasonably approach...
+    <antrik> braunr: BTW, I wouldn't really consider the sync vs. async IPC
+      cases any different. the client blocks waiting for the server to reply
+      either way...
+    <antrik> the only difference is that in the sync IPC case, the server might
+      want to take some special precaution so it doesn't have to block until
+      the client is ready to receive the reply
+    <antrik> but that's optional and not really select-specific I'd say
+    <antrik> (I'd say the only sane approach with sync IPC is probably for the
+      server never to wait -- if the client fails to set up for receiving the
+      reply in time, it looses...)
+    <antrik> and with the receive buffer approach in Viengoos, this can be done
+      really easy and nice :-)
+
+
+#### IRC, freenode, #hurd, 2012-07-22
+
+    <braunr> antrik: you can't block in servers with sync ipc
+    <braunr> so in this case, "select" becomes a request for notifications
+    <braunr> whereas with async ipc, you can, so it's less efficient to make a
+      full round trip just to ask for requests when you can just do async
+      requests (doing the actual blocking) and wait for any reply after
+    <antrik> braunr: I don't understand. why can't you block in servers with
+      async IPC?
+    <antrik> braunr: err... with sync IPC I mean
+    <braunr> antrik: because select operates on more than one fd
+    <antrik> braunr: and what does that got to do with sync vs. async IPC?...
+    <antrik> maybe you are thinking of endpoints here, which is a whole
+      different story
+    <antrik> traditional L4 has IPC ports bound to specific threads; so
+      implementing select requires a separate client thread for each
+      server. but that's not mandatory for sync IPC. Viengoos has endpoints not
+      bound to threads
+    <braunr> antrik: i don't know what "endpoint" means here
+    <braunr> but, you can't use sync IPC to implement select on multiple fds
+      (and thus possibly multiple servers) by blocking in the servers
+    <braunr> you'd block in the first and completely miss the others
+    <antrik> braunr: I still don't see why... or why async IPC would change
+      anything in that regard
+    <braunr> antrik: well, you call select on 3 fds, each implemented by
+      different servers
+    <braunr> antrik: you call a sync select on the first fd, obviously you'll
+      block there
+    <braunr> antrik: if it's async, you don't block, you just send the
+      requests, and wait for any reply
+    <braunr> like we do
+    <antrik> braunr: I think you might be confused about the meaning of sync
+      IPC. it doesn't in any way imply that after sending an RPC request you
+      have to block on some particular reply...
+    <youpi> antrik: what does sync mean then?
+    <antrik> braunr: you can have any number of threads listening for replies
+      from the various servers (if using an L4-like model); or even a single
+      thread, if you have endpoints that can listen on replies from different
+      sources (which was pretty much the central concern in the Viengoos IPC
+      design AIUI)
+    <youpi> antrik: I agree with your "so it makes some sense to make sure that
+      select() really doesn't delay because of a busy server" (for blocking
+      select) and "OTOH, unless the server is actually broken (in which
+      anything could happen), a 0-time select should never actually block" (for
+      non-blocking select)
+    <antrik> youpi: regarding the select, I was thinking out loud; the former
+      statement was mostly cancelled by my later conclusions...
+    <antrik> and I'm not sure the latter statement was quite clear
+    <youpi> do you know when it was?
+    <antrik> after rethinking it, I finally concluded that it's probably *not*
+      a problem to rely on the server to observe the timout. if it's really
+      busy, it might take longer than the designated timeout (especially if
+      timeout is 0, hehe) -- but I don't think this is a problem
+    <antrik> and if it doens't observe the timout because it's
+      broken/malicious, that's not more problematic that any other RPC the
+      server doesn't handle as expected
+    <youpi> ok
+    <youpi> did somebody wrote down the conclusion "let's make select timeout
+      handled at server side" somewhere?
+    <antrik> youpi: well, neal already said that in a followup to the select
+      issue Debian bug... and after some consideration, I completely agree with
+      his reasoning (as does braunr)
+
+
+#### IRC, freenode, #hurd, 2012-07-23
+
+    <braunr> antrik: i was meaning sync in the most common meaning, yes, the
+      client blocking on the reply
+    <antrik> braunr: I think you are confusing sync IPC with sync I/O ;-)
+    <antrik> braunr: by that definition, the vast majority of Hurd IPC would be
+      sync... but that's obviously not the case
+    <antrik> synchronous IPC means that send and receive happen at the same
+      time -- nothing more, nothing less. that's why it's called synchronous
+    <braunr> antrik: yes
+    <braunr> antrik: so it means the client can't continue unless he actually
+      receives
+    <antrik> in a pure sync model such as L4 or EROS, this means either the
+      sender or the receiver has to block, so synchronisation can happen. which
+      one is server and which one is client is completely irrelevant here --
+      this is about individual message transfer, not any RPC model on top of it
+    <braunr> i the case of select, i assume sender == client
+    <antrik> in Viengoos, the IPC is synchronous in the sense that transfer
+      from the send buffer to the receive buffer happens at the same time; but
+      it's asynchronous in the sense that the receiver doesn't necessarily have
+      to be actively waiting for the incoming message
+    <braunr> ok, i was talking about a pure sync model
+    <antrik> (though it most cases it will still do so...)
+    <antrik> braunr: BTW, in the case of select, the sender is *not* the
+      client. the reply is relevant here, not the request -- so the client is
+      the receiver
+    <antrik> (the select request is boring)
+    <braunr> sorry, i don't understand, you seem to dismiss the select request
+      for no valid reason
+    <antrik> I still don't see how sync vs. async affects the select reply
+      receive though... blocking seems the right approach in either case
+    <braunr> blocking is required
+    <braunr> but you either block in the servers, or in the client
+    <braunr> (and if blocking in the servers, the client also blocks)
+    <braunr> i'll explain how i see it again
+    <braunr> there are two approaches to implementing select
+    <braunr> 1/ send requests to all servers, wait for any reply, this is what
+      the hurd does
+    <braunr> but it's possible because you can send all the requests without
+      waiting for the replies
+    <braunr> 2/ send notification requests, wait for a notification
+    <braunr> this doesn't require blocking in the servers (so if you have many
+      clients, you don't need as many threads)
+    <braunr> i was wondering which approach was used by the hurd, and if it
+      made sense to change
+    <antrik> TBH I don't see the difference between 1) and 2)... whether the
+      message from the server is called an RPC reply or a notification is just
+      a matter of definition
+    <antrik> I think I see though what you are getting at
+    <antrik> with sync IPC, if the client sent all requests and only afterwards
+      started to listen for replies, the servers might need to block while
+      trying to deliver the reply because the client is not ready yet
+    <braunr> that's one thing yes
+    <antrik> but even in the sync case, the client can immediately wait for
+      replies to each individual request -- it might just be more complicated,
+      depending on the specifics of the IPC design
+    <braunr> what i mean by "send notification requests" is actually more than
+      just sending, it's a complete RPC
+    <braunr> and notifications are non-blocking, yes
+    <antrik> (with L4, it would require a separate client thread for each
+      server contacted... which is precisely why a different mechanism was
+      designed for Viengoos)
+    <braunr> seems weird though
+    <braunr> don't they have a portset like abstraction ?
+    <antrik> braunr: well, having an immediate reply to the request and a
+      separate notification later is just a waste of resources... the immediate
+      reply would have no information value
+    <antrik> no, in original L4 IPC is always directed to specific threads
+    <braunr> antrik: some could see the waste of resource as being the
+      duplication of the number of client threads in the server
+    <antrik> you could have one thread listening to replies from several
+      servers -- but then, replies can get lost
+    <braunr> i see
+    <antrik> (or the servers have to block on the reply)
+    <braunr> so, there are really no capabilities in the original l4 design ?
+    <antrik> though I guess in the case of select() it wouldn't really matter
+      if replies get lost, as long as at least one is handled... would just
+      require the listener thread by separate from the thread sending the
+      requests
+    <antrik> braunr: right. no capabilities of any kind
+    <braunr> that was my initial understanding too
+    <braunr> thanks
+    <antrik> so I partially agree: in a purely sync IPC design, it would be
+      more complicated (but not impossible) to make sure the client gets the
+      replies without the server having to block while sending replies
+
+    <braunr> arg, we need hurd_condition_timedwait (and possible
+      condition_timedwait) to cleanly fix io_select
+    <braunr> luckily, i still have my old patch for condition_timedwait :>
+    <braunr> bddebian: in order to implement timeouts in select calls, servers
+      now have to use a hurd_condition_timedwait function
+    <braunr> is it possible that a thread both gets canceled and timeout on a
+      wait ?
+    <braunr> looks unlikely to me
+
+    <braunr> hm, i guess the same kind of compatibility constraints exist for
+      hurd interfaces
+    <braunr> so, should we have an io_select1 ?
+    <antrik> braunr: I would use a more descriptive name: io_select_timeout()
+    <braunr> antrik: ah yes
+    <braunr> well, i don't really like the idea of having 2 interfaces for the
+      same call :)
+    <braunr> because all select should be select_timeout :)
+    <braunr> but ok
+    <braunr> antrik: actually, having two select calls may be better
+    <braunr> oh it's really minor, we do'nt care actually
+    <antrik> braunr: two select calls?
+    <braunr> antrik: one with a timeout and one without
+    <braunr> the glibc would choose at runtime
+    <antrik> right. that was the idea. like with most transitions, that's
+      probably the best option
+    <braunr> there is no need to pass the timeout value if it's not needed, and
+      it's easier to pass NULL this way
+    <antrik> oh
+    <antrik> nah, that would make the transition more complicated I think
+    <braunr> ?
+    <braunr> ok
+    <braunr> :)
+    <braunr> this way, it becomes very easy
+    <braunr> the existing io_select call moves into a select_common() function
+    <antrik> the old variant doesn't know that the server has to return
+      immediately; changing that would be tricky. better just use the new
+      variant for the new behaviour, and deprecate the old one
+    <braunr> and the entry points just call this common function with either
+      NULL or the given timeout
+    <braunr> no need to deprecate the old one
+    <braunr> that's what i'm saying
+    <braunr> and i don't understand "the old variant doesn't know that the
+      server has to return immediately"
+    <antrik> won't the old variant block indefinitely in the server if there
+      are no ready fds?
+    <braunr> yes it will
+    <antrik> oh, you mean using the old variant if there is no timeout value?
+    <braunr> yes
+    <antrik> well, I guess this would work
+    <braunr> well of course, the question is rather if we want this or not :)
+    <antrik> hm... not sure
+    <braunr> we need something to improve the process of changing our
+      interfaces
+    <braunr> it's really painful currnelty
+    <antrik> inside the servers, we probably want to use common code
+      anyways... so in the long run, I think it simplifies the code when we can
+      just drop the old variant at some point
+    <braunr> a lot of the work we need to do involves changing interfaces, and
+      we very often get to the point where we don't know how to do that and
+      hardly agree on a final version :
+    <braunr> :/
+    <braunr> ok but
+    <braunr> how do you tell the server you don't want a timeout ?
+    <braunr> a special value ? like { -1; -1 } ?
+    <antrik> hm... good point
+    <braunr> i'll do it that way for now
+    <braunr> it's the best way to test it
+    <antrik> which way you mean now?
+    <braunr> keeping io_select as it is, add io_select_timeout
+    <antrik> yeah, I thought we agreed on that part... the question is just
+      whether io_select_timeout should also handle the no-timeout variant going
+      forward, or keep io_select for that. I'm really not sure
+    <antrik> maybe I'll form an opinion over time :-)
+    <antrik> but right now I'm undecided
+    <braunr> i say we keep io_select
+    <braunr> anyway it won't change much
+    <braunr> we can just change that at the end if we decide otherwise
+    <antrik> right
+    <braunr> even passing special values is ok
+    <braunr> with a carefully written hurd_condition_timedwait, it's very easy
+      to add the timeouts :)
+    <youpi> antrik, braunr: I'm wondering, another solution is to add an
+      io_probe, i.e. the server has to return an immediate result, and the
+      client then just waits for all results, without timeout
+    <youpi> that'd be a mere addition in the glibc select() call: when timeout
+      is 0, use that, and otherwise use the previous code
+    <youpi> the good point is that it looks nicer in fs.defs
+    <youpi> are there bad points?
+    <youpi> (I don't have the whole issues in the mind now, so I'm probably
+      missing things)
+    <braunr> youpi: the bad point is duplicating the implementation maybe
+    <youpi> what duplication ?
+    <youpi> ah you mean for the select case
+    <braunr> yes
+    <braunr> although it would be pretty much the same
+    <braunr> that is, if probe only, don't enter the wait loop
+    <youpi> could that be just some ifs here and there?
+    <youpi> (though not making the code easier to read...)
+    <braunr> hm i'm not sure it's fine
+    <youpi> in that case oi_select_timeout looks ncier ideed :)
+    <braunr> my problem with the current implementation is having the timeout
+      at the client side whereas the server side is doing the blocking
+    <youpi> I wonder how expensive a notification is, compared to blocking
+    <youpi> a blocking indeed needs a thread stack
+    <youpi> (and kernel thread stuff)
+    <braunr> with the kind of async ipc we have, it's still better to do it
+      that way
+    <braunr> and all the code already exists
+    <braunr> having the timeout at the client side also have its advantage
+    <braunr> has*
+    <braunr> latency is more precise
+    <braunr> so the real problem is indeed the non blocking case only
+    <youpi> isn't it bound to kernel ticks anyway ?
+    <braunr> uh, not if your server sucks
+    <braunr> or is loaded for whatever reason
+    <youpi> ok, that's not what I understood by "precision" :)
+    <youpi> I'd rather call it robustness :)
+    <braunr> hm
+    <braunr> right
+    <braunr> there are several ways to do this, but the io_select_timeout one
+      looks fine to me
+    <braunr> and is already well on its way
+    <braunr> and it's reliable
+    <braunr> (whereas i'm not sure about reliability if we keep the timeout at
+      client side)
+    <youpi> btw make the timeout nanoseconds
+    <braunr> ??
+    <youpi> pselect uses timespec, not timeval
+    <braunr> do we want pselect ?
+    <youpi> err, that's the only safe way with signals
+    <braunr> not only, no
+    <youpi> and poll is timespec also
+    <youpi> not only??
+    <braunr> you mean ppol
+    <braunr> ppoll
+    <youpi> no, poll too
+    <youpi> by "the only safe way", I mean for select calls
+    <braunr> i understand the race issue
+    <youpi> ppoll is a gnu extension
+    <braunr> int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+    <youpi> ah, right, I was also looking at ppoll
+    <youpi> any
+    <youpi> way
+    <youpi> we can use nanosecs
+    <braunr> most event loops use a pipe or a socketpair
+    <youpi> there's no reason not to
+    <antrik> youpi: I briefly considered special-casisg 0 timeouts last time we
+      discussed this; but I concluded that it's probably better to handle all
+      timeouts server-side
+    <youpi> I don't see why we should even discuss that
+    <braunr> and translate signals to writes into the pipe/socketpair
+    <youpi> antrik: ok
+    <antrik> you can't count on select() timout precision anyways
+    <antrik> a few ms more shouldn't hurt any sanely written program
+    <youpi> braunr: "most" doesn't mean "all"
+    <youpi> there *are* applications which use pselect
+    <braunr> well mach only handles millisedonds
+    <braunr> seconds
+    <youpi> and it's not going out of the standard
+    <youpi> mach is not the hurd
+    <youpi> if we change mach, we can still keep the hurd ipcs
+    <youpi> anyway
+    <youpi> agagin
+    <youpi> I reallyt don't see the point of the discussion
+    <youpi> is there anything *against* using nanoseconds?
+    <braunr> i chose the types specifically because of that :p
+    <braunr> but ok i can change again
+    <youpi> becaus what??
+    <braunr> i chose to use mach's native time_value_t
+    <braunr> because it matches timeval nicely
+    <youpi> but it doesn't match timespec nicely
+    <braunr> no it doesn't
+    <braunr> should i add a hurd specific time_spec_t then ?
+    <youpi> "how do you tell the server you don't want a timeout ? a special
+      value ? like { -1; -1 } ?"
+    <youpi> you meant infinite blocking?
+    <braunr> youpi: yes
+    <braunr> oh right, pselect is posix
+    <youpi> actually posix says that there can be limitations on the maximum
+      timeout supported, which should be at least 31 days
+    <youpi> -1;-1 is thus fine
+    <braunr> yes
+    <braunr> which is why i could choose time_value_t (a struct of 2 integer_t)
+    <youpi> well, I'd say gnumach could grow a nanosecond-precision time value
+    <youpi> e.g. for clock_gettime precision and such
+
+[[clock_gettime]].
+
+    <braunr> so you would prefer me adding the time_spec_t time to gnumach
+      rather than the hurd ?
+    <youpi> well, if hurd RPCs are using mach types and there's no mach type
+      for nanoseconds, it m akes sense to add one
+    <youpi> I don't know about the first part
+    <braunr> yes some hurd itnerfaces also use time_value_t
+    <antrik> in general, I don't think Hurd interfaces should rely on a Mach
+      timevalue. it's really only meaningful when Mach is involved...
+    <antrik> we could even pass the time value as an opaque struct. don't
+      really need an explicit MIG type for that.
+    <braunr> opaque ?
+    <youpi> an opaque type would be a step backward from multi-machine support
+      ;)
+    <antrik> youpi: that's a sham anyways ;-)
+    <youpi> what?
+    <youpi> ah, using an opaque type, yes :)
+    <braunr> probably why my head bugged while reading that
+    <antrik> it wouldn't be fully opaque either. it would be two ints, right?
+      even if Mach doesn't know what these two ints mean, it still could to
+      byte order conversion, if we ever actually supported setups where it
+      matters...
+    <braunr> so uh, should this new time_spec_t be added in gnumach or the hurd
+      ?
+    <braunr> youpi: you're the maintainer, you decide :p
+    *** antrik (~olaf@port-92-195-60-96.dynamic.qsc.de) has joined channel
+          #hurd
+    <youpi> well, I don't like deciding when I didn't even have read fs.defs :)
+    <youpi> but I'd say the way forward is defining it in the hurd
+    <youpi> and put a comment "should be our own type" above use of the mach
+      type
+    <braunr> ok
+    *** antrik (~olaf@port-92-195-60-96.dynamic.qsc.de) has quit: Remote host
+          closed the connection
+    <braunr> and, by the way, is using integer_t fine wrt the 64-bits port ?
+    <youpi> I believe we settled on keeping integer_t a 32bit integer, like xnu
+      does
+    *** elmig (~elmig@a89-155-34-142.cpe.netcabo.pt) has quit: Quit: leaving
+    <braunr> ok so it's not
+    *** antrik (~olaf@port-92-195-60-96.dynamic.qsc.de) has joined channel
+          #hurd
+    <braunr> uh well
+    <youpi> why "not" ?
+    <braunr> keeping it 32-bits for the 32-bits userspace hurd
+    <braunr> but i'm talking about a true 64-bits version
+    <braunr> wouldn't integer_t get 64-bits then ?
+    <youpi> I meant we settled on a no
+    <youpi> like xnu does
+    <braunr> xnu uses 32-bits integer_t even when userspace runs in 64-bits
+      mode ?
+    <youpi> because things for which we'd need 64bits then are offset_t,
+      vm_size_t, and such
+    <youpi> yes
+    <braunr> ok
+    <braunr> youpi: but then what is the type to use for long integers ?
+    <braunr> or uintptr_t
+    <youpi> braunr: uintptr_t
+    <braunr> the mig type i mean
+    <youpi> type memory_object_offset_t     = uint64_t;
+    <youpi> (and size)
+    <braunr> well that's a 64-bits type
+    <youpi> well, yes
+    <braunr> natural_t and integer_t were supposed to have the processor word
+      size
+    <youpi> probably I didn't understand your question
+    <braunr> if we remove that property, what else has it ?
+    <youpi> yes, but see rolands comment on this
+    <braunr> ah ?
+    <youpi> ah, no, he just says the same
+    <antrik> braunr: well, it's debatable whether the processor word size is
+      really 64 bit on x86_64...
+    <antrik> all known compilers still consider int to be 32 bit
+    <antrik> (and int is the default word size)
+    <braunr> not really
+    <youpi> as in?
+    <braunr> the word size really is 64-bits
+    <braunr> the question concerns the data model
+    <braunr> with ILP32 and LP64, int is always 32-bits, and long gets the
+      processor word size
+    <braunr> and those are the only ones current unices support
+    <braunr> (which is why long is used everywhere for this purpose instead of
+      uintptr_t in linux)
+    <antrik> I don't think int is 32 bit on alpha?
+    <antrik> (and probably some other 64 bit arches)
+    <braunr> also, assuming we want to maintain the ability to support single
+      system images, do we really want RPC with variable size types ?
+    <youpi> antrik: linux alpha's int is 32bit
+    <braunr> sparc64 too
+    <youpi> I don't know any 64bit port with 64bit int
+    <braunr> i wonder how posix will solve the year 2038 problem ;p
+    <youpi> time_t is a long
+    <youpi> the hope is that there'll be no 32bit systems by 2038 :)
+    <braunr> :)
+    <youpi> but yes, that matters to us
+    <youpi> number of seconds should not be just an int
+    <braunr> we can force a 64-bits type then
+    <braunr> i tend to think we should have no variable size type in any mig
+      interface
+    <braunr> youpi: so, new hurd type, named time_spec_t, composed of two
+      64-bits signed integers
+    <pinotree> braunr: i added that in my prototype of monotonic clock patch
+      for gnumach
+    <braunr> oh
+    <youpi> braunr: well, 64bit is not needed for the nanosecond part
+    <braunr> right
+    <braunr> it will be aligned anyway :p
+    <youpi> I know
+    <youpi> uh, actually linux uses long there
+    <braunr> pinotree: i guess your patch is still in debian ?
+    <braunr> youpi: well yes
+    <braunr> youpi: why wouldn't it ? :)
+    <pinotree> no, never applied
+    <youpi> braunr: because 64bit is not needed
+    <braunr> ah, i see what you mean
+    <youpi> oh, posix says longa ctually
+    <youpi> *exactly* long
+    <braunr> i'll use the same sizes
+    <braunr> so it fits nicely with timespec
+    <braunr> hm
+    <braunr> but timespec is only used at the client side
+    <braunr> glibc would simply move the timespec values into our hurd specific
+      type (which can use 32-bits nanosecs) and servers would only use that
+      type
+    <braunr> all right, i'll do it that way, unless there are additional
+      comments next morning :)
+    <antrik> braunr: we never supported federations, and I'm pretty sure we
+      never will. the remnants of network IPC code were ripped out some years
+      ago. some of the Hurd interfaces use opaque structs too, so it wouldn't
+      even work if it existed. as I said earlier, it's really all a sham
+    <antrik> as for the timespec type, I think it's easier to stick with the
+      API definition at RPC level too
+
+
+#### IRC, freenode, #hurd, 2012-07-24
+
+    <braunr> youpi: antrik: is vm_size_t an appropriate type for a c long ?
+    <braunr> (appropriate mig type)
+    <antrik> I wouldn't say so. while technically they are pretty much
+      guaranteed to be the same, conceptually they are entirely different
+      things -- it would be confusing at least to do it that way...
+    <braunr> antrik: well which one then ? :(
+    <antrik> braunr: no idea TBH
+    <braunr> antrik_: that should have been natural_t and integer_t
+    <braunr> so maybe we should new types to replace them
+    <antrik_> braunr: actually, RPCs should never have nay machine-specific
+      types... which makes me realise that a 1:1 translation to the POSIX
+      definition is actually not possible if we want to follow the Mach ideals
+    <braunr> i agree
+    <braunr> (well, the original mach authors used natural_t in quite a bunch
+      of places ..)
+    <braunr> the mig interfaces look extremely messy to me because of this type
+      issue
+    <braunr> and i just want to move forward with my work now
+    <braunr> i could just use 2 integer_t, that would get converted in the
+      massive future revamp of the interfaces for the 64-bits userspace
+    <braunr> or 2 64-bits types
+    <braunr> i'd like us to agree on one of the two not too late so i can
+      continue
+
+
+#### IRC, freenode, #hurd, 2012-07-25
+
+    <antrik_> braunr: well, for actual kernel calls, machine-specific types are
+      probably hard to avoid... the problem is when they are used in other RPCs
+    <braunr> antrik: i opted for a hurd specific time_data_t = struct[2] of
+      int64
+    <braunr> and going on with this for now
+    <braunr> once it works we'll finalize the types if needed
+    <antrik> I'm really not sure how to best handle such 32 vs. 64 bit issues
+      in Hurd interfaces...
+    <braunr> you *could* consider time_t and long to be machine specific types
+    <antrik> well, they clearly are
+    <braunr> long is
+    <braunr> time_t isn't really
+    <antrik> didn't you say POSIX demands it to be longs?
+    <braunr> we could decide to make it 64 bits in all versions of the hurd
+    <braunr> no
+    <braunr> posix requires the nanoseconds field of timespec to be long
+    <braunr> the way i see it, i don't see any problem (other than a little bit
+      of storage and performance) using 64-bits types here
+    <antrik> well, do we really want to use a machine-independent time format,
+      if the POSIX interfaces we are mapping do not?...
+    <antrik> (perhaps we should; I'm just uncertain what's better in this case)
+    <braunr> this would require creating new types for that
+    <braunr> probably mach types for consistency
+    <braunr> to replace natural_t and integer_t
+    <braunr> now this concerns a totally different issue than select
+    <braunr> which is how we're gonna handle the 64-bits port
+    <braunr> because natural_t and integer_t are used almost everywhere
+    <antrik> indeed
+    <braunr> and we must think of 2 ports
+    <braunr> the 32-bits over 64-bits gnumach, and the complete 64-bits one
+    <antrik> what do we do for the interfaces that are explicitly 64 bit?
+    <braunr> what do you mean ?
+    <braunr> i'm not sure there is anything to do
+    <antrik> I mean what is done in the existing ones?
+    <braunr> like off64_t ?
+    <antrik> yeah
+    <braunr> they use int64 and unsigned64
+    <antrik> OK. so we shouldn't have any trouble with that at least...
+    <pinotree> braunr: were you adding a time_value_t in mach, but for
+      nanoseconds?
+    <braunr> no i'm adding a time_data_t to the hurd
+    <braunr> for nanoseconds yes
+    <pinotree> ah ok
+    <pinotree> (maybe sure it is available in hurd/hurd_types.defs)
+    <braunr> yes it's there
+    <pinotree> \o/
+    <braunr> i mean, i didn't forget to add it there
+    <braunr> for now it's a struct[2] of int64
+    <braunr> but we're not completely sure of that
+    <braunr> currently i'm teaching the hurd how to use timeouts
+    <pinotree> cool
+    <braunr> which basically involves adding a time_data_t *timeout parameter
+      to many functions
+    <braunr> and replacing hurd_condition_wait with hurd_condition_timedwait
+    <braunr> and making sure a timeout isn't an error on the return path
+    * pinotree has a simplier idea for time_data_t: add a file_utimesns to
+        fs.defs
+    <braunr> hmm, some functions have a nonblocking parameter
+    <braunr> i'm not sure if it's better to replace them with the timeout, or add the timeout parameter
+    <braunr> considering the functions involved may return EWOULDBLOCK
+    <braunr> for now i'll add a timeout parameter, so that the code requires as little modification as possible
+    <braunr> tell me your opinion on that please
+    <antrik> braunr: what functions?
+    <braunr> connq_listen in pflocal for example
+    <antrik> braunr: I don't really understand what you are talking about :-(
+    <braunr> some servers implement select this way :
+    <braunr> 1/ call a function in non-blocking mode, if it indicates data is available, return immediately
+    <braunr> 2/ call the same function, in blocking mode
+    <braunr> normally, with the new timeout parameter, non-blocking could be passed in the timeout parameter (with a timeout of 0)
+    <braunr> operating in non-blocking mode, i mean
+    <braunr> antrik: is it clear now ? :)
+    <braunr> i wonder how the hurd managed to grow so much code without a cond_timedwait function :/
+    <braunr> i think i have finished my io_select_timeout patch on the hurd side
+    <braunr> :)
+    <braunr> a small step for the hurd, but a big one against vim latencies !!
+    <braunr> (which is the true reason i'm working on this haha)
+    <braunr> new hurd rbraun/io_select_timeout branch for those interested
+    <braunr> hm, my changes clashes hard with the debian pflocal patch by neal :/
+    <braunr> clash*
+    <antrik> braunr: replace I'd say. no need to introduce redundancy; and code changes not affecting interfaces are cheap
+    <antrik> (in general, I'm always in favour of refactoring)
+    <braunr> antrik: replace what ?
+    <antrik> braunr: wow, didn't think moving the timeouts to server would be such a quick task :-)
+    <braunr> antrik: :)
+    <antrik> 16:57 < braunr> hmm, some functions have a nonblocking parameter
+    <antrik> 16:58 < braunr> i'm not sure if it's better to replace them with the timeout, or add the timeout parameter
+    <braunr> antrik: ah about that, ok
+
+
+#### IRC, freenode, #hurd, 2012-07-26
+
+    <pinotree> braunr: wrt your select_timeout branch, why not push only the
+      time_data stuff to master?
+    <braunr> pinotree: we didn't agree on that yet
+
+    <braunr> ah better, with the correct ordering of io routines, my hurd boots
+      :)
+    <pinotree> and works too? :p
+    <braunr> so far yes
+    <braunr> i've spotted some issues in libpipe but nothing major
+    <braunr> i "only" have to adjust the client side select implementation now
+
+
+#### IRC, freenode, #hurd, 2012-07-27
+
+    <braunr> io_select should remain a routine (i.e. synchronous) for server
+      side stub code
+    <braunr> but should be asynchronous (send only) for client side stub code
+    <braunr> (since _hurs_select manually handles replies through a port set)
+
+
+##### IRC, freenode, #hurd, 2013-02-09
+
+    <braunr> io_select becomes a simpleroutine, except inside the hurd, where
+      it's a routine to keep the receive and reply mig stub code
+    <braunr> (the server side)
+
+
+#### IRC, freenode, #hurd, 2012-07-28
+
+    <braunr> why are there both REPLY_PORTS and IO_SELECT_REPLY_PORT macros in
+      the hurd ..
+    <braunr> and for the select call only :(
+    <braunr> and doing the exact same thing unless i'm mistaken
+    <braunr> the reply port is required for select anyway ..
+    <braunr> i just want to squeeze them into a new IO_SELECT_SERVER macro
+    <braunr> i don't think i can maintain the use the existing io_select call
+      as it is
+    <braunr> grr, the io_request/io_reply files aren't synced with the io.defs
+      file
+    <braunr> calls like io_sigio_request seem totally unused
+    <antrik> yeah, that's a major shortcoming of MIG -- we shouldn't need to
+      have separate request/reply defs
+    <braunr> they're not even used :/
+    <braunr> i did something a bit ugly but it seems to do what i wanted
+
+
+#### IRC, freenode, #hurd, 2012-07-29
+
+    <braunr> good, i have a working client-side select
+    <braunr> now i need to fix the servers a bit :x
+    <braunr> arg, my test cases work, but vim doesn't :((
+    <braunr> i hate select :p
+    <braunr> ah good, my problems are caused by a deadlock because of my glibc
+      changes
+    <braunr> ah yes, found my locking problem
+    <braunr> building my final libc now
+    * braunr crosses fingers
+    <braunr> (the deadlock issue was of course a one liner)
+    <braunr> grr deadlocks again
+    <braunr> grmbl, my deadlock is in pfinet :/
+    <braunr> my select_timeout code makes servers deadlock on the libports
+      global lock :/
+    <braunr> wtf..
+    <braunr> youpi: it may be related to the failed asserttion
+    <braunr> deadlocking on mutex_unlock oO
+    <braunr> grr
+    <braunr> actually, mutex_unlock sends a message to notify other threads
+      that the lock is ready
+    <braunr> and that's what is blocking ..
+    <braunr> i'm not sure it's a fundamental problem here
+    <braunr> it may simply be a corruption
+    <braunr> i have several (but not that many) threads blocked in mutex_unlock
+      and one blocked in mutex_lcok
+    <braunr> i fail to see how my changes can create such a behaviour
+    <braunr> the weird thing is that i can't reproduce this with my test cases
+      :/
+    <braunr> only vim makes things crazy
+    <braunr> and i suppose it's related to the terminal
+    <braunr> (don't terminals relay select requests ?)
+    <braunr> when starting vim through ssh, pfinet deadlocks, and when starting
+      it on the mach console, the console term deadlocks
+    <pinotree> no help/hints when started with rpctrace?
+    <braunr> i only get assertions with rpctrace
+    <braunr> it's completely unusable for me
+    <braunr> gdb tells vim is indeed blocked in a select request
+    <braunr> and i can't see any in the remote servers :/
+    <braunr> this is so weird ..
+    <braunr> when using vim with the unmodified c library, i clearly see the
+      select call, and everything works fine ....
+    <braunr>     2e27:       a1 c4 d2 b7 f7          mov    0xf7b7d2c4,%eax
+    <braunr>     2e2c:       62                      (bad)  
+    <braunr>     2e2d:       f6 47 b6 69             testb  $0x69,-0x4a(%edi)
+    <braunr> what's the "bad" line ??
+    <braunr> ew, i think i understand my problem now
+    <braunr> the timeout makes blocking threads wake prematurely
+    <braunr> but on an mutex unlock, or a condition signal/broadcast, a message
+      is still sent, as it is expected a thread is still waiting
+    <braunr> but the receiving thread, having returned sooner than expected
+      from mach_msg, doesn't dequeue the message
+    <braunr> as vim does a lot of non blocking selects, this fills the message
+      queue ...
+
+
+#### IRC, freenode, #hurd, 2012-07-30
+
+    <braunr> hm nice, the problem i have with my hurd_condition_timedwait seems
+      to also exist in libpthread
+
+[[!taglink open_issue_libpthread]].
+
+    <braunr> although at a lesser degree (the implementation already correctly
+      removes a thread that timed out from a condition queue, and there is a
+      nice FIXME comment asking what to do with any stale wakeup message)
+    <braunr> and the only solution i can think of for now is to drain the
+      message queue
+    <braunr> ah yes, i know have vim running with my io_select_timeout code :>
+    <braunr> but hum
+    <braunr> eating all cpu
+    <braunr> ah nice, an infinite loop in _hurd_critical_section_unlock
+    <braunr> grmbl
+    <tschwinge> braunr: But not this one?
+      http://www.gnu.org/software/hurd/open_issues/fork_deadlock.html
+    <braunr> it looks similar, yes
+    <braunr> let me try again to compare in detail
+    <braunr> pretty much the same yes
+    <braunr> there is only one difference but i really don't think it matters
+    <braunr> (#3  _hurd_sigstate_lock (ss=0x2dff718) at hurdsig.c:173
+    <braunr> instead of
+    <braunr> #3  _hurd_sigstate_lock (ss=0x1235008) at hurdsig.c:172)
+    <braunr> ok so we need to review jeremie's work
+    <braunr> tschwinge: thanks for pointing me at this
+    <braunr> the good thing with my patch is that i can reproduce in a few
+      seconds
+    <braunr> consistently
+    <tschwinge> braunr: You're welcome.  Great -- a reproducer!
+    <tschwinge> You might also build a glibc without his patches as a
+      cross-test to see the issues goes away?
+    <braunr> right
+    <braunr> i hope they're easy to find :)
+    <tschwinge> Hmm, have you already done changes to glibc?  Otherwise you
+      might also simply use a Debian package from before?
+    <braunr> yes i have local changes to _hurd_select
+    <tschwinge> OK, too bad.
+    <tschwinge> braunr: debian/patches/hurd-i386/tg-hurdsig-*, I think.
+    <braunr> ok
+    <braunr> hmmmmm
+    <braunr> it may be related to my last patch on the select_timeout branch
+    <braunr> (i mean, this may be caused by what i mentioned earlier this
+      morning)
+    <braunr> damn i can't build glibc without the signal disposition patches :(
+    <braunr> libpthread_sigmask.diff depends on it
+    <braunr> tschwinge: doesn't libpthread (as implemented in the debian glibc
+      patches) depend on global signal dispositions ?
+    <braunr> i think i'll use an older glibc for now
+    <braunr> but hmm which one ..
+    <braunr> oh whatever, let's fix the deadlock, it's simpler
+    <braunr> and more productive anyway
+    <tschwinge> braunr: May be that you need to revert some libpthread patch,
+      too.  Or even take out the libpthread build completely (you don't need it
+      for you current work, I think).
+    <tschwinge> braunr: Or, of course, you locate the deadlock.  :-)
+    <braunr> hum, now why would __io_select_timeout return
+      EMACH_SEND_INVALID_DEST :(
+    <braunr> the current glibc code just transparently reports any such error
+      as a false positive oO
+    <braunr> hm nice, segfault through recursion
+    <braunr> "task foo destroying an invalid port bar" everywhere :((
+    <braunr> i still have problems at the server side ..
+    <braunr> ok i think i have a solution for the "synchronization problem"
+    <braunr> (by this name, i refer to the way mutex and condition variables
+      are implemented"
+    <braunr> (the problem being that, when a thread unblocks early, because of
+      a timeout, another may still send a message to attempt it, which may fill
+      up the message queue and make the sender block, causing a deadlock)
+    <braunr> s/attempt/attempt to wake/
+    <bddebian> Attempts to wake a dead thread?
+    <braunr> no
+    <braunr> attempt to wake an already active thread
+    <braunr> which won't dequeue the message because it's doing something else
+    <braunr> bddebian: i'm mentioning this because the problem potentially also
+      exists in libpthread
+
+[[!taglink open_issue_libpthread]].
+
+    <braunr> since the underlying algorithms are exactly the same
+    <youpi> (fortunately the time-out versions are not often used)
+    <braunr> for now :)
+    <braunr> for reference, my idea is to make the wake call truely non
+      blocking, by setting a timeout of 0
+    <braunr> i also limit the message queue size to 1, to limit the amount of
+      spurious wakeups
+    <braunr> i'll be able to test that in 30 mins or so
+    <braunr> hum
+    <braunr> how can mach_msg block with a timeout of 0 ??
+    <braunr> never mind :p
+    <braunr> unfortunately, my idea alone isn't enough
+    <braunr> for those interested in the problem, i've updated the analysis in
+      my last commit
+      (https://git.savannah.gnu.org/cgit/hurd/hurd.git/commit/?h=rbraun/select_timeout&id=40fe717ba9093c0c893d9ea44673e46a6f9e0c7d)
+
+
+#### IRC, freenode, #hurd, 2012-08-01
+
+    <braunr> damn, i can't manage to make threads calling condition_wait to
+      dequeue themselves from the condition queue :(
+    <braunr> (instead of the one sending the signal/broadcast)
+    <braunr> my changes on cthreads introduce 2 intrusive changes
+    <braunr> the first is that the wakeup port is limited to 1 port, and the
+      wakeup operation is totally non blocking
+    <braunr> which is something we should probably add in any case
+    <braunr> the second is that condition_wait dequeues itself after blocking,
+      instead of condition_signal/broadcast
+    <braunr> and this second change seems to introduce deadlocks, for reasons
+      completely unknown to me :((
+    <braunr> limited to 1 message*
+    <braunr> if anyone has an idea about why it is bad for a thread to remove
+      itself from a condition/mutex queue, i'm all ears
+    <braunr> i'm hitting a wall :(
+    <braunr> antrik: if you have some motivation, can you review this please ?
+      http://www.sceen.net/~rbraun/0001-Rework-condition-signal-broadcast.patch
+    <braunr> with this patch, i get threads blocked in condition_wait,
+      apparently waiting for a wakeup that never comes (or was already
+      consumed)
+    <braunr> and i don't understand why :
+    <braunr> :(
+    <bddebian> braunr: The condition never happens?
+    <braunr> bddebian: it works without the patch, so i guess that's not the
+      problem
+    <braunr> bddebian: hm, you could be right actually :p
+    <bddebian> braunr: About what? :)
+    <braunr> 17:50 < bddebian> braunr: The condition never happens?
+    <braunr> although i doubt it again
+    <braunr> this problem is getting very very frustrating
+    <bddebian> :(
+    <braunr> it frightens me because i don't see any flaw in the logic :(
+
+
+#### IRC, freenode, #hurd, 2012-08-02
+
+    <braunr> ah, seems i found a reliable workaround to my deadlock issue, and
+      more than a workaround, it should increase efficiency by reducing
+      messaging
+    * braunr happy
+    <kilobug> congrats :)
+    <braunr> the downside is that we may have a problem with non blocking send
+      calls :/
+    <braunr> which are used for signals
+    <braunr> i mean, this could be a mach bug
+    <braunr> let's try running a complete hurd with the change
+    <braunr> arg, the boot doesn't complete with the patch .. :(
+    <braunr> grmbl, by changing only a few bits in crtheads, the boot process
+      freezes in an infinite loop in somethign started after auth
+      (/etc/hurd/runsystem i assume)
+
+
+#### IRC, freenode, #hurd, 2012-08-03
+
+    <braunr> glibc actually makes some direct use of cthreads condition
+      variables
+    <braunr> and my patch seems to work with servers in an already working
+      hurd, but don't allow it to boot
+    <braunr> and the hang happens on bash, the first thing that doesn't come
+      from the hurd package
+    <braunr> (i mean, during the boot sequence)
+    <braunr> which means we can't change cthreads headers (as some primitives
+      are macros)
+    <braunr> *sigh*
+    <braunr> the thing is, i can't fix select until i have a
+      condition_timedwait primitive
+    <braunr> and i can't add this primitive until either 1/ cthreads are fixed
+      not to allow the inlining of its primitives, or 2/ the switch to pthreads
+      is done
+    <braunr> which might take a loong time :p
+    <braunr> i'll have to rebuild a whole libc package with a fixed cthreads
+      version
+    <braunr> let's do this
+    <braunr> pinotree: i see two __condition_wait calls in glibc, how is the
+      double underscore handled ?
+    <pinotree> where do you see it?
+    <braunr> sysdeps/mach/hurd/setpgid.c and sysdeps/mach/hurd/setsid.c
+    <braunr> i wonder if it's even used
+    <braunr> looks like we use posix/setsid.c now
+    <pinotree> #ifdef noteven
+    <braunr> ?
+    <pinotree> the two __condition_wait calls you pointed out are in such
+      preprocessor block
+    <pinotree> s
+    <braunr> but what does it mean ?
+    <pinotree> no idea
+    <braunr> ok
+    <pinotree> these two files should be definitely be used, they are found
+      earlier in the vpath
+    <braunr> hum, posix/setsid.c is a nop stub
+    <pinotree> i don't see anything defining "noteven" in glibc itself nor in
+      hurd
+    <braunr> :(
+    <pinotree> yes, most of the stuff in posix/, misc/, signal/, time/ are
+      ENOSYS stubs, to be reimplemented in a sysdep
+    <braunr> hm, i may have made a small mistake in cthreads itself actually
+    <braunr> right
+    <braunr> when i try to debug using a subhurd, gdb tells me the blocked
+      process is spinning in ld ..
+    <braunr> i mean ld.so
+    <braunr> and i can't see any debugging symbol
+    <braunr> some progress, it hangs at process_envvars
+    <braunr> eh
+    <braunr> i've partially traced my problem
+    <braunr> when a "normal" program starts, libc creates the signal thread
+      early
+    <braunr> the main thread waits for the creation of this thread by polling
+      its address
+    <braunr> (i.e. while (signal_thread == 0); )
+    <braunr> for some reason, it is stuck in this loop
+    <braunr> cthread creation being actually governed by
+      condition_wait/broadcast, it makes some sense
+    <bddebian> braunr: When you say the "main" thread, do you mean the main
+      thread of the program?
+    <braunr> bddebian: yes
+    <braunr> i think i've determined my mistake
+    <braunr> glibc has its own variants of the mutex primitives
+    <braunr> and i changed one :/
+    <bddebian> Ah
+    <braunr> it's good news for me :)
+    <braunr> hum no, that's not exactly what i described
+    <braunr> glibc has some stubs, but it's not the problem, the problem is
+      that mutex_lock/unlock are macros, and i changed one of them
+    <braunr> so everything that used that macro inside glibc wasn't changed
+    <braunr> yes!
+    <braunr> my patched hurd now boots :)
+    * braunr relieved
+    <braunr> this experience at least taught me that it's not possible to
+      easily change the singly linked queues of thread (waiting for a mutex or
+      a condition variable) :(
+    <braunr> for now, i'm using a linear search from the start
+    <braunr> so, not only does this patched hurd boot, but i was able to use
+      aptitude, git, build a whole hurd, copy the whole thing, and remove
+      everything, and it still runs fine (whereas usually it would fail very
+      early)
+    * braunr happy
+    <antrik> and vim works fine now?
+    <braunr> err, wait
+    <braunr> this patch does only one thing
+    <braunr> it alters the way condition_signal/broadcast and
+      {hurd_,}condition_wait operate
+    <braunr> currently, condition_signal/broadcast dequeues threads from a
+      condition queue and wake them
+    <braunr> my patch makes these functions only wake the target threads
+    <braunr> which dequeue themselves
+    <braunr> (a necessary requirement to allow clean timeout handling)
+    <braunr> the next step is to fix my hurd_condition_wait patch
+    <braunr> and reapply the whole hurd patch indotrucing io_select_timeout
+    <braunr> introducing*
+    <braunr> then i'll be able to tell you
+    <braunr> one side effect of my current changes is that the linear search
+      required when a thread dequeues itself is ugly
+    <braunr> so it'll be an additional reason to help the pthreads porting
+      effort
+    <braunr> (pthreads have the same sort of issues wrt to timeout handling,
+      but threads are a doubly-linked lists, making it way easier to adjust)
+    <braunr> +on
+    <braunr> damn i'm happy
+    <braunr> 3 days on this stupid bug
+    <braunr> (which is actually responsible for what i initially feared to be a
+      mach bug on non blocking sends)
+    <braunr> (and because of that, i worked on the code to make it sure that 1/
+      waking is truely non blocking and 2/ only one message is required for
+      wakeups
+    <braunr> )
+    <braunr> a simple flag is tested instead of sending in a non blocking way
+      :)
+    <braunr> these improvments should be ported to pthreads some day
+
+[[!taglink open_issue_libpthread]]
+
+    <braunr> ahah !
+    <braunr> view is now FAST !
+    <mel-> braunr: what do you mean by 'view'?
+    <braunr> mel-: i mean the read-only version of vim
+    <mel-> aah
+    <braunr> i still have a few port leaks to fix
+    <braunr> and some polishing
+    <braunr> but basically, the non-blocking select issue seems fixed
+    <braunr> and with some luck, we should get unexpected speedups here and
+      there
+    <mel-> so vim was considerable slow on the Hurd before? didn't know that.
+    <braunr> not exactly
+    <braunr> at first, it wasn't, but the non blocking select/poll calls
+      misbehaved
+    <braunr> so a patch was introduced to make these block at least 1 ms
+    <braunr> then vim became slow, because it does a lot of non blocking select
+    <braunr> so another patch was introduced, not to set the 1ms timeout for a
+      few programs
+    <braunr> youpi: darnassus is already running the patched hurd, which shows
+      (as expected) that it can safely be used with an older libc
+    <youpi> i.e. servers with the additional io_select?
+    <braunr> yes
+    <youpi> k
+    <youpi> good :)
+    <braunr> and the modified cthreads
+    <braunr> which is the most intrusive change
+    <braunr> port leaks fixed
+    <gnu_srs> braunr: Congrats:-D
+    <braunr> thanks
+    <braunr> it's not over yet :p
+    <braunr> tests, reviews, more tests, polishing, commits, packaging
+
+
+#### IRC, freenode, #hurd, 2012-08-04
+
+    <braunr> grmbl, apt-get fails on select in my subhurd with the updated
+      glibc
+    <braunr> otherwise it boots and runs fine
+    <braunr> fixed :)
+    <braunr> grmbl, there is a deadlock in pfinet with my patch
+    <braunr> deadlock fixed
+    <braunr> the sigstate and the condition locks must be taken at the same
+      time, for some obscure reason explained in the cthreads code
+    <braunr> but when a thread awakes and dequeues itself from the condition
+      queue, it only took the condition lock
+    <braunr> i noted in my todo list that this could create problems, but
+      wanted to leave it as it is to really see it happen
+    <braunr> well, i saw :)
+    <braunr> the last commit of my hurd branch includes the 3 line fix
+    <braunr> these fixes will be required for libpthreads
+      (pthread_mutex_timedlock and pthread_cond_timedwait) some day
+    <braunr> after the select bug is fixed, i'll probably work on that with you
+      and thomas d
+
+
+#### IRC, freenode, #hurd, 2012-08-05
+
+    <braunr> eh, i made dpkg-buildpackage use the patched c library, and it
+      finished the build oO
+    <gnu_srs> braunr: :)
+    <braunr> faked-tcp was blocked in a select call :/
+    <braunr> (with the old libc i mean)
+    <braunr> with mine i just worked at the first attempt
+    <braunr> i'm not sure what it means
+    <braunr> it could mean that the patched hurd servers are not completely
+      compatible with the current libc, for some weird corner cases
+    <braunr> the slowness of faked-tcp is apparently inherent to its
+      implementation
+    <braunr> all right, let's put all these packages online
+    <braunr> eh, right when i upload them, i get a deadlock
+    <braunr> this one seems specific to pfinet
+    <braunr> only one deadlock so far, and the libc wasn't in sync with the
+      hurd
+    <braunr> :/
+    <braunr> damn, another deadlock as soon as i send a mail on bug-hurd :(
+    <braunr> grr
+    <pinotree> thou shall not email
+    <braunr> aptitude seems to be a heavy user of select
+    <braunr> oh, it may be due to my script regularly chaning the system time
+    <braunr> or it may not be a deadlock, but simply the linear queue getting
+      extremely large
+
+
+#### IRC, freenode, #hurd, 2012-08-06
+
+    <braunr> i have bad news :( it seems there can be memory corruptions with
+      my io_select patch
+    <braunr> i've just seen an auth server (!) spinning on a condition lock
+      (the internal spin lock), probably because the condition was corrupted ..
+    <braunr> i guess it's simply because conditions embedded in dynamically
+      allocated structures can be freed while there are still threads waiting
+      ...
+    <braunr> so, yes the solution to my problem is simply to dequeue threads
+      from both the waker when there is one, and the waiter when no wakeup
+      message was received
+    <braunr> simple
+    <braunr> it's so obvious i wonder how i didn't think of it earlier :(-
+    <antrik> braunr: an elegant solution always seems obvious afterwards... ;-)
+    <braunr> antrik: let's hope this time, it's completely right
+    <braunr> good, my latest hurd packages seem fixed finally
+    <braunr> looks like i got another deadlock
+    * braunr hangs himselg
+    <braunr> that, or again, condition queues can get very large (e.g. on
+      thread storms)
+    <braunr> looks like this is the case yes
+    <braunr> after some time the system recovered :(
+    <braunr> which means a doubly linked list is required to avoid pathological
+      behaviours
+    <braunr> arg
+    <braunr> it won't be easy at all to add a doubly linked list to condition
+      variables :(
+    <braunr> actually, just a bit messy
+    <braunr> youpi: other than this linear search on dequeue, darnassus has
+      been working fine so far
+    <youpi> k
+    <youpi> Mmm, you'd need to bump the abi soname if changing the condition
+      structure layout
+    <braunr> :(
+    <braunr> youpi: how are we going to solve that ?
+    <youpi> well, either bump soname, or finish transition to libpthread :)
+    <braunr> it looks better to work on pthread now
+    <braunr> to avoid too many abi changes
+
+[[libpthread]].
+
+
+#### IRC, freenode, #hurd, 2012-08-07
+
+    <rbraun_hurd> anyone knows of applications extensively using non-blocking
+      networking functions ?
+    <rbraun_hurd> (well, networking functions in a non-blocking way)
+    <antrik> rbraun_hurd: X perhaps?
+    <antrik> it's single-threaded, so I guess it must be pretty async ;-)
+    <antrik> thinking about it, perhaps it's the reason it works so poorly on
+      Hurd...
+    <braunr> it does ?
+    <rbraun_hurd> ah maybe at the client side, right
+    <rbraun_hurd> hm no, the client side is synchronous
+    <rbraun_hurd> oh by the way, i can use gitk on darnassys
+    <rbraun_hurd> i wonder if it's because of the select fix
+    <tschwinge> rbraun_hurd: If you want, you could also have a look if there's
+      any improvement for these:
+      http://www.gnu.org/software/hurd/open_issues/select.html (elinks),
+      http://www.gnu.org/software/hurd/open_issues/dbus.html,
+      http://www.gnu.org/software/hurd/open_issues/runit.html
+    <tschwinge> rbraun_hurd: And congratulations, again!  :-)
+    <rbraun_hurd> tschwinge: too bad it can't be merged before the pthread port
+      :(
+    <antrik> rbraun_hurd: I was talking about server. most clients are probably
+      sync.
+    <rbraun_hurd> antrik: i guessed :)
+    <antrik> (thought certainly not all... multithreaded clients are not really
+      supported with xlib IIRC)
+    <rbraun_hurd> but i didn't have much trouble with X 
+    <antrik> tried something pushing a lot of data? like, say, glxgears? :-)
+    <rbraun_hurd> why not
+    <rbraun_hurd> the problem with tests involving "a lot of data" is that it
+      can easily degenerate into a livelock
+    <antrik> yeah, sounds about right
+    <rbraun_hurd> (with the current patch i mean)
+    <antrik> the symptoms I got were general jerkiness, with occasional long
+      hangs
+    <rbraun_hurd> that applies to about everything on the hurd
+    <rbraun_hurd> so it didn't alarm me
+    <antrik> another interesting testcase is freeciv-gtk... it reporducibly
+      caused a thread explosion after idling for some time -- though I don't
+      remember the details; and never managed to come up with a way to track
+      down how this happens...
+    <rbraun_hurd> dbus is more worthwhile
+    <rbraun_hurd> pinotree: hwo do i test that ?
+    <pinotree> eh?
+    <rbraun_hurd> pinotree: you once mentioned dbus had trouble with non
+      blocking selects
+    <pinotree> it does a poll() with a 0s timeout
+    <rbraun_hurd> that's the non blocking select part, yes
+    <pinotree> you'll need also fixes for the socket credentials though,
+      otherwise it won't work ootb
+    <rbraun_hurd> right but, isn't it already used somehow ?
+    <antrik> rbraun_hurd: uhm... none of the non-X applications I use expose a
+      visible jerkiness/long hangs pattern... though that may well be a result
+      of general load patterns rather than X I guess
+    <rbraun_hurd> antrik: that's my feeling
+    <rbraun_hurd> antrik: heavy communication channels, unoptimal scheduling,
+      lack of scalability, they're clearly responsible for the generally
+      perceived "jerkiness" of the system
+    <antrik> again, I can't say I observe "general jerkiness". apart from slow
+      I/O the system behaves rather normally for the things I do
+    <antrik> I'm pretty sure the X jerkiness *is* caused by the socket
+      communication
+    <antrik> which of course might be a scheduling issue
+    <antrik> but it seems perfectly possible that it *is* related to the select
+      implementation
+    <antrik> at least worth a try I'd say
+    <rbraun_hurd> sure
+    <rbraun_hurd> there is still some work to do on it though
+    <rbraun_hurd> the client side changes i did could be optimized a bit more
+    <rbraun_hurd> (but i'm afraid it would lead to ugly things like 2 timeout
+      parameters in the io_select_timeout call, one for the client side, the
+      other for the servers, eh)
+
+
+#### IRC, freenode, #hurd, 2012-08-07
+
+    <braunr> when running gitk on [darnassus], yesterday, i could push the CPU
+      to 100% by simply moving the mouse in the window :p
+    <braunr> (but it may also be caused by the select fix)
+    <antrik> braunr: that cursor might be "normal"
+    <rbraunrh> antrik: what do you mean ?
+    <antrik> the 100% CPU
+    <rbraunh> antrik: yes i got that, but what would make it normal ?
+    <rbraunh> antrik: right i get similar behaviour on linux actually
+    <rbraunh> (not 100% because two threads are spread on different cores, but
+      their cpu usage add up to 100%)
+    <rbraunh> antrik: so you think as long as there are events to process, the
+      x client is running
+    <rbraunh> thath would mean latencies are small enough to allow that, which
+      is actually a very good thing
+    <antrik> hehe... sound kinda funny :-)
+    <rbraunh> this linear search on dequeue is a real pain :/
+
+
+#### IRC, freenode, #hurd, 2012-08-09
+
+`screen` doesn't close a window/hangs after exiting the shell.
+
+    <rbraunh> the screen issue seems linked to select :p
+    <rbraunh> tschwinge: the term server may not correctly implement it
+    <rbraunh> tschwinge: the problem looks related to the term consoles not
+      dying
+    <rbraunh> http://www.gnu.org/software/hurd/open_issues/term_blocking.html
+
+[[Term_blocking]].
+
+
+### IRC, freenode, #hurd, 2012-12-05
+
+    <braunr> well if i'm unable to build my own packages, i'll send you the one
+      line patch i wrote that fixes select/poll for the case where there is
+      only one descriptor
+    <braunr> (the current code calls mach_msg twice, each time with the same
+      timeout, doubling the total wait time when there is no event)
+
+
+#### IRC, freenode, #hurd, 2012-12-06
+
+    <braunr> damn, my eglibc patch breaks select :x
+    <braunr> i guess i'll just simplify the code by using the same path for
+      both single fd and multiple fd calls
+    <braunr> at least, the patch does fix the case i wanted it to .. :)
+    <braunr> htop and ping act at the right regular interval
+    <braunr> my select patch is :
+    <braunr>    /* Now wait for reply messages.  */
+    <braunr> -  if (!err && got == 0)
+    <braunr> +  if (!err && got == 0 && firstfd != -1 && firstfd != lastfd)
+    <braunr> basically, when there is a single fd, the code calls io_select
+      with a timeout
+    <braunr> and later calls mach_msg with the same timeout
+    <braunr> effectively making the maximum wait time twice what it should be
+    <pinotree> ouch
+    <braunr> which is why htop and ping are "laggy"
+    <braunr> and perhaps also why fakeroot is when building libc
+    <braunr> well
+    <braunr> when building packages
+    <braunr> my patch avoids entering the mach_msg call if there is only one fd
+    <braunr> (my failed attempt didn't have the firstfd != -1 check, leading to
+      the 0 fd case skipping mach_msg too, which is wrong since in that case
+      there is just no wait, making applications use select/poll for sleeping
+      consume all cpu)
+
+    <braunr> the second is a fix in select (yet another) for the case where a
+      single fd is passed
+    <braunr> in which case there is one timeout directly passed in the
+      io_select call, but then yet another in the mach_msg call that waits for
+      replies
+    <braunr> this can account for the slowness of a bunch of select/poll users
+
+
+#### IRC, freenode, #hurd, 2012-12-07
+
+    <braunr> finally, my select patch works :)
+
+
+#### IRC, freenode, #hurd, 2012-12-08
+
+    <braunr> for those interested, i pushed my eglibc packages that include
+      this little select/poll timeout fix on my debian repository
+    <braunr> deb http://ftp.sceen.net/debian-hurd experimental/
+    <braunr> reports are welcome, i'm especially interested in potential
+      regressions
+
+
+#### IRC, freenode, #hurd, 2012-12-10
+
+    <gnu_srs> I have verified your double timeout bug in hurdselect.c.
+    <gnu_srs>  Since I'm also working on hurdselect I have a few questions
+      about where the timeouts in mach_msg and io_select are implemented.
+    <gnu_srs> Have a big problem to trace them down to actual code: mig magic
+      again?
+    <braunr> yes
+    <braunr> see hurd/io.defs, io_select includes a waittime timeout:
+      natural_t; parameter
+    <braunr> waittime is mig magic that tells the client side not to wait more
+      than the timeout
+    <braunr> and in _hurd_select, you can see these lines :
+    <braunr>             err = __io_select (d[i].io_port, d[i].reply_port,
+    <braunr>                                /* Poll only if there's a single
+      descriptor.  */
+    <braunr>                                (firstfd == lastfd) ? to : 0,
+    <braunr> to being the timeout previously computed
+    <braunr> "to"
+    <braunr> and later, when waiting for replies :
+    <braunr>       while ((msgerr = __mach_msg (&msg.head,
+    <braunr>                                    MACH_RCV_MSG | options,
+    <braunr>                                    0, sizeof msg, portset, to,
+    <braunr>                                    MACH_PORT_NULL)) ==
+      MACH_MSG_SUCCESS)
+    <braunr> the same timeout is used
+    <braunr> hope it helps
+    <gnu_srs> Additional stuff on io-select question is at
+      http://paste.debian.net/215401/
+    <gnu_srs> Sorry, should have posted it before you comment, but was
+      disturbed.
+    <braunr> 14:13 < braunr> waittime is mig magic that tells the client side
+      not to wait more than the timeout
+    <braunr> the waittime argument is a client argument only
+    <braunr> that's one of the main source of problems with select/poll, and
+      the one i fixed 6 months ago
+    <gnu_srs> so there is no relation to the third argument of the client call
+      and the third argument of the server code?
+    <braunr> no
+    <braunr> the 3rd argument at server side is undoubtedly the 4th at client
+      side here
+    <gnu_srs> but for the fourth argument there is?
+    <braunr> i think i've just answered that
+    <braunr> when in doubt, check the code generated by mig when building glibc
+    <gnu_srs> as I said before, I have verified the timeout bug you solved.
+    <gnu_srs> which code to look for RPC_*?
+    <braunr> should be easy to guess
+    <gnu_srs> is it the same with mach_msg()? No explicit usage of the timeout
+      there either.
+    <gnu_srs> in the code for the function I mean.
+    <braunr> gnu_srs: mach_msg is a low level system call
+    <braunr> see
+      http://www.gnu.org/software/hurd/gnumach-doc/Mach-Message-Call.html#Mach-Message-Call
+    <gnu_srs> found the definition of __io_select in: RPC_io_select.c, thanks.
+    <gnu_srs> so the client code to look for wrt RPC_ is in hurd/*.defs? what
+      about the gnumach/*/include/*.defs?
+    <gnu_srs> a final question: why use a timeout if there is a single FD for
+      the __io_select call, not when there are more than one?
+    <braunr> well, the code is obviously buggy, so don't expect me to justify
+      wrong code
+    <braunr> but i suppose the idea was : if there is only one fd, perform a
+      classical synchronous RPC, whereas if there are more use a heavyweight
+      portset and additional code to receive replies
+
+    <youpi> exim4 didn't get fixed by the libc patch, unfortunately
+    <braunr> yes i noticed
+    <braunr> gdb can't attach correctly to exim, so it's probably something
+      completely different
+    <braunr> i'll try the non intrusive mode
+
+
+##### IRC, freenode, #hurd, 2013-01-26
+
+    <braunr> ah great, one of the recent fixes (probably select-eintr or
+      setitimer) fixed exim4 :)
+
+
+#### IRC, freenode, #hurd, 2012-12-11
+
+    <gnu_srs1> braunr: What is the technical difference of having the delay at
+      io_select compared to mach_msg for one FD?
+    <braunr> gnu_srs1: it's a slight optimization
+    <braunr> instead of doing a send and a receive, the same mach_msg call is
+      used for both
+    <braunr> (for L4 guys it wouldn't be considered a slight optimization :))
+
+
+#### IRC, freenode, #hurd, 2012-12-17
+
+    <braunr> tschwinge:
+      https://git.savannah.gnu.org/cgit/hurd/glibc.git/log/?h=rbraun/select_timeout_for_one_fd
+    <braunr> gnu_srs: talking about that, can you explain :
+    <braunr> "- The pure delay case is much faster now, making it necessary to                                                                                                                                                    
+    <braunr> introduce a delay of 1 msec when the timeout parameter is set to
+      zero.                                                                                                                                              
+    <braunr> "
+    <gnu_srs> I meant poll with zero delay needs a delay to make sure the file
+      descriptors are ready. Testing it now.
+    <braunr> for me, the "pure delay" case is the case where there is no file
+      descriptor
+    <braunr> when the timeout is 0 is the non-blocking case
+    <braunr> and yes, you need 1ms for the non-blocking case when there are
+      file descriptors
+    <gnu_srs> sorry bad wording (again)
+    <braunr> (note however that this last "requirement" is very hurd specific,
+      and due to a design issue)
+    <braunr> the work i did six months ago fixes it, but depends on pthreads
+      for correct performances (or rather, a thread library change, but
+      changing cthreads was both difficult and pointless)
+    <braunr> also, i intend to work on io_poll as a replacement for io_select,
+      that fixes the "message storm" (i love these names) caused by dead-name
+      notifications resulting from the way io_select works
+
+
+#### IRC, freenode, #hurd, 2012-12-19
+
+    <braunr> tschwinge: i've tested the glibc rbraun/select_timeout_for_one_fd
+      branch for a few days on darnassus now, and nothing wrong to report
+
+
+#### IRC, freenode, #hurd, 2012-12-20
+
+    <youpi> braunr: so, shall I commit the single hurd select timeout fix to
+      the debian package?
+    <braunr> youpi: i'd say so yes
+
+
+#### IRC, freenode, #hurd, 2013-01-03
+
+    <braunr> gnu_srs: sorry, i don't understand your poll_timeout patch
+    <braunr> it basically reverts mine for poll only
+    <braunr> but why ?
+    <gnu_srs> braunr: It does not revert your select patch, if there is one FD
+      the timeout is at io_select, if not one the timeout is at mach_msg
+    <braunr> but why does it only concern poll ?
+    <braunr> (and why didn't i do it this way in the first place ?)
+    <braunr> (or maybe i did ?)
+    <gnu_srs> there are problems with a timeout of zero for poll, depending on
+      the implementation the FDs can result in not being ready.
+    <braunr> but that's also true with select
+    <gnu_srs> the cases I've tested only have problems for poll, not select
+    <braunr> we'll have to create test cases for both
+    <braunr> but your solution doesn't hold anyway
+    <braunr> our current workaround for this class of problems is to set a
+      lower bound on the timeout to 1
+    <braunr> (which comes from a debian specific patch)
+    <gnu_srs> see the test code i sent,
+      http://lists.gnu.org/archive/html/bug-hurd/2012-12/msg00043.html,
+      test_poll+select.c
+    <braunr> the patch might be incomplete though
+    <braunr> i know, but your solution is still wrong
+    <braunr> see debian/patches/hurd-i386/local-select.diff in the debian
+      eglibc package
+    <gnu_srs> and in that message I have introduced a minimum timeout for poll
+      of 1ms.
+    <braunr> yes but you shouldn't
+    <braunr> this is a *known* bug, and for now we have a distribution-specific
+      patch
+    <braunr> in other words, we can't commit that crap upstream
+    <gnu_srs> well, according to youpi there is a need for a communication to
+      flag when the FDs are ready, not yet implemented.
+    <braunr> i'm not sure what you mean by that
+    <youpi> I don't understand what you refer to
+    <braunr> there is a need for a full round-trip even in the non blocking
+      case
+    <braunr> which is implemented in one of my hurd branches, but awaits
+      pthreads integration for decent scalability
+    <youpi> the only difference between poll and select is that select can stop
+      the loop on error, while poll needs to continue
+    <braunr> youpi: don't you think the glibc select patch is incomplete ?
+    <youpi> incomplete in what direction?
+    <youpi> the minimum 1ms delay is a completely bogus workaround
+    <gnu_srs> youpi:
+      http://lists.gnu.org/archive/html/bug-hurd/2012-11/msg00001.html
+    <youpi> so I wouldn't say it's even completing anything :)
+    <braunr> hm no never mind, it's not
+    <braunr> i thought it missed some cases where the delay made sense, but no
+    <braunr> the timeout can only be 0 if the timeout parameter is non NULL
+    <braunr> gnu_srs: during your tests, do you run with the debian eglibc
+      package (including your changes), or from the git glibc ?
+    <gnu_srs> I run with -37, -38, with my minimum poll changes, my 3 cases,
+      and 3 case-poll updates.
+    <braunr> so you do have the debian patches
+    <braunr> so you normally have this 1ms hack
+    <braunr> which means you shouldn't need to make the poll case special
+    <gnu_srs> A admit the 1ms patch is not possible to submit upstream, but it
+      makes things work (and youpi use it for vim)
+    <braunr> i'll try to reproduce your ntpdate problem with -38 when i have
+      some time
+    <braunr> uh, no, vim actually doesn't use the hack :p
+    <youpi> gnu_srs: it's the contrary: we have to avoid it for vim
+    <gnu_srs>  if (strcmp(program_invocation_short_name, "vi") &&
+      strcmp(program_invocation_short_name, "vim") &&
+      strcmp(program_invocation_short_name, "vimdiff") && !to)
+    <gnu_srs>         to = 1;
+    <youpi> that does what we are saying
+    <braunr> strcmp returns 0 on equality
+    <gnu_srs> aha, OK then
+    <gnu_srs> I don't have that hack in my code. I have tested vim a little,
+      but cannot judge, since I'm not a vi user.
+    <braunr> you don't ?
+    <braunr> you should have it if the package patches were correctly applied
+    <gnu_srs> Maybe somebody else could compile a libc with the 3-split code to
+      test it out?
+    <braunr> that's another issue
+    <gnu_srs> I mean the patch I sent to the list, there the vi{m} hack is not
+      present.
+    <braunr> well obviously
+    <braunr> but i'm asking about the poll_timeout one
+    <gnu_srs> A, OK, it's very easy to test that version too but currently -38
+      maybe has a regression due to some other patch.
+    <braunr> that's another thing we're interested in
+    <gnu_srs> Unfortunately it takes a _long_ time to build a new version of
+      libc (several hours...)
+    <braunr> -38 is already built
+    <gnu_srs> yes, but removing patches one by one and rebuilding.
+    <braunr> but then, the "regression" you mention concerns a package that
+      wasn't really working before
+    <braunr> removing ?
+    <braunr> ah, to identify the trouble carrying one
+    <gnu_srs> ntpdate works with -37, no problem...
+    <gnu_srs> but not with -38
+    <braunr> again, trace it with -38
+    <braunr> to see on what it blocks
+    <gnu_srs> as I wrote yesterday gdb hangs the box hard and rpctrace bugs
+      out, any ideas?
+    <youpi> printf
+    <braunr> gdb from a subhurd
+    <gnu_srs> I'm suspecting the setitimer patch: Without it gdb ntpdate does
+      not freeze hard any longer, bt full: http://paste.debian.net/221491/
+    Program received signal SIGINT, Interrupt.
+    0x010477cc in mach_msg_trap ()
+        at /usr/src/kernels/eglibc/eglibc-2.13/build-tree/hurd-i386-libc/mach/mach_msg_trap.S:2
+    2       kernel_trap (__mach_msg_trap,-25,7)
+    (gdb) thread apply all bt full
+    
+    Thread 6 (Thread 3158.6):
+    #0  0x010477cc in mach_msg_trap ()
+        at /usr/src/kernels/eglibc/eglibc-2.13/build-tree/hurd-i386-libc/mach/mach_msg_trap.S:2
+    No locals.
+    #1  0x01047fc9 in __mach_msg (msg=0x52fd4, option=1282, send_size=0, 
+        rcv_size=0, rcv_name=132, timeout=100, notify=0) at msg.c:110
+            ret = <optimized out>
+    #2  0x010ec3a8 in timer_thread () at ../sysdeps/mach/hurd/setitimer.c:90
+            err = <optimized out>
+            msg = {header = {msgh_bits = 4608, msgh_size = 32, 
+                msgh_remote_port = 0, msgh_local_port = 132, msgh_seqno = 78, 
+                msgh_id = 23100}, return_code = 17744699}
+    
+    setitimer.c:90
+          err = __mach_msg (&msg.header,
+                            MACH_RCV_MSG|MACH_RCV_TIMEOUT|MACH_RCV_INTERRUPT,
+                            0, 0, _hurd_itimer_port,
+                            _hurd_itimerval.it_value.tv_sec * 1000 +
+                            _hurd_itimerval.it_value.tv_usec / 1000,
+                            MACH_PORT_NULL);
+
+[[alarm_setitimer]].
+
+    <braunr> gdb ?
+    <braunr> i thought ntpdate was the program freezing
+    <gnu_srs> the freeze is due to -38
+    <braunr> yes we know that
+    <braunr> but why do you say "gdb ntpdate" instead of "ntpdate" ?
+    <gnu_srs> yes, ntpdate freezes: without gdb kill -9 is OK, with gdb it
+      freezes hard (with setitimer pacth).
+    <braunr> we don't care much about the kill behaviour
+    <braunr> ntpdate does indeed makes direct calls to setitimer
+    <gnu_srs> without the setitimer patch: without gdb ntpdate freezes (C-c is
+      OK), with gdb C-c gives the paste above
+    <braunr> sorry i don't understand
+    <braunr> *what* is the problem ?
+    <youpi> there are two of them
+    <youpi> ntpdate freezing
+    <youpi> gdb freezing
+    <braunr> ok
+    <youpi> he's saying gdb freezing is due to the setitimer patch
+    <braunr> yes that's what i understand now
+    <braunr> what he said earlier made me think ntpdate was freezing with -38
+    <gnu_srs> better: ntpdate hangs, gdb ntpdate freezes (with the setitimer
+      patch)
+    <braunr> what's the behaviour in -37, and then what is the behaviour with
+      -38 ?
+    <braunr> (of both actions, so your answer should give us four behaviours)
+    <youpi> gnu_srs: what is the difference between "hangs" and "freezes" ?
+    <gnu_srs> -37 no problem, both with and without gdb.
+    <braunr> you mean ntpdate doesn't freeze with -37, and does with -38 ?
+    <gnu_srs> hangs: kill -9 is sufficient, freezes: reboot, checking file
+      system etc
+    <braunr> and i really mean ntpdate, not gdb whatever
+    <gnu_srs> the ntpdate hang (without the setitimer patch) in -38 can be due
+      to the poll stuff: Have to check further with my poll patch...
+
+
+#### IRC, freenode, #hurd, 2013-01-04
+
+    <gnu_srs> Summary of the eglibc-2.13-38 issues: without the
+      unsubmitted-setitimer_fix.diff patch and with
+    <gnu_srs> my poll_timeout.patch fix in
+      http://lists.gnu.org/archive/html/bug-hurd/2012-12/msg00042.html
+    <gnu_srs> ntpdate works again :)
+    <gnu_srs> please consider reworking the setitimer patch and add a poll case
+      in hurdselect.c:-D 
+    <gnu_srs> Additional info: vim prefers to use select before poll,. With the
+      proposed changes (small,3-split),
+    <gnu_srs> only poll is affected by the 1ms default timeout, i.e. the
+      current vi hack is no longer needed.
+    <braunr> gnu_srs: the setitimer patch looks fine, and has real grounds
+    <braunr> gnu_srs: your poll_timeout doesn't
+    <braunr> so unless you can explain where the problem comes from, we
+      shouldn't remove the setitimer patch and add yours
+    <braunr> in addition
+    <braunr> 09:30 < gnu_srs> only poll is affected by the 1ms default timeout,
+      i.e. the current vi hack is no longer needed.
+    <braunr> that sentence is complete nonsense
+    <braunr> poll and select are implemented using the same rpc, which means
+      they're both broken
+    <braunr> if the vi hack isn't needed, it means you broke every poll user
+    <braunr> btw, i think your ntpdate issue is very similar to the gitk one
+    <braunr> gitk currently doesn't work because of select/poll
+    <braunr> it does work fine with my hurd select branch though
+    <braunr> which clearly shows a more thorough change is required, and your
+      hacks won't do any good (you may "fix" ntpdate, and break many other
+      things)
+    <gnu_srs> braunr: Why don't you try ntpdate yourself on -38 (none of my
+      patches applied)
+    <braunr> you're missing the point
+    <braunr> the real problem is the way select/poll is implemented, both at
+      client *and* server sides
+    <gnu_srs> 09:30 etc: The current implementation is slower than the 3-way
+      patch. Therefore it in not needed in the current implementation (I didn't
+      propose that either)
+    <braunr> hacks at the client side only are pointless, whatever you do
+    <braunr> slower ?
+    <braunr> it's not about performance but correctness
+    <braunr> your hack *can't* solve the select/poll correctness issue
+    <gnu_srs> yes, slower on my kvm boxes...
+    <braunr> so it's normal that ntpdate and other applications such as gitk
+      are broken
+    <braunr> if you try to fix it by playing with the timeout, you'll just
+      break the applications that were fixed in the past by playing with the
+      timeout another way
+    <braunr> can you understand that ?
+    <gnu_srs> forget the timeout default, it's a side issue.
+    <braunr> the *real* select/poll issue is that non blocking calls
+      (timeout=0) don't have the time to make a full round trip at the server
+    <braunr> no it's not, it's the whole problem
+    <braunr> some applications work with a higher timeout, some like gitk don't
+    <braunr> ntpdate might act just the same
+    <gnu_srs> yes of course, and I have not addressed this problem either, I'm
+      mostly interested in the 3-way split.
+    <braunr> well, it looks like you're trying to ..
+    <gnu_srs> to be able to submit my poll patches (not yet published)
+    <braunr> i suggest you postpone these changes until the underlying
+      implementation works
+    <braunr> i strongly suspect the split to be useless
+    <braunr> we shouldn't need completely different paths just for this
+      conformance issue
+    <braunr> so wait until select/poll is fixed, then test again
+    <gnu_srs> Read the POSIX stuff: poll and select are different.
+    <braunr> i know
+    <braunr> their expected behaviour is
+    <braunr> that's what needs to be addressed
+    <braunr> but you can't do that now, because there are other bugs in the way
+    <braunr> so you'll have a hard time making sure your changes do fix your
+      issues, because the problems might be cause by the other problems
+    <gnu_srs> since you are the one who knows best, why don't you implement
+      everything yourself.
+    <braunr> well, i did
+    <braunr> and i'm just waiting for the pthreads hurd to spread before
+      adapting my select branch
+
+[[libpthread]].
+
+    <braunr> it won't fix the conformance issue, but it will fix the underlying
+      implementation (the rpc)
+    <braunr> and then you'll have reliable results for the tests you're
+      currently doing
+    <gnu_srs> why not even trying out the cases I found to have problems??
+    <braunr> because i now know why you're observing what you're observing
+    <braunr> i don't need my eyes to see it to actually imagine it clerly
+    <braunr> when i start gitk and it's hanging, i'm not thinking 'oh my, i
+      need to hack glibc select/poll !!!'
+    <braunr> because i know the problem
+    <braunr> i know what needs to be done, i know how to do it, it will be done
+      in time
+    <braunr> please try to think the same way ..
+    <braunr> you're fixing problems by pure guessing, without understanding
+      what's really happenning
+    <gnu_srs> (10:59:17 AM) braunr: your hack *can't* solve the select/poll
+      correctness issue: which hack?
+    <braunr> "please consider removing setitimer because it blocks my ntpdate"
+    <braunr> gnu_srs: all your select related patches
+    <braunr> the poll_timeout, the 3-way split, they just can't
+    <braunr> changes need to be made at the server side too
+    <braunr> you *may* have fixed the conformance issue related to what is
+      returned, but since it get mixed with the underlying implementation
+      problems, your tests aren't reliable
+    <gnu_srs> well some of the test code is from gnulib, their code is not
+      reliable?
+    <braunr> their results aren't
+    <braunr> why is that so hard to understand for you ?
+    <gnu_srs> (11:08:05 AM) braunr: "please consider removing setitimer because
+      it blocks my ntpdate": It's not my ntpdate, it's a program that fails to
+      run on -38, but does on -37!
+    <braunr> it doesn't mean glibc -37 is right
+    <braunr> it just means the ntpdate case seems to be handled correctly
+    <braunr> a correct implementation is *ALWAYS* correct
+    <braunr> if there is one wrong case, it's not, and we know our select/poll
+      implementation is wrong
+    <gnu_srs> no of course not, and the ntpdate implementation is not correct?
+      file a bug upstream then.
+    <braunr> you're starting to say stupid things again
+    <braunr> ntpdate and gnulib tests can't be right if they use code that
+      isn't right
+    <braunr> it doesn't mean they'll always fail either, the programs that fail
+      are those for which select/poll behaves wrong
+    <braunr> same thing for setitimer btw
+    <braunr> we know it was wrong, and i think it was never working actually
+    <gnu_srs> where are the missing test cases then? maybe you should publish
+      correct code so we can try it out?
+    <braunr> i have, but there are dependencies that prevent using it right now
+    <braunr> which is why i'm waiting for pthreads hurd to spread
+    <braunr> pthreads provide the necessary requirements for select to be
+      correctly implemented at server side
+    <gnu_srs> well conformance with your code could be tested on Linux,
+      kFreeBSD, etc
+    <braunr> ?
+    <braunr> i'm not writing test units
+    <gnu_srs> /code/test code/
+    <braunr> the problem is *NOT* the test code
+    <braunr> the problem is some of our system calls
+    <braunr> it's the same for ntpdate and gitk and all other users
+    <gnu_srs> then the gnulib, ntpdate, gitk code is _not_ wrong
+    <braunr> no, but their execution is, and thus their results
+    <braunr> which is ok, they're tests
+    <braunr> they're here precisely to tell us if one case works
+    <braunr> they must all pass to hope their subject is right
+    <braunr> so, again, since there are several problems with our low level
+      calls, you may have fixed one, but still suffer from others
+    <braunr> so even if you did fix something, you may not consider the test
+      failure as an indication that your fix is wrong
+    <braunr> but if you try to make your changes fix everything just to have
+      results that look valid, it's certain to fail, since you only fix the
+      client side, and it's *known* the server side must be changed too
+    <gnu_srs> do you consider unsubmitted-single-hurdselect-timeout.diff and
+      local-select.diff a hack or not?
+    <braunr> the first isn't, since it fixes the correctness of the call for
+      one case, at the cost of some performance
+    <braunr> the second clearly is
+    <braunr> which is the difference between unsubmitted-* and local-*
+    <gnu_srs> and my proposal to modify the first is a hack?
+    <braunr> yes
+    <braunr> it reverts a valid change to "make things work" whereas we know
+      the previous behaviour was wrong
+    <braunr> that's close to the definition of a hack
+    <gnu_srs> "make things work" meaning breaking some applications?
+    <braunr> yes
+    <braunr> in this case, those using poll with one file descriptor and
+      expecting a timeout, not twice the timeout
+    <braunr> well, your change isn't really a revert
+    <braunr> hum yes actually it is
+    <gnu_srs> the timeout is correct
+    <braunr> no, it looks correct
+    <braunr> how did you test it ?
+    <braunr> and same question as yesterday: why only poll ?
+    <gnu_srs> see the code I mentioned before
+    <braunr> no i won't look
+    <braunr> it doesn't explain anything
+    <gnu_srs> I have not found any problems with select, only poll (yes, this
+      is a user perspective)
+    <braunr> that's what i call "pure guessing"
+    <braunr> you just can't explain why it fixes things
+    <braunr> because you don't know
+    <braunr> you don't understand what's really happening in the system
+    <braunr> there is a good idea in your change
+    <braunr> but merely for performance, not correctness
+    <braunr> (your change makes it possible to save the mach_msg receive if the
+      io_select blocked, which is good, but not required)
+
+See also [[alarm_setitimer]].
+
+
+#### IRC, freenode, #hurd, 2013-01-22
+
+    <gnu_srs> youpi: Maybe it's overkill to have a separate case for DELAY; but
+      it enhances readability (and simplifies a lot too)
+    <youpi> but it reduces factorization
+    <youpi> if select is already supposed to behave the same way as delay,
+      there is no need for a separate code
+    <gnu_srs> OK; I'll make a two-way split then. What about POLL and nfds=0,
+      timeout !=0?
+    <braunr> gnu_srs: handle nfds=0 as a pure timeout as the linux man page
+      describes
+    <braunr> it makes sense, and as other popular systems do it, it's better to
+      do it the same way
+    <braunr> and i disagree with you, factorization doesn't imply less
+      readability
+    <gnu_srs> So you agree with me to have a special case for DELAY?
+    <gnu_srs> Coding style is a matter of taste: for me case a: case b: etc is
+      more readable than "if then elseif then else ..."
+    <braunr> it's not coding style
+    <braunr> avoiding duplication is almost always best
+    <braunr> whatever the style
+    <braunr> i don't see the need for a special delay case
+    <braunr> it's the same mach_msg call
+    <braunr> (for now)
+    <braunr> gnu_srs: i'd say the only reason to duplicate is when you can't do
+      otherwise
+    <gnu_srs> ways of coding then... And I agree with the idea of avoiding code
+      duplication, ever heard of Literate Programming
+    <braunr> we'll need a "special case" when the timeout is handled at the
+      server side, but it's like two lines ..
+
+
+#### IRC, freenode, #hurd, 2013-02-11
+
+    <youpi> braunr: the libpthread hurd_cond_timedwait_np looks good to me
+
+
+##### IRC, freenode, #hurd, 2013-02-15
+
+    <youpi> braunr: does cond_timedwait_np depend on the cancellation fix?
+    <braunr> yes
+    <youpi> ok
+    <braunr> the timeout fix
+    <youpi> so I also have to pull that into my glibc build
+    <braunr> (i fixed cancellation too because the cleanup routine had to be
+      adjusted anyway
+    <braunr> )
+    <youpi> ah, and I need the patches hurd package too
+    <braunr> if unsure, you can check my packages
+    <youpi> ok, not for tonight then
+    <braunr> i listed the additional patches in the changelog
+    <youpi> yep, I'll probably use them
+
+
+#### IRC, freenode, #hurd, 2013-02-11
+
+    <youpi> braunr: I don't understand one change in glibc:
+    <youpi> - err = __io_select (d[i].io_port, d[i].reply_port, 0, &type);
+    <youpi> + err = __io_select (d[i].io_port, d[i].reply_port, type);
+    <braunr> youpi: the waittime parameter ahs been removed
+    <braunr> has*
+    <youpi> where? when?
+    <braunr> in the hurd branch
+    <youpi> in the defs?
+    <braunr> yes
+    <youpi> I don't see this change
+    <youpi> only the addition of io_select_timeout
+    <braunr> hum
+    <youpi> also, io_select_timeout should be documented along io_select in
+      hurd.texi
+    <braunr> be6e5b86bdb9055b01ab929cb6b6eec49521ef93
+    <braunr>     Selectively compile io_select{,_timeout} as a routine
+    <braunr>     * hurd/io.defs (io_select_timeout): Declare as a routine if
+    <braunr>     _HURD_IO_SELECT_ROUTINE is defined, or a simpleroutine
+      otherwise.
+    <braunr>     (io_select): Likewise. In addition, remove the waittime
+      timeout parameter.
+    <youpi> ah, it's in another commit
+    <braunr> yes, perhaps misplaced
+    <braunr> that's the kind of thing i want to polish
+    <braunr> my main issue currently is that time_data_t is passed by value
+    <braunr> i'm trying to pass it by address
+    <youpi> I don't know the details of routine vs simpleroutine
+    <braunr> it made sense for me to remove the waittime parameter at the same
+      time as adding the _HURD_IO_SELECT_ROUTINE macro, since waittime is what
+      allows glibc to use a synchronous RPC in an asynchronous way
+    <youpi> is it only a matter of timeout parameter?
+    <braunr> simpleroutine sends a message
+    <braunr> routine sends and receives
+    <braunr> by having a waittime parameter, _hurd_select could make io_select
+      send a message and return before having a reply
+    <youpi> ah, that's why in glibc you replaced MACH_RCV_TIMED_OUT by 0
+    <braunr> yes
+    <youpi> it seems a bit odd to have a two-face call
+    <braunr> it is
+    <youpi> can't we just keep it as such?
+    <braunr> no
+    <youpi> damn
+    <braunr> well we could, but it really wouldn't make any sense
+    <youpi> why not?
+    <braunr> because the way select is implemented implies io_select doesn't
+      expect a reply
+    <braunr> (except for the single df case but that's an optimization)
+    <braunr> fd*
+    <youpi> that's how it is already, yes?
+    <braunr> yes
+    <braunr> well yes and no
+    <braunr> that's complicated :)
+    <braunr> there are two passes
+    <braunr> let me check before saying anything ;p
+    <youpi> :)
+    <youpi> in the io_select(timeout=0) case, can it ever happen that we
+      receive an answer?
+    <braunr> i don't think it is
+    <braunr> you mean non blocking right ?
+    <braunr> not infinite timeout
+    <youpi> I mean calling io_select with the timeout parameter being set to 0
+    <braunr> so yes, non blocking
+    <braunr> no, i think we always get MACH_RCV_TIMED_OUT
+    <youpi> for me non-blocking can mean a lot of things :)
+    <braunr> ok
+    <braunr> i was thinking mach_msg here
+    <braunr> ok so, let's not consider the single fd case
+    <braunr> the first pass simply calls io_select with a timeout 0 to send
+      messages
+    <youpi> I don't think it's useful to try to optimize it
+    <youpi> it'd only lead to bugs :)
+    <braunr> me neither
+    <braunr> yes
+    <youpi> (as was shown :) )
+    <braunr> what seems useful to me however is to optimize the io_select call
+    <braunr> with a waittime parameter, the generated code is an RPC (send |
+      receive)
+    <braunr> whereas, as a simpleroutine, it becomes a simple send
+    <youpi> ok
+    <youpi> my concern is that, as you change it, you change the API of the
+      __io_select() function
+    <youpi> (from libhurduser)
+    <braunr> yes but glibc is the only user
+    <braunr> and actually no
+    <braunr> i mean
+    <braunr> i change the api at the client side only
+    <youpi> that's what I mean
+    <braunr> remember that io.Defs is almost full
+    <youpi> "full" ?
+    <braunr> i'm almost certain it becomes full with io_select_timeout
+    <braunr> there is a practical limit of 100 calls per interface iirc
+    <braunr> since the reply identifiers are request + 100
+    <youpi> are we at it already?
+    <braunr> i remember i had problems with it so probably
+    <youpi> but anyway, I'm not thinking about introducing yet another RPC
+    <youpi> but get a reasonable state of io_select
+    <braunr> i'l have to check that limit
+    <braunr> it looks wrong now
+    <braunr> or was it 50
+    <braunr> i don't remember :/
+    <braunr> i understand
+    <braunr> but what i can guarantee is that, while the api changes at the
+      client side, it doesn't at the server side
+    <youpi> ideally, the client api of io_select could be left as it is, and
+      libc use it as a simpleroutine
+    <youpi> sure, I understand that
+    <braunr> which means glibc, whether patched or not, still works fine with
+      that call
+    <braunr> yes it could
+    <braunr> that's merely a performance optimization
+    <youpi> my concern is that an API depends on the presence of
+      _HURD_IO_SELECT_ROUTINE, and backward compatibility being brought by
+      defining it! :)
+    <braunr> yes
+    <braunr> i personally don't mind much
+    <youpi> I'd rather avoid the clutter
+    <braunr> what do you mean ?
+    <youpi> anything that avoids this situation
+    <youpi> like just using timeout = 0
+    <braunr> well, in that case, we'll have both a useless timeout at the
+      client side
+    <braunr> and another call for truely passing a timeout
+    <braunr> that's also weird
+    <youpi> how so a useless timeout at the client side?
+    <braunr> 22:39 < youpi> - err = __io_select (d[i].io_port, d[i].reply_port,
+      0, &type);
+    <braunr> 0 here is the waittime parameter
+    <youpi> that's a 0-timeout
+    <braunr> and it will have to be 0
+    <youpi> yes
+    <braunr> that's confusing
+    <youpi> ah, you mean the two io_select calls?
+    <braunr> yes
+    <youpi> but isn't that necessary for the several-fd case, anyway?
+    <braunr> ?
+    <braunr> if the io_select calls are simple routines, this useless waittime
+      parameter can just be omitted like i did
+    <youpi> don't we *have* to make several calls when we select on several
+      fds?
+    <braunr> suure but i don't see how it's related
+    <youpi> well then I don't see what optimization you are doing then
+    <youpi> except dropping a parameter
+    <youpi> which does not bring much to my standard :)
+    <braunr> a simpleroutine makes mach_msg take a much shorter path
+    <youpi> that the 0-timeout doesn't take?
+    <braunr> yes
+    <braunr> it's a send | receive
+    <youpi> ok, but that's why I asked before
+    <braunr> so there are a bunch of additional checks until the timeout is
+      handled
+    <youpi> whether timeout=0 means we can't get a receive
+    <youpi> and thus the kernel could optimize
+    <braunr> that's not the same thing :)
+    <youpi> ok
+    <braunr> it's a longer path to the same result
+    <youpi> I'd really rather see glibc building its own private simpleroutine
+      version of io_select
+    <youpi> iirc we already have such kind of thing
+    <braunr> ok
+    <braunr> well there are io_request and io_reply defs
+    <braunr> but i haven't seen them used anywhere
+    <braunr> but agreed, we should do that
+    <youpi> braunr: the prototype for io_select seems bogus in the io_request,
+      id_tag is no more since ages :)
+    <braunr> youpi: yes
+    <braunr> youpi: i'll recreate my hurd branch with only one commit
+    <braunr> without the routine/simpleroutine hack
+    <braunr> and with time_data_t passed by address
+    <braunr> and perhaps other very minor changes
+    <youpi> braunr: the firstfd == -1 test needs a comment
+    <braunr> or better, i'll create a v2 branch to make it easy to compare them
+    <braunr> ok
+    <youpi> braunr: actually it's also the other branch of the if which needs a
+      comment: "we rely on servers implementing the timeout"
+    <braunr> youpi: ok
+    <youpi> -                 (msg.success.result & SELECT_ALL) == 0)
+    <youpi> why removing that test?
+    <youpi> you also need to document the difference between got and ready
+    <braunr> hm i'll have to remember
+    <braunr> i wrote this code like a year ago :)
+    <braunr> almost
+    <youpi> AIUI, got is the number of replies
+    <braunr> but i think it has to do with error handling
+    <braunr> and
+    <braunr> +                       if (d[i].type)
+    <braunr> +                         ++ready;
+    <youpi> while ready is the number of successful replies
+    <braunr> is what replaces it
+    <braunr> youpi: yes
+    <braunr> the poll wrapper already normalizes the timeout parameter to
+      _hurd_select
+    <braunr> no you probably don't
+    <braunr> the whole point of the patch is to remove this ugly hack
+    <braunr> youpi: ok so
+    <braunr> 23:24 < youpi> -                 (msg.success.result & SELECT_ALL)
+      == 0)
+    <braunr> when a request times out
+    <youpi> ah, right
+    <braunr> we could get a result with no event
+    <braunr> and no error
+    <braunr> and this is what makes got != ready
+    <youpi> tell that to the source, not me :)
+    <braunr> sure :)
+    <braunr> i'm also saying it to myself
+    <braunr> ... :)
+    <youpi> right, using io_select_request() is only an optimization, which we
+      can do later
+    <braunr> what i currently do is remove the waittime parameter from
+      io_select
+    <braunr> what we'll do instead (soon) is let the parameter there to keep
+      the API unchancged
+    <braunr> but always use a waittime of 0
+    <braunr> to make the mach_msg call non blocking
+    <braunr> then we'll try to get the io_request/io_reply definitions back so
+      we can have simpleroutines (send only) version of the io RPCs
+    <braunr> and we'll use io_select_request (without a waittime)
+    <braunr> youpi: is that what you understood too ?
+    <youpi> yes
+    <youpi> (and we can do that later)
+    <braunr> gnu_srs: does it make more sense for you ?
+    <braunr> this change is quite sparsed so it's not easy to get the big
+      picture
+    <braunr> sparse*
+    <braunr> it requires changes in libpthread, the hurd, and glibc
+    <youpi> the libpthread change can be almost forgotten
+    <youpi> it's just yet another cond_foo function :)
+    <braunr> well not if he's building his own packages
+    <youpi> right
+    <youpi> ok, apart from the io_select_request() and documenting the newer
+      io_select_timeout(), the changes seem good to me
+    <braunr> youpi: actually, a send | timeout takes the slow path in mach_msg
+    <braunr> and i actually wonder if send | receive | timeout = 0 can get a
+      valid reply from the server
+    <braunr> but the select code already handles that so it shouldn't be much
+      of a problem
+    <youpi> k
+
+
+##### IRC, freenode, #hurd, 2013-02-12
+
+    <braunr> hum
+    <braunr> io_select_timeout actually has to be a simpleroutine at the client
+      side :/
+    <braunr> grmbl
+    <youpi> ah?
+    <braunr> otherwise it blocks
+    <youpi> how so?
+    <braunr> routines wait for replies
+    <youpi> even with timeout 0?
+    <braunr> there is no waittime for io_select_timeout
+    <braunr> adding one would be really weird
+    <youpi> oh, sorry, I thought you were talking about io_select
+    <braunr> it would be more interesting to directly use
+      io_select_timeout_request
+    <braunr> but this means additional and separate work to make the
+      request/reply defs up to date
+    <braunr> and used
+    <braunr> personally i don't mind, but it matters for wheezy
+    <braunr> youpi: i suppose it's not difficult to add .defs to glibc, is it ?
+    <braunr> i mean, make glibc build the stub code
+    <youpi> it's probably not difficult indeed
+    <braunr> ok then it's better to do that first
+    <youpi> yes
+    <youpi> there's faultexec for instance in hurd/Makefile
+    <braunr> ok
+    <youpi> or rather, apparently it'd be simply user-interfaces
+    <youpi> it'll probably be linked into libhurduser
+    <youpi> but with an odd-enough name it shouldn't matter
+    <braunr> youpi: adding io_request to the list does indeed build the RPCs :)
+    <braunr> i'll write a patch to sync io/io_reply/io_request
+    <braunr> youpi: oh by the way, i'm having a small issue with the
+      io_{reply,request} interfaces
+    <braunr> the generated headers both share the same enclosing macro
+      (_io_user)
+    <braunr> so i'm getting compiler warning
+    <braunr> s
+    <youpi> we could fix that quickly in mig, couldn't we?
+    <braunr> youpi: i suppose, yes, just mentioning
+
+
+##### IRC, freenode, #hurd, 2013-02-19
+
+    <youpi> in the hurdselect.c code, I'd rather see it td[0]. rather than
+      td->
+    <braunr> ok
+    <youpi> otherwise it's frownprone
+    <youpi> (it has just made me frown :) )
+    <braunr> yes, that looked odd to me too, but at the same time, i didn't
+      want it to seem to contain several elements
+    <youpi> I prefer it to look like there could be several elements (and then
+      the reader has to find out how many, i.e. 1), rather than it to look like
+      the pointer is not initialized
+    <braunr> right
+    <youpi> I'll also rather move that code further
+    <youpi> so the preparation can set timeout to 0
+    <youpi> (needed for poll)
+    <youpi> how about turning your branch into a tg branch?
+    <braunr> feel free to add your modifications on top of it
+    <braunr> sure
+    <youpi> ok
+    <youpi> I'll handle these then
+    <braunr> youpi: i made an updated changelog entry in the
+      io_select_timeout_v3 branch
+    <youpi> could you rather commit that to the t/io_select_timeout branch I've
+      just created?
+    <braunr> i mean, i did that a few days ago
+    <youpi> (in the .topmsg file)
+    <youpi> ah
+    <youpi> k
+
+
+##### IRC, freenode, #hurd, 2013-02-26
+
+    <braunr> youpi: i've just pushed a rbraun/select_timeout_pthread_v4 branch
+      in the hurd repository that includes the changes we discussed yesterday
+    <braunr> untested, but easy to compare with the previous version
+
+
+##### IRC, freenode, #hurd, 2013-02-27
+
+    <youpi> braunr: io_select_timeout seems to be working fine here
+    <youpi> braunr: I feel like uploading them to debian-ports, what do you
+      think?
+    <braunr> youpi: the packages i rebuild last night work fine too
+
+
+# See Also
+
+See also [[select_bogus_fd]] and [[select_vs_signals]].

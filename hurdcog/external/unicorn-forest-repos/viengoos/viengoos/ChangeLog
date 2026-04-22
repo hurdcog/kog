@@ -1,0 +1,2823 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h: Don't include <l4.h>.
+	* mutex.h [USE_L4]: Only include <l4/thread.h> in this case.
+	(ss_mutex_t) [! USE_L4]: Define to be an int.
+	(ss_mutex_lock) [! USE_L4]: Make a no-op.
+	(ss_mutex_unlock) [! USE_L4]: Likewise.
+	(ss_mutex_trylock) [! USE_L4]: Likewise.
+	* object.h [USE_L4]: Only include <l4.h> in this case.
+	(object_desc_unmap) [! USE_L4]: Make a no-op.
+	(object_desc_flush) [! USE_L4]: Likewise.
+	* thread.h: Don't include <l4.h>.
+	(struct thread): Make tid a vg_thread_id_t, not an l4_thread_id_t.
+	(thread_lookup): Make threadid a vg_thread_id_t, not an
+	l4_thread_id_t.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (viengoos_LDADD): Link to
+	../libhurd-btree/libhurd-btree-kernel.a, not
+	../libhurd-btree/libhurd-btree.a.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Handle multiple objects in
+	object_discarded_clear.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Set SLOT to 0, not TARGET.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Look up capability addresses relative to
+	TARGET_ROOT, not THREAD->ASPACE in fault and futex.  In
+	thread_exregs, look them up relative to SOURCE->AS_ROOT.
+
+2008-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Use the first capability as the reply
+	messenger.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (update_stats): Use vg_activity_info_reply, not
+	rm_activity_info_reply.
+	* pager.c (pager_collect): Likewise.
+	* object.c (folio_object_alloc): Use
+	vg_object_reply_on_destruction_reply, not
+	rm_object_reply_on_destruction_reply.
+	* server.c (server_loop): Use vg_write_send_unmarshal, not
+	rm_write_send_unmarshal.  Use vg_write_reply, not rm_write_reply.
+	Use VG_read_send_unmarshal, not rm_read_send_unmarshal. Use
+	VG_read_reply, not rm_read_reply. Use VG_fault_send_unmarshal, not
+	rm_fault_send_unmarshal. Use VG_fault_reply, not
+	rm_fault_reply. Use VG_fault_reply, not rm_fault_reply. Use
+	VG_folio_alloc_send_unmarshal, not
+	rm_folio_alloc_send_unmarshal. Use VG_folio_alloc_reply, not
+	rm_folio_alloc_reply. Use VG_folio_free_send_unmarshal, not
+	rm_folio_free_send_unmarshal. Use VG_folio_free_reply, not
+	rm_folio_free_reply. Use VG_folio_object_alloc_send_unmarshal, not
+	rm_folio_object_alloc_send_unmarshal. Use
+	VG_folio_object_alloc_reply, not rm_folio_object_alloc_reply. Use
+	VG_folio_policy_send_unmarshal, not
+	rm_folio_policy_send_unmarshal. Use VG_folio_policy_reply, not
+	rm_folio_policy_reply. Use VG_cap_copy_send_unmarshal, not
+	rm_cap_copy_send_unmarshal. Use VG_cap_copy_reply, not
+	rm_cap_copy_reply. Use VG_cap_rubout_send_unmarshal, not
+	rm_cap_rubout_send_unmarshal. Use VG_cap_rubout_reply, not
+	rm_cap_rubout_reply. Use VG_cap_read_send_unmarshal, not
+	rm_cap_read_send_unmarshal. Use VG_cap_read_reply, not
+	rm_cap_read_reply. Use VG_object_discarded_clear_send_unmarshal,
+	not rm_object_discarded_clear_send_unmarshal. Use
+	VG_object_discarded_clear_reply, not
+	rm_object_discarded_clear_reply. Use
+	VG_object_discard_send_unmarshal, not
+	rm_object_discard_send_unmarshal. Use VG_object_discard_reply, not
+	rm_object_discard_reply. Use VG_object_status_send_unmarshal, not
+	rm_object_status_send_unmarshal. Use VG_object_status_reply, not
+	rm_object_status_reply. Use VG_object_name_send_unmarshal, not
+	rm_object_name_send_unmarshal. Use VG_object_name_reply, not
+	rm_object_name_reply. Use VG_thread_exregs_send_unmarshal, not
+	rm_thread_exregs_send_unmarshal. Use VG_thread_exregs_reply, not
+	rm_thread_exregs_reply. Use VG_thread_id_send_unmarshal, not
+	rm_thread_id_send_unmarshal. Use VG_thread_id_reply, not
+	rm_thread_id_reply. Use
+	VG_object_reply_on_destruction_send_unmarshal, not
+	rm_object_reply_on_destruction_send_unmarshal. Use
+	VG_activity_policy_send_unmarshal, not
+	rm_activity_policy_send_unmarshal. Use VG_activity_policy_reply,
+	not rm_activity_policy_reply. Use VG_activity_info_send_unmarshal,
+	not rm_activity_info_send_unmarshal. Use VG_activity_info_reply,
+	not rm_activity_info_reply. Use
+	VG_thread_activation_collect_send_unmarshal, not
+	rm_thread_activation_collect_send_unmarshal. Use
+	VG_thread_activation_collect_reply, not
+	rm_thread_activation_collect_reply. Use VG_as_dump_send_unmarshal,
+	not rm_as_dump_send_unmarshal. Use VG_as_dump_reply, not
+	rm_as_dump_reply. Use VG_futex_reply, not rm_futex_reply. Use
+	VG_futex_send_unmarshal, not rm_futex_send_unmarshal. Use
+	VG_futex_reply, not rm_futex_reply. Use VG_futex_reply, not
+	rm_futex_reply. Use VG_futex_reply, not rm_futex_reply.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c: Don't include <hurd/exceptions.h>.
+	* thread.c: Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.c: Don't include <l4/math.h>.  Include <viengoos/math.h>.
+	(zfree): Use vg_msb instead of l4_msb.
+	* ager.c (update_stats): Likewise.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c: Don't include "rm.h" but <viengoos/misc.h>.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h: Move from here...
+	* ../libviengoos/viengoos/misc.h: ... to here.  Update users.
+	* headers.m4: Don't link rm.h to hurd/rm.h.
+	* Makefile.am (viengoos_SOURCES): Remove rm.h.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_activate): Don't update
+	UTCB->SAVED_THREAD_STATE.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_deliver_pending): Only unlink M if it
+	successfully activates its associated thread.
+
+2008-12-16  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Only set SOURCE->BUFFER if the message
+	is not inline.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Fix the activity_policy implementation
+	to allow a weak capability to set an activity's child relative
+	policy but not its sibling relative policy.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	Implement messengers and convert to new IPC semantics.
+	* messenger.h: New file.
+	* messenger.c: New file.
+	* Makefile.am (viengoos_SOURCES): Add messenger.h and messenger.c.
+	* ager.c: Include "messenger.h".
+	(update_stats): Update notifivation code to use messengers.
+	* cap.c: Include <hurd/messenger.h>.
+	(cap_shootdown): Follow thread and messenger objects.
+	* object.h (object_wait_queue_head): Use and return struct
+	messenger *'s, not struct thread *'s.  Update users.
+	(object_wait_queue_tail): Likewise.
+	(object_wait_queue_next): Likewise.
+	(object_wait_queue_prev): Likewise.
+	(object_wait_queue_enqueue): Likewise.
+	(object_wait_queue_dequeue): Likewise.  Rename from this...
+	(object_wait_queue_unlink): ... to this.
+	(object_wait_queue_push): New declaration.
+	(folio_object_wait_queue_for_each): Use and return struct
+	messenger *'s, not struct thread *'s.  Update users.
+	(object_wait_queue_for_each): Likewise.
+	* object.c: Include <hurd/messenger.h> and "messenger.h".
+	(folio_object_alloc): When destroying a messenger, call
+	messenger_destroy.
+	(folio_object_alloc): Send notifications using messengers.
+	(object_wait_queue_head): Use and return struct messenger *'s, not
+	struct thread *'s.
+	(object_wait_queue_tail): Likewise.
+	(object_wait_queue_next): Likewise.
+	(object_wait_queue_prev): Likewise.
+	(object_wait_queue_check): Likewise.
+	(object_wait_queue_enqueue): Likewise.  Add MESSENGER to end of
+	the queue, not the beginning.
+	(object_wait_queue_push): New function.
+	(object_wait_queue_dequeue): Use and return struct messenger *'s,
+	not struct thread *'s.  Rename from this...
+	(object_wait_queue_unlink): ... to this.
+	* pager.c: Include "messenger.h".
+	* thread.h: Don't include "list.h".  Include <hurd/cap.h> and
+	<hurd/thread.h>.
+	(struct folio): Remove declaration.
+	(THREAD_SLOTS): Don't define.
+	(THREAD_WAIT_FUTEX): Move from here...
+	* messenger.h (MESSENGER_WAIT_FUTEX): ... to here.
+	* thread.h (THREAD_WAIT_DESTROY): Move from here...
+	* messenger.h (MESSENGER_WAIT_DESTROY): ... to here.
+	* thread.h (THREAD_WAIT_ACTIVITY_INFO): Move from here...
+	* messenger.h (MESSENGER_WAIT_ACTIVITY_INFO): ... to here.
+	* thread.h (struct thread): Rename field exception_page to utcb.
+	Add field exception_messenger.  Remove fields wait_queue_p,
+	wait_queue_head, wait_queue_tail, wait_reason, wait_reason_arg,
+	wait_reason_arg2, wait_queue and futex_waiter_node.
+	(futex_waiters): Don't declare.
+	(thread_exregs): Change input capabilities to not be pointers to
+	capabilities but just capability structures.  Add argument
+	exception_messenger.  Remove arguments aspace_out, activity_out
+	and exception_page_out.  Update users.
+	(thread_activate): New declaration.
+	(thread_raise_exception): Change MSG's type to be struct
+	vg_message *.  Update users.
+	(thread_deliver_pending): New declaration.
+	* thread.c (thread_deinit): Remove code to remove THREAD from a
+	wait queue.
+	(thread_exregs): Change input capabilities to not be pointers to
+	capabilities but just capability structures.  Update code.  Add
+	argument exception_messenger.  Set THREAD's exception messenger
+	according to it and CONTROL.  Remove arguments aspace_out,
+	activity_out and exception_page_out.  Don't save the old
+	capabilities.
+	(thread_raise_exception): Move body of function...
+	(thread_activate): ... to this new function.  Update to use
+	messengers.
+	(thread_raise_exception): Implement in terms of it.
+	(thread_deliver_pending): New function.
+	* server.c: Include <hurd/ipc.h> and "messenger.h".
+	(DEBUG): If label is the IPC label, use "IPC" as the function.
+	(OBJECT_): Take additional parameter WRITABLE.  Save whether the
+	object is writable in *WRITABLE.  Update users.
+	(OBJECT): Likewise.
+	(server_loop): Update to use messengers and the new IPC interface.
+	Update method implementations appropriately.  Don't marshal faults
+	using exception_fault_send_marshal but the new
+	activation_fault_send_marshal.  Remove implementations of
+	object_slot_copy_out, object_slot_copy_in and object_slot_read.
+	Reimplement object_discard.  In the thread_exregs implementation,
+	handle the exception messenger.  Implement thread_id.  Remove
+	thread_wait_object_destroyed.  Implement
+	object_reply_on_destruction.  In activity_info and
+	activity_policy, don't operate on PRINCIPAL but the invoke
+	activity.  Implement thread_activation_collect.  When blocking on
+	a futex, don't enqueue the calling thread but the reply messenger.
+	Implement the messenger_id method.
+	(REPLY): Redefine before processing an object invocation to reply
+	using the reply messenger included in the request.
+
+	* rm.h: Include <l4/message.h>.
+	(rm_method_id_string): Don't handle object_slot_copy_out,
+	object_slot_copy_in, object_slot_read, exception_collect or
+	thread_wait_object_destroyed.  Handle object_reply_on_destruction,
+	thread_id, thread_activation_collect.
+	(RPC_TARGET_NEED_ARG): Don't undefine.
+	(RPC_TARGET): Don't define.
+	(struct io_buffer): Redefine in terms of L4_NUM_BRS.
+	(write): Update interface specification according to new IDL
+	interface.  Update users.
+	(read): Likewise.
+	(as_dump): Likewise.
+	(fault): Likewise.
+	(RPC_STUB_PREFIX): Don't undefine.
+	(RPC_ID_PREFIX): Likewise.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (bootstrap): Add code to configure the memory to
+	better detect buffer overflows and other incorrect memory
+	accesses.
+	(bootstrap): Don't fault in the binary here...
+	(memory_configure): ... but here.  Set the main thread's pager to
+	l4_nilthread.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.c (zalloc_internal): Only assert that ZALLOC_MEMORY is
+	zero if the requested allocation is for PAGESIZE bytes of memory.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (RM_fault): Define.
+	(rm_method_id_string): Handle it.
+	(fault): New RPC.
+	* server.c (server_loop): Implement it.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Add code to the page fault handler that
+	not only map the faulted page but also some following pages.
+	Leave disabled.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): Only print configuration when
+	destroying the root activity.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Count the number of shared pages that are
+	unmapped, the total number of active pages and the total number of
+	inactive pages.  Print this information.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Update use of profile_start to match new
+	API.
+	* pager.c (pager_collect): Likewise.
+
+2008-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Add field maybe_folio_desc.
+	(objects_folio): Use it if valid.  If not, update it.
+	
+2008-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_init): Don't clear BUFFER or OBJECT_DESCS.
+	* thread.c (thread_init): Don't clear BUFFER.
+
+2008-11-17  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (struct fault_info): Remove struct.
+	(page_fault): Remove function.  Inline code in callers.
+	(server_loop): Comment out code that prefaults pages in cap_copy
+	and object_discarded_clear.
+
+2008-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Count the number of shared pages which were
+	unmapped, the total number of active pages and the total number of
+	inactive pages.  Also print that.
+
+2008-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.c (cap_to_object_internal): Don't clear CAP->TYPE if
+	object_find returns NULL.
+	* server.c (page_fault): Look up the object using cap_to_object.
+	Check the capability's version with the object's version.
+
+2008-11-15  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.h (zalloc_internal): New declaration.
+	(zalloc): Change to an inline function, which calls
+	zalloc_internal if there is sufficient memory to satisfy the
+	request.
+	* zalloc.c (zalloc): Rename from this...
+	(zalloc_internal): ... to this.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (reclaim_from): Use list_dequeue instead of list_unlink.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_init): Set OBJECTS load factory to 30.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c (memory_frame_allocate): Take frames from the head of
+	the available list.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): Dump the current statistics
+	whenever an activity is destroyed.
+
+2008-11-14  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (struct fault_info): New structure.
+	(page_fault): New function.
+	(server_loop): Implement page fault handling in terms of the new
+	function.  When copying a capability that makes a page available
+	in the caller's hardware address space, map it preemptively.  When
+	clearing a discarded bit for a page that appears in the caller's
+	hardware address space, allocate the object and map it
+	preemptively.
+
+2008-11-12  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (list_queue): Rename from this...
+	(list_enqueue): ... to this.  Update users.
+	(list_dequeue): New function.
+	(LIST_CLASS): Rename the generated queue function accordingly and
+	update users.  Generate a stub for dequeueing elements.
+
+2008-11-12  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (reclaim_from): Add victims to the end of the eviction
+	list.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Add frames to the end of the active or
+	inactive list, not the head.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_desc_claim): Fix typo.
+
+2008-11-04  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Replace fields active, inactive,
+	priorities and priorities_count with fields frames_ and frames.
+	Update users.
+	* object.h (activity_lru): Rename from this...
+	(activity): ... to this.  Update users.
+	* activity.c (activity_destroy): When moving frames claimed by a
+	child to its parent's lowest priority level, update each frame's
+	respective priority.
+	(activity_prepare) [! NDEBUG]: Initialize priority levels.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Use s_printf, not debug, to print the
+	unpatched warning.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty viengoos/libhurd-cap.a.
+
+2008-10-08  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (enum rm_method_id): Add RM_read.
+	(rm_method_id_string): Handle it.
+	(read): New RPC.
+	* server.c (server_loop): Implement the read RPC.
+
+2008-08-15  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the implementation of cap_read, if
+	the capability's type is not void, make sure that the capability
+	is valid.  Otherwise, set the type to cap_void.
+
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.h: Move to ../libc-parts.
+	* profile.c: Likewise.
+	* Makefile.am (viengoos_SOURCES): Remove profile.h and profile.c.
+	* ager.c: Don't include "profile.h" but <profile.h>.
+	(update_stats): Replace use of profile_start and profile_end with
+	profile_region and profile_region_end.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (viengoos.striped): Rename from this...
+	(viengoos.stripped): ... to this.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load): Free the memory associated with
+	the main executable.
+	(bootstrap): New function.
+	(main): Move most functionality to it.  Call it.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_collect): Start with a factor of 1, not 0, when
+	calculating the impact of active pages.  When calculating the
+	number of frames available to an activity, cast the unsigned
+	variables to ints.  Correct the calculation of FRAMES.  Bump
+	VICTIM->FREE_ALLOCATIONS to a 1000.  Always add GOAL to
+	TOTAL_FREED when we send a memory pressure message.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (update_stats): When calculating statistics, remove a
+	little bit from the total memory available to the root activity.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (all-local) [! ENABLE_TESTS]: Only define in this
+	case.
+	(viengoos.striped) [! ENABLE_TESTS]: Likewise.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c: Include "zalloc.h" and "memory.h".
+	(activity_dump): Also print the total amount of memory, the
+	available memory, and the memory on the laundry list.
+
+2008-07-01  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the cap_rubout implementation,
+	shootdown TARGET.
+
+2008-07-01  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (object_desc_to_cap): Correctly set the subpage
+	specification.
+
+2008-07-01  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (viengoos_LDADD): Also add
+	../libhurd-mm/libas-kernel.a before libc-kernel.a.
+
+2008-06-30  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.c (cap_shootdown): Iterate over all capabilities in a
+	cappage and all elements in a folio, not just the first log2 of
+	them.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (all-local): New target.
+	(viengoos.striped): Likewise.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c: Include <hurd/trace.h>.
+	(thread_exregs): Improve debugging output.
+	(thread_raise_exception): Likewise.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): After printing the profile data,
+	print the enabled debugging options.
+	
+	(do_activity_dump): Also print how many free allocations the
+	activity has, its karma and the number of excluded frames.
+
+2008-06-28  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Fix debug statement.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Add fields free_bad_karma,
+	free_goal, free_allocations and free_initial_allocation.
+	* rm.h (rm_method_id_string): Replace RM_activity_stats handling
+	with RM_activity_info handling.
+	* thread.h (THREAD_WAIT_STATS): Remove.
+	(THREAD_WAIT_ACTIVITY_INFO): Replace with this.
+	(struct thread): Add field wait_reason_arg2.
+	* ager.c (update_stats): Account for local pressure when
+	calculating availability.  Don't use activity_stats to inform
+	threads of new statistics but activity_info.
+	* object.c (object_desc_claim): Adjust the activity's FREE_GOAL,
+	FREE_ALLOCATIONS, and FRAMES_EXCLUDED fields as appropriate.
+	* pager.c (pager_collect): When selecting a victim, don't include
+	an activity's excluded frames in its allocation.  Don't even
+	consider activities for which FREE_ALLOCATIONS is non-zero.
+	Having selected a victim, don't increase the pressure do
+	drastically.  Update the local pressure.  Having selected a victim
+	from which to revoke pages, send any waiting threads a message to
+	free memory.  If VICTIM->FREE_BAD_KARMA is 0, assume that the
+	memory will be freed and give the activity 100 claims to do it.
+	If the activity has bad karma, decrease it by one.
+	* server.c (server_loop): Replace activity_stats implementation
+	with implementation appropriate for activity_info.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Assign viengoos_tid after we test that that
+	libl4 was correctly configured.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (reclaim_from): Only update VICTIM's evicted statistic.
+	Don't update its ancestors'.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (update_stats): Add child stats to parent here.
+	(ager_loop): Not here.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (RM_putchar): Remove.
+	(RM_write): Replace with this.
+	(rm_method_id_string): Update.
+	(struct io_buffer): New structure.
+	(write): New method.
+	* server.c (server_loop): Replace putchar method implementation
+	with write method implementation.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (rm_method_id_string): Handle the RM_object_name case.
+	* server.c (server_loop): Implement the object_name method.
+
+	* activity.h (struct activity): New field name.
+	* thread.h (struct thread): Likewise.
+	* object.h (OBJECT_NAME_FMT): New macro.
+	(OBJECT_NAME_PRINTF): Likewise.
+	* activity.c: Include "thread.h".
+	(do_activity_dump): Use OBJECT_NAME_FMT and OBJECT_NAME_PRINTF
+	rather than OID_FMT and OID_PRINTF.
+	(activity_dump): Only call do_activity_dump if debugging output is
+	enabled.
+	* pager.c: Include "thread.h".
+	(pager_collect): Use OBJECT_NAME_FMT and OBJECT_NAME_PRINTF rather
+	than OID_FMT and OID_PRINTF.
+	* ager.c (update_stats): Likewise.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_charge): Also update ACTIVITY's claimed and
+	disowned statistics, as appropriate.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the implementation of cap_discard, if
+	cap_to_object_soft fails, only return ENOENT if the version does
+	not match.  If the object is not in memory, still clear the
+	content bit.  Don't forget to free the memory.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Move assert from here...
+	* object.c (object_init): ... to here.  Use build_asserts, not
+	asserts to check object sizes.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In object_discarded_clear
+	implementation, if the capability is weak, return EPERM.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Implement cap_discard.
+	* rm.h (rm_method_id_string): Handle the RM_object_discard case.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (update_stats): When we mean ACTIVITY, use ACTIVITY, not
+	P.
+
+2008-06-24  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_desc_claim): Declare and initialize EC.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.c (extant): New variable.
+	(profile_start): Increment it.
+	(profile_end): Decrement it.  Only add the time to TOTAL_TIME if
+	EXTANT is 0.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Change AGE from a uint16_t to a
+	uint8_t.
+	* ager.c (ager_loop): Set TIMEOUT to a quarter of a second.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (update_stats): New function.  Update statistics and
+	implement available algorithm.
+	(ager_loop): Don't update update statistics here, call
+	update_stats.
+
+	(ager_loop): Profile time spent unmapping pages.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c (memory_frame_allocate): If we discard a page, update
+	DESC->ACTIVITY's DISCARDED statistic.
+
+	* pager.c (pager_collect): When we collect an activity, update
+	its pressure statistic.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c: Include "profile.h".
+	(pager_collect): Profile.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.h (pager_min_alloc_before_next_collect): New declaration.
+	(pager_collect_needed): Only collect if AVAILABLE_PAGES >
+	PAGER_LOW_WATER_MARK and PAGER_MIN_ALLOC_BEFORE_NEXT_COLLECT > 0.
+	(pager_collect_needed): Don't include the dirty, non-discardable
+	pages when consider if a collection is required.
+	* pager.c (pager_min_alloc_before_next_collect): New variable.
+	(pager_collect): If we don't collect enough pages to exceed the
+	high water mark, set PAGER_MIN_ALLOC_BEFORE_NEXT_COLLECT to
+	two-thirds the available pages.
+	* memory.c (memory_frame_allocate): On success, decrement
+	PAGER_MIN_ALLOC_BEFORE_NEXT_COLLECT.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the cap_copy implementation, if the
+	caller updates the capability's policy, if the object is in
+	memory, also update it appropriately.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Add field frames_pending_eviction.
+	Note that we now include frames that are in the laundry in the
+	FRAMES_TOTAL and FRAMES_LOCAL variables.
+	* object.c (object_desc_claim): If claiming a non-discardable
+	eviction candidate, update ACTIVITY's FRAMES_LOCAL, and it and its
+	ancestors' FRAMES_TOTAL and FRAMES_PENDING_EVICTION fields.
+	* pager.c (reclaim_from): Update VICTIM->FRAMES_LOCAL,
+	FRAMES_TOTAL and FRAMES_PENDING_EVICTION appropriately.
+	(process): If ACTIVITY_FRAMES is less than GOAL / 1000, don't
+	bother collecting the activity.
+	(pager_collect): Loop at most 8 times.  Increase the active factor
+	by two.  When calling process, don't include the frames pending
+	eviction.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Add field priorities_count.
+	* activity.c (activity_destroy): Update it.
+	* object.c (object_desc_claim): Likewise.
+	* pager.c (reclaim_from): Likewise.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.h (viengoos_tid): New declaration.
+	(ager_tid): New declaration.
+	* viengoos.c (viengoos_tid): New variable.
+	(ager_tid): Likewise.
+	(ager_start): Don't push Viengoos's tid on the stack.  Save the
+	ager's tid in AGER_TID and Viengoos's in VIENGOOS_TID.
+	* ager.h (ager_loop): Don't take any arguments.
+	* ager.c: Include "viengoos.h".
+	(ager_loop): Don't take any arguments.  Use VIENGOOS_TID, not
+	MAIN_THREAD.
+
+2008-06-23  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.c (profile_end): Only dump profile statistics every
+	100000 samples if the debug output level is or exceeds 5.
+	(profile_stats_dump): When printing the per-call time, also print
+	the first digit after the period.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c: Include "profile.h".
+	(activity_destroy): If ACTIVITY is the root activity, dump the
+	profile statistics before panicking.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c: Include "profile.h".
+	(ager_loop): Profile.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (list_count) [! NDEBUG]: Don't check the length of the
+	list in this case...
+	[! NCHECK]: ... but in this case.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the implementation of
+	object_discarded_clear, if CAP.TYPE is void, directly return
+	ENOENT.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h: Include "list.h".
+	(struct thread) [! NDEBUG]: Add field futex_waiter_node.
+	[! NDEBUG]: Instantiate the futex_waiter list class.
+	(futex_waiters) [! NDEBUG]: Declare.
+	* server.c (futex_waiters) [! NDEBUG]: New variable.
+	(server_loop) [! NDEBUG]: If we don't get an RPC for a while,
+	dequeue all thread's enqueued on FUTEX_WAITERS and return EDEADLK.
+	When blocking a thread on a futex, add THREAD to FUTEX_WAITERS.
+	* object.c (object_wait_queue_dequeue) [! NDEBUG]: If
+	THREAD->WAIT_REASON is THREAD_WAIT_FUTEX, unlink THREAD from
+	FUTEX_WAITERS.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* profile.c: New file.
+	* profile.h: Likewise.
+	* Makefile.am (viengoos_SOURCES): Add profile.h and profile.c.
+	* server.c: Include "profile.h".
+	(PAGEFAULT_METHOD): Define.
+	(server_loop): Add profiling code.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): If CAP_COPY_DISCARDABLE_SET or
+	CAP_COPY_PRIORITY_SET is set, also update the object's policy,
+	when appropriate.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c: Include "pager.h".
+	(ager_loop): Consider total available memory as not MEMORY_TOTAL
+	but MEMORY_TOTAL - PAGER_LOW_WATER_MARK.  Improve debugging
+	output.
+
+2008-06-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Implement the cap_rubout method.
+	* rm.h (rm_method_id_string): Handle RM_cap_rubout.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): In the object_discarded_clear
+	implementation, don't use cap_to_object, which ignores discarded
+	object, to find the object but look it up manually.
+
+2008-06-11  Neal H. Walfield  <neal@gnu.org>
+
+	* output.c (puts) [_ENABLE_TESTS]: Don't define.
+	(vprintf) [_ENABLE_TESTS]: Likewise.
+	(printf) [_ENABLE_TESTS]: Likewise.
+
+2008-06-11  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h: Include <s-printf.h>.
+	(device_puts): Remove declaration.
+	(device_vprintf): Likewise.
+	(device_printf): Likewise.
+	* output.c (device_puts): Remove function.
+	(print_nr): Likewise.
+	(print_signed_nr): Likewise.
+	(device_vprintf): Likewise.
+	(device_printf): Likewise.
+	(puts): Implement in terms of s_puts.
+	(vprintf): Implement in terms of s_vprintf.
+	(printf): Likewise.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c: Move from here...
+	* ../libhurd-mm/as-lookup.c: ... to here.
+	* as.c: Move from here...
+	* ../libhurd-mm/as-build.c: ... to here.
+	* as-custom.c: Move from here...
+	* ../libhurd-mm/as-build-custom.c: ... to here.
+	* as.h: Move contents...
+	* ../libhurd-mm/as.h: ... to here...
+	* ../libhurd-mm/as-compute-gbits.h: ... and to here.
+	* bits.h: Move from here...
+	* ../libhurd-mm/bits.h: ... to here.
+	* Makefile.am (viengoos_SOURCES): Remove cap-lookup.c, as.h and
+	as.c.
+	(t_as_SOURCES): Likewise.
+	(t_activity_SOURCES): Likewise.
+	(viengoos_LDADD): Add ../libhurd-mm/libas-kernel.a.
+	(t_as_LDADD): Add ../libhurd-mm/libas-check.a.
+	(t_activity_LDADD): Likewise.
+	(lib_LIBRARIES): Remove libhurd-cap.a.
+	(libhurd_cap_a_CPPFLAGS): Remove variable.
+	(libhurd_cap_a_CFLAGS): Likewise.
+	(libhurd_cap_a_SOURCES): Likewise.
+	* server.c (server_loop): Replace use of object_lookup_rel with
+	as_object_lookup_rel.  Replace use of slot_lookup_rel with
+	as_slot_lookup_rel_use.  Replace use of cap_lookup_rel with
+	as_cap_lookup_rel.
+	* viengoos.c: Don't include "as.h", include <hurd/as.h>.
+	* t-activity.c: Don't include "as.h", include <hurd/as.h>.
+	(allocate_object): Change return type to struct
+	as_allocate_pt_ret.
+	* t-as.c: Don't include "as.h", include <hurd/as.h>.
+	(allocate_object): Change return type to struct
+	as_allocate_pt_ret.
+	(allocate_page_table): New function.
+	(try): Replace use of as_insert with as_insert_full.  Replace use
+	of slot_lookup_rel with as_slot_lookup_rel_use.  Replace use of
+	object_lookup_rel with as_object_lookup_rel.
+	(test): Likewise.
+	* t-guard.c: Don't include "as.h", include <hurd/as.h>.  Include
+	"../libhurd-mm/as-compute-gbits.h".
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c: Include <hurd/trace.h>.
+	(rpc_trace) [!NDEBUG]: New trace buffer.
+	(DEBUG) [!NDEBUG]: If LEVEL <= 4, add the message to the trace
+	buffer.
+	(server_loop) [!NDEBUG]: If 5 seconds pass without an RPC, dump
+	the trace buffer.  Improve debugging output.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (abort): Add declaration.
+
+2008-05-31  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_slot_ensure_full): Update use of storage_check_reserve
+	to be consistent with new API.
+	(as_insert): Likewise.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c [! RM_INTERN]: Include <hurd/storage.h>.
+	(as_slot_ensure_full) [! RM_INTERN]: Call storage_check_reserve.
+	(as_insert) [! RM_INTERN]: Likewise.
+	
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+	Create symbolic link to package's library in `sysroot/lib/'.
+	* Makefile.am [ENABLE_TESTS]: Don't build package's program and
+	library.
+
+	* viengoos.c (parse_args): Use `strtol' instead of `atoi'.
+
+	* object.h: Include <hurd/error.h> instead of <error.h>.
+
+	* cap-lookup.c: Unconditionally use `S_PUTCHAR' and `S_PRINTF' instead
+	of `s_putchar' and `s_printf' and remove the latters' prototypes.
+
+	* Makefile.am: Rework system of build flags for the test programs.
+
+2008-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c: Include <hurd/exceptions.h>.
+	(ensure_stack): Change SPACE to be EXCEPTION_STACK_SIZE - PAGESIZE
+	bytes large.  Write to each page.
+	* cap-lookup.c: Include <hurd/exceptions.h>.
+	(ensure_stack): Change SPACE to be EXCEPTION_STACK_SIZE - PAGESIZE
+	bytes large.  Write to each page.
+
+	* zalloc.c (ZONE_SIZE): Add suffix the 1 with a U type qualifier.
+	(ZONES): Include one less zone.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_find_soft): Also claim the object if
+	ODESC->EVICTION_CANDIDATE is true.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_collect): Correctly parenthesize the use of <<.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_collect): Don't just consider the first-level
+	activities, walk the activity hierarchy to find the victim.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (slot_lookup_rel): Don't take parameter type.  Pass
+	-1 to lookup in its place.
+	* server.c (server_loop): Update use of slot_lookup_rel to be
+	consistent with new API.
+	* t-as.c (try): Likewise.
+	(test): Likewise.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): If a cappage is read-only, only bail if
+	TYPE is not weak.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (ager_start): Increase the stack size.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_object_alloc): Set CAP's policy to POLICY.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): Don't update WRITABLE if the designated
+	capability's type is strong but the requested type weak.  Consider
+	the designated capability's type incompatible with the requested
+	type if the former is weak and the latter strong.
+
+2008-05-28  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (folio_object_alloc): Return a struct cap, not void.
+	Remove the objectp parameter.  Update all users.
+	* object.c (folio_object_alloc): Return a capability designating
+	the new object.  Don't take a location in which to store the
+	new object.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (THREAD_WAIT_STATS): Define.
+	* server.c (server_loop): Update implementation of activity_stats
+	to handle the new parameter, until_period.  If the current period
+	is less than UNTIL_PERIOD, queue the caller on PRINCIPAL and do
+	not reply.
+	* ager.c: Include "thread.h".
+	(ager_loop): When generating an activity's statistics, if a thread
+	is waiting for the statistic, send it reply.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): When we need a principal, use PRINCIPAL,
+	not ACTIVITY.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_desc_claim): Fix debug statement, ACTIVITY may
+	be NULL.
+
+2008-05-24  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h (ss_mutex_lock): Wait for any local thread.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (rm_method_id_string): Handle the case where ID is
+	RM_activity_stats.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (object_desc_flush): Take additional parameter,
+	clear_kernel.  If true, fetch the status bits corresponding to
+	Viengoos even if the dirty bit is set.  Update callers.
+
+	* pager.c (is_clean): More thoroughly check that a page alleged to
+	be clean is really all zeros.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (rm_method_id_string): Handle the case where ID is
+	RM_object_status.
+	* server.c (server_loop): Implement the object_status method.
+
+	* ager.c (ager_loop): Set DESC->USER_DIRTY and DESC->REFERENCED as
+	appropriate.
+	* object.c (folio_object_alloc): Clear ODESC->USER_REFERENCED and
+	ODESC->USER_DIRTY.
+	(folio_object_alloc): Clear the object's user referenced and user
+	dirty bits.
+	* object.h (struct object_desc): Add fields user_dirty and
+	user_referenced.
+	(object_desc_unmap): Update DESC->USER_DIRTY and
+	DESC->USER_REFERENCED appropriately.
+	(object_desc_flush): LIkewise.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (object_desc_flush): Take additional parameter
+	CLEAR_KERNEL.  If true, also clear the kernel's status bits.
+
+	* object.c (memory_object_alloc): Clear OBJECT's status bits
+	before returning it.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (object_find_soft): If we don't claim ODESC, mark it as
+	shared.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): If the caller's activity slot does not
+	designate a valid activity object, just ignore the message.
+	
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (ager_start): Set the new thread's pager to the
+	initial thread.
+	* server.c (server_loop): If we get a message from a kernel (i.e.,
+	Viengoos) thread, panic.
+
+2008-05-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Don't flush shared pages, only unmap them.
+
+2008-05-21  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_object_alloc): Use the strong variant of TYPE.
+
+2008-05-21  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): To see if we are at the start of a period,
+	check if ITERATIONS is a multiple of FREQ, not if it is zero.  Set
+	each activity's statistic's period field.  Always increment
+	iterations.
+	(ager_loop): 
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (COMMON_CPPFLAGS): Remove variable.
+	(viengoos_CPPFLAGS): Set to $(KERNEL_CPPFLAGS).
+	(viengoos_CFLAGS): New variable.
+	(libhurd_cap_a_CPPFLAGS): Set to $(USER_CPPFLAGS).
+	(libhurd_cap_a_CFLAGS): New variable.
+	(t_as_CFLAGS): New variable.
+	(t_activity_CFLAGS): Likewise.
+	(t_link_CFLAGS): Likewise.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Implement object_discarded_clear method.
+	* rm.h (rm_method_id_string): Handle RM_object_discarded_clear
+	case.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): On a page fault, use cap_to_object_soft
+	to find the page.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.h (cap_to_object): New declaration.
+	(cap_to_object_soft): Likewise.
+	* cap.c (cap_to_object_internal): New function.
+	(cap_to_object): Implement in terms of it.
+	(cap_to_object_soft): New function.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Unify the inactive_dirty and
+	inactive_clean lists.  Update users.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): Move objects from VICTIM's
+	priority tree to its VICTIM->PARENT's priority tree, not its
+	inactive lists.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (FOLIOS_CORE): Increase value.
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (struct list) [! NDEBUG]: Add field name.
+	(list_init): Add parameter name.  Update users.
+	(LIST_CLASS): Update template to account for list_init changes.
+	(list_unlink): Improve debugging output.
+	* activity.c (activity_prepare): Explicitly initialize all lists.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): When raising a fault, set INFO.DISCARDED
+	to DISCARDED, not true.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Improve debugging output.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_collect): When looking for a victim activity, if
+	none are found, repeat the process giving the number of active
+	pages less weight.  Fix asserts.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): When resolving a fault, if the page was
+	discarded, reflect the fault.
+	* object.c (object_find): If the page was discarded, return NULL.
+	(folio_object_alloc): Clear the discarded flag.
+	* object.c (memory_object_destroy): Don't set the discarded flag
+	or content flag here.
+	* memory.c (memory_frame_allocate): Set them here.
+
+2008-02-18  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup) [RM_INTERN]: When generating a capability
+	to an object in a folio, don't lookup the object and then use
+	object_to_cap, just use folio_object_cap.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Add fields mapped, shared and
+	floating.
+	(object_desc_unmap): Only unmap a page if DESC->MAPPED is true.
+	(object_desc_flush): Call object_desc_unmap rather than copying
+	the code.
+	* object.c (object_find_soft): If ODESC->FLOATING is true, claim
+	the object.  Set ODESC->FLOATING to false.
+	(folio_object_alloc): After clearing the page, flush it and then
+	ODESC->DIRTY to false.  Set ODESC->SHARED to false.
+	* ager.c (SAMPLES): Rename from this...
+	(FREQ): ... to this.  Update users.
+	(ager_loop): Don't just flush the whole address space; every FREQ
+	iterations, unmap shared objects, set DESC->MAPPED to false, and
+	DESC->FLOATING to true.
+	* server.c (server_loop): When mapping a page, record it.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.c (cap_shootdown): Fix scoping problem.  If an object of a
+	folio is identical with the start capability, return.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.c (zalloc): Reduce debugging output when there is no
+	memory available.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (kernel_lock): New declaration.  Replace current
+	locking scheme with this global lock variable.
+	(lru_lock): Remove variable.
+	(struct object_desc): Remove field lock.
+	* object.c (kernel_lock): New variable.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.h: Include "memory.h", "zalloc.h", and "object.h".
+	(pager_collect): Take an additional argument goal and return an
+	integer.
+	(PAGER_LOW_WATER_MARK): New macro.
+	(PAGER_HIGH_WATER_MARK): Likewise.
+	(pager_collect_needed): New function.
+	(pager_query): Likewise.
+	* pager.c (LOW_WATER_MARK): Don't define.
+	(HIGH_WATER_MARK): Likewise.
+	(is_clean): New function.
+	(reclaim_from): New function.  Broken out of pager_collect.
+	Correctly update statistics.
+	(pager_collect): Take an additional argument goal and return an
+	integer.  Rewrite victim selection implementation.
+	* memory.c (memory_frame_allocate): Call page_query.  If zalloc
+	fails, take from the available list.  Add asserts.  Don't clear
+	memory if we get memory from zalloc.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Calculate statistics.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (ACTIVITY_STATS): Correctly bounds check
+	ACTIVITY->CURRENT_PERIOD.
+	(ACTIVITY_STATS_LAST): New macro.
+
+	* server.c (server_loop): Correctly copy the statistic buffers to
+	the output buffer.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (memory_object_destroy): Set discardable bit if appropriate.
+	
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (memory_object_destroy): Move lru_lock unlock later.
+	
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Change live from bit field to a
+	bool.
+	* object.c: Include <assert.h>.
+	(memory_object_destroy): Add asserts.  Fix canary being careful
+	not to overwrite DESC->LIVE.
+	(object_find_soft): Add assert.
+	(folio_object_alloc): Likewise.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h: Include "list.h".
+	(LIST_CLASS_TYPE): Declare an activity_children list.
+	(struct activity): Change children's type to a struct
+	activity_children_list.  Replace sibling_next and sibling_prev
+	with sibling, a struct list_node.
+	(activity_for_each_inmemory_child): Remove macro.
+	* activity.c (children_list_insert_after): Remove function.
+	Replace uses with appropriate list function.
+	(children_list_detach): Likewise.
+	* pager.c (pager_collect): Replace use of
+	activity_for_each_inmemory_child with a list iterator.
+	* ager.c (ager_loop): Likewise.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (object_desc_unmap) [_L4_TEST_ENVIRONMENT]: Do nothing.
+	(object_desc_unmap) [_L4_TEST_ENVIRONMENT]: When adding the dirty
+	bit, be careful to make sure that the correct value is bitwise
+	or'ed into DESC->DIRTY.
+	(object_desc_flush): New function.
+	* cap.c (cap_shootdown): Don't use l4_unmap_fpage, use
+	object_desc_unmap instead.
+	* pager.c (pager_collect): Replace use of object_desc_unmap with
+	object_desc_flush.
+	
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* cap.c (cap_shootdown): If we encounter a capability designating
+	the same object as CAP, skip it.
+
+2008-02-15  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (list_insert_after): New function.
+	(LIST_CLASS): Add above function to template.
+	
+	(LIST_CLASS_TYPE): New macro.
+	(LIST_CLASS): Take additional argument need_type.  If false, don't
+	generate a type declaration.  Update users.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-crt0.S (STACK_SIZE): Increase to 64 pages.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_for_each_inmemory_child): Add additional
+	asserts.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Update comment regarding fault handling for
+	additional threads.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_policy_update): New declaration.
+	* activity.c (children_list_insert_after): New function.
+	(children_list_detach): Likewise.
+	(activity_prepare): Use the above to insert ACTIVITY onto its
+	parent's children list.  Keep the list is priority sorted order.
+	(activity_deprepare): Likewise, but to remove ACTIVITY from its
+	parent's children list.
+	(activity_policy_update): New function.
+	* server.c (server_loop): Use activity_policy_update to update an
+	activity's policy.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* pager.c (pager_collect): If CHILD and VICTIM have the same
+	weight steal from the activity with the larger number of frames.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Implement activity_stats method.
+
+	* ager.c (ager_loop): Implement first pass at updating available
+	memory statistic.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c: Don't include <loader.h>.  Include <process-spawn.h>.
+	(system_task_load): Just call process_spawn to load the task.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load.alloc): Update alloc callback
+	function to take additional parameter ro to be consistent with the
+	updated API.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (program_name): Change type to char *.
+	* viengoos.h (program_name): Likewise.
+	* panic.c (program_name): Likewise.
+	* t-environment.h (program_name): Likewise.
+	(environment_init): Just set program_name to
+	argv[0].
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_raise_exception): Improve the debugging output
+	for the case where the thread has no exception page.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): If sending or receiving fails, don't
+	panic, print a debugging diagnostic and recover.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (OBJECT_): Use object_lookup_rel, not CAP_, to find
+	objects.
+	(ROOT): If ROOT_ADDR_ is not ADDR_VOID, use OBJECT to find the
+	thread.  If that fails, use SLOT, not CAP, to find the capability
+	slot.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ia32-crt0.S (_start): Clear EBP before jumping to cmain.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_insert): Change return type to struct cap *.
+	* as.c (as_insert): Change return type to struct cap *.
+	Return SLOT.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_object_alloc): When reallocating an object and
+	the object is in memory, clear the memory.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): When calculating the value for *WRITABLE,
+	only consider the permission to dereference the capability in the
+	resolved slot when MODE is want_object.
+
+	Tweak debugging output.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (print_nr): Use s_printf and s_putchar instead of
+	printf and putchar.
+
+	(do_walk): Take additional argument descend.  If false, after
+	printing the capability, just return.  Update callers.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Raise debugging level of futex debugging
+	output.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (viengoos_LDADD): Link against newlib's
+	`libc-routines.a'.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (memory_object_destroy): Update comment to indicate
+	that LRU_LOCK must not be held by the caller.
+	(object_desc_claim): Update comment to indicate that LRU_LOCK must
+	be held by the caller.
+	* object.c (memory_object_destroy): Don't assert that LRU_LOCK is
+	held.  Take the lock before calling object_desc_claim.
+	(object_desc_claim): Assert that LRU_LOCK is held.
+	* viengoos.c (system_task_load): Take LRU_LOCK before calling
+	object_claim.
+
+	* memory.c (memory_frame_allocate): After getting an object, lock
+	it and then drop LRU_LOCK.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c: Don't include "output.h".
+	(AS_LOCK) [! RM_INTERN]: Only define if not already defined.
+	(AS_UNLOCK) [! RM_INTERN]: Likewise.
+	(AS_DUMP): Pass AS_ROOT_ADDR to the invocation of rm_as_dump.
+	(ID): New macro.
+	(OBJECT_INDEX_PARAM): New macro.
+	(OBJECT_INDEX_ARG): Likewise.
+	(do_index): Reverse order of pte and addr arguments.  Update
+	users.
+	(as_build_internal): Wrap function name with ID.  Add
+	OBJECT_INDEX_PARAM to formal arguments.  Set the subpage size of
+	the capability before calling do_index.  Add additional asserts
+	and comments.
+	(as_slot_ensure_full): Wrap function name with ID.  Add
+	OBJECT_INDEX_PARAM to formal arguments.  Include OBJECT_INDEX_ARG
+	when invoking as_build_internal.
+	(as_insert): Likewise.
+	* as.c (as_lock): Move from here...
+	* cap-lookup.c: ... to here.
+	* as.c (print_nr): Move from here...
+	* cap-lookup.c: ... to here.
+	* as.c (do_walk): Move from here...
+	* cap-lookup.c: ... to here.
+	* as.c (as_dump_from): Move from here...
+	* cap-lookup.c: ... to here.
+	* as-custom.c: New file customizing as.c.
+	* Makefile.am (libhurd_cap_a_SOURCES): Add as-custom.c.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (rm_method_id_string): Handle
+	RM_thread_wait_object_destroyed.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (as_dump): Change parameter to specify the root of an
+	address space, not necessarily a thread object.
+	* server.c (server_loop): Update as_dump implementation to be
+	consistent with the new as_dump API.
+
+	* server.c (ROOT): First lookup the capability using CAP.  If it
+	is not a thread object, only then get the slot.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Add debugging output to futex
+	implementation.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (DEBUG): Print the caller's thread id.
+	(server_loop): When using DEBUG, don't include the caller's thread
+	id.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_init): Update use of
+	hurd_ihash_init_with_buffer to be consistent with new API.
+	* object.c (object_init): Likewise.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* output-serial.c (serial_init): Rewrite command-line parser to
+	not use strtok.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (do_index): New function.
+	(as_build_internal): Don't index a page table directly.  Instead,
+	use the above new function.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_build_internal): Improve comments.  Do some variable
+	renaming.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_build_internal): When addressing capability pages, use
+	the thread's address space, not AS_ROOT_ADDR.
+
+2008-02-06  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_free): Synchronize the in-memory descriptor with
+	the on-disk data.
+	(folio_object_alloc): Likewise.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct wait_queue_node): Remove structure.
+	(struct thread): Add field wait_queue_p.  Make the wait queue next
+	and previous pointers oid_t's and not struct cap's.  Update users.
+	* object.h (object_oid): New function.
+	* as.c (as_build_internal): Don't access a folio's fields
+	directly; use the accessor functions.
+	* cap.c (cap_shootdown): Likewise.
+	* cap-lookup.c (lookup): Likewise.
+	* object.c (memory_object_destroy): Likewise.
+	(object_find): Likewise.
+	(folio_free): Likewise.
+	(folio_object_alloc): Likewise.
+	(object_wait_queue): Remove function.
+	(object_wait_queue_head): Don't access a folio's fields directly;
+	use the accessor functions.  Update implementation to reflect
+	struct thread changes.
+	(object_wait_queue_tail): Likewise.
+	(object_wait_queue_next): Likewise.
+	(object_wait_queue_prev): Likewise.
+	(object_wait_queue_check): Likewise.
+	(object_wait_queue_enqueue): Likewise.
+	(object_wait_queue_dequeue): Likewise.
+	* object.h (folio_object_wait_queue_for_each): Likewise.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Add additional debugging output.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Add fields current_period and
+	stats.
+	(ACTIVITY_STATS): New macro.
+	(ACTIVITY_STAT_UPDATE): Likewise.
+	* ager.c (ager_loop): Gather statistics.
+	* pager.c (pager_collect): Likewise.
+
+2008-01-26  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (ROOT): Reduce debugging output.
+
+2008-01-26  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (SLOT): Take a pointer to the root of the address
+	space.  Update users.
+	(CAP): Likewise.
+	(OBJECT): Likewise.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load): Correctly copy startup data.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load): Restructure to allow the use of
+	more than one page of start up data.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c: Include <loader.h>.  Don't include "loader.h".
+	(system_task_load): Update user of loader_elf_load to new API.
+	* loader.h: Move to ../libc-parts.
+	* loader.c: Move to ../libc-parts.
+	* elf.h: Move to ../libc-parts.
+	* Makefile.am (viengoos_SOURCES): Remove elf.h, loader.h and
+	loader.c.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (viengoos_LDADD): Fix link order.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_insert): Rename argument AS_ROOT_ADDR to TARGET_AS.
+	Take additional argument SOURCE_AS.  Update users.
+	* as.c (as_build_internal): Update use of cap_copy_x to be
+	consistent with new API.
+	(as_insert): Take additional argument ENTRY_AS.  Update use of
+	cap_copy to be consistent with new API.
+	* cap.h (cap_set): Update use of cap_copy to be consistent with
+	new API.
+	* thread.c (thread_exregs): Update use of cap_copy and cap_copy_x
+	to be consistent with new API.
+
+	* as.h (as_slot_ensure_full): New declaration.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load): When allocating the activity and
+	thread, pass ADDR_VOID as the address to allocate_object.  On
+	return, set the object's descriptor to designate the allocated
+	storage.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (SLOT_): Take additional argument root.  Use it rather
+	than THREAD->ASPACE.  Update users.
+	(SLOT): Likewise.
+	(CAP_): Likewise.
+	(CAP): Likewise.
+	(ROOT): New macro.
+	(server_loop): Update cap_read, object_slot_copy_out,
+	object_slot_copy_in, object_slot_read, cap_copy_x, and cap_copy
+	method implementations to new API.
+	* as.h (as_insert): Take additional argument AS_ROOT_ADDR.
+	Update users.
+	* as.c (as_build_internal): Take additional argument
+	AS_ROOT_ADDR.  Pass it to cap_copy_x.
+	(as_slot_ensure_full): Take additional argument AS_ROOT_ADDR.
+	Pass it to as_build_internal.
+	(as_insert): Likewise.
+	* thread.c (thread_exregs): Update use of cap_copy to conform
+	with new API.
+	* cap.h (cap_set): Likewise.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (viengoos_LDADD): Link with
+	../libc-parts/libc-kernel.a, not ../libc-parts/libc-parts.a
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_init): Clear BUFFER.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* mmap.c: Remove file.
+	* Makefile.am (viengoos_SOURCES): Remove mmap.c.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c: Include "zalloc.h".
+	(thread_init): Initialize TID_TO_THREAD hash here.  Allocate using
+	zalloc.
+	* object.c: Include "zalloc.h".
+	(object_init): Allocate hash table and object_descs using zalloc.
+	* Makefile.am (viengoos_SOURCES): Remove malloc.h and
+	malloc-wrap.c.
+	(viengoos_LDADD): Use ../libhurd-ihash/libhurd-ihash-nomalloc.a
+	rather than ../libhurd-ihash/libhurd-ihash.a.
+	(EXTRA_viengoos_SOURCES): Remove variable.
+
+	* memory.c (memory_grab) [_L4_TEST_ENVIRONMENT]: Don't include
+	binary when calculating available memory.
+
+2008-01-22  Neal H. Walfield  <neal@gnu.org>
+
+	* mutex.h: New file, copy ../hurd/mutex.h.
+
+	* ager.c: Include "mutex.h", not <hurd/mutex.h>.
+	* object.h: Likewise.
+	* t-environment.h: Likewise.
+	* viengoos.c: Likewise.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_object_alloc): If a thread is waiting for an
+	event other than THREAD_WAIT_DESTROY, return EFAULT.
+
+2008-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (THREAD_WAIT_FUTEX): New define.
+	(THREAD_WAIT_DESTROY): Likewise.
+	(struct thread): Remove fields futex_block and futex_offset.  Add
+	fields wait_reason and wait_reason_arg.  Update users.
+	* object.h (folio_object_alloc): Take additional argument
+	return_code.  Update users.
+	(folio_object_wait_queue_for_each): New macro.
+	* object.c: Include <hurd/thread.h>.
+	(folio_object_alloc): Take additional argument return_code.
+	Wake any threads blocked on the object being destroyed.
+	* server.c (server_loop): Update folio_object_alloc method
+	implementation to new API.  Pass RETURN_CODE to the call to
+	folio_object_alloc.  Implement the thread_wait_object_destroyed
+	method.
+	* t-activity.c (allocate_object): Update rm_folio_object_alloc use to
+	reflect API changes.
+	(test): Likewise.
+	* t-as.c (allocate_object): Likewise.
+
+2008-01-15  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct thread): New forward.
+	(object_wait_queue_head): New declaration.
+	(object_wait_queue_tail): New declaration.
+	(object_wait_queue_next): New declaration.
+	(object_wait_queue_prev): New declaration.
+	(object_wait_queue_enqueue): New declaration.
+	(object_wait_queue_dequeue): New declaration.
+	(object_wait_queue_for_each): New macro.
+	* object.c (object_wait_queue): New function.
+	(object_wait_queue_head): Likewise.
+	(object_wait_queue_tail): Likewise.
+	(object_wait_queue_next): Likewise.
+	(object_wait_queue_prev): Likewise.
+	(object_wait_queue_check): Likewise.
+	(object_wait_queue_enqueue): Likewise.
+	(object_wait_queue_dequeue): Likewise.
+	* thread.h (struct wait_queue_node): New structure.
+	(struct thread): Add fields wait_queue_head, wait_queue_tail,
+	futex_block, futex_offset and wait_queue.
+	* thread.c (thread_deinit): If THREAD is enqueue on a wait queue,
+	dequeue it.
+	
+	* rm.h: Include <hurd/futex.h>.
+	(rm_method_id_string): Handle the RM_futex case.
+
+	* server.c: Include <hurd/futex.h>.
+	(server_loop): Implement the rm_futex method.
+
+2008-01-13  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (list_unlink): Cast LIST.
+
+2008-01-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c: Update statistics.
+
+	* activity.h (struct activity): New fields current_period and
+	stats.
+	(ACTIVITY_STATS): New macro.
+	(ACTIVITY_STAT_UPDATE): Likewise.
+
+2008-01-13  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): When making a frame inactive, be
+	sure to reset its age to 0.
+
+	* list.h (list_unlink): Improve debugging output.
+
+2008-01-10  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): Update activity statistics.  Change the
+	number of iterations
+
+	* activity.h (struct activity): Add field stats and
+	current_period.
+	(ACTIVITY_STATS): New macro.
+	(ACTIVITY_STAT_UPDATE): New macro.
+
+2008-01-06  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (object_age): Add parameter referenced.  Update users.
+	Use text-book aging algorithm.
+	* ager.c (ager_loop): Use object_age to age objects.
+
+	* object.h (object_active): New function.
+	* object.c (object_find_soft): Use it to check whether an object
+	is active.
+	(object_desc_claim): Likewise.
+	* ager.c (ager_loop): Likewise.
+
+2008-01-06  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c (memory_frame_allocate): Pass the correct arguments to
+	available_list_prev.
+
+2008-01-04  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Add fields eviction_clean and
+	eviction_dirty.  Improve comments.
+	(activity_charge): Change asserts to account for unsignedness.
+	* activity.c (activity_destroy): Move all objects owned by VICTIM
+	to its parent.
+	(activity_deprepare): Add additional asserts.
+	(do_activity_dump): Don't assert that ACTIVITY->FRAMES_LOCAL is
+	the sum of the items on ACTIVITY's LRU lists.
+	* object.h (struct object_desc): Add fields eviction_candidate,
+	live, laundry_node and available_node.  Make priority_node a union
+	with activity_node, which replaces activity_lru.  Remove field
+	global_lru.
+	(object_activity_lru): Rename this list class...
+	(activity_lru): ... to this.  Update users.
+	(object_global_lru): Don't generate this list class.
+	(eviction): Generate new list class.
+	(available): Likewise.
+	(laundry): Likewise.
+	(global_active): Remove declaration.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Likewise.
+	(laundry): New declaration.
+	(available): Likewise.
+	(memory_object_destroy): Likewise.
+	(object_desc_disown_simple): Remove declaration.
+	(object_disown_simple): Remove function.
+	(object_desc_disown): Likewise.
+	(object_disown): Likewise.
+	(object_desc_claim): Take additional parameter update_accounting.
+	Update users.
+	(object_claim): Likewise.
+	(object_desc_unmap): New function.
+	(object_age): Likewise.
+	(objects_folio_offset): Likewise.
+	(objects_folio): Likewise.
+	(object_free): Implement in terms of the above two functions.
+	* object.c (global_active): Remove variable.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Likewise.
+	(laundry): New variable.
+	(available): Likewise.
+	(memory_object_alloc): Initialize ODESC to 0.  Call
+	object_desc_claim to attach it to the relevant lists.  Assert that
+	ODESC->LIVE is 0.  Set ODESC->LIVE to 1.
+	(memory_object_destroy): Remove static qualifier.  Require that
+	LRU_LOCK be held on entry.  Update users.  Use object_desc_claim
+	to disconnect DESC from any lists to which it is attached.  Don't
+	call memory_frame_free, that is now the caller's responsibility.
+	Update users. Set DESC->LIVE to 0.
+	(folio_free): Don't disown the folio header.
+	(folio_object_alloc): Call memory_frame_free to really free the
+	memory.
+	(object_desc_disown_simple): Remove function.
+	(object_desc_disown_): Likewise.
+	(object_desc_claim): Take additional parameter update_accounting.
+	If true, update the relevant activities' accounting information.
+	Update connect and disconnect code.  Only add an object to one of
+	the priority tree and the lru lists, but not both.
+	* viengoos.c (system_task_load): After allocating the
+	root activity, have the root activity claim it and FOLIO.
+	* ager.c: Include "zalloc.h".
+	(AGE_DELTA): Don't define.
+	(ager_loop): Rewrite to walk the object descriptors sequentially
+	rather than following a linked list.  Update object list
+	connection and disconnection code.
+	* pager.h: New file.
+	* pager.c: Likewise.
+	* Makefile.am (viengoos_SOURCES): Add pager.h and pager.c.
+	* memory.h (struct activity): Add forward.
+	(memory_frame_allocate): Take additional parameter activity.
+	Return a uintptr_t instead of an l4_word_t.  Update users.
+	* memory.c: Include "pager.h" and "activity.h".
+	(memory_grab): Always get base page sized pages.
+	(memory_frame_allocate): Take additional parameter activity.
+	Return a uintptr_t instead of an l4_word_t.  If zalloc fails,
+	check AVAILABLE_LIST.  If nothing is applicable, call
+	pager_collect and try again.
+	* t-environment.h (pager_collect): New function.
+
+2008-01-04  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c (memory_add): Add to MEMORY_TOTAL here.
+	(memory_grab): Never here.
+
+2008-01-04  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h (struct list_node): Add comment that about initialization
+	requirements.
+	(list_unlink): Always set ITEM->NEXT and ITEM->PREV to NULL.
+
+	(list_node_attached): New function.
+
+	(list_count): Add an assert.
+
+2008-01-03  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (folio_alloc): Correctly account folios.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (libhurd_cap_a_CPPFLAGS): Add
+	-mpreferred-stack-boundary=2.
+
+	* as.c (ensure_stack) [! RM_INTERN]: New function.
+	(AS_LOCK) [! RM_INTERN]: Call it.
+	* cap-lookup.c (ensure_stack) [! RM_INTERN]: New function.
+	(AS_LOCK): New macro.
+	(AS_UNLOCK): Likewise.
+	(cap_lookup_rel): Use AS_LOCK and AS_UNOCK rather than
+	pthread_rwlock_rdlock and pthread_rwlock_unlock, respectively.
+	(object_lookup_rel): Likewise.
+	(slot_lookup_rel): Likewise.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (parse_args) [DEBUG_ELIDE]: Indicate in the help text
+	that debugging output is disabled.  Don't assign to OUTPUT_DEBUG in
+	this case.
+	(memory_configure): Use do_debug rather than directly checking
+	against OUTPUT_DEBUG.
+	(system_task_load): Likewise.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* t-link.c: Include <stdlib.h>.
+	(test): Use malloc to allocate the object.  Free them on unlink.
+	Improve coverage of tail and prev functions.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* object.c (memory_object_destroy): Unlock LRU_LOCK.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h: Don't include <l4.h>, <errno.h> or <hurd/btree.h>.
+	Include <hurd/activity.h>.
+	(struct activity): Remove fields priority, weight and
+	storage_quota.  Replace with policy.  Change folio_count to a
+	uint32_t.  Update users.
+
+	* server.c (server_loop): Remove activity_properties
+	implementation.  Add activity_policy implementation.
+
+	* rm.h (rm_method_id_string): Remove RM_activity_properties case.
+	Handle RM_activity_policy.
+
+2008-01-01  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (struct activity): Rename field parent to parent_cap.
+	Rename field children to children_cap.  Rename field sibling_next
+	to sibling_next_cap.  Rename field sibling_prev to
+	sibling_prev_cap.  Rename field parent_ptr to parent.  Add fields
+	children, sibling_next and sibling_prev.  Rename field frames to
+	frames_total.  Add field frames_local.  Update users.
+	(activity_prepare): New declaration.
+	(activity_deprepare): Likewise.
+	(activity_charge): Update ACTIVITY->FRAMES_LOCAL.
+	(activity_for_each_inmemory_child): New define.
+	* activity.c (activity_create): Call activity_prepare.
+	(activity_destroy): Assert that VICTIM->FRAMES_LOCAL is 0.  Call
+	activity_deprepare.
+	(activity_prepare): New function.
+	(activity_deprepare): Likewise.
+	(do_activity_dump): Assert that the total number of objects on the
+	active, dirty and clean lists matches ACTIVITY->FRAMES_LOCAL.
+
+2007-12-31  Neal H. Walfield  <neal@gnu.org>
+
+	* list.h: New file.
+	* Makefile.am (viengoos_SOURCES): Add list.h.
+	(t_link_SOURCES): Remove object.h.  Add list.h.
+	* object.h: Include "list.h".
+	(LINK_TEMPLATE): Move from here...
+	* list.h: ... to this new file.  Generalize functionality.  Add
+	count, head, prev, next and prev methods.  Rename LINK_TEMPLATE to
+	LIST_CLASS.  Update users.
+	* object.h (struct object_desc): Change activity_lru and
+	global_lru to struct list_node's.
+	(global_active): Change to a struct object_global_lru_list.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Change to a struct object_activity_lru_list.
+	* object.c (global_active): Change to a struct
+	object_global_lru_list.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Change to a struct object_activity_lru_list.
+	* activity.h (struct activity): Change active, inactive_clean and
+	inactive_dirty to struct object_activity_lru_list's.
+
+2007-12-31  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.h: Include <stdint.h>.
+	(memory_total): New declaration.
+	* memory.c (memory_total): Define.
+	(memory_grab): Before exiting, set memory_total to zalloc_memory.
+
+	(memory_frame_allocate): If zalloc fails, panic.
+
+2007-12-30  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.h (zalloc_memory): New declaration.
+	* zalloc.c (zalloc_memory): New definition.
+	(zfree): Keep zalloc_memory up to date.
+	(zalloc): Likewise.  Add an assert.
+	(zalloc_dump_zones): Add an assert.
+
+2007-12-30  Neal H. Walfield  <neal@gnu.org>
+
+	* zalloc.h: Don't include <l4.h>.  Include <stdint.h>.  Replace
+	use of l4 types with standard C types.
+	* zalloc.c: Include <stdint.h> and <l4/math.h>.  Replace use of l4
+	types with standard C types.
+	(zone): Don't explicitly initialize to 0.
+
+2007-12-30  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c (memory_add): Don't add the page at address 0 to the
+	free pool.
+
+2007-12-27  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (LINK_TEMPLATE): Move assertion related code into the
+	assert statement.
+
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* t-activity.c (test): Remove unused variable.
+
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_for_each_child): Improve comment.
+	(activity_consistency_check): Remove.
+	(activity_consistency_check_): Likewise.
+	* activity.c (activity_consistency_check_): Remove.
+	* object.c (memory_object_alloc): Remove call to
+	activity_consistency_check.
+	(object_find_soft): Likewise.
+	(folio_free): Likewise.
+	(folio_object_alloc): Likewise.
+
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Replace field activity_lru.prevp
+	with activity_lru.prev.  Replace field global_lru.prevp with
+	global_lru.prev.
+	(LINK_TEMPLATE): Use circular lists.  Replace the
+	object_field_link function with object_field_push and
+	object_field_queue.  Require that the caller pass the head of the
+	list to unlink.  Update users.
+
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Refactor code to eliminate gcc
+	uninitialized use warnings.
+	
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Refactor code to move variable
+	declaration into the smallest scope in which they are used.
+
+2007-12-26  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h: Include <hurd/btree.h>.  Don't include "activity.h".
+	(struct activity): Add forward.
+	(struct object_desc): Add field priority_node.
+	(priority_compare): New function.
+	(priorities): New btree class.
+	* activity.h: Include <hurd/btree.h>.  Don't include "object.h".
+	(struct activity): Add field priorities.
+	* ager.c (ager_loop): Don't add discardable dirty objects to the
+	inactive dirty list.
+	* object.h (object_find): Take additional parameter policy.
+	Update callers.
+	(object_find_soft): Likewise.
+	(object_desc_disown_simple): Move implementation from here...
+	* object.c (object_desc_disown_simple): ... to here.  Maintain
+	the activity's priority-ordered object list.
+	* object.h (object_desc_disown_): Move from here...
+	* object.c (object_desc_disown_): ... to here.  Maintain the
+	activity's priority-ordered object list.
+	* object.h (object_desc_claim_): Move from here...
+	* object.c (object_desc_claim_): ... to here.  Take additional
+	parameter policy.  Save the policy in the object descriptor.
+	Maintain the activity's priority-ordered object list.  Update
+	callers.
+	* object.h (object_claim_): Take additional parameter policy.
+	Pass it to object_desc_claim_.  Update callers.
+	* object.c (memory_object_alloc): Take additional parameter
+	policy.  Pass it to object_desc_claim.  Update callers.
+	(object_find_soft): Likewise.
+	(object_find): Likewise.
+	
+2007-12-25  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (struct object_desc): Add field policy.
+	(object_desc_to_cap): Also return the discardable bit and the
+	priority.
+	(folio_object_alloc): Take additional parameter, the object's
+	policy.  Update callers.
+	* object.c (folio_object_alloc): Take additional parameter, the
+	object policy.  Save it in the folio header.
+	* as.c (as_build_internal): Update cap_copy_x use to reflect API
+	changes.
+	* thread.h: Remove parameter addr_trans and replace with a
+	parameter that includes it and the object policy.  Update users.
+	* thread.c (thread_exregs): Remove parameter addr_trans and
+	replace with a parameter that includes it and the object policy.
+	Pass it to cap_copy_x as appropriate.
+	* server.c: Include "output.h".
+	(server_loop): Update the folio_object_alloc,
+	object_slot_copy_out, object_slot_copy_in, and cap_copy
+	implementations to set the allocated object's policy consistent
+	with the API changes.  Update the object_slot_read and cap_read
+	implementations to return the object policy consistent with the
+	API changes.  Update the thread_exregs implementation to handle
+	the address space capability's object policy consistent with the
+	API changes.
+
+2007-12-24  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_build_internal): Include "output.h".
+
+	* cap-lookup.c (lookup): Use OID_FMT and OID_PRINTF rather than
+	assuming OID's type.
+	* as.c (as_build_internal): Likewise.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* shutdown.c: Include "output.h".
+
+2007-12-22  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (folio_alloc): Take additional parameter policy.
+	Update users.
+	(folio_policy): New declaration.
+	* object.c: Include <hurd/folio.h>.
+	(folio_alloc): Take additional parameter policy.  Use it.
+	(folio_policy): New function.
+	* server.c (server_loop): Update folio_alloc implementation to
+	handle additional parameter policy.  Implement the folio_policy
+	method.
+
+2007-12-21  Neal H. Walfield  <neal@gnu.org>
+
+	* output.h: Include <stdint.h> and <stdbool.h>.
+	(struct output_driver): Add a struct output_driver * argument to
+	all function pointers.  Update users.  Add fields getchar and
+	cookie.
+	(output_init): Take additional arguments device, a struct
+	output_driver * pointing to storage to hold the driver instance,
+	and make_default, a boolean, indicating whether the device should
+	be made the default device.
+	(output_deinit): Take additional argument device, a struct
+	output_driver *, designating the device to deinitialize.  Update
+	users.
+	(device_putchar): New declaration.
+	(device_puts): Likewise.
+	(device_vprintf): Likewise.
+	(device_printf): Likewise.
+	(device_getchar): Likewise.
+	(getchar): Likewise.
+	* output.c: Include <hurd/stddef.h>.
+	(output): Rename...
+	(default_device): ... to this.  Update users.
+	(output_init): Take additional parameter, device.  Treat the
+	selected driver as a template and store a copy of it here.  Take
+	additional parameter make_default.  If true, set DEFAULT_DEVICE to
+	the driver.  If DEFAULT_DEVICE was not NULL and MAKE_DEFAULT is
+	true, first deinitialize the driver instance.
+	(output_deinit): Take additional parameter device.  Use it as the
+	device to deinitialize.
+	(device_putchar): New function.
+	(putchar): Implement in terms of device_putchar.
+	(device_puts): New function.
+	(puts): Implement in terms of device_puts.
+	(print_nr): Take additional parameter, the device to send output
+	to.  Use it.  Update callers.
+	(print_signed_nr): Likewise.
+	(device_vprintf): New function.
+	(vprintf): Implement in terms of device_vprintf.
+	(device_printf): New function.
+	(device_getchar): Likewise.
+	(getchar): Likewise.
+	* output-serial.c (uart_base): Remove variable.
+	(UART_BASE_DEFAULT): New macro.
+	(UART_DR): Use DEVICE->COOKIE, not UART_BASE, to determine the
+	uart.
+	(UART_IER): Likewise.
+	(UART_IIR): Likewise.
+	(UART_LCR): Likewise.
+	(UART_MCR): Likewise.
+	(UART_LSR): Likewise.
+	(UART_MSR): Likewise.
+	(UART_LSB): Likewise.
+	(UART_MSB): Likewise.
+	(UART_LSR_DR): New macro.
+	(serial_init): Save the selected uart in DEVICE->COOKIE.
+	(serial_getchar): New function.
+	(serial_output): Add it here.
+	* Makefile.am (t_link_SOURCES): Add panic.c shutdown.h shutdown.c.
+	(t_guard_SOURCES): Likewise.
+	* t-environment.h: Include "output.h".
+	* viengoos.c (output_device): New variable.
+	
+	* Makefile.am (t_as_SOURCES): Remove reference to panic.h.
+	(t_activity_SOURCES): Likewise.
+
+2007-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c: Include "activity.h".
+	* as.c: Include "rm.h".
+	* cap.h: Don't include "rm.h".
+	* loader.c: Include "cap.h" and "thread.h".
+	* loader.h: Don't include "activity.h" or "thread.h".
+	(struct activity): Add forward declaration.
+	(struct thread): Likewise.
+	* thread.h: Don't include "cap.h".
+	* viengoos.c: Include <hurd/thread.h>.
+	
+	* as.c (as_insert): Add assert.
+	* cap-lookup.c (lookup): Improve assert.
+
+2007-12-18  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h: Don't include <assert.h>, <l4.h>, <errno.h>,
+	<hurd/types.h>, <hurd/addr.h> or <hurd/addr-trans.h>.  Include
+	<hurd/folio.h> and <hurd/exceptions.h>.
+	(RM_folio_alloc, RM_folio_free, RM_folio_object_alloc,
+	folio_alloc, folio_free, folio_object_alloc): Move from here...
+	* ../hurd/folio.h: ... to this file.
+	* rm.h (RM_cap_copy, RM_cap_read, RM_object_slot_copy_out,
+	RM_object_slot_copy_in, RM_object_slot_read, cap_copy, cap_read,
+	object_slot_copy_out, object_slot_copy_in, object_slot_read,
+	CAP_COPY_COPY_ADDR_TRANS_SUBPAGE, CAP_COPY_COPY_ADDR_TRANS_GUARD,
+	CAP_COPY_COPY_SOURCE_GUARD, CAP_COPY_WEAKEN): Move from here...
+	* ../hurd/folio.h: ... to this file.
+	* rm.h (RM_exception_collect, exception_collect): Move from
+	here...
+	* ../hurd/exceptions.h: ... to this file.
+
+2007-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* memory.c: Update BTREE_CLASS use to reflect API changes.
+
+2007-12-14  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (system_task_load:csalloc): Remove function.
+	(system_task_load): Don't allocate additional capability slots for
+	the objects we allocate, just use the address of the storage
+	object.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (folio_object_alloc): Take additional parameter, a slot to
+	store a weak capability.
+	(CAP_COPY_WEAKEN): Define.
+	* server.c (server_loop): Update implementation of
+	folio_object_alloc to accept the additional parameter.  If not
+	ADDR_VOID, store a weak capability to the created object in the
+	specified slot.  If the CAP_COPY_WEAKEN flag is specified in a
+	object_slot_copy_out, object_slot_copy_in or cap_copy invocation,
+	copy a weakened capability to the target slot.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Load MSG before replying.  Use
+	l4_pagefault_reply_formulate_in rather than
+	l4_pagefault_reply_formulate.  Change method implementations to
+	use marshaling and unmarshaling functions.
+	(CHECK): Remove macro.
+	(REPLYW): Remove macro.
+	(REPLY): If ERR_ is non-zero, create an error reply in MSG.
+	Either way, finish processing RPC.
+	(ARG): Accept an argument, the word to return.
+	(ARG64): Likewise.
+	(ARG_ADDR): Likewise.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (rm_putchar): Remove function.
+	(putchar): Generate method stubs using RPC_SIMPLE.
+
+2007-12-13  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (cap_read): Change out arguments to the actual types and
+	not references.
+	(object_slot_read): Likewise.
+	* server.c (server_loop): Update calls to reply marshal functions
+	to pass values, not references.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_build_internal): If the required capability slot is not
+	cap_void but MAY_OVERWRITE is true, return that slot.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (as_build_internal): If REMAINING is less than or equal to
+	the guard of the current capability and MAY_OVERWRITE is true, use
+	that capability rather than erroring out.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c: Include <hurd/mutex.h>.
+	(ss_lock_trace) [! NDEBUG]: New definition.
+	(ss_lock_trace_count) [! NDEBUG]: Likewise.
+	* t-environment.h: Include <hurd/mutex.h>.
+	(ss_lock_trace): New definition.
+	(ss_lock_trace_count): Likewise.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos.c (main): Ensure that the binary is mapped.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_lookup): Assert that THREAD is not NULL.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): Reduce verbosity of debugging output for
+	common scenarios.
+
+2007-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h: Update comment.
+	* activity.c (activity_consistency_check_): Don't assert that
+	LRU_LOCK is held.
+	* object.h (object_disown_simple): Don't call
+	activity_consistency_check here.
+	(object_desc_disown_): Likewise.
+	(object_desc_claim_): Likewise.
+	(object_desc_claim_): Likewise.
+	* object.c (memory_object_alloc): Call activity_consistency_check.
+	(memory_object_destroy): Likewise.
+	(object_find_soft): Likewise.
+	(folio_free): Likewise.
+	(folio_object_alloc): Likewise.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* as.h (as_compute_gbits_cappage): Remove debugging code.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* t-as.c (test) [0]: Add test case to demonstrate failure mode.
+	* as.c (as_build_internal): Move the guard and cappage sizing from
+	here...
+	* as.h (as_compute_gbits_cappage): ... to this new function.
+	Change allocation strategy to better support a mix of folios and
+	pages.
+	* t-guard.c: New file.
+	* Makefile.am (TESTS): Add t-guard.
+	(t_guard_CPPFLAGS): New variable.
+	(t_guard_SOURCES): Likewise.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c (AS_LOCK): New macro.
+	(AS_UNLOCK): Likewise.
+	(AS_DUMP): Likewise.
+	(as_build_internal): Use the above macros.  Unlock before dumping
+	the address space.
+	(as_slot_ensure_full): Use the above macros.
+	(as_dump_from): Update comment.
+
+	(do_walk): Don't display dead capabilities.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* t-link.c (output_debug): New declaration.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ager.c (ager_loop): When checking for overflow, be careful to
+	correctly cast the results.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): Clear VICTIM->SIBLING_NEXT.TYPE
+	and VICTIM->SIBLING_PREV.TYPE.  Add additional asserts.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* object.h (lru_lock): New declaration.
+	(LINK_TEMPLATE): Assert that LRU_LOCK is held.
+	(object_desc_disown_simple): Likewise.
+	(object_disown_simple): Likewise.
+	(object_desc_disown): Likewise.
+	(object_disown): Likewise.
+	(object_desc_claim): Likewise.
+	(object_claim): Likewise.
+	* object.c (lru_lock): Define.
+	(memory_object_alloc): Lock LRU_LOCK when manipulating
+	the LRU lists.
+	(memory_object_destroy): Likewise.
+	(object_find_soft): Likewise.
+	(folio_free): Likewise.
+	(folio_object_alloc): Likewise.
+	* activity.c (activity_destroy): Lock LRU_LOCK when manipulating
+	the LRU lists.
+	(activity_destroy): Likewise.
+	(activity_dump): Likewise.
+	(activity_consistency_check_): Assert that LRU_LOCK is held.
+	* ager.c (ager_loop): Lock LRU_LOCK when manipulating the LRU
+	lists.
+	* Makefile.am (t_link_CPPFLAGS): Include
+	$(srcdir)/t-environment.h.
+	(t_link_SOURCES): Add output.h, output.c and output-stdio.c.
+	* t-environment.h: Move includes down.
+	(environment_kip) [! _L4_TEST_MAIN]: Don't define, only declare.
+	Remove static qualifier.
+	(environment_api_version) [! _L4_TEST_MAIN]: Likewise.
+	(environment_api_flags) [! _L4_TEST_MAIN]: Likewise.
+	(environment_kernel_id) [! _L4_TEST_MAIN]: Likewise.
+	(environment_utcb) [! _L4_TEST_MAIN]: Likewise.
+	(environment_utcb_address) [! _L4_TEST_MAIN]: Likewise.
+	(environment_init): Initialize
+	ENVIRONMENT_UTCB_ADDRESS[_L4_UTCB_MY_GLOBAL_ID] to a non-NULL
+	value.
+	* t-link.c: Include "t-environment.h".
+	(_L4_TEST_MAIN): Define.
+	(program_name): Don't define.
+	(lru_lock): Define.
+	(main): Rename from this...
+	(test): ... to this.  Lock LRU_LOCK on entry and unlock on exit.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	* t-link.c: Include "object.h".
+	(program_name): Remove static qualifier.
+	(struct object_desc): Don't define.  Replace all uses of foo with
+	lru_activity and value with age.
+	* Makefile.am (t_link_CPPFLAGS): Don't include the macro
+	definitions from object.h.
+
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	Add a page ager.
+	* viengoos.c: Include "zalloc.h" and "ager.h".
+	(ager_start): New function.
+	(main): Call ager_start.
+	* ager.h: New file.
+	* ager.c: Likewise.
+	* Makefile.am (viengoos_SOURCES): Add ager.h and ager.c.
+	* object.h: Include <hurd/mutex.h>.
+	(struct object_desc): Add field lock.
+	* object.c (memory_object_alloc): Initialize ODESC->LOCK.
+	
+2007-12-10  Neal H. Walfield  <neal@gnu.org>
+
+	Properly account memory and folios.
+	* activity.h (struct activity): Remove field objects.  New fields
+	parent_ptr, active, inactive_clean, inactive_dirty and dying.
+	(root_activity): New declaration.
+	(activity_create): Return void.  Don't take priority, weight and
+	storage_quota arguments.  Update callers.
+	(activity_for_each_ancestor): New macro.
+	(activity_charge): New function.
+	(activity_for_each_child): New macro.
+	(activity_dump): New declaration.
+	(activity_consistency_check_): Likewise.
+	(activity_consistency_check): New macro.
+	* activity.c (root_activity): Define.
+	(activity_create): Return void.  Don't take priority, weight and
+	storage_quota arguments.  Remove relevant functionality.  Set
+	CHILD->PARENT_PTR appropriately.  Be careful when bootstrapping.
+	(activity_destroy): Check that VICTIM->DYING is not set.  If so,
+	panic.  Otherwise, set it.  When recursively destroying an
+	activity, call object_free, not activity_destroy, to clean up.
+	Abandon all own frames.  Assert that VICTIM->FRAMES and
+	VICTIM_FOLIO_COUNT are 0.  Set PARENT->CHILDREN to
+	VICTIM->SIBLING_NEXT if VICTIM is the head of the list.
+	(do_activity_dump): New function.
+	(activity_dump): New function.
+	(activity_consistency_check_): New function.
+	* object.h: Don't include "thread.h".
+	(struct object_desc): Remove field activity.  Rename field alru to
+	activity_lru.  Rename field GLRU to global_lru.  New fields dirty,
+	age and activity.
+	(LINK_TEMPLATE): New macro.  Use it.
+	(dirty): Remove declaration.
+	(clean): Likewise.
+	(global_active): New declaration.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Likewise.
+	(object_desc_disown_simple): New function.
+	(object_disown_simple): Likewise.
+	(object_desc_disown_): Likewise.
+	(object_disown_): Likewise.
+	(object_desc_disown): New macro.
+	(object_disown): Likewise.
+	(object_desc_claim_): New function.
+	(object_claim_): Likewise.
+	(object_desc_claim): New macro.
+	(object_claim): Likewise.
+	(folio_parent): Remove parameter principal.  Update callers.
+	(object_free): Improve parentheses.
+	* object.c: Include "thread.h".
+	(global_active): Define.
+	(global_inactive_dirty): Likewise.
+	(global_inactive_clean): Likewise.
+	(disowned): Likewise.
+	(object_init): Add asserts.
+	(memory_object_setup): Rename from this...
+	(memory_object_alloc): ... to this.  Take additional parameters,
+	the type, oid and version.  Also set up the object's descriptor.
+	Update callers.
+	(memory_object_destroy): Add asserts.  Remove object from the
+	various linked lists.  If OBJECT is an activity, assert that there
+	are no frames allocated against it.
+	(object_find_soft): If OBJECT is not accounted or inactive, assign
+	to ACTIVITY.
+	(folio_reparent): Rename from this...
+	(folio_parent): ... to this.  Remove the parameter PRINCIPAL.  Use
+	ACTIVITY where PRINCIPAL was previous used.  Add asserts.
+	Correctly add FOLIO to ACTIVITY's folio list.
+	(folio_alloc): Check if the activity's storage quota allows the
+	allocation of another folio.  Account the allocation of the folio.
+	(folio_free): Add asserts.  Correctly account the folio.  Clear
+	FOLIO->NEXT and FOLIO->PREV.  Disown FOLIO's frame.
+	(folio_object_alloc): Assign OBJECT to ACTIVITY.  When creating an
+	activity, call activity_create.
+	* cap.h (cap_set): Take additional parameter, a struct activity *.
+	Pass it to cap copy.
+	* cap.c Include "thread.h".
+	(cap_set_object): Remove dead function.
+	(cap_to_object): Clear CAP->TYPE if object_find returns NULL.
+	(cap_shootdown): Asser that ACTIVITY is not NULL.
+	* viengoos.c (root_activity): Don't define here.
+	* t-as.c (root_activity): Remove static qualifier.
+	* t-link.c: New file.
+	* t-activity.c: New file.
+	* Makefile.am (TESTS): Add t-activity and t-link.
+	(t_activity_CPPFLAGS): New variable.
+	(t_activity_SOURCES): Likewise.
+	(t_activity_LDADD): Likewise.
+	(t_link_CPPFLAGS): Likewise.
+	(t_link_SOURCES): Likewise.
+
+	* rm.h (RM_as_dump): Define.
+	(rm_method_id_string): Remove case for RM_activity_create.
+	(as_dump): New method.
+	* server.c (server_loop): Add support for method as_dump.  Remove
+	support for method activity_create.
+
+2007-12-05  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): When marshalling the fault, return the
+	current stack pointer, consistent with the updated interface.
+
+2007-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	Remove exception threads.  Replace with support for activations.
+	* thread.h (THREAD_SLOTS): Bump to 3.
+	(struct thread): Add field exception_page.  Remove fields
+	have_exception and exception.
+	(thread_exregs): Take additional arguments exception_page and
+	exception_page_out.  Update users.
+	(thread_raise_exception): New declaration.
+	* thread.c (THREAD_VERSION): Define.
+	(thread_init): Remove code related to the exception thread.
+	(thread_commission): Likewise.
+	(thread_decommission): Likewise.
+	(thread_exregs): Likewise.  Take additional arguments
+	EXCEPTION_PAGE and EXCEPTION_PAGE_OUT.  If CONTROL contains
+	HURD_EXREGS_GET_REGS and EXCEPTION_PAGE_OUT is not NULL, return a
+	capability to THREAD's exception page in *EXCEPTION_PAGE_OUT.  If
+	CONTROL contains HURD_EXREGS_SET_EXCEPTION_PAGE, then set THREAD's
+	exception page to EXCEPTION_PAGE.
+	(thread_raise_exception): New function.
+	* server.c (server_loop): Remove code related to handling the
+	exception thread.  Call thread_raise_exception to propagate
+	exception.  Reimplement the exception_collect method.  Update
+	implementation of the thread_exregs method to support the new
+	argument passing scheme.  Add support for setting and retrieving
+	the exception page.
+	(REPLYW): Only clear MSG here.
+	* rm.h (exception_collect): Take an additional argument, the
+	principal.
+	* object.h (object_type): New function.
+
+2007-12-01  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h: Update to use new RPC stub generation interface.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* as.c [! RM_INTERN] (as_lock): New declaration.
+	(as_slot_ensure_full) [! RM_INTERN]: Take AS_LOCK.
+	(as_insert) [! RM_INTERN]: Likewise.
+	* cap-lookup.c (cap_lookup_rel) [! RM_INTERN]: Likewise.
+	(object_lookup_rel) [! RM_INTERN]: Likewise.
+	(slot_lookup_rel) [! RM_INTERN]: Likewise.
+
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Use exception_fault_send_marshal, not
+	exception_fault_marshal.
+	
+2007-11-29  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (OBJECT_): Just pass REQUIRE_WRITABLE on to CAP_.
+	(server_loop): Save the capability that identifies the principal.
+	Implement the RM_activity_properties method.
+	* rm.h (rm_method_id_string): Handle the RM_activity_properties
+	case.
+
+2007-11-28  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.h (activity_allocate): Rename from this...
+	(activity_create): ... to this.  Remove arguments caller, folio,
+	indent, activity and control.  Add argument child.  Update users.
+	* activity.c (activity_allocate): Rename from this...
+	(activity_create): ... to this.  Remove arguments caller, folio,
+	indent, activity and control.  Add argument child.  If CHILD is
+	live, destroy it first.  Correctly add CHILD to PARENT's children
+	list.
+	* activity.h (activity_destroy): Remove argument cap.  Update
+	callers.
+	* activity.c (activity_destroy): Remove argument cap.  Correctly
+	destroy child activities and allocated folios.  Correctly unlink
+	from parent.
+	* server.c (CAP_): Remove argument writablep.  Add argument
+	require_writable.  Fail if REQUIRE_WRITABLE is true, and the
+	object is not writable.
+	(OBJECT_): Likewise.
+	(CAP): Remove argument writablep.  Add argument require_writable.
+	Update callers.
+	(OBJECT): Likewise.
+	(server_loop): Add support for the activity_create method.
+	* object.c (folio_free): Also update FOLIO->FOLIO_VERSION.
+	(folio_object_alloc): Check if the object is a
+	cap_activity_control, not a cap_activity.
+	(folio_reparent): Correctly link FOLIO to PARENT.
+	* t-as.c (test): Don't create a cap_activity object but a
+	cap_activity_control object.
+	* viengoos.c (system_task_load): Likewise.
+	* cap.c (cap_to_object): Use cap_types_compatible when asserting
+	that the capability's type and the object's type are identical.
+	* thread.c (thread_exregs): Use cap_types_compatible when checking
+	whether the thread has a valid activity object.
+	* rm.h: Include <hurd/activity.h>.
+	(rm_method_id_string): Handle the RM_activity_create case.
+
+2007-11-28  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): Use cap_types_compatible to determine
+	whether two types are compatible.
+
+2007-11-27  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.c (thread_commission): After creating the exception
+	thread, stop it cancelling any pending IPC.
+
+2007-11-27  Neal H. Walfield  <neal@gnu.org>
+
+	* server.c (server_loop): Add improve debugging output.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (thread_exregs): Take two additional arguments, a
+	cap_addr_trans structure and a corresponding flags.  Update users.
+	* thread.c (thread_commission): Don't start thread THREAD.
+	(control_to_string): New function.
+	(thread_exregs): Take two additional arguments, a cap_addr_trans
+	structure and a corresponding flags.  Use them when copying a
+	supplied capability into the address space slot of the thread.
+	Support the HURD_EXREGS_EXCEPTION_THREAD flag.  Improve error
+	detection and debugging out.
+	* server.c (server_loop): Let a void address for the activity slot
+	imply the caller's current activity.  Take two additional
+	arguments, a cap_addr_trans structure and a corresponding flags
+	argument.  Pass them to thread_exregs.
+	* viengoos.c (system_task_load): Set THREAD_ACTIVITY.  Don't call
+	thread_commission.  Instead, call thread_exregs.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup): Improving debugging output for when we
+	expect an address translation unit but don't find one.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct thread): Add fields efalgs, user_handle and
+	init.
+	(thread_create_in): Rename from this...
+	(thread_init): ... to this.  Remove the activity argument.
+	Update all users.
+	(thread_create): Remove declaration.
+	(thread_destroy): Rename from this...
+	(thread_deinit): ... to this.  Update all users.
+	(thread_send_sp_ip): Remove declaration.
+	(thread_exregs): New declaration.
+	* thread.c: Include <hurd/thread.h>.
+	(thread_lookup): Add additional asserts.
+	(thread_create_in): Rename from this...
+	(thread_init): ... to this.  Remove the activity argument.  Don't
+	set THREAD->ACTIVITY.  Set THREAD->INIT to true.
+	(thread_create): Remove function.
+	(thread_destroy): Rename from this...
+	(thread_deinit): ... to this.  Correctly calculate the bit to
+	deallocate.  Fix assert.  Set THREAD->INIT to false.
+	(thread_commission): If THREAD->INIT is false, first call
+	thread_init.  Correctly calculate the thread ids to initialize.
+	(thread_send_sp_ip): Remove function.
+	(thread_exregs): New function.
+	* rm.h (RPC_STUB_PREFIX): Include <hurd/thread.h>.
+	(rm_method_id_string): Support RM_thread_exregs.
+	(THREAD_ASPACE_SLOT, THREAD_ACTIVITY_SLOT): Move from...
+	* ../hurd/thread.h: ... to this new file.
+	* server.c: Include <hurd/thread.h>.
+	(server_loop): Implement the thread_exregs RPC.
+	* viengoos.c (system_task_load): Set THREAD->ACTIVITY to a
+	capability designating ROOT_ACTIVITY.
+	
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* activity.c (activity_destroy): Don't call OBJECT_FREE.
+	* thread.c (thread_destroy): Likewise.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* cap-lookup.c (lookup) [!RM_INTERN]: Set ROOT to the shadow slot
+	when indexing a folio, not &FAKE_ROOT.
+
+2007-11-22  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (CAP_COPY_COPY_SUBPAGE): Rename from this...
+	(CAP_COPY_COPY_ADDR_TRANS_SUBPAGE): ... to this.  Update all users.
+	(CAP_COPY_COPY_GUARD): Rename from this...
+	(CAP_COPY_COPY_ADDR_TRANS_GUARD): ... to this.  Update all users.
+	(CAP_COPY_COPY_SOURCE_GUARD): New constant.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* thread.h (struct thread): Add fields have_exception and
+	exception.
+	(UTCB_AREA_SIZE): Provide space for two UTCBs.
+	* thread.c: Include <hurd/exceptions.h>.
+	(thread_create_in): For each thread that we allocate, allocate two
+	consecutive l4 thread ids.
+	(thread_commission): Initialize the main thread and the exception
+	thread.
+	(thread_decommission): Destroy both the main thread and the
+	exception thread.
+
+	* rm.h: Add RM_exception_collect.
+	(rm_method_id_string): Handle RM_exception_collect.
+	(exception_collect): New RPC method.
+	* server.c: Include <hurd/exceptions.h>.
+	(server_loop): If FROM is the exception thread, look up the thread
+	object using the main thread id.  Propagate any fault to the
+	exception thread.  If not immediately successful, save the message
+	in THREAD->EXCEPTION and set THREAD->HAVE_EXCEPTION.  Implement
+	the exception_collect method.
+
+	(DEBUG): Also print the method number.
+
+2007-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* rm.h (RPC_STUB_PREFIX): Define.
+	(RPC_ID_PREFIX): Likewise.
+	(RPC_TARGET_NEED_ARG): Undefine.
+	(RPC_TARGET): Define.
+	#include <hurd/rpc.h>.
+	(rm_putchar): Add declaration for __hurd_startup_data.
+	(RPCX, RPCLOAD, RPCSTORE, RPC2, RPC3, RPC4, RPC5, RPC6, RPC7) 
+	(RPC8, RPC9, RPC22, RPC32, RPC42, RPC52): Move from here...
+	* ../hurd/rpc.h: ... to here.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* viengoos/Makefile.am: New file based on ../wortel/Makefile.am.
+	* viengoos/headers.m4: New file.
+	* viengoos/config.m4: New file based on ../wortel/config.m4.
+
+	* viengoos/viengoos.h: New file.
+	* viengoos/viengoos.c: New file.
+	* viengoos/activity.h: Likewise.
+	* viengoos/activity.c: Likewise.
+	* viengoos/as.h: Likewise.
+	* viengoos/as.c: Likewise.
+	* viengoos/cap-lookup.c: Likewise.
+	* viengoos/cap.h: Likewise.
+	* viengoos/cap.c: Likewise.
+	* viengoos/thread.h: New file.
+	* viengoos/thread.c: New file.
+	* viengoos/object.h: New file.
+	* viengoos/object.c: New file.
+	* viengoos/rm.h: New file.
+	* viengoos/server.c: New file.
+	* viengoos/server.h: New file.
+
+	* viengoos/zalloc.h: Copied from ../physmem.
+	* viengoos/zalloc.c: Copied from ../physmem.
+	Don't include "output.h".
+	Include <hurd/stddef.h>.
+	Change uses of min_page_size to PAGESIZE.
+	* viengoos/memory.h: New file.
+	* viengoos/memory.c: New file.
+	* viengoos/sigma0.c: Copy from ../wortel.
+	* viengoos/sigma0.h: Copy from ../wortel.
+	Don't include "shutdown.h".
+	Include <hurd/stddef.h>.
+
+	* viengoos/bits.h: Likewise.
+
+	* viengoos/panic.c: New file.
+	* viengoos/debug.c: Likewise.
+	* viengoos/debug.h: Likewise.
+
+	* viengoos/boot-modules.h: Likewise.
+	* viengoos/boot-modules.c: Likewise.
+	* viengoos/elf.h: Copied from ../wortel.
+	* viengoos/loader.c: New file based on ../wortel/loader.c.
+	* viengoos/loader.h: New file.
+	* viengoos/multiboot.h: Copied from Grub.
+
+	* viengoos/mmap.c: New file based on ../physmem/mmap.c.
+	* viengoos/malloc-wrap.c: New file based on ../physmem/malloc-wrap.c.
+	* viengoos/malloc.c: Version 2.8.3 of Doug Lea's malloc.c.
+	* viengoos/malloc.h: Version 2.8.3 of Doug Lea's malloc.h.
+
+	* viengoos/ia32-cmain.c: New file based on ../wortel/ia32-cmain.c.
+	* viengoos/ia32-crt0.S: Copied from ../wortel.
+	(STACK_SIZE): Use a 16 page stack.
+	* viengoos/ia32-output.c: Copied from ../wortel.
+	* viengoos/ia32-shutdown.c: Likewise.
+
+	* viengoos/output.h: New file based on ../wortel/output.h.
+	Include <stdarg.h>.
+	(cprintf): New definition.
+	(output_debug): Don't define.
+	(debug): Don't define.
+	* viengoos/output.c: New file based on ../wortel/output.c.
+	Don't include <stdlib.h>.
+	(vprintf): New function.
+	(printf): Implement in terms of vprintf.
+	* viengoos/output-none.c: Copied from ../wortel.
+	* viengoos/output-serial.c: Likewise.
+	* viengoos/output-stdio.c: New file.
+	* viengoos/output-vga.c: Copied from ../wortel.
+
+	* viengoos/shutdown.h: New file based on ../wortel/shutdown.h.
+	Don't include "output.h".
+	(panic): Don't define.
+	(shutdown): Rename from this...
+	(shutdown_machine): ... to this.
+	* viengoos/shutdown.c: New file based on ../wortel/shutdown.c.
+	(reset) [_L4_TEST_ENVIRONMENT]: Call abort.
+	(halt) [_L4_TEST_ENVIRONMENT]: Call abort.
+	(shutdown): Rename from this...
+	(shutdown_machine): ... to this.
+
+	* viengoos/t-environment.h: New file based on
+	../libl4/tests/environment.h.
+	Protect from multiple inclusion.
+	Include <hurd/stddef.h>.
+	Include <string.h>.
+	Include <l4/stubs.h>.
+	(program_name): New declaration.
+	(check_nr): Don't assume that val1 and val2 are _L4_word_t, use
+	typeof instead.
+	(main): Call output_init.
+	* viengoos/t-as.c: New file.

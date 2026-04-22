@@ -1,0 +1,29 @@
+#                arnuld @ Hurd-Wiki
+
+## General 
+
+* Name:    arnuld
+* Email:   arnuld.mizong (at) gmail (dot) com
+* Country:  India
+* Homepage: <http://www.lispmachine.wordpress.com>
+
+
+## Experience
+
+Half a decade of C Programming on Linux. Trivial Toy programs in two dozen or more languages.
+
+
+## GNU Art
+
+Being inspired by GNU, I have created some copyleft art. It is mentioned on GNU website too in "GNU Art on other sites" section here:
+
+<https://www.gnu.org/graphics/graphics.html>
+
+
+For original links, go here:
+
+Copyleft Art: <https://lispmachine.wordpress.com/2007/09/01/copyleft-logo/>
+
+Copyleft in Hebrew: <https://lispmachine.wordpress.com/2007/09/01/copyleft-logo-hebrew/>
+
+Hagnus Art: <https://lispmachine.wordpress.com/2007/08/01/hagnus-logos/>

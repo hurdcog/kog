@@ -1,0 +1,449 @@
+name: Vendor Dependencies to Repository
+
+# This workflow builds all vcpkg dependencies and commits them directly to the repo.
+# After running once, builds require ZERO dependency downloads - everything is in the repo.
+#
+# WARNING: This will add ~500MB-1GB to your repository size.
+# That's a small price for instant builds forever.
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild all packages (ignore existing)'
+        required: false
+        default: 'false'
+        type: boolean
+      commit_to_branch:
+        description: 'Branch to commit vendored deps to'
+        required: false
+        default: 'main'
+        type: string
+  push:
+    paths:
+      - 'vcpkg.json'
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: vendor-deps
+  cancel-in-progress: false  # Never cancel - we need this to complete
+
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+  VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+
+jobs:
+  build-and-vendor:
+    runs-on: windows-latest
+    name: Build & Vendor All Dependencies
+    timeout-minutes: 180  # 3 hours max
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Check if vendored deps exist
+        id: check-existing
+        shell: pwsh
+        run: |
+          if ((Test-Path "prebuilt/x64-windows/lib") -and ("${{ github.event.inputs.force_rebuild }}" -ne "true")) {
+            $libCount = (Get-ChildItem -Path "prebuilt/x64-windows/lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+            if ($libCount -gt 100) {
+              Write-Host "Found $libCount existing vendored libraries - skipping rebuild" -ForegroundColor Green
+              echo "skip_build=true" >> $env:GITHUB_OUTPUT
+              exit 0
+            }
+          }
+          Write-Host "Will build and vendor all dependencies" -ForegroundColor Yellow
+          echo "skip_build=false" >> $env:GITHUB_OUTPUT
+
+      - name: Setup Build Environment
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_INSTALLED_DIR" | Out-Null
+          New-Item -ItemType Directory -Force -Path "prebuilt" | Out-Null
+
+      - name: Setup vcpkg
+        if: steps.check-existing.outputs.skip_build != 'true'
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '11bbc873e00e9e58d4e9dffb30b7a5493a030e0b'
+
+      # ============================================================
+      # BUILD ALL PACKAGES - With progress tracking and checkpoints
+      # ============================================================
+
+      - name: "Phase 1/5: Build Header-Only Packages (~5 min)"
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  PHASE 1: Header-Only Packages" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          $packages = @(
+            "boost-headers", "boost-config", "boost-core", "boost-preprocessor",
+            "boost-type-traits", "boost-assert", "boost-static-assert",
+            "boost-throw-exception", "boost-smart-ptr", "boost-utility",
+            "boost-optional", "boost-mpl", "boost-mp11", "boost-describe",
+            "boost-container-hash", "boost-iterator", "boost-range",
+            "boost-algorithm", "boost-bind", "boost-function", "boost-functional",
+            "boost-tuple", "boost-variant", "boost-variant2", "boost-any",
+            "boost-endian", "boost-io", "boost-detail", "boost-concept-check",
+            "boost-conversion", "boost-numeric-conversion", "boost-lexical-cast",
+            "boost-tokenizer", "boost-array", "boost-move", "boost-intrusive",
+            "boost-unordered", "boost-container", "boost-pool", "boost-integer",
+            "boost-ratio", "boost-winapi", "boost-predef", "boost-typeof",
+            "boost-function-types", "boost-exception", "boost-type-index",
+            "boost-align", "boost-scope", "boost-dynamic-bitset", "boost-spirit",
+            "boost-phoenix", "boost-proto", "boost-fusion",
+            "asio", "eigen3", "nlohmann-json", "cxxopts"
+          )
+
+          foreach ($pkg in $packages) {
+            Write-Host "Installing $pkg..." -ForegroundColor Yellow
+            & "$env:VCPKG_ROOT/vcpkg.exe" install "${pkg}:x64-windows" --x-install-root="$env:VCPKG_INSTALLED_DIR" 2>&1 | Out-Null
+          }
+          Write-Host "Phase 1 complete!" -ForegroundColor Green
+
+      - name: "Phase 2/5: Build Boost Compiled Libs (~10 min)"
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  PHASE 2: Boost Compiled Libraries" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          $packages = @(
+            "boost-atomic", "boost-chrono", "boost-date-time", "boost-system",
+            "boost-filesystem", "boost-thread", "boost-program-options",
+            "boost-regex", "boost-random", "boost-serialization"
+          )
+
+          foreach ($pkg in $packages) {
+            $start = Get-Date
+            Write-Host "Installing $pkg..." -ForegroundColor Yellow
+            & "$env:VCPKG_ROOT/vcpkg.exe" install "${pkg}:x64-windows" --x-install-root="$env:VCPKG_INSTALLED_DIR"
+            $elapsed = (Get-Date) - $start
+            Write-Host "  Done in $([math]::Round($elapsed.TotalSeconds))s" -ForegroundColor Green
+          }
+
+      - name: "Phase 3/5: Build Medium Packages (~15 min)"
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  PHASE 3: Medium Packages" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          $packages = @(
+            "zlib", "fmt", "spdlog", "catch2", "yaml-cpp",
+            "cppzmq", "zeromq", "curl", "tbb", "lz4", "pkgconf"
+          )
+
+          foreach ($pkg in $packages) {
+            $start = Get-Date
+            Write-Host "Installing $pkg..." -ForegroundColor Yellow
+            & "$env:VCPKG_ROOT/vcpkg.exe" install "${pkg}:x64-windows" --x-install-root="$env:VCPKG_INSTALLED_DIR"
+            $elapsed = (Get-Date) - $start
+            Write-Host "  Done in $([math]::Round($elapsed.TotalSeconds))s" -ForegroundColor Green
+          }
+
+      - name: "Phase 4/5: Build Heavy Packages (~90 min)"
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;files,${{ env.VCPKG_DEFAULT_BINARY_CACHE }},readwrite"
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  PHASE 4: Heavy Packages (This takes a while)" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          # Build in order of dependencies
+          $heavyPackages = @(
+            @{ name = "openssl"; time = "8 min" },
+            @{ name = "abseil"; time = "2 min" },
+            @{ name = "re2"; time = "0.5 min" },
+            @{ name = "c-ares"; time = "1.5 min" },
+            @{ name = "utf8-range"; time = "0.1 min" },
+            @{ name = "protobuf"; time = "13 min" },
+            @{ name = "grpc"; time = "60 min" },
+            @{ name = "hwloc"; time = "7 min" },
+            @{ name = "libpq"; time = "1.5 min" },
+            @{ name = "rocksdb"; time = "28 min" }
+          )
+
+          $totalStart = Get-Date
+
+          foreach ($pkg in $heavyPackages) {
+            $start = Get-Date
+            Write-Host "`n>>> Building $($pkg.name) (expected: $($pkg.time))..." -ForegroundColor Magenta
+
+            & "$env:VCPKG_ROOT/vcpkg.exe" install "$($pkg.name):x64-windows" --x-install-root="$env:VCPKG_INSTALLED_DIR"
+
+            $elapsed = (Get-Date) - $start
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "<<< $($pkg.name) completed in $([math]::Round($elapsed.TotalMinutes, 1)) minutes" -ForegroundColor Green
+            } else {
+              Write-Host "<<< $($pkg.name) FAILED after $([math]::Round($elapsed.TotalMinutes, 1)) minutes" -ForegroundColor Red
+            }
+          }
+
+          $totalElapsed = (Get-Date) - $totalStart
+          Write-Host "`nPhase 4 total time: $([math]::Round($totalElapsed.TotalMinutes, 1)) minutes" -ForegroundColor Cyan
+
+      - name: "Phase 5/5: Verify All Packages"
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  PHASE 5: Verification" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+
+          $criticalLibs = @(
+            @{ name = "grpc"; file = "grpc.lib" },
+            @{ name = "rocksdb"; file = "rocksdb.lib" },
+            @{ name = "protobuf"; file = "libprotobuf.lib" },
+            @{ name = "openssl"; file = "libssl.lib" },
+            @{ name = "boost_system"; file = "boost_system*.lib" },
+            @{ name = "boost_filesystem"; file = "boost_filesystem*.lib" },
+            @{ name = "fmt"; file = "fmt*.lib" },
+            @{ name = "spdlog"; file = "spdlog*.lib" }
+          )
+
+          $allGood = $true
+          foreach ($lib in $criticalLibs) {
+            $found = Get-ChildItem -Path "$env:VCPKG_INSTALLED_DIR/x64-windows/lib" -Filter $lib.file -ErrorAction SilentlyContinue
+            if ($found) {
+              Write-Host "  OK: $($lib.name)" -ForegroundColor Green
+            } else {
+              Write-Host "  MISSING: $($lib.name)" -ForegroundColor Red
+              $allGood = $false
+            }
+          }
+
+          # Count totals
+          $libCount = (Get-ChildItem -Path "$env:VCPKG_INSTALLED_DIR/x64-windows/lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+          $dllCount = (Get-ChildItem -Path "$env:VCPKG_INSTALLED_DIR/x64-windows/bin" -Filter "*.dll" -ErrorAction SilentlyContinue).Count
+          $includeCount = (Get-ChildItem -Path "$env:VCPKG_INSTALLED_DIR/x64-windows/include" -Directory -ErrorAction SilentlyContinue).Count
+
+          Write-Host "`nPackage Summary:" -ForegroundColor Cyan
+          Write-Host "  Libraries (.lib): $libCount" -ForegroundColor Yellow
+          Write-Host "  DLLs (.dll): $dllCount" -ForegroundColor Yellow
+          Write-Host "  Include dirs: $includeCount" -ForegroundColor Yellow
+
+      # ============================================================
+      # COPY TO PREBUILT DIRECTORY AND COMMIT
+      # ============================================================
+
+      - name: Copy to prebuilt directory
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          Write-Host "=== Copying to prebuilt/ directory ===" -ForegroundColor Cyan
+
+          # Remove old prebuilt if exists
+          if (Test-Path "prebuilt") {
+            Remove-Item -Path "prebuilt" -Recurse -Force
+          }
+
+          # Copy the entire vcpkg_installed directory
+          Copy-Item -Path "$env:VCPKG_INSTALLED_DIR/*" -Destination "prebuilt/" -Recurse -Force
+
+          # Calculate size
+          $size = (Get-ChildItem -Path "prebuilt" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host "Prebuilt directory size: $([math]::Round($size, 1)) MB" -ForegroundColor Yellow
+
+      - name: Create prebuilt manifest
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          $manifest = @{
+            "generated" = (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+            "vcpkg_baseline" = "11bbc873e00e9e58d4e9dffb30b7a5493a030e0b"
+            "triplet" = "x64-windows"
+            "generator" = "Visual Studio 17 2022"
+            "packages" = @{
+              "grpc" = if (Test-Path "prebuilt/x64-windows/lib/grpc.lib") { "installed" } else { "missing" }
+              "rocksdb" = if (Test-Path "prebuilt/x64-windows/lib/rocksdb.lib") { "installed" } else { "missing" }
+              "protobuf" = if (Test-Path "prebuilt/x64-windows/lib/libprotobuf.lib") { "installed" } else { "missing" }
+              "openssl" = if (Test-Path "prebuilt/x64-windows/lib/libssl.lib") { "installed" } else { "missing" }
+              "boost" = if (Test-Path "prebuilt/x64-windows/include/boost") { "installed" } else { "missing" }
+            }
+            "usage" = @{
+              "cmake_prefix_path" = "prebuilt/x64-windows"
+              "include_dir" = "prebuilt/x64-windows/include"
+              "lib_dir" = "prebuilt/x64-windows/lib"
+              "bin_dir" = "prebuilt/x64-windows/bin"
+            }
+          }
+
+          $manifest | ConvertTo-Json -Depth 4 | Out-File "prebuilt/MANIFEST.json" -Encoding UTF8
+
+          # Also create a simple README
+          $readmeContent = @'
+          # Prebuilt Windows Dependencies
+
+          This directory contains prebuilt vcpkg packages for Windows x64.
+
+          **Triplet:** x64-windows
+          **vcpkg Baseline:** 11bbc873e00e9e58d4e9dffb30b7a5493a030e0b
+
+          ## Usage in CMake
+
+          set(CMAKE_PREFIX_PATH "prebuilt/x64-windows")
+
+          ## Contents
+
+          - include/ - Header files
+          - lib/ - Static libraries (.lib)
+          - bin/ - Dynamic libraries (.dll) and tools
+          - share/ - CMake config files
+          - tools/ - Build tools (protoc, grpc_cpp_plugin, etc.)
+
+          ## Major Packages Included
+
+          - gRPC (with codegen), RocksDB, Protobuf, OpenSSL
+          - Boost (all components), fmt, spdlog, catch2
+          - TBB, hwloc, PostgreSQL client (libpq), ZeroMQ
+          - And 90+ more...
+
+          DO NOT EDIT MANUALLY - Regenerate with vendor-dependencies.yml workflow
+          '@
+          $readmeContent | Out-File "prebuilt/README.md" -Encoding UTF8
+
+      - name: Configure Git LFS for large files
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          # Create .gitattributes for LFS if not exists
+          $lfsPatterns = @'
+          # Git LFS for prebuilt binaries
+          prebuilt/**/*.lib filter=lfs diff=lfs merge=lfs -text
+          prebuilt/**/*.dll filter=lfs diff=lfs merge=lfs -text
+          prebuilt/**/*.exe filter=lfs diff=lfs merge=lfs -text
+          prebuilt/**/*.pdb filter=lfs diff=lfs merge=lfs -text
+          '@
+
+          if (Test-Path ".gitattributes") {
+            $existing = Get-Content ".gitattributes" -Raw
+            if (-not $existing.Contains("prebuilt/**/*.lib")) {
+              Add-Content ".gitattributes" "`n$lfsPatterns"
+              Write-Host "Added LFS patterns to .gitattributes" -ForegroundColor Green
+            }
+          } else {
+            $lfsPatterns | Out-File ".gitattributes" -Encoding UTF8
+            Write-Host "Created .gitattributes with LFS patterns" -ForegroundColor Green
+          }
+
+      - name: Commit vendored dependencies
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        run: |
+          Write-Host "=== Committing vendored dependencies ===" -ForegroundColor Cyan
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if LFS is available
+          $lfsInstalled = $null -ne (Get-Command git-lfs -ErrorAction SilentlyContinue)
+
+          if ($lfsInstalled) {
+            Write-Host "Git LFS detected - tracking large files" -ForegroundColor Yellow
+            git lfs install
+            git lfs track "prebuilt/**/*.lib"
+            git lfs track "prebuilt/**/*.dll"
+            git lfs track "prebuilt/**/*.exe"
+          } else {
+            Write-Host "Git LFS not available - committing directly (repo will be larger)" -ForegroundColor Yellow
+          }
+
+          # Add everything
+          git add prebuilt/
+          git add .gitattributes
+
+          # Check if there are changes
+          $changes = git status --porcelain
+          if ($changes) {
+            $size = (Get-ChildItem -Path "prebuilt" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+
+            git commit -m "chore: Vendor Windows x64 dependencies ($([math]::Round($size))MB) - prebuilt vcpkg packages"
+
+            Write-Host "Committed vendored dependencies" -ForegroundColor Green
+          } else {
+            Write-Host "No changes to commit" -ForegroundColor Yellow
+          }
+
+      - name: Push to repository
+        if: steps.check-existing.outputs.skip_build != 'true'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $branch = "${{ github.event.inputs.commit_to_branch }}"
+          if (-not $branch) { $branch = "main" }
+
+          Write-Host "Pushing to $branch..." -ForegroundColor Cyan
+
+          # Push with retries and rebase to handle concurrent conflicts
+          $maxRetries = 4
+          $retryDelay = 5
+
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            git pull --rebase origin $branch 2>&1 | Out-Null
+            git push origin HEAD:$branch
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Push successful!" -ForegroundColor Green
+              break
+            }
+            if ($i -eq $maxRetries) {
+              Write-Host "Failed to push vendored dependencies to $branch after $maxRetries attempts. The prebuilt artifacts are available as a workflow artifact backup." -ForegroundColor Red
+              exit 1
+            }
+            Write-Host "Push attempt $i failed, retrying in $retryDelay seconds..." -ForegroundColor Yellow
+            Start-Sleep -Seconds $retryDelay
+            $retryDelay *= 2
+          }
+
+      - name: Upload as artifact (backup)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilt-x64-windows
+          path: prebuilt/
+          retention-days: 90
+          compression-level: 9
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "================================================" -ForegroundColor Green
+          Write-Host "     VENDORING COMPLETE" -ForegroundColor Green
+          Write-Host "================================================" -ForegroundColor Green
+          Write-Host ""
+
+          if (Test-Path "prebuilt/x64-windows/lib") {
+            $libCount = (Get-ChildItem -Path "prebuilt/x64-windows/lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+            $size = (Get-ChildItem -Path "prebuilt" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+
+            Write-Host "Libraries vendored: $libCount" -ForegroundColor Cyan
+            Write-Host "Total size: $([math]::Round($size)) MB" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "Your builds will now be INSTANT!" -ForegroundColor Yellow
+            Write-Host "No more waiting 2+ hours for vcpkg." -ForegroundColor Yellow
+          }

@@ -1,0 +1,3 @@
+etc/ld.so.conf.d/opencog.conf
+usr/share/opencog/cogutil/buildbot-master.cfg
+usr/share/opencog/cogutil/cogutil.spec

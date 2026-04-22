@@ -1,0 +1,27 @@
+Lwip is a lightweight TCP/IP stack, and a google summer of code made it possible to use lwip to replace pfinet.
+
+The lwip translator provides all of the following:
+
+* Support for IPv4 and IPv6
+* Support for TCP and UDP
+* Support for multiple Ethernet devices
+* Support for fsysopts and command-line parameters configuration
+* Support to create an IP tunnel which may be used by an OpenVPN client
+
+To configure lwip for internet connectivity, use the
+[[`settrans`|settrans]] command, like this:
+
+    # settrans -fgap /servers/socket/2 /hurd/lwip ↩
+        -i /dev/eth0 -a 192.168.0.50 -g 192.168.0.1 -m 255.255.255.0
+
+The argument /server/socket/2 is the node that the translator is to be attached to. This is followed by the translator program to run and any arguments to give it.
+
+There, -i, -a, -g and -m are, quite obviously, the (Mach) device to use, the IP
+address, the gateway and netmask.  You can discover these values via the
+`ifconfig` command (You need to run this command on the host system and NOT in
+the qemu environment).
+
+
+More information can be found on Joan Lledo's blog:
+
+* <http://darnassus.sceen.net/~jlledom/en/>

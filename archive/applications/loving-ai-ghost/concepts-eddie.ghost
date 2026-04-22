@@ -1,0 +1,416 @@
+# ##############################################################################
+# concepts.ghost
+#
+# This is a reimplementation of the loving-ai concepts written in ghost.
+# It includes only those concepts which are used in the other toy examples.
+#
+# ##############################################################################
+
+
+
+concept: ~yes
+(
+  "yes" "we do" "they do" "they are" "she is" "she does" "right o"
+  "I have" "sounds good" "good" "great"
+  "okey" "okay" "it is" "it does" "I would say so" "he is" "he does"
+  "daccord" "bring it on" "yuppers" "yup" "you may have a point"
+  "you may be right" "you may" "you could say that" "you bet"
+  "you are right" "yip" "yeppers" "yep"
+  "yeh" "yeah" "yea" "yay" "yah"
+  "wonderful" "without a doubt" "with pleasure" "will do" "whatever"
+  "you are right" "should try"
+  "we did" "we can try" "very well" "unquestionably"
+  "undoubtedly" "uh huh" "two thumbs up" "true" "totally" "thumbs up"
+  "that is right" "that is good" "that is correct" "that is alright"
+  "surely" "sure" "supposedly" "wonderful"
+  "si" "righto" "right on" "right brah"
+  "right" "probably" "precisely" "positively" "please" "perfect"
+  "one hundred percent" "okey dokey" "ok" "OK"
+  "alright" "of course" "nods" "nod" "no problem"
+  "no objections" "no doubt" "naturally" "my pleasure" "mostly"
+  "certainly" "assuredly" "makes sense" "let us try" "let's try"
+  "be a pleasure"
+  "likely" "indubitably"
+  "indefinitely" "indeed" "in this case" "I will drink to that"
+  "totally agree" "I think so" "no objection" "i guess"
+  "I give my consent" "I give consent" "I do" "I did"
+  "I could not agree with you more" "I consent" "can try"
+  "I am"
+  "pleased to" "I am certain" "I agree"
+  "I understand" "true" "hell yeah" "go ahead"
+  "generally" "fully" "fortune smiles on that" "fine"
+  "fantastic" "extremely" "exactly" "evidently" "especially" "delighted"
+  "definitely" "damn skippy" "damn straight" "damn good" "da"
+  "could not have said it better" "could be" "correct" "constantly"
+  "confirmed" "completely" "can not argue with that"
+  "by all means" "beyond a doubt" "be my guest" "aye"
+  "ay" "approved" "apparently" "always" "alright" "all right"
+  "agreed" "affirmative" "accepted" "accept" "absolutely"
+  "aright" "aight" "I guess so" "do it"
+  "make it so" "continue" "once"
+)
+
+concept: ~no
+(
+  "no" "do not" "don't" "I haven't" "have not" "I've not" "know"
+  "you must be kidding" "you must be joking" "you have got to be kidding"
+  "unlikely" "unfortunately not"
+  "thinks not" "no reason to think so"
+  "that is impossible"
+  "surely not" "rubbish" "on the contrary"
+  "oh come on" "of course not" "not very often"
+  "not to speak of" "not to my knowledge" "not that I know of"
+  "not so much" "not really" "not particularly" "not on your life"
+  "not much" "not many" "not likely" "not in a million years"
+  "not especially" "not by any means" "not by a long shot" "not at all"
+  "not a snowball's chance in hell" "not a chance" "nope"
+  "no thanks" "no thank you" "no chance" "no can do" "never mind"
+  "negative" "nay" "naw" "nah" "most certainly not"
+  "me thinks not" "it is unlikely" "not possible" "inconceivable"
+  "improbable" "impossible" "would not" "woudn't"
+  "I will not" "I won't" "I think not" "I refuse" "I just do not get it"
+  "I doubt it" "I dont think so" "I do not" "I don't"
+  "I disagree"
+  "I could not disagree more"
+  "I am not sure I agree" "afraid not" "I do not agree"
+  "I disagree" "horse hockey" "hell no" "hardly"
+  "get real" "get out" "fat chance"
+  "false" "doubtful" "not seem possible" "not seem likely"
+  "disagree" "did not" "come off it" "by no means"
+  "of course not" "but no" "bollocks" "no way" "barely"
+  "rarely" "none" "never" "not a prayer"
+)
+
+concept: ~agree
+(
+  ~yes ~good_quality_adjectives ~verbal_agree ~agreement_words better
+  ~emomaybe "why not" ready
+)
+
+concept: ~disagree
+(
+  ~no ~bad_quality_adjectives "don't think so"
+)
+
+concept: ~not_sure
+(
+   "not sure"  "do not know" "don't know" ~dontknow
+)
+
+concept: ~repeat
+(
+    "repeat that" "repeat what" "say that again" "say it again" "what did you say"
+)
+# no wildcards in concepts
+
+
+concept: ~quantity_adjectives
+(
+  ~FEW ~MUCH middling several some
+)
+
+concept: ~few
+(
+  few insufficient meager minority not_many scant scarcely_any scarce
+  scattering slight sporadic stingy
+)
+
+concept: ~much
+(
+  a_lot abounding bounteous bountiful copious crowded divers innumerable legion
+  lousy_with many much multifarious myriad no_end_of numberless numerous
+  plentiful populous rife teeming umpteen uncounted
+)
+
+
+concept: ~emoignorance
+(
+  "you expect me to know" "the answer escapes me" "the answer eludes me"
+  "not a clue" "I have no idea" "I do not know" "how would I know"
+  "how would I know that" "do not ask me" "beats me"
+)
+
+concept: ~dontknow
+(
+  ~emoignorance "not know" "no idea" "doubt it" "doubt so" "not sure"
+  "don't know" "what are you saying" "not clear" "already did"
+)
+
+concept: ~thinkso
+(
+  "think so" "kind of" "pretty sure" "sort of" "seems right" "okay" ~yes
+)
+
+
+
+concept: ~agreement_words
+(
+  awesome
+)
+
+
+concept: ~good_quality_adjectives
+(
+  best excellent fine first-rate good great matchless outstanding peerless
+  superb superior unrivaled
+)
+
+concept: ~verbal_agree
+(
+  acknowledge affirm agree approve compromise consent rubberstamp stipulate
+)
+
+concept: ~emomaybe
+(
+  "within the realm of possiblity" "that may be true" "possibly"
+  "perhaps" "maybe" "it may not be true"     "I can imagine it"
+  "I am uncertain" "for all I know" "conceivably" "not sure"
+)
+
+concept: ~bad_quality_adjectives
+(
+  atrocious awful bad mediocre poor
+)
+
+
+##### Words with implied emotional valence #####
+
+# Available emotions
+# happy
+# sad
+# fear
+# angry
+# bored
+# surprised
+# disgust
+# irritated
+# awe
+# amused
+# worry
+# recoil
+
+
+### happy expression animation ###
+concept: ~happy_expression_triggers
+(
+  ~feeling_happy ~feeling_safe ~feeling_loved ~feeling_fearless ~feeling_free
+  ~feeling_grateful ~feeling_esteem ~good_quality_adjectives ~feeling_sympathy
+)
+
+concept: ~feeling_happy
+(
+  affection airy amused animated beatific blissful blithe bright brisk buoyant
+  cheerful cheery chipper comfortable compassion contented convivial debonair
+  delight delighted eager eagerness ecstatic elated enthused enthusiastic
+  excited exhilarated exultant fabulous fain fantastic festive free_and_easy
+  frisky genial glad gleeful great happiness happy harmony high-spirited
+  hilarious hope humorous important inspired jaunty jocular jolly jovial joy
+  joyful joyous jubilant laughing lighthearted lively love lucky merry mirthful
+  optimism optimistic overjoyed peaceful playful pleased pleasure rapturous
+  satisfaction satisfied saucy self-satisfied serene sparkling spirited
+  sprightly sunny terrific thankful tranquil transported triumph vivacious
+  wonderful
+)
+
+concept: ~feeling_safe
+(
+  at_ease calm comfortable composed peaceful relieved secure
+)
+
+concept: ~feeling_loved
+(
+  accepted adorable adored approved_of desirable entrusted loved validated
+  valued welcomed
+)
+
+concept: ~feeling_fearless
+(
+  audacious bold brave certain confident courageous daring dauntless determined
+  encouraged enterprising gallant hardy heroic reassured resolute secure
+  self-reliant spirited stout
+)
+
+concept: ~feeling_free
+(
+  autonomous free independent released unshackled
+)
+
+concept: ~feeling_grateful
+(
+  grateful gratitude
+)
+
+concept: ~feeling_esteem
+(
+  admired appreciated esteemed respected revered significant supported valued
+  worshiped
+)
+
+concept: ~good_quality_adjectives
+(
+  best excellent fine first-rate good great matchless outstanding peerless
+  superb superior unrivaled
+)
+
+concept: ~feeling_sympathy
+(
+  compassion kindness pity sympathy
+)
+
+### surprise expression ###
+
+concept: ~surprise_expression_triggers (~feeling_surprise)
+
+concept: ~feeling_surprise
+(
+  astonished bewildered confused shock shocked startled surprise surprised surprising
+)
+
+### angry expression ###
+concept: ~angry_expression_triggers (~feeling_angry ~feeling_burden ~feeling_cheated )
+
+concept: ~feeling_angry
+(
+  acrimonious anger angry annoyed appalled bitter boiling cross devastated
+  disgusted enraged fed_up frustrated fuming furious hostile in_a_huff in_a_stew
+  incensed indignant inflamed infuriated irate irritated irritating livid loathing mad
+  offended outraged pique provoked rageful rancor resentful sullen temper
+  up_in_arms virulent worked_up wrathful wrought_up
+)
+
+
+concept: ~feeling_burden
+(
+  burdened obligated pressured put_upon thwarted
+)
+
+concept: ~feeling_cheated
+(
+  abused accused betrayed cheated coerced conned deceived disparaged duped
+  exploited framed lied_to manipulated tricked victimized violated
+)
+
+
+
+### irritation experssion
+concept: ~irritation_expression_triggers
+(
+    ~feeling_hated ~feeling_reproachful ~feeling_trapped
+)
+
+concept: ~feeling_hated
+(
+  abandoned chastised criticized deserted discarded forsaken hated humiliated
+  ignored left_out let_down overlooked punished rejected replaced unapproved_of
+  unlovable unloved
+)
+
+concept: ~feeling_reproachful
+(
+  calumniating castigating censorious contumelious defamatory derisive
+  disparaging invective libelous maligning opprobrious reproachful reviling
+  sarcastic scathing scolding scurrilous
+)
+
+concept: ~feeling_trapped
+(
+  cornered deceived imprisoned optionless outmaneuvered set_up stifled trapped
+  tricked
+)
+
+
+### sad experession ###
+concept: ~sad_expression_triggers
+(
+    ~feeling_sad ~feeling_singedout ~feeling_demoralized ~feeling_embarassed
+    ~feeling_powerless
+)
+
+concept: ~feeling_sad
+(
+  aching afflicted agonized anguished bereaved cheerless clouded crestfallen
+  crushed dark dejected depress depressed depressing despair despairing
+  despondent disappointing disconsolate discontented discouraged disheartened
+  dismal displeased disspirited distress distressed dolorous down downcast
+  downhearted dreadful dreary dull embarrassed feel_blue flat frowning funereal
+  gloomy gloom glum grief grief-stricken grieved guilt hapless heartbroken
+  heavyhearted hopelessness humiliated hurt in_despair in_pain in_the_dumps
+  injured joyless listless listlessness lonely low lugubrious melancholy
+  miserable moody moping mournful offended oppressed out_of_sorts pathetic
+  pessimism piteous regretful remorse rueful sad sadness shamed shocked somber
+  sorrow sorrowful spiritless suffering sulky sullen tortured tragic unhappy
+  victimized withdrawn woebegone woeful worried
+)
+
+concept: ~feeling_singledout
+(
+  affronted categorized cross-examined guilty interrogated judged labeled rated
+  singled_out stereotyped wronged
+)
+
+concept: ~feeling_demoralized
+(
+  demoralized disappointed discouraged disheartened disillusioned disinclined
+  stifled thwarted
+)
+
+concept: ~feeling_embarrassed
+(
+  ashamed awkward disparaged embarrassed guilty
+)
+
+concept: ~feeling_powerless
+(
+  bashful beaten_down blocked defeated discouraged disorganized exhausted
+  frustrated hopeless irresponsible overwhelmed powerless stifled thwarted
+  worn_down worn_out
+)
+
+
+### disgust expression ###
+concept: ~disgust_expression_triggers (~feeling_disgust)
+
+concept: ~feeling_disgust
+(
+  appalled appalling disgust disgusting disgusted revolted revolting
+)
+
+
+### fear exppression ###
+concept: ~fear_expression_triggers (~feeling_fearful)
+
+concept: ~feeling_fearful
+(
+  afraid aghast alarmed anxious appalled apprehension apprehensive attacked awed
+  cautious concern concerned cowardly defenseless diffident dismayed distrustful
+  doubtful dread dubious exposed fainthearted fear fearful fidgety fright
+  frightened full_of_misgiving hesitant horrified horror hysterical in_fear
+  indecisive insecure irresolute menaced misgiving nervous panic panicked
+  paranoid pensive perplexed petrified phobic quaking questioning scared scary shaky
+  shocked skeptical suspicious tense terrified terrorized threatened timid
+  timorous trembling tremulous unbelieving uncertain uncomfortable upset
+  wavering worried
+)
+
+
+
+# Unused thus far
+
+concept: ~feeling_attached
+(
+  affectionate attached belonging captivated cherished compassionate connected
+  empathetic included liked loved loving understood
+)
+
+concept: ~feeling_focused
+(
+  committed complacent determined focused in_the_zone
+)
+
+concept: ~feeling_codependent
+(
+  addicted codependent insecure needy
+)
+
+
+

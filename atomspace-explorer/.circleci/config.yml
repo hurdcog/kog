@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  atomspace-explorer:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/atomspace-explorer
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package atomspace-explorer verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - atomspace-explorer

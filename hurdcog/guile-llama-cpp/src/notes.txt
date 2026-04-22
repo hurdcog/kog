@@ -1,0 +1,12 @@
+manual build steps (in this src directory):
+
+swig -c++ -guile -Linkage module -I${C_INCLUDE_PATH}  llama.i
+gcc `pkg-config --cflags guile-3.0` -fPIC   ./llama_wrap.cxx -lllama -shared  -o libguile_llama_cpp.so -lm  -lstdc++
+
+then run an example from this src directory with, for example:
+
+ ../scripts/tokenize.scm  "what is GNU?" /share/software/llm/gguf/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+
+ or
+
+ ../scripts/simple.scm  "what is GNU?" /share/software/llm/gguf/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_M.gguf

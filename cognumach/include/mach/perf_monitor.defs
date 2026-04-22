@@ -1,0 +1,119 @@
+/*
+ * Performance Monitoring Interface
+ * Mach RPC interface for performance analysis framework
+ *
+ * Copyright (C) 2024 Free Software Foundation, Inc.
+ */
+
+subsystem perf_monitor 5200;
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+/*
+ * Enable or disable performance monitoring
+ */
+routine perf_monitor_enable(
+    host            : host_t;
+    enable          : boolean_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Configure performance monitoring parameters
+ */
+routine perf_monitor_configure(
+    host            : host_t;
+    sample_rate     : uint32_t;
+    buffer_size     : uint32_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Get performance statistics for a specific event type
+ */
+routine perf_get_event_stats(
+    host            : host_t;
+    event_type      : uint32_t
+) -> (
+    return_code     : kern_return_t;
+    count           : uint64_t;
+    total_time_us   : uint64_t;
+    min_time_us     : uint64_t;
+    max_time_us     : uint64_t;
+    avg_time_us     : uint64_t;
+    last_timestamp  : uint64_t
+);
+
+/*
+ * Get system-wide performance summary
+ */
+routine perf_get_system_stats(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t;
+    total_events    : uint32_t;
+    samples_dropped : uint32_t;
+    regression_detected : boolean_t;
+    overall_count   : uint64_t;
+    overall_total_time : uint64_t;
+    overall_min_time : uint64_t;
+    overall_max_time : uint64_t;
+    overall_avg_time : uint64_t
+);
+
+/*
+ * Read performance samples from buffer
+ */
+routine perf_read_samples(
+    host            : host_t;
+    max_samples     : uint32_t
+) -> (
+    return_code     : kern_return_t;
+    samples         : array[*:1024] of uint8_t;
+    samples_count   : uint32_t
+);
+
+/*
+ * Set performance baseline for regression detection
+ */
+routine perf_set_baseline(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Check for performance regressions
+ */
+routine perf_check_regression(
+    host            : host_t;
+    event_type      : uint32_t;
+    threshold_percent : uint32_t
+) -> (
+    return_code     : kern_return_t;
+    regression_detected : boolean_t
+);
+
+/*
+ * Reset performance statistics
+ */
+routine perf_reset_stats(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Set real-time monitoring thresholds
+ */
+routine perf_set_thresholds(
+    host            : host_t;
+    latency_us      : uint32_t;
+    throughput      : uint32_t;
+    error_rate      : uint32_t
+) -> (
+    return_code     : kern_return_t
+);

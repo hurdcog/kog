@@ -1,0 +1,24 @@
+# set term png small color
+
+#################################################
+# Used to generate the the distribution of marg-MI graph.
+#
+# set term png
+# set out 'marg-mi-dist.png'
+set term postscript eps enhanced color 24
+set out 'marg-mi-dist.eps'
+set key right top
+set logscale y
+set title "Distribution of Marg-MI"
+set xlabel "Marg-MI"
+set ylabel "Probability"
+set yrange [1e-5:0.2]
+set format y "10^{%L}"
+sigma=3.2
+off=-4.3
+mu=-13.76
+g(x) = exp(-(x-mu)**2/(2*sigma**2))/(sigma * sqrt(2*3.14159))
+
+plot "marg-mi-dist.dat" using 2:3 with lines lw 2 title "", \
+     "marg-mi-dist.dat" using 2:(g($2)) with lines lw 2 title "G(-13.8, 3.2)"
+#################################################

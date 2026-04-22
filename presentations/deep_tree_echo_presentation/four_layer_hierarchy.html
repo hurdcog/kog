@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Four-Layer Hierarchy Organizes Cognitive Functions</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 60px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 32px;
+        }
+        .layers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .layer-box {
+            border: 2px solid #0f4c81;
+            background: rgba(15, 76, 129, 0.02);
+            padding: 20px 24px;
+            position: relative;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .layer-indicator {
+            position: absolute;
+            left: -2px;
+            top: -2px;
+            background: #e94560;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            letter-spacing: 1px;
+        }
+        .layer-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .layer-role {
+            font-size: 12px;
+            font-weight: 500;
+            color: #0f4c81;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .layer-description {
+            font-size: 14px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .layer-components {
+            font-size: 12px;
+            font-weight: 400;
+            color: #0f4c81;
+            line-height: 1.5;
+        }
+        .component-label {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Title -->
+        <div class="slide-title">Four-Layer Hierarchy Organizes Cognitive Functions</div>
+        <div class="title-line"></div>
+        
+        <!-- Layers Container -->
+        <div class="layers-container">
+            
+            <!-- Layer 1: Membrane Hierarchy -->
+            <div class="layer-box">
+                <div class="layer-indicator">LAYER 01</div>
+                <div>
+                    <div class="layer-name">Membrane Hierarchy</div>
+                    <div class="layer-role">System Boundaries</div>
+                </div>
+                <div>
+                    <div class="layer-description">
+                        Outermost layer defining system boundaries through Root Membrane containing three primary sub-membranes. Controls all interactions with external environment and defines what is "inside" versus "outside" the cognitive system.
+                    </div>
+                    <div class="layer-components">
+                        <span class="component-label">Components:</span> Cognitive Membrane (Memory, Reasoning, Grammar) • Extension Membrane (Browser, ML, Introspection) • Security Membrane (Authentication, Validation, Emergency)
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Layer 2: Core Engine -->
+            <div class="layer-box">
+                <div class="layer-indicator">LAYER 02</div>
+                <div>
+                    <div class="layer-name">Core Engine</div>
+                    <div class="layer-role">Foundation</div>
+                </div>
+                <div>
+                    <div class="layer-description">
+                        Foundational cognitive capabilities through three interconnected components working in continuous feedback loops. Provides the basis for all higher-level cognition through unified knowledge representation and spreading activation.
+                    </div>
+                    <div class="layer-components">
+                        <span class="component-label">Components:</span> Hypergraph Memory Space (declarative, procedural, episodic, intentional) • Echo Propagation Engine (activation, patterns, feedback) • Cognitive Grammar Kernel (symbolic, neural-symbolic, meta-cognitive)
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Layer 3: Extension Architecture -->
+            <div class="layer-box">
+                <div class="layer-indicator">LAYER 03</div>
+                <div>
+                    <div class="layer-name">Extension Architecture</div>
+                    <div class="layer-role">Specialization</div>
+                </div>
+                <div>
+                    <div class="layer-description">
+                        Domain-specific capabilities through modular plugin system. Enables specialized functions without modifying core, allowing new capabilities to be added dynamically similar to smartphone app extensions.
+                    </div>
+                    <div class="layer-components">
+                        <span class="component-label">Components:</span> Browser Automation (DeepTreeEchoBrowser) • ML Integration (Echo9ML) • Evolution Engine (EchoAgent) • Introspection (EchoselfIntrospection) • Monitoring (DeepEchoMonitor) • Sensory Motor Interface
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Layer 4: Infrastructure -->
+            <div class="layer-box">
+                <div class="layer-indicator">LAYER 04</div>
+                <div>
+                    <div class="layer-name">Infrastructure</div>
+                    <div class="layer-role">Support Systems</div>
+                </div>
+                <div>
+                    <div class="layer-description">
+                        Essential services operating transparently across all layers. Invisible to higher-level processing but critical for system reliability, providing membrane management, communication, security, optimization, and state management.
+                    </div>
+                    <div class="layer-components">
+                        <span class="component-label">Components:</span> P-System Membrane Manager • Communication Protocols • Security & Validation • Performance Optimization • Version Control & Rollback
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

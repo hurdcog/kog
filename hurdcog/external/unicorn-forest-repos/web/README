@@ -1,0 +1,43 @@
+-*- mode: org -*-
+
+#+TITLE: the Hurd website
+
+The Hurd website available at https://www.gnu.org/software/hurd/ is a
+static website built with [[https://ikiwiki.info/][Ikiwiki]].  This directory contains the source
+files of the website.
+
+* Development environment
+
+The folling dependencies are needed to build the website
+
+   ikiwiki,
+   perl,
+   cpan Text::Markdown,
+   cpan Search::Xapian,
+   cpan YAML::Syck, and
+   Texinfo
+
+On Debian, do something like:
+
+#+BEGIN_EXAMPLE
+sudo apt-get install ikiwiki perl libtext-markdown-perl \
+    libsearch-xapian-perl libyaml-syck-perl texinfo
+#+END_EXAMPLE
+
+The development manifest for Guix is described in the usual [[file:manifest.scm][manifest.scm]], run:
+#+BEGIN_EXAMPLE
+guix shell
+#+END_EXAMPLE
+to enter a development environment.
+
+* Running the website
+
+To try out the website locally while you work on it, run the following
+commands:
+
+#+BEGIN_EXAMPLE
+rm -rf ../web.rendered
+./render_locally
+#+END_EXAMPLE
+
+the website is built out of tree (!) in in [[file:~/src/hurd/web.rendered][../web.rendered]].

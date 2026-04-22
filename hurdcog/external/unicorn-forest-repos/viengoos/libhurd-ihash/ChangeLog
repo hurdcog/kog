@@ -1,0 +1,261 @@
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty libhurd-ihash/libhurd-ihash.a.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+	Create symbolic link to package's library in `sysroot/lib/'.
+	* Makefile.am: When building package's libraries, differentiate between
+	[ENABLE_TESTS] with respect to build flags.
+
+	* Makefile.am (t_ihash_CPPFLAGS, t_ihash64_CPPFLAGS): Remove special
+	`printf' handling.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Remove variable.
+	(AM_CFLAGS): Likewise.
+	(libhurd_ihash_a_CPPFLAGS): New variable.
+	(libhurd_ihash_a_CFLAGS): Likewise.
+	(libhurd_ihash_nomalloc_a_CPPFLAGS): Replace use of $(AM_CPPFLAGS)
+	with $(USER_CPPFLAGS).
+	(libhurd_ihash_nomalloc_a_CFLAGS): New variable.
+	(t_ihash_CPPFLAGS): Remove use of $(AM_CPPFLAGS).
+	(t_ihash64_CPPFLAGS): Likewise.
+	(t_ihash_CFLAGS): New variable.
+	(t_ihash64_CFLAGS): Likewise.
+	* ihash.c: Don't include <hurd/ihash.h> but "ihash.h".
+
+2008-02-20  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.c (hurd_ihash_init_with_buffer): Set size to the largest
+	size in IHASH_SIZES that is less than or equal to the maximum size
+	that the provided buffer can handle.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* t-ihash.c (program_name): Change type to char *.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h: Include <bits/wordsize.h>.
+	(hurd_ihash_key64_t): New definition.
+	(struct _hurd_ihash_item64): New structure.
+	(struct hurd_ihash): Change items's type void *.
+	[__WORDSIZE == 32]: Add field large.
+	(_HURD_IHASH_LARGE): New macro.
+	(HURD_IHASH_INITIALIZER): Take additional argument large.  Use it.
+	(hurd_ihash_init): Take additional argument large.
+	(hurd_ihash_buffer_size): Likewise.
+	(hurd_ihash_init_with_buffer): Likewise.
+	(hurd_ihash_create): Likewise.
+	(hurd_ihash_replace): Change key's type to hurd_ihash_key64_t.
+	(hurd_ihash_add): Likewise.
+	(hurd_ihash_find): Likewise.
+	(hurd_ihash_remove): Likewise.
+	(HURD_IHASH_ITERATE): Rewrite to properly handle both 32- and
+	64-bit keys.
+	* ihash.c (ITEM): New macro.
+	(VALUE): Likewise.
+	(KEY): Likewise.
+	(ITEM_SIZE): Likewise.
+	(index_empty): Use the above macros rather than accessing
+	HT->ITEMS directly.
+	(index_valid): Likewise and change key's type to a
+	hurd_ihash_key64_t.
+	(find_index): Likewise.
+	(replace_one): Likewise.
+	(hurd_ihash_replace): Likewise.
+	(hurd_ihash_find): Likewise.
+	(hurd_ihash_remove): Likewise.
+	(hurd_ihash_init_internal): Take additional argument large.  Use
+	it.
+	(hurd_ihash_init): Likewise.
+	(hurd_ihash_init_with_buffer): Likewise.
+	(hurd_ihash_create): Likewise.
+	(hurd_ihash_buffer_size): Likewise.
+	* t-ihash.c: Include <assert.h>.
+	(main): Expect that TEST_LARGE is defined.  Use it when calling
+	hurd_ihash_init.  If true, add some tests with 64-bit keys.
+	* Makefile.am (TESTS): Add t-ihash64.
+	(check_PROGRAMS): Likewise.
+	(t_ihash_CPPFLAGS): Add -DTEST_LARGE=false.
+	(t_ihash64_SOURCES): New variable.
+	(t_ihash64_CPPFLAGS): Likewise.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (t_ihash_SOURCES): Add ihash.c.
+	(t_ihash_CPPFLAGS): New variable.
+	* t-ihash.c: Include <stdio.h>.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (hurd_ihash_buffer_size): New declaration.
+	(hurd_ihash_init_with_buffer): Likewise.
+	(hurd_ihash_init): Add comment that this function is not provided
+	if the library is compiled with NO_MALLOC.
+	(hurd_ihash_create): Likewise.
+	(hurd_ihash_free): Likewise.
+	(hurd_ihash_destroy): Update comment.
+	* ihash.c (hurd_ihash_init_with_buffer): New function.
+	(hurd_ihash_destroy) [NO_MALLOC]: Don't free HT->ITEMS.
+	(hurd_ihash_create) [NO_MALLOC]: Just return ENOMEM;
+	(hurd_ihash_free) [NO_MALLOC]: Remove function.
+	(hurd_ihash_buffer_size): New function.
+	(hurd_ihash_replace) [NO_MALLOC]: Don't attempt to expand the hash
+	table.
+	[! NO_MALLOC]: Use hurd_ihash_buffer_size to calculate an
+	appropriate buffer size.
+	* Makefile.am (lib_LIBRARIES): Add libhurd-ihash-nomalloc.a.
+	(libhurd_ihash_nomalloc_a_CPPFLAGS): New variable.
+	(libhurd_ihash_nomalloc_a_SOURCES): Likewise.
+
+	* t-ihash.c (main): Cast locp offset calculation to elide warning.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Add -I$(LIBC)/include.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (HURD_IHASH_NO_LOCP): Define to PTRDIFF_MIN rather than
+	INTPTR_MIN.
+
+2007-11-13  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (hurd_ihash_locp_remove): Fix comment.
+	* t-ihash.c (program_name): Add variable.
+	(main): Add a test case for hurd_ihash_locp_remove.
+
+2007-10-16  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h: Don't include <sys/types.h>.
+	Include <stddef.h> and <stdbool.h>.
+
+2007-10-09  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (hurd_ihash_locp_remove): Update comment.
+
+2007-10-06  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (hurd_ihash_replace): New prototype.
+	(hurd_ihash_add): Replace prototype with a static inline
+	implementation that calls hurd_ihash_replace with the right
+	parameters.
+	* ihash.c (locp_remove): Take additional argument, cleanup.  Only
+	call the cleanup function if CLEANUP is true.  Update callers.
+	(add_one): Rename from this...
+	(replace_one): ... to this.  Add two parameters, had_value and
+	old_value.  If the key has a value and OLD_VALUE is not NULL, then
+	do not call the cleanup function but save the old value in
+	*OLD_VALUE.  If the key had a value and HAD_VALUE is not NULL,
+	then store true in *HAD_VALUE, otherwise, false.  Update callers.
+	
+	* Makefile.am (TESTS): Set to t-ihash.
+	(check_PROGRAMS): Set to t-ihash.
+	(t_ihash_SOURCES): Set to t-ihash.c and ihash.h.
+	(t_ihash_LDADD): Set to libhurd-ihash.a.
+	* t-ihash.c: New file.
+
+2007-08-23  Neal H. Walfield  <neal@gnu.org>
+
+	* ihash.h (hurd_ihash_replace): New declaration.
+	(hurd_ihash_add): Replace declaration with a static inline stub
+	that calls hurd_ihash_replace.
+	* ihash.c (add_one): Rename from this...
+	(replace_one): ... to this.  Add two parameters.  Save the old key
+	value in *OLD_VALUE.  Save whether there was an old value in
+	*HAD_VALUE.  Update callers.
+	(hurd_ihash_add): Rename from this...
+	(hurd_ihash_replace): ... to this.  Add two parameters.  Pass them
+	in calls to replace_one.
+
+2004-04-21  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ihash.h (HURD_IHASH_ITERATE): Don't use increment operator in
+	assignment, but just add one.  Reported by Ognyan Kulev.
+
+2004-04-03  Marco Gerards  <metgerards@student.han.nl>
+
+	Bringing ihash into sync with the version in the Hurd:
+
+	* ihash.h: Include <stdint.h>.
+	(HURD_IHASH_NO_LOCP): Change to INTPTR_MIN.
+	(struct hurd_ihash): Change type of locp_offset from off_t to
+	intptr_t.
+	(hurd_ihash_init): Likewise in prototype.
+	(hurd_ihash_create): Likewise in prototype.
+	(hurd_ihash_key_t): Likewise in typedef.
+	* ihash.c (hurd_ihash_init): Likewise in definition.
+	(hurd_ihash_create): Likewise in definition.
+	(hurd_ihash_remove): Don't look for the index when the hashtable
+	is empty.
+
+2004-03-19  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Add -I$(top_srcdir)/libc-parts for
+	now.
+
+2003-09-21  Marco Gerards  <metgerards@student.han.nl>
+
+	* Makefile.am (AM_CPPFLAGS): Use top_builddir instead of
+	top_srcdir.
+
+2003-08-26  Marcus Brinkmann  <marcus@g10code.de>
+
+	* ihash.h: Include <limits.h>.
+	(HURD_IHASH_NO_LOCP): New macro.
+	(HURD_IHASH_INITIALIZER): Take locp offset as argument.
+	Initialize HT->nr_items, HT->max_load and HT->locp_offset.
+	(HURD_IHASH_MAX_LOAD_DEFAULT): New macro.
+	(struct _hurd_ihash_item): New structure.
+	(_hurd_ihash_item_t): New type.
+	(struct hurd_ihash): New fields NR_ITEMS, ITEMS, LOCP_OFFSET and
+	MAX_LOAD.  Remove KEYS, TABLE and LOCPS.
+	(hurd_ihash_set_max_load): New function.
+	(HURD_IHASH_ITERATE): Rewrite to use ITEMS instead TABLE and KEYS.
+	(hurd_ihash_init): Take locp_offs argument in prototype.
+	(hurd_ihash_create): Likewise.
+	(hurd_ihash_add): Don't take locp argument in prototype.
+	(hurd_ihash_set_max_load): New prototype.
+	* ihash.c (HASH, REHASH): Macros removed.
+	(ihash_sizes): Change table to list prime numbers that are 3
+	modulo 4.
+	(index_empty): Use HT->items instead HT->table.
+	(index_valid): Likewise.
+	(find_index): Use quadratic probing.
+	(locp_remove): New helper function.
+	(hurd_ihash_init): Take locp_offs as argument.  Initialize
+	HT->locp_offset, HT->nr_items and HT->max_load.
+	(hurd_ihash_destroy): Free HT->items, but not anything else.
+	(hurd_ihash_create): Take locp_offs as argument and pass it to
+	hurd_ihash_init.
+	(hurd_ihash_set_max_load): New function.
+	(add_one): Don't take a locp argument anymore.  Use quadratic
+	probing.  Call locp_remove instead duplicating the code.
+	Increment HT->nr_items.
+	(hurd_ihash_add): Don't take a locp argument anymore.  Check
+	maximum load factor before adding element.  Use ITEMS and not KEYS
+	and TABLE.  Don't allocate memory for locp.  Use calloc instead of
+	malloc and initialization.
+	(hurd_ihash_remove): Call locp_remove instead hurd_ihash_locp_remove.
+	(hurd_ihash_locp_remove): Call locp_remove.
+	
+2003-08-17  Marcus Brinkmann  <marcus@gnu.org>
+
+	* ihash.h (HURD_IHASH_INITIALIZER): New macro.
+
+	* Initial check-in.
+
+
+Copyright 2003 Free Software Foundation, Inc.
+
+This file is free software; as a special exception the author gives
+unlimited permission to copy and/or distribute it, with or without
+modifications, as long as this notice is preserved.
+ 
+This file is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

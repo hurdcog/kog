@@ -1,0 +1,13 @@
+;; Guix channel definition for OpenCog Collection repository
+;; This allows users to add this repository as a Guix channel
+
+(dependencies
+ (channel
+  (name guix)
+  (url "https://git.savannah.gnu.org/git/guix.git")
+  (minimum-guix "1.4.0")))
+
+(channel
+ (name opencog-collection)
+ (url "https://github.com/cogpy/occ.git")
+ (branch "main"))

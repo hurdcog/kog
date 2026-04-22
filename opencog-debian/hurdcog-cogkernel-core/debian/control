@@ -1,0 +1,51 @@
+Source: hurdcog-cogkernel-core
+Section: devel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 10),
+               guile-3.0,
+               guile-3.0-dev,
+               hurdcog-machspace,
+               opencog-atomspace,
+               libcogutil-dev
+Standards-Version: 4.1.3
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: hurdcog-cogkernel-core
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         guile-3.0,
+         hurdcog-machspace,
+         opencog-atomspace,
+         hurdcog
+Description: Core cognitive kernel infrastructure for HurdCog
+ The HurdCog Cognitive Kernel provides the foundational infrastructure for
+ implementing cognitive capabilities within the GNU Hurd operating system,
+ transforming it into a self-aware, self-optimizing cognitive OS.
+ .
+ Core Components:
+  * Minimal bootstrap system for cognitive initialization
+  * Cognitive interface framework for decision-making and workflow
+  * Integration with MachSpace for distributed cognition
+  * Support for autonomous agents and distributed coordination
+  * Cognitive grip mechanism for universal object manipulation
+  * Self-modification and meta-cognitive capabilities
+ .
+ Architecture Features:
+  * Tensor-shaped membranes within recursive P-System
+  * Five core subsystems (Memory, Task, AI, Autonomy, Build)
+  * Integration with Agent-Zero and ElizaOS patterns
+  * GUIX declarative build system enhancement
+  * Hypergraph-based capability and issue tracking
+ .
+ The cognitive kernel implements the core infrastructure that enables
+ HurdCog to reason about its own operation, make autonomous decisions,
+ and continuously optimize system behavior through cognitive synergy
+ between the microkernel, OS, and application layers.
+ .
+ This package provides the essential cognitive kernel components required
+ by all other HurdCog cognitive subsystems (agents, attention, reasoning,
+ etc.). It establishes the foundation for the AGI Operating System.

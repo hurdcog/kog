@@ -1,0 +1,100 @@
+[[!meta copyright="Copyright © 2011, 2013, 2015 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="VirtualBox"]]
+
+Some people are very familiar with using VirtualBox to run virtual machines of OS
+like GNU/Linux, Windows, etc. Hurd CAN also be run with VirtualBox normally, and
+the way is very similar to running other OS with it. The main problem may be that
+Hurd may not support as many emulated hardware as others, which is also a good
+point to help us.
+
+This also provides a good opportunity for people who want to play with Hurd on
+every other OS which can run VirtualBox. You can absolutely run and develop Hurd
+without switching your current OS or running a nest Hurd in another virtual machine.
+
+If you happen to have experience on developing GNU/Linux on other OS like
+Windows, you can develop Hurd smoothly just like before. We might recommend that
+you use a FSF approved operating system to get better experience of developing
+Hurd, but if for some reason you are stuck using Windows, this won't be an
+unsolvable obstacle.
+
+You can download VirtualBox at <http://www.virtualbox.org/>.
+
+# Installation  
+
+The disk controller has to be configured as IDE or AHCI. Neither RAID nor SCSI are
+supported.
+
+The network controller should be configured as PCnet-PCI II or PCNet-FAST III
+for instance. INTEL PRO or Paravirtualized Network do not work.
+
+Note: If your Hurd image freezes on startup with "start ext2fs: ext2fs: device:hd0s1: No such device or address", then you may need to manually edit the hard disk controller to be "IDE", because VirtualBox defaults to "SATA" which does not work. Go in to the "Storage" tab and check whether there is an entry for "Controller: SATA". If the SATA entry exists and the Hurd disk image is attached to it, delete the SATA controller and then add a new hard disk under "Controller: IDE". Restart the virtual machine. The hard disk should now be accessible via an IDE interface and Hurd should start successfully and reach the login prompt. (This is the case on VirtualBox 4.3.28 on Mac OS.)
+
+## Converting from qemu image
+
+It is possible to convert qemu raw image to one of the formats recognized by VirtualBox, namely vdi format.
+
+If you are not sure if the image is a raw format, use qemu to get the information:
+
+    qemu-img info debian-hurd-original.img
+
+To convert the image you need the VirtualBox package properly installed with a VBoxManage tool (which is part of the package). Convert image from raw to vdi:
+
+    VBoxManage convertfromraw debian-hurd-original.img debian-hurd-converted.vdi --format VDI
+
+
+# Performance
+
+If [[QEMU with KVM|qemu]] is not available, VirtualBox reportedly has better
+performance.
+
+
+# Open Issues
+
+## IRC, freenode, #hurd, 2011-10-31
+
+    <youpi> I don't know what virtualbox does with hardware emulation, but
+      gnumach is awfully slow to probe things there
+
+
+## IRC, freenode, #hurd, 2013-09-28
+
+    <snadge> the problem is if i giveit more than 1855 it says truncating to
+      that
+    <snadge> so i give it that.. then it has kmem alloc error
+    <snadge> 1536mb same.. 1024 isok
+    <braunr> hum
+    <braunr> that's weird
+    <braunr> virtual box ?
+    <snadge> yeah
+    <snadge> i wonder what cpu features i should enable/disable
+    <snadge> pae ?
+    <braunr> make sure vbox doesn't count on the so called memory balloon
+    <braunr> pae isn't used except on xen
+    <braunr> disable apic
+    <braunr> enable host io cache in disk controllers
+    <youpi> do we have these written on the wiki?
+    <braunr> no because i didn't run into these problems
+    <braunr> but since i know the system well enough to avoid them in the first
+      place ..
+    <braunr> we need real users to report them
+    <braunr> i'm not sure we have anything about vbox in the wiki actually
+    <youpi> ./hurd/running/virtualbox.mdwn
+    <youpi> we seem to have a page at least
+    <snadge> it seems to be okay with 1024MiB
+    <braunr> still weird
+    <braunr> looks more random than buggy with more memory
+    <braunr> do you have the exact error message you got during your previous
+      attempts ?
+    <snadge> no.. i should have taken a screenshot.. its easy enough to
+      reproduce though
+    <snadge> i'll wait until after its installed

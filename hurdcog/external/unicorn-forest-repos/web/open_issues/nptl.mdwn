@@ -1,0 +1,130 @@
+[[!meta copyright="Copyright © 2010, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_libpthread open_issue_glibc]]
+
+[[!toc]]
+
+
+# IRC, freenode, #hurd, 2010-07-31
+
+    <tschwinge> Other question: how difficult is a NPTL port?  Futexes and some
+      kernel interfaces for scheduling stuff etc. -- what else?
+    <youpi> actually NPTL doesn't _require_ futexes
+    <youpi> it just requires low-level locks
+    <youpi> Mmm, it seems to be so only in principle
+    <youpi> I can see futex names here and there in the generic code
+    <youpi> looks like Drepper isn't disciplined enough in that area either
+    <tschwinge> (well, why would he...)
+    <youpi> I'm not sure we really want to port NPTL
+    <tschwinge> OK.
+    <youpi> Drepper will keep finding things to add
+    <youpi> while the interface between glibc and libpthread isn't increasing
+      _so_ much
+    <tschwinge> ... and even less so the interfavce that actual applications
+      are using.
+    <tschwinge> We'd need to evaluate which benefits NPTL would bring.
+
+
+# Debian GNU/kFreeBSD: FBTL
+
+## IRC, freenode, #hurd, 2013-08-05
+
+    <gnu_srs> Hi, looks like kfreebsd are now using an NPTL-based pthread
+      library: FBTL, http://lists.debian.org/debian-bsd/2013/07/msg00060.html
+
+[[!message-id "alpine.LNX.2.00.1307102021050.4232@contest.felk.cvut.cz"]].
+
+    <gnu_srs> Anything of interest for porting to Hurd? See also
+      http://lists.debian.org/debian-hurd/2013/08/msg00000.html
+    <azeem> Petr could've been more verbose in his announcements
+    <pinotree> and there's
+      http://www.gnu.org/software/hurd/open_issues/nptl.html in our wiki
+    <azeem> well, it seems to work fine for kFreeBSD:
+      http://lists.debian.org/debian-bsd/2013/07/msg00134.html
+    <azeem> and http://lists.debian.org/debian-bsd/2013/07/msg00138.html
+
+
+## [[!message-id "alpine.LNX.2.00.1308021035160.5570@contest.felk.cvut.cz"]]
+
+
+## [[!message-id "alpine.LNX.2.00.1405082034530.8707@contest.felk.cvut.cz"]]
+
+
+## [[!message-id "87wqdv1314.fsf@kepler.schwinge.homeip.net"]]
+
+
+# IRC, freenode, #hurd, 2013-12-26
+
+    <nalaginrut> hm? has NPTL already supported for Hurd?
+    <braunr> probably won't ever be
+    <nalaginrut> so no plan for it?
+    <braunr> what for ?
+    <nalaginrut> no one interested in it, or no necessary adding it?
+    <braunr> why would you want nptl ?
+    <braunr> ntpl was created to overcome the defficiencies of linuxthreads
+    <braunr> we have our own libpthread
+    <braunr> (with its own defficiencies)
+    <braunr> supporting nptl would probably force us to implement something a
+      la clone
+    <nalaginrut> well, just inertia, now that Linux/kFreebsd has it
+    <braunr> are you sure kfreebsd has it ?
+    * teythoon thought we have clone
+    <nalaginrut> http://www.gnu.org/software/hurd/open_issues/nptl.html
+    <nalaginrut> seems someone mentioned it
+    <braunr> it's a "nptl-like implementation"
+    <nalaginrut> yes, I don't think it should be the same with Linux one, but
+      something like it
+    <braunr> but what for ?
+    <braunr> as mentioned in the link you just gave, "<tschwinge> We'd need to
+      evaluate which benefits NPTL would bring."
+    <nalaginrut> well, it's the note of 2010, I don't know if it's relative now
+    <braunr> relevant*
+    <nalaginrut> ah thanks
+    <braunr> but that still doesn't answer anything
+    <braunr> why are *you* talking about nptl ?
+    <nalaginrut> just saw pthread, then recall nptl, dunno
+    <nalaginrut> just asking
+    <braunr> :)
+    <nalaginrut> but you mentioned that Hurd has its own thread implementation,
+      is it similar or better than Linux NPTL?
+    <nalaginrut> or there's no benchmark yet?
+    <braunr> it's inferior in performance
+    <braunr> almost everything in the hurd is inferior performance-wise because
+      of the lack of optimizations
+    <braunr> currently we care more about correctness
+    <nalaginrut> speak the NPTL, I ever argued with a friend since I saw
+      drepper mentioned NPTL should be m:n, then I thought it is...But finally
+      I was failed, he didn't implement it yet...
+    <braunr> what ?
+    <braunr> nptl was always 1:1
+    <nalaginrut> but in nptl-design draft, I thought it's m:n
+    <nalaginrut> anyway, it's draft
+    <nalaginrut> and seems being a draft for long time
+    <braunr> never read anything like that
+    <nalaginrut> I think it's my misread
+    <nalaginrut> I have to go, see you guys tomorrow
+    <braunr> The consensus among the kernel developers was that an M-on-N
+      implementation
+    <braunr> would not fit into the Linux kernel concept. The necessary
+      infrastructure which would
+    <braunr> have to be added comes with a cost which is too high.
+
+
+---
+
+# Resources
+
+  * <http://www.akkadia.org/drepper/nptl-design.pdf>
+
+  * <http://nptltracetool.sourceforge.net/>
+
+  * <http://posixtest.sourceforge.net/>

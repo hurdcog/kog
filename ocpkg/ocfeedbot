@@ -1,0 +1,61 @@
+#!/usr/bin/python
+#
+# IRC b0t that keeps track of RSS feeds
+#
+# Licensed under the GNU General Public License v3
+#
+# Copyright (2009) by Akarsh Simha
+
+import irclib
+import feedparser
+import os
+import threading
+import time
+
+irc = irclib.IRC()
+server = irc.server()
+
+channels = [ "#opencog" ] 
+feeds = [ "http://wiki.opencog.org/wikihome/index.php?title=Special:RecentChanges&feed=atom", 
+          "http://feeds.launchpad.net/opencog/revisions.atom",
+          "http://search.twitter.com/search.atom?q=%23opencog" ]
+old_entries_file = os.environ.get("HOME") + "/.ocfeedbot.history"
+
+server.connect( "irc.freenode.org", 6667, "ocfeedbot" ) 
+
+msgqueue = []
+
+def feed_refresh():
+ FILE = open( old_entries_file, "r" )
+ filetext = FILE.read()
+ FILE.close()
+ for feed in feeds:
+  NextFeed = False
+  d = feedparser.parse( feed )
+  for entry in d.entries:
+   id = entry.link.encode('utf-8')+entry.title.encode('utf-8')
+   if id in filetext:
+    NextFeed = True
+   else:
+    FILE = open( old_entries_file, "a" )
+    FILE.write( id + "\n" )
+    FILE.close()
+    msgqueue.append( entry.title.encode('utf-8') + " : " + entry.link.encode('utf-8') )
+   if NextFeed:
+    break;
+
+ t = threading.Timer( 900.0, feed_refresh ) 
+ t.start()
+
+for channel in channels:
+  server.join( channel )
+
+feed_refresh()
+
+while 1:
+ while len(msgqueue) > 0:
+  msg = msgqueue.pop()
+  for channel in channels:
+   server.privmsg( channel, msg )
+ time.sleep(1) 
+ irc.process_once()

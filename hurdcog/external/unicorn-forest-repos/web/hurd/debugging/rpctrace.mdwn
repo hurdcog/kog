@@ -1,0 +1,354 @@
+[[!meta copyright="Copyright © 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014
+Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+*rpctrace* is -- roughly -- an equivavlent to Linux's *strace* or Solaris' or
+BSD's *truss*.  It is used to trace [[remote_procedure_call|rpc]]s a process is
+doing.
+
+See `rpctrace --help` about how to use it.
+
+    $ rpctrace cat /dev/null
+
+# IRC, freenode, #hurd, 2013-07-29
+
+    <teythoon> about rpctrace, it poses as the kernel for its children, parses
+      and relays any messages sent over the childrens message port, right?
+    <braunr> teythoon: rpctrace doesn't "poses as the kernel"
+    <braunr> well, it's close enough
+    <teythoon> but it intercepts messages send by its children by handing them
+      a message port different from the one provided by the kernel, doesn't it?
+    <braunr> yes
+
+
+# Issues and Patches
+
+[[!tag open_issue_hurd]]
+
+* <http://savannah.gnu.org/patch/?2104> -- don't assert that local port names
+  are valid
+* <http://savannah.gnu.org/bugs/?3939> -- `rpctrace`d program hangs when signal
+  that terminates or suspends it is sent
+  * <http://savannah.gnu.org/patch/?1633> -- terminated with `C-c` `rpctrace`d
+    programs hang
+* <http://savannah.gnu.org/patch/?5580> -- more readable output
+
+* IRC, unknown channel, unknown date
+
+        <youpi> how to rpctrace a translator ?
+        <youpi> ah, just settrans /usr/bin/rpctrace...
+        <youpi> hum, it hung, and killing it got a Mach panic (thread in unexpected
+          state) ...
+
+    [[open_issues/gnumach_panic_thread_dispatch]]?
+
+* IRC, unknown channel, unknown date
+
+        <antrik> hm... for a funny effect, try running rpctrace on
+          /servers/socket/1, and then use dpkg... ;-)
+
+* IRC, unknown channel, unknown date.
+
+        <youpi> the problem of rpctrace is that it's a man in the middle :)
+        <youpi> so in principle, by design authentication stuff shouldn't work
+        <antrik> I don't think the Hurd auth mechanism in any way prevents or tries to prevent man-in-the-middle...
+        <youpi> maybe, but just try, you'll see all kinds of issue as soon as you have authentication stuff
+        <youpi> and the basic reason is that being a man in the middle needs special care
+        <youpi> which rpctrace doesn't completely do
+        <antrik> it's a while since I have dived into rpctrace; but AIUI, it should work just fine if the proxying is done properly
+        <antrik> note that there is a number of known bugs in rpctrace, for which zhengda has sent patches... though I haven't reviewed all of them I think
+        <antrik> there are some nasty Mach operations that are really hard to proxy -- but I don't think the auth mechanism needs any of these...
+
+* IRC, freenode, #hurd, 2011-11-04
+
+    [[!taglink open_issue_documentation]]
+
+        <mcsim> hello. Are there any documentation about understanding output
+          of rpctrace?
+        <braunr> no
+        <braunr> you should read the source code, best doc available
+        <braunr> if you have too many numbers and almost no symbolc names,
+          you're lacking rpc definition lists
+        <braunr> check that the gnumach-common package is installed, as it
+          provides the gnumach definitions
+        <braunr> (the glibc ones are almost always available)
+        <braunr> with those two, you should be fine for the beginning
+        <mcsim> gnumach-common is installed. And what is the name for glibc
+          package for gnumach definitions.
+        <mcsim> Also I'm using libraries specified by LD_LIBRARY_PATH. Does it
+          make influence on absence of symbolic names?
+        <braunr> no
+        <braunr> rpctrace --help
+        <braunr> see the --rpc-list=FILE option
+        <braunr> the default lists are in /usr/share/msgids/, with the .msgids
+          extension
+        <braunr> $ dpkg -S msgids
+        <braunr> gnumach-common: /usr/share/msgids/gnumach.msgids
+        <braunr> hurd: /usr/share/msgids/hurd.msgids
+        <braunr> ok, glibc has none, it's the hurd
+        <braunr> for more details about the output, read the source code
+        <braunr> it shouldn't be that hard to grasp
+        <mcsim> -I /usr/share/msgids helped
+        <mcsim> thank you
+        <braunr> it shouldn't have, it's the default path
+        <mcsim> but symbolic names appeared
+        <braunr> well, that's weird :)
+        <pinotree> braunr: the output of rpctrace --help should tell the
+          default dir for msgids
+
+* IRC, freenode, #hurd, 2012-06-30
+
+        <mcsim> hello. Has anyone faced with problem when translator works
+          fine, but when it is started via rpctrace it hangs? Probably you know
+          what can cause this?
+        <antrik> mcsim: rpctrace itself is quite buggy
+        <antrik> zhengda once did a number of improvements, but they never went
+          upstream...
+        <youpi> well, he never explained how his fixes worked :)
+        <youpi> GNU/Hurd is no different from other projects in that regard: if
+          you don't explain how your patches work, there's low chance that they
+          are applied
+        <youpi> unless the maintainer has time to dive himself, which we don't
+        <pinotree> "it compiles, ship it!"
+        <braunr> pinotree: i guess the hurd is different in that particular
+          regard :p
+        <youpi> not different from linux
+        <braunr> eh, they include staging drivers now :)
+        <youpi> we have a sort-of staging tree as well, with netdde
+        <youpi> we don't really care about stability there
+        <antrik> youpi: actually, I think by now (and not to a small part
+          because of this episode) that we are too strict about patch
+          submission
+        <youpi> well, review really is needed, otherwise source gets into a bad
+          shape
+        <antrik> while zhengda's variant might not have been ideal (nobody of
+          us understands the workings of rpctrace enough to tell), I have
+          little doubt that it would be an improvement...
+        <youpi> it happened quite a few times that a fix revealed to be
+          actually bogus
+        <youpi> in that particular case, I agree
+        <youpi> the problem is that usually what happens is that questions are
+          asked
+        <youpi> and the answers never happen
+        <youpi> and thus the patch gets lost
+        <antrik> after all, when he when he submitted that patch, he had a much
+          better understanding of rpctrace than any of us...
+        <youpi> sure
+        <antrik> Linus is actually quite pragmatic about that. from what I've
+          seen, if he can be convinced that something is *probably* an
+          improvement over the previous status, he will usually merge it, even
+          if he has some qualms
+        <youpi> when there is a maintainer, he usually requires his approval,
+          doesn't he?
+        <antrik> in particular, for code that is new or has been in a very bad
+          shape before, standards shouldn't be as high as for changes to known
+          good code. and quite frankly, large parts of the Hurd code base
+          aren't all that good to begin with...
+        <youpi> sure
+        <antrik> well, sure. in this case, we should have just appointed
+          zhengda to be the rpctrace maintainer :-)
+        <antrik> BTW, as his version is quite fundamentally different, perhaps
+          instead of merging the very large patch, perhaps we should just ship
+          both versions, and perhaps drop the old one at some point if the new
+          one turns out to work well...
+        <antrik> (and perhaps I overused the word perhaps in that sentence
+          perhaps ;-) )
+        <youpi> about that particular patch, you had needed raised a few bits
+        <youpi> and there was no answers
+        <youpi> the patch is still in my mbox, far away
+        <youpi> so it was *not* technically lost
+        <youpi> it's just that as usual we lack manpower
+        <antrik> yeah, I know. but many of the things I raised were mostly
+          formalisms, which might be helpful for maintaining high-quality code,
+          but probably were just a waste of time and effort in this case... I'm
+          not surprised that zhengda lost motivation to pursue this further :-(
+        <braunr> it would help a lot to get the ton of patches in the debian
+          packages upstream :)
+        <youpi> braunr: there  aren't many, and usually for a good reason
+        <youpi> some of them are in debian for testing, and can probably be
+          commited at some point
+        <pinotree> youpi: we could mark (with dep3 headers) the ones which are
+          meant to be debian-specific
+        <youpi> sure
+        <antrik> well, there are also a few patches that are not exactly
+          Debian-specific, but not ready for upstream either...
+        <youpi> antrik: yes
+
+* IRC, freenode, #hurd, 2012-07-18
+
+        <braunr> hm, rpctrace on gitk gives an interesting result
+        <braunr>   152<--153(pid1849)->io_set_all_openmodes_request (267) = 0 
+        <braunr> rpctrace:
+          /home/rbraun/hd0s7/hurd/hurd-20120710/./utils/rpctrace.c:1287:
+          trace_and_forward: Assertion `reply_type == 18' failed.
+
+    This assertion is actually caused by using the io_select interface, which creates
+    a send right instead of a send-once right for the reply port (IIRC).
+
+      * IRC, OFTC, #debian-hurd, 2013-03-14
+
+            <youpi> uhu, there's a TODO just above that assertion :)
+
+* IRC, freenode, #hurd, 2013-07-05
+
+        <pinotree> wish: make rpctrace decode the results of io_stat rpcs
+
+* IRC, freenode, #hurd, 2013-07-29
+
+    <teythoon> imho rpctrace is kind of a mess right now :-/ we should move the
+      parsing code to a library
+    <teythoon> that would also be useful for valgrind, it should have to do
+      basically the same
+
+* IRC, freenode, #hurd, 2013-07-29
+
+    <teythoon> and I tried to rpctrace a subhurd, but rpctrace died on a
+      assertion failure, some msg had an unexpected type or something
+    <braunr> rpctrace dies on select
+    <braunr> and guess what, the boot tool does call select on the console it
+      emulates
+    <teythoon> that's a shame, that'd be really useful for me
+    <braunr> it might not be hard to fix
+    <braunr> but i've never looked into it :/
+    <braunr> i only saw that rpctrace expects the common RPC message types
+    <braunr> and select is all but a common RPC
+    <braunr> so the type of the messages involved is slightly different
+    <braunr> and the assertion chokes on that
+    <teythoon> rpctrace.c is huge and hand written, it'd be nice if the parser
+      was created from the procedure definitions
+    <teythoon> and thinking of that, mig does exactly that, one would only need
+      some glue code
+    <braunr> select is partially hand written
+    <braunr> but it's a special case so that's ok
+
+* IRC, freenode, #hurd, 2013-12-11
+
+    <gnu_srs> teythoon: Congrats regarding rpctrace, is it now fully
+      functional?
+    <teythoon> should be
+    <teythoon> well, you should be able to use it on any application that uses
+      select
+    <teythoon> other than that, it's as functional as it ever was
+    <teythoon> i was annoyed that i couldn't rpctrace ping, and the fix was
+      much easier than expected
+    <gnu_srs> and fork is no problem anymore?
+    <teythoon> was it ever ?
+    <braunr> yes, fork and some issues
+    <teythoon> rpctrace should pick up any forked processes
+    <teythoon> oh ?
+    <braunr> thanks for rpctrace too
+    <braunr> it was indeed on the todo list for a long time
+    <braunr> ah fork with regard to rpctrace
+    <braunr> no i don't think so
+    <braunr> but
+    <braunr> rpctrace can't be a perfect proxy
+    <braunr> because some calls just go directly through the kernel
+    <teythoon> really ?
+    <teythoon> we could install custom functions for any such call
+    <braunr> system calls
+    <braunr> yes
+    <teythoon> so why couldn't it be perfect ?
+    <braunr> i don't see how custom functions would do the trick
+    <braunr> i mean
+    <braunr> it would help, but not guarantee applications have to use these
+      functions
+    <braunr> the real solution would be something like strace
+    <teythoon> huh ?
+    <teythoon> why wouldn't there be any guarantee like that ?
+    <braunr> rpctrace catches messages, not system calls
+    <braunr> you don't see calls to mach_reply_port() obviously
+    <braunr> you just hope that such reply ports are sent through messages
+      rpctrace will see
+    <teythoon>
+      http://www.gnu.org/software/hurd/gnumach-doc/Syscall-Emulation.html
+    <teythoon> sure one does
+    <braunr> ah that
+    <braunr> we don't want that :p
+    <teythoon> why not ?
+    <braunr> it's a hack
+    <braunr> and checking for those impacts performances a bit
+    <braunr> it would be better to change the system calls into RPCs
+    <teythoon> so ? it would only affect tasks running in rpctrace, and the
+      documentation does not call that interface a hack ;)
+    <braunr> oh i agree
+    <braunr> i was saying we don't want them the same way we don't want async
+      ipc
+    <teythoon> yeah sure, i agree
+    <braunr> but since that's how mach works, why not
+    <braunr> although iirc, checking for emulated syscalls is done by the
+      syscall entry code
+    <teythoon> so ?
+    <braunr> so it has an impact on every system call
+    <teythoon> we could make that a compile time option and use it in rpctrace
+      only when available
+    <teythoon> so anyone who needs good traces, could run that kind of kernel
+    <braunr> no need
+    <teythoon> for what ?
+    <braunr> mach and the hurd are already too slow for this to be noticeable
+    <braunr> let's just live with it and use syscall emulation
+    <teythoon> why do you say that, i mean, do you have numbers ?
+    <braunr> from what i see, it's a bunch of less than 5 instructions
+    <teythoon> ok
+    <braunr> i'm just being picky
+    <braunr> i really don't like the idea of emulated system calls
+    <braunr> RPCs are much cleaner
+    <braunr> and frankly, the system calls that i'd like to see in rpctrace are
+      those like mach_thread_self()
+    <braunr> to spot reference leaks
+    <braunr> not too annoying actually
+
+* IRC, freenode, #hurd, 2013-12-13
+
+    <teythoon> hm
+    <teythoon> i briefly looked into the haskell test suite failure youpi wrote
+      about
+    <teythoon> i looked at one of the haskell-http-conduit failures
+    <teythoon> i think it starts a dummy web server and does one request to
+      itself
+    <teythoon> the binary is using select, so i used the fixed rpctrace to
+      obtain a trace
+    <teythoon> it looks strange ...
+    <teythoon> the http request is answered before the request is sent
+
+    <gnu_srs> teythoon: Nice to see that you added escape of non-printable
+      characters in rpctrace:-D
+    <teythoon> yeah, makes rpctrace less trippy though ;)
+
+* IRC, OFTC, #debian-hurd, 2014-02-20
+
+        * pere really misses strace.
+        <pere> rpctrace is not even close.
+        <teythoon> pere: why do you say that ?
+        <teythoon> pere: it is not that we couldn't write strace for mach, it
+          would just be very boring
+        <pere> teythoon: because strace tell me what a program does in details,
+          without too much irrelevant information, while rpctrace is just so
+          verbose that it is hard to see the relevant parts.
+        <youpi> well, they are mostly equivalent
+        <youpi> strace ls / gives me 200 lines, while rpctrace ls / gives me
+          300 lines
+        <youpi> there are spurious lines like term_getctty, but otherwise it's
+          mostly the same level of details
+        <youpi> (also, mach_port_deallocate get in the way)
+        <pere> strace also have the great advantage for C programmers that the
+          output look like the equivalent C calls.
+        <youpi> well, twice as many lines is not so much more verbose :)
+        <youpi> but yes, having internal RPC names doesn't help
+        <youpi> another way would be to use sotruss
+        <pere> sotruss just gave me 'killed'
+        <youpi> yes, it probably needs fixing, nobody worked on it AFAIK
+        <youpi> that's why I said "would", not "is" :)
+        <pere> in the mean time, I'll just keep dreaming of something with
+          output like strace. :)
+
+
+# See Also
+
+See also [[open_issues/librpci]].

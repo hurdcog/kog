@@ -1,0 +1,98 @@
+graph TB
+    subgraph ROOT["🎪 Root Membrane (System Boundary)"]
+        direction TB
+        
+        subgraph COGNITIVE["🧠 Cognitive Membrane (Core Processing)"]
+            direction TB
+            MEMORY["💭 Memory Membrane<br/>(Storage & Retrieval)"]
+            REASONING["⚡ Reasoning Membrane<br/>(Inference & Logic)"]
+            GRAMMAR["🎭 Grammar Membrane<br/>(Symbolic Processing)"]
+        end
+        
+        subgraph EXTENSION["🔌 Extension Membrane (Plugin Container)"]
+            direction TB
+            BROWSER["🌍 Browser Membrane"]
+            ML["📊 ML Membrane"]
+            INTROSPECT["🪞 Introspection Membrane"]
+        end
+        
+        subgraph SECURITY["🛡️ Security Membrane (Validation & Control)"]
+            direction TB
+            AUTH["🔒 Authentication Membrane"]
+            VALID["✅ Validation Membrane"]
+            EMERGENCY["🚨 Emergency Membrane"]
+        end
+    end
+    
+    subgraph CORE["🧠 Deep Tree Echo Core Engine"]
+        direction TB
+        
+        subgraph HYPERGRAPH["🌐 Hypergraph Memory Space"]
+            direction LR
+            DECLARATIVE["Declarative Memory<br/>(facts, concepts)"]
+            PROCEDURAL["Procedural Memory<br/>(skills, algorithms)"]
+            EPISODIC["Episodic Memory<br/>(experiences, events)"]
+            INTENTIONAL["Intentional Memory<br/>(goals, plans)"]
+        end
+        
+        subgraph ECHO["⚡ Echo Propagation Engine"]
+            direction LR
+            ACTIVATION["Activation<br/>Spreading"]
+            PATTERN["Pattern<br/>Recognition"]
+            FEEDBACK["Feedback<br/>Loops"]
+        end
+        
+        subgraph KERNEL["🎭 Cognitive Grammar Kernel (Scheme)"]
+            direction LR
+            SYMBOLIC["Symbolic<br/>Reasoning"]
+            NEURO["Neural-Symbolic<br/>Integration"]
+            META["Meta-Cognitive<br/>Reflection"]
+        end
+    end
+    
+    subgraph EXT_ARCH["🔌 Extension Architecture"]
+        direction TB
+        BROWSER_EXT["🌍 Browser Automation<br/>(DeepTreeEchoBrowser)"]
+        ML_EXT["📊 ML Integration<br/>(Echo9ML)"]
+        EVOLUTION["🧬 Evolution Engine<br/>(EchoAgent)"]
+        INTROSPECT_EXT["🪞 Introspection System<br/>(EchoselfIntrospection)"]
+        MONITOR["📈 Monitoring Dashboard<br/>(DeepEchoMonitor)"]
+        SENSORY["🎯 Sensory Motor Interface"]
+    end
+    
+    subgraph INFRA["⚙️ Infrastructure Services"]
+        direction TB
+        PSYSTEM["🔒 P-System<br/>Membrane Manager"]
+        COMM["📡 Communication<br/>Protocols"]
+        SEC_INFRA["🛡️ Security &<br/>Validation"]
+        PERF["📊 Performance<br/>Optimization"]
+        VERSION["🔄 Version Control<br/>& Rollback"]
+    end
+    
+    %% Connections between layers
+    COGNITIVE --> CORE
+    EXTENSION --> EXT_ARCH
+    SECURITY --> INFRA
+    
+    CORE --> HYPERGRAPH
+    CORE --> ECHO
+    CORE --> KERNEL
+    
+    HYPERGRAPH --> ECHO
+    ECHO --> KERNEL
+    KERNEL --> HYPERGRAPH
+    
+    EXT_ARCH --> CORE
+    INFRA --> CORE
+    INFRA --> EXT_ARCH
+    
+    %% Styling
+    classDef membraneStyle fill:#e1f5ff,stroke:#0288d1,stroke-width:3px,color:#01579b
+    classDef coreStyle fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#e65100
+    classDef extensionStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#4a148c
+    classDef infraStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#1b5e20
+    
+    class ROOT,COGNITIVE,EXTENSION,SECURITY membraneStyle
+    class CORE,HYPERGRAPH,ECHO,KERNEL coreStyle
+    class EXT_ARCH extensionStyle
+    class INFRA infraStyle

@@ -1,0 +1,1705 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass beamer
+\begin_preamble
+% Uncomment to print out only slides and overlays
+%
+%\onlyslides{\slides}
+
+% Uncomment to print out only notes
+%
+%\onlynotes{\notes}
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures false
+\graphics none
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Struktūra yra Viskas (Tinklai Visur)
+\end_layout
+
+\begin_layout Subtitle
+DIRBTINIS INTELEKTAS: KOKĮ JĮ SUKŪRĖME, AR JIS MUS PAKEIS?
+\end_layout
+
+\begin_layout Author
+Linas Vepstas
+\end_layout
+
+\begin_layout Institute
+Santara–Šviesa 2024
+\end_layout
+
+\begin_layout Date
+22 Liepos m.
+ 2024
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Dėlionės gabaliukai visur
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Dėlionės - lyg vaikiškas dalykas
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+\begin_inset Graphics
+	filename delione.jpeg
+	width 25page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename vaikams-delione-lietuva.jpg
+	lyxscale 50
+	width 48page%
+
+\end_inset
+
+
+\begin_inset space \space{}
+\end_inset
+
+
+\begin_inset Graphics
+	filename deliones-mintis.jpeg
+	width 34page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Visi tinklai susideda iš dėlionių gabaliukų
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Ašis / Kraštelis -> Dėlionių sujungimas skirtukais
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename delione.jpeg
+	width 30col%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename H2O.eps
+	width 50col%
+
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+Vanduo
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+Bendrai: Chemija
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename C2H5OH.eps
+	width 60page%
+
+\end_inset
+
+Alkoholis
+\end_layout
+
+\begin_layout Frame
+Vieni atomai prie kitu prisijungia atomines skirtukais
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Industriniai Procesai: Iš dėlionių gabaliukų sudaryti
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Ašis / Kraštelis -> Dėlionių gabaliukų sujungimas
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+Citrinos ciklas: kuno (ląstelių) energijos fabrikas, verčia maista į energiją
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename Citric_acid_cycle_with_aconitate_2.svg
+	lyxscale 30
+	width 45page%
+
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset Box Frameless
+position "b"
+hor_pos "c"
+has_inner_box 1
+inner_pos "b"
+use_parbox 1
+use_makebox 0
+width "15col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+įvestis
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename industrine-delione.eps
+	width 15page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+išvestis / išėjimai
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Simbolinis suvokimas objektų dalis
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Kaip galima SIMBOLIŠKAI suprasti objekto kompozicija?
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Šviesoforo vaizdo sudėtis suprantama kaip dėlionė
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../reco-image/traffic-lights.jpg
+	width 14col%
+
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset Graphics
+	filename sviesoforas.eps
+	width 65col%
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Sintaktinė Lingvistika
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Daiktavardis / Tema / Vardininkas -> Veiksmažodis -> Papildinys / Naudininkas
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Sintaksė kaip dėlionės gabaliukai: Link Grammar (Temperly/Sleator 1991)
+ ir anksčiau (Marcus, 1967)
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../reco-image/link-grammar.png
+	lyxscale 50
+	width 90col%
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ../reco-image/Yuret.png
+	width 90col%
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Maximalai Apimantis Medis
+\end_layout
+
+\begin_layout Frame
+Surinkimas / Analizavimas iš žodžių porų (1998)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Semantinė Lingvistika
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Reikšmės pagrindai: Simbolinio Dirbtinio Intelekto fundamentai
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Abstraktus, Symbolinis suvokimas: 
+\begin_inset Quotes eld
+\end_inset
+
+Dalykai kurie yra matomi
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset Graphics
+	filename semantika.eps
+	lyxscale 50
+	width 107col%
+
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Nukirpkime tiesioginius ryšius
+\end_layout
+
+\begin_layout Frame
+Perkaičiam į skirtukus
+\end_layout
+
+\begin_layout Frame
+Kiti panašus gabaliukai irgi sueina
+\end_layout
+
+\begin_layout Frame
+Dėlionių sintaksė prieina prie semantikos ...
+ ir semiotikos
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Garsas, Dainos, Muzika, Šnekčiavimas 
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Ne tik 1D, 2D, 3D dimensiju bet irgi abstractus sensorinis (jutimo?!!) sritis
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Garso: dažnis, intensyvumas, laikas, vokas (laiško), čiulbėjimas
+\end_layout
+
+\begin_layout Frame
+Bangelės, bangelių analizė
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\begin_inset Graphics
+	filename banginio-daina.eps
+	width 110col%
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset VSpace defskip
+\end_inset
+
+Kaire pusė: banginio dainos įrašas
+\end_layout
+
+\begin_layout Frame
+Dešine pusė: sintakse ir struktūra: kaip kompozicijos struktura ištyrinėjama
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Matematinis Pagrindas
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Dėlionė yra tensoris; pusbaigta yra tensorine algebra
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Ir taip yra suprantama sudetingas matematinis konceptas: Tensorine algebra
+\end_layout
+
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename tensor.eps
+	lyxscale 70
+	width 20col%
+
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset Box Frameless
+position "b"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 1
+use_makebox 0
+width "50col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{align*}
+ & =\Psi_{\;\;\;cj}^{ab}\\
+ & =a\otimes b\otimes\overline{c}\otimes\overline{j}\\
+ & =\left|a\right\rangle \otimes\left|b\right\rangle \otimes\left\langle c\right|\otimes\left\langle j\right|
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+Skirtukai yra tensorio indeksai
+\end_layout
+
+\begin_layout Frame
+Atviro kodo programinė įranga – 
+\begin_inset Quotes eld
+\end_inset
+
+TensorFlow
+\begin_inset Quotes erd
+\end_inset
+
+ ir 
+\begin_inset Quotes eld
+\end_inset
+
+PyTorch
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+Aparatinė įranga – Nvidia 
+\begin_inset Quotes eld
+\end_inset
+
+TensorCore
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Frame
+Google 
+\begin_inset Quotes eld
+\end_inset
+
+Tensor Processing Unit
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Būties Galimybės
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Daug galimybių kaip sujungti dėlionės gabaliukus!!
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\size large
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+
+\begin_inset space \qquad{}
+\end_inset
+
+Neuroninis Mazgas
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename kate.eps
+	lyxscale 50
+	width 60page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Kiekviena (būties) gailimybė gauna skaičių irodant įsitikinimą (
+\begin_inset Quotes eld
+\end_inset
+
+stiprumą
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+svorį
+\begin_inset Quotes erd
+\end_inset
+
+) skirtukų panašumo
+\end_layout
+
+\begin_layout Itemize
+Stebuklingai užtenka dauginti ir sudėti visus skaičius !!
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+Balsavimas
+\begin_inset Quotes erd
+\end_inset
+
+, bet vieni skaičiuoja stipriau už kitus.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Mazgų pavyzdys
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Matematine Ortodoksija: Atsistokime, Pagiedokime, Atsiklaupkiame, Amen.
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Duomenys teka kaip vanduo per vamzdžius,
+\end_layout
+
+\begin_layout Frame
+Visaip galima užrišti mazgus.
+\end_layout
+
+\begin_layout Frame
+Žinios paskelbia tobulesnė inovacija kas savaitė.
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename lstm-cell.png
+	width 35page%
+
+\end_inset
+
+
+\begin_inset space \quad{}
+\end_inset
+
+
+\begin_inset Graphics
+	filename LSTM_Cell.svg.png
+	lyxscale 30
+	width 35page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Čia raidė 
+\begin_inset Quotes eld
+\end_inset
+
+W
+\begin_inset Quotes erd
+\end_inset
+
+ rodo tą 
+\begin_inset Quotes eld
+\end_inset
+
+centrinį
+\begin_inset Quotes erd
+\end_inset
+
+ mazgą.
+\end_layout
+
+\begin_layout Itemize
+Mazgas pakartojamas sluoksnais.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Aukštos Dimensijos (
+\begin_inset Quotes eld
+\end_inset
+
+Hypervector
+\begin_inset Quotes erd
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Aukštose dimensijose yra labai labai labai daug vietos.
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename hypercube-nn.eps
+	width 85page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+D = Dimensija, K = Kampas
+\end_layout
+
+\begin_layout Itemize
+Po viena žodį į kampą: tai yra, po viena dėlionė į kampą.
+\end_layout
+
+\begin_layout Itemize
+Nepažymėti kampai surenka (
+\begin_inset Quotes eld
+\end_inset
+
+generuoja
+\begin_inset Quotes erd
+\end_inset
+
+) teksta iš kaimynų.
+\end_layout
+
+\begin_layout Itemize
+t.y.
+ pilnus sakinius net ir pastraipos.
+\end_layout
+
+\begin_layout Itemize
+Čia tikras stebuklas: užtenka peržiūrėti arčiausius kaimynus
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Ka čia reiškia?
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Šiuolaikinis Dirbtinis Intelektas / Neuronų Tinklai
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+LLM tai labai ryški kalbos nuotrauka !
+\end_layout
+
+\begin_layout Itemize
+Galima didinti ir didinti, lyg po mikroskopu, ir stebėti į detales (t.y.
+ atsakymus į klausimus.)
+\end_layout
+
+\begin_layout Itemize
+Ar tai 
+\begin_inset Quotes eld
+\end_inset
+
+galvoja
+\begin_inset Quotes erd
+\end_inset
+
+? ...
+ Ne.
+ Atsakymai netoli klausimų.
+\end_layout
+
+\begin_layout Itemize
+Ar gali samprotauti logiškai? 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Ne, bet galima rasti nufotkinto samprotavimo.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Ar sapnuoja / haliucinuoja?
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Ne, čia nuotraukoje surasta nereikšmingų nesąmonų:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+Šešiu metų amžiaus, valgiau ledus su mama
+\begin_inset Quotes erd
+\end_inset
+
+ (Ne, niekad taip nebuvo.)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Ar gyvas? Ar turi jausmų? Nu, ar nuotrauka 
+\begin_inset Quotes eld
+\end_inset
+
+gyva
+\begin_inset Quotes erd
+\end_inset
+
+?
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+———— Bet yra galimybių, ir ateitis greit ateina! ————
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Ateitis greitai artėja!
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Ko dar truksta? Kokios galimybes?
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Samprotavimo trūkumai bus greitai (1-2-5-10 m.) išspręsta:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+D.I.
+ tures suprasti ka tai reiškia simboliai
+\end_layout
+
+\begin_layout Itemize
+Matyti, reaguoti, veikti 
+\begin_inset Quotes eld
+\end_inset
+
+tikram pasauliuje
+\begin_inset Quotes erd
+\end_inset
+
+, (o ne iš treniravimo duomenu)
+\end_layout
+
+\begin_layout Itemize
+Stebeti kaip veiksmas pakeičia dabartinė situacija
+\end_layout
+
+\begin_layout Itemize
+t.y.
+ atsiminti praeiti
+\end_layout
+
+\begin_layout Itemize
+logiškai tyrinėti įvykius
+\end_layout
+
+\begin_layout Itemize
+Save-stebejimas: 
+\begin_inset Quotes eld
+\end_inset
+
+Ką aš darau? Kas čia vyksta mano galvoje?
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Ar kada bus 
+\begin_inset Quotes eld
+\end_inset
+
+gyvas
+\begin_inset Quotes erd
+\end_inset
+
+? Galima būti gyvas be jausmų, emocijų?
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Meile, empatija, užuojauta, ...
+\end_layout
+
+\begin_layout Itemize
+Atkaklumas, valios jėga, užsimanymas, užsispyrimas, ...
+\end_layout
+
+\begin_layout Itemize
+Pyktis, neapykanta, ...
+ 
+\end_layout
+
+\begin_layout Itemize
+Vienatvė, liūdesys, ...
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Dirbtinio Intelekto Pagrindos
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+
+\size largest
+Ačiu!
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Nauja Tema
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+\align center
+
+\size largest
+Dirbtinis Intelektas Kontekste:
+\end_layout
+
+\begin_layout Standard
+\align center
+
+\size largest
+Dabartine Socialpsykologija
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Žmogaus Vieta Tinkle
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Pamirštame kad esame valdomi ir didesnių ir mažesnių jėgų
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Nikotinas yra neurotransmiteris: molekulė veikianti ant neuronų
+\end_layout
+
+\begin_layout Frame
+Teknologine mimetinė būtybė, 400 metų senumo.
+\end_layout
+
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename nicotine.eps
+	lyxscale 50
+	width 75col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Žiniasklaidos Tinklai
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Socialiniai tinklai tirpsta kaip ledas į vanduo
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Žmogaus vieta keičiasi – ryšiai keičiasi
+\end_layout
+
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Graphics
+	filename social-melting.dia
+	lyxscale 50
+	width 80page%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+Ryšiai nebe iš viešo centro, bet ištyžo į smulkius privačias grupęlės
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Socialiniai Tinklai prieš ir po Interneto
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Kai tinklai persiorganizuoja, vadinasi 
+\begin_inset Quotes eld
+\end_inset
+
+fazių perėjimas
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+Pati fizine sistema keičiasi
+\end_layout
+
+\begin_layout Frame
+Ledas kietas, vanduo minkštas, garai išsidebesuoja
+\end_layout
+
+\begin_layout Frame
+\begin_inset VSpace defskip
+\end_inset
+
+Kaip galima suprasti dartinė visuomenes politika? Pavz.:
+\end_layout
+
+\begin_layout Frame
+☺ Prieš 1980, kasmetinis 
+\begin_inset Quotes eld
+\end_inset
+
+Ploksčios Žemes
+\begin_inset Quotes erd
+\end_inset
+
+ suvažiavimas, visa JAV.
+\end_layout
+
+\begin_layout Frame
+☺ Išleistos visuomenes procesai: apie 200 dalyvautojų.
+\end_layout
+
+\begin_layout Frame
+☹ Po 2012, po du suvažiavimai kiekviename JAV valstybėje !
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+2012 - Visi jaunieji (po visą pasaulį) gavo telefonus su apsais.
+\end_layout
+
+\begin_layout Itemize
+Pakilo jaunųjų savižudystė, nerimas (visam pasaulyje).
+\end_layout
+
+\begin_layout Itemize
+....
+ narcistai ...
+ gėdinimas ...
+ sekso šantažas ...
+\end_layout
+
+\begin_layout Itemize
+Privačios vietos, nebe viešos.
+ 
+\end_layout
+
+\begin_layout Itemize
+Ryšiai pakavoti nuo bendromenės žiurosenos.
+\end_layout
+
+\begin_layout Itemize
+Kas kur ką šnibždi? Bus sunkiau išsaugoti demokratija.
+\end_layout
+
+\end_deeper
+\begin_layout Frame
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Reakcinė Kontrolė
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Nuo 1960 - KGB FSB karo teorija
+\end_layout
+
+\begin_layout Itemize
+Ar tu turi laisvą valią?
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+Negalvok apie dramblį !
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Konformistai? Influenceriai? Kaip man prisitaikyti prie kitu?
+\end_layout
+
+\begin_layout Itemize
+Skabajeva, Simonyan, Soloviev ...
+\end_layout
+
+\begin_layout Itemize
+Kalbėsime apie kokia tema? Jei ne ta, tai gal apie ką nors kita?
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+Negalvokime apie atominį karą !
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Aš pats turiu nuomonė, ir noriu pasireikšti!
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Quotes eld
+\end_inset
+
+Parodysim! Mes rusai sutraiškysim tuos silpnus vakariečius.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Kodel tu nori daryti taip ir taip? Kas tai yra noras?
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Frame
+\begin_inset Argument 4
+status open
+
+\begin_layout Plain Layout
+Ateitis
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout FrameSubtitle
+Kur mes atsirasime? Kosminiai klausimai
+\end_layout
+
+\begin_layout Itemize
+Ryšiai, ryšiai, ryšiai
+\end_layout
+
+\begin_layout Itemize
+Tinklai, tinklai, tinklai
+\end_layout
+
+\begin_layout Itemize
+Pritvitrtiname elektronika prie smegenų
+\end_layout
+
+\begin_layout Itemize
+Kur baigiasi kūnas?
+\end_layout
+
+\begin_layout Itemize
+Kur randamas savęs pasienis?
+\end_layout
+
+\begin_layout Itemize
+Kas tai 
+\begin_inset Quotes eld
+\end_inset
+
+aš
+\begin_inset Quotes erd
+\end_inset
+
+, be kitų? (Be kitų minčių, kitų žmonių)
+\end_layout
+
+\begin_layout Itemize
+Ar saveprasmę ištirps?
+\end_layout
+
+\begin_layout Itemize
+Ar visata, visatos prasmė, ar tai jausmai, 
+\begin_inset Quotes eld
+\end_inset
+
+qualia
+\begin_inset Quotes erd
+\end_inset
+
+?
+\end_layout
+
+\begin_layout Itemize
+
+\size scriptsize
+(Galima atrasti visus atsakymus Sigito Parulsko knygoje, 
+\begin_inset Quotes eld
+\end_inset
+
+Mano tikėjimo iltys
+\begin_inset Quotes erd
+\end_inset
+
+)
+\size footnotesize
+ 
+\end_layout
+
+\end_deeper
+\end_body
+\end_document

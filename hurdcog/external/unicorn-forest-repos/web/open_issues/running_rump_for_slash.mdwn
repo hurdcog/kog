@@ -1,0 +1,72 @@
+[[!meta copyright="Copyright © 2019 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+## Samuel's [[email|https://lists.gnu.org/archive/html/bug-hurd/2019-12/msg00002.html]]
+
+I have been thinking about how to get rump running for the / filesystem.
+
+Looking at how things go between ext2fs and exec: in grub.cfg we have
+roughly:
+
+    module ext2fs --exec-server-task='${exec-task}' '$(task-create)' '$(task-resume)'
+    module exec '$(exec-task=task-create)'
+
+i.e. the kernel is told to create two tasks, to pass a reference to
+the exec task to the ext2fs task, and to let only the ext2fs task to
+run.  What happens then is in `diskfs_start_bootstrap`, which calls
+`start_execserver`, which uses `task_set_special_port` to set the
+`TASK_BOOTSTRAP_PORT` special port to a send right to ext2fs, and resumes
+the exec task. I.e. basically ext2fs tells exec where it is so that exec
+can start the userland with `/` available.
+
+I'm thinking that the same can be used for the rump translator,
+something like:
+
+    module rump --fs-server-task='${fs-task}' '$(task-create)' '$(task-resume)'
+    module ext2fs --exec-server-task='${exec-task}' '$(fs-task=task-create)'
+    module exec '$(exec-task=task-create)'
+
+and we'd make rump's initialization use `task_set_special_port` to set
+the `TASK_BOOTSTRAP_PORT` special port of ext2fs to a send right to rump,
+and resume it. When ext2fs sees that this port is set, it would use it
+instead of the gnumach-provided `_hurd_device_master` port to open
+devices.
+
+And we can nest this yet more for the pci-arbiter:
+
+    module pci-arbiter --disk-server-task='${disk-task}' '$(task-create)' '$(task-resume)'
+    module rump --fs-server-task='${fs-task}' '$(disk-task=task-create)'
+    module ext2fs --exec-server-task='${exec-task}' '$(fs-task=task-create)'
+    module exec '$(exec-task=task-create)'
+
+and we'd make `pci-arbiter`'s initialization use `task_set_special_port`
+to set the `TASK_BOOTSTRAP_PORT` special port of rump to a send right to
+pci-arbiter and resume it. When `libpciaccess` sees that this port is set,
+it would use it instead of looking up `/server/bus/pci`.
+
+## Damien's [[follow up email|https://lists.gnu.org/archive/html/bug-hurd/2020-04/msg00032.html]]
+
+In my own words, the changes that are needed:
+
+1. libpciaccess needs to check if pci-arbiter's `task_bootstrap_port` is set
+and if it is, use it instead of `/servers/bus/pci`
+
+2. pci-arbiter needs to call `task_set_special_port` on rump's `TASK_BOOTSTRAP_PORT`
+if `--disk-server-task` flag is detected.
+
+3. rumpdisk needs to call `task_set_special_port` on ext2fs's `TASK_BOOTSTRAP_PORT`
+if `--fs-server-task` flag is detected.
+
+4. ext2fs will just work in this configuration
+
+

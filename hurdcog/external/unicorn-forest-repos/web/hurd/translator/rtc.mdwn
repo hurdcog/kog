@@ -1,0 +1,31 @@
+[[!meta copyright="Copyright © 2025 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+The *rtc* translator implements a real-time clock driver. It can be used to add
+the `rtc` device files, with those files, we can access the underlying
+real-time clock using `ioctl()`. The description of `ioctl()` can be found
+[here](https://www.gnu.org/software/libc/manual/html_node/IOCTLs.html).
+
+The operation macros are required to access the real-time clock. They are
+defined as `RTC_*` in `hurd/rtc.h`.
+
+The `hwclock` command from `util-linux` can use the `rtc` device files to
+access the real-time clock devices.
+
+# Usage Example
+Setup a `rtc` device file in `/tmp`:
+
+    settrans -c /tmp/rtc /hurd/rtc
+
+Read the time value through the `rtc` device file:
+ 
+    int fd = open("/tmp/rtc", O_RDONLY);
+    struct rtc_time time;
+    ioctl(fd, RTC_RD_TIME, &time);

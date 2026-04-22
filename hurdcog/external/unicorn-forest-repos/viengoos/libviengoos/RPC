@@ -1,0 +1,12 @@
+RPC Method id Assignments
+-------------------------
+
+100: miscellaneous (putchar, etc.)
+200: folio
+300: cap
+400: generic object
+500: activation
+600: thread
+700: activity
+800: futex
+900: messenger

@@ -1,0 +1,904 @@
+--------------------------------------------------------------------------------
+-- OpenCog Collection - External Integrations Formal Specification (Z++)
+--
+-- This specification formalizes the contracts and protocols for external
+-- system integrations, including storage backends, network protocols,
+-- and external service APIs.
+--
+-- Author: Formal Methods Agent
+-- Date: 2025-11-06
+--------------------------------------------------------------------------------
+
+-- Import prerequisite specifications
+include data_model.zpp
+include system_state.zpp
+include operations.zpp
+
+--------------------------------------------------------------------------------
+-- SECTION 1: Storage Backend Integration Contracts
+--------------------------------------------------------------------------------
+
+-- Storage Backend Interface Contract
+-- All storage implementations must satisfy this interface
+schema StorageBackendContract
+  backend: StorageNode
+  
+  -- Core operations that must be implemented
+  store: Atom → Result
+  fetch: UUID → (Atom ∪ {null})
+  remove: UUID → Result
+  barrier: () → Result  -- Ensure all pending writes complete
+  
+  -- Batch operations for efficiency
+  storeBatch: seq Atom → Result
+  fetchBatch: seq UUID → seq (Atom ∪ {null})
+  
+  -- Query operations
+  fetchIncoming: UUID → ℙ UUID
+  fetchType: AtomType → ℙ UUID
+where
+  -- Invariant: Backend must be connected for operations
+  ∀ atom: Atom | store(atom).success = true ⇒ backend.connected = true
+  ∀ uuid: UUID | fetch(uuid) ≠ null ⇒ backend.connected = true
+  
+  -- Invariant: Store operation updates statistics
+  ∀ atom: Atom | store(atom).success = true ⇒
+    backend'.statistics.atomsStored = backend.statistics.atomsStored + 1
+  
+  -- Invariant: Fetch operation updates statistics
+  ∀ uuid: UUID | fetch(uuid) ≠ null ⇒
+    backend'.statistics.atomsFetched = backend.statistics.atomsFetched + 1
+  
+  -- Invariant: Batch operations are atomic
+  ∀ atoms: seq Atom | 
+    storeBatch(atoms).success = true ⇒
+    (∀ atom: Atom | atom ∈ atoms ⇒ fetch(atom.uuid) = atom)
+end
+
+Result ::= {success: 𝔹, errorMessage: String}
+
+-- RocksDB Backend Specification
+schema RocksDBBackend extends StorageBackendContract
+  dbPath: String
+  columnFamilies: ℙ String
+  writeOptions: WriteOptions
+  readOptions: ReadOptions
+  bloomFilterEnabled: 𝔹
+where
+  -- Backend type must be ROCKSDB
+  backend.backendType = ROCKSDB
+  
+  -- Database path must exist and be writable
+  backend.connected = true ⇒ dbPath ≠ "" ∧ isWritable(dbPath)
+  
+  -- Column families for organizing data
+  "atoms" ∈ columnFamilies ∧
+  "incoming" ∈ columnFamilies ∧
+  "types" ∈ columnFamilies
+  
+  -- Bloom filter optimization
+  bloomFilterEnabled = true ⇒
+    averageReadLatency < averageReadLatencyWithoutFilter / 2
+end
+
+WriteOptions ::= {sync: 𝔹, disableWAL: 𝔹}
+ReadOptions ::= {verifyChecksums: 𝔹, fillCache: 𝔹}
+
+isWritable: String → 𝔹
+
+averageReadLatency: ℝ
+averageReadLatencyWithoutFilter: ℝ
+
+-- PostgreSQL Backend Specification
+schema PostgreSQLBackend extends StorageBackendContract
+  connectionString: String
+  schema: String
+  tables: ℙ String
+  preparedStatements: ℙ PreparedStatement
+  connectionPool: ConnectionPool
+where
+  -- Backend type must be POSTGRESQL
+  backend.backendType = POSTGRESQL
+  
+  -- Connection string must be valid
+  backend.connected = true ⇒ 
+    connectionString ≠ "" ∧ isValidConnectionString(connectionString)
+  
+  -- Required tables must exist
+  "atoms" ∈ tables ∧
+  "links" ∈ tables ∧
+  "values" ∈ tables ∧
+  "incoming_set" ∈ tables
+  
+  -- Connection pool for concurrent access
+  connectionPool.maxConnections ≥ 10 ∧
+  connectionPool.activeConnections ≤ connectionPool.maxConnections
+  
+  -- Prepared statements for performance
+  #preparedStatements ≥ 5  -- insert, update, delete, select, etc.
+end
+
+PreparedStatement ::= {name: String, sql: String}
+
+schema ConnectionPool
+  maxConnections: ℕ
+  activeConnections: ℕ
+  idleConnections: ℕ
+where
+  activeConnections + idleConnections ≤ maxConnections
+end
+
+isValidConnectionString: String → 𝔹
+
+-- Distributed Cog Storage Backend Specification
+schema CogStorageBackend extends StorageBackendContract
+  remoteAtomSpaceURL: String
+  networkProtocol: Protocol
+  compressionEnabled: 𝔹
+  encryptionEnabled: 𝔹
+  retryPolicy: RetryPolicy
+where
+  -- Backend type must be COG_DISTRIBUTED
+  backend.backendType = COG_DISTRIBUTED
+  
+  -- Remote URL must be valid
+  backend.connected = true ⇒
+    remoteAtomSpaceURL ≠ "" ∧ isValidURL(remoteAtomSpaceURL)
+  
+  -- Network protocol typically TCP or WebSocket
+  networkProtocol ∈ {TCP_BINARY, WEBSOCKET}
+  
+  -- Compression improves network performance
+  compressionEnabled = true ⇒
+    backend.statistics.averageWriteLatency < 
+    estimateUncompressedLatency / 1.5
+  
+  -- Retry policy for network failures
+  retryPolicy.maxRetries ≥ 3
+  retryPolicy.backoffMultiplier > 1.0
+end
+
+schema RetryPolicy
+  maxRetries: ℕ
+  initialDelay: ℝ  -- milliseconds
+  backoffMultiplier: ℝ
+  maxDelay: ℝ  -- milliseconds
+where
+  maxRetries > 0
+  initialDelay > 0
+  backoffMultiplier ≥ 1.0
+  maxDelay ≥ initialDelay
+end
+
+isValidURL: String → 𝔹
+estimateUncompressedLatency: ℝ
+
+--------------------------------------------------------------------------------
+-- SECTION 2: Network Protocol Specifications
+--------------------------------------------------------------------------------
+
+-- TCP Binary Protocol Specification
+schema TCPBinaryProtocol
+  port: PortNumber
+  maxMessageSize: ℕ  -- bytes
+  messageFormat: MessageFormat
+  keepAliveInterval: ℕ  -- seconds
+where
+  -- Standard port for CogServer
+  port = 17001
+  
+  -- Message size limit to prevent DoS
+  maxMessageSize ≤ 100 * 1024 * 1024  -- 100MB limit
+  
+  -- Message format is S-expressions
+  messageFormat = SEXPRESSION
+  
+  -- Keep-alive to detect dead connections
+  keepAliveInterval ≥ 30 ∧ keepAliveInterval ≤ 300
+end
+
+MessageFormat ::= {SEXPRESSION, JSON, BINARY}
+
+-- S-Expression Message Structure
+schema SExpressionMessage
+  messageType: SExprMessageType
+  content: String
+  length: ℕ
+where
+  -- Length must match content
+  length = #content
+  
+  -- Content must be valid S-expression
+  isValidSExpression(content)
+  
+  -- Message type determines parsing
+  messageType ∈ {COMMAND, QUERY, RESPONSE, ERROR}
+end
+
+SExprMessageType ::= {COMMAND, QUERY, RESPONSE, ERROR}
+
+isValidSExpression: String → 𝔹
+
+-- WebSocket Protocol Specification
+schema WebSocketProtocol
+  port: PortNumber
+  path: String
+  subprotocols: ℙ String
+  maxFrameSize: ℕ
+  pingInterval: ℕ  -- seconds
+where
+  -- Standard WebSocket port
+  port = 18080
+  
+  -- Different paths for different APIs
+  path ∈ {"/py", "/scm", "/json"}
+  
+  -- Supported subprotocols
+  "opencog-sexpr" ∈ subprotocols ∨
+  "opencog-json" ∈ subprotocols
+  
+  -- Frame size limit
+  maxFrameSize ≤ 10 * 1024 * 1024  -- 10MB
+  
+  -- Ping/pong for connection health
+  pingInterval ≥ 10 ∧ pingInterval ≤ 60
+end
+
+-- JSON API Protocol Specification
+schema JSONAPIProtocol
+  version: String
+  endpoints: ℙ APIEndpoint
+  requestFormat: JSONRequestFormat
+  responseFormat: JSONResponseFormat
+where
+  -- API version
+  version = "1.0"
+  
+  -- Standard endpoints
+  ∃ ep: APIEndpoint | 
+    ep ∈ endpoints ∧ ep.path = "/atomspace/query" ∧
+  ∃ ep: APIEndpoint |
+    ep ∈ endpoints ∧ ep.path = "/atomspace/create" ∧
+  ∃ ep: APIEndpoint |
+    ep ∈ endpoints ∧ ep.path = "/atomspace/update"
+  
+  -- Request format
+  requestFormat.encoding = UTF8
+  requestFormat.contentType = "application/json"
+  
+  -- Response format
+  responseFormat.encoding = UTF8
+  responseFormat.includeMetadata = true
+end
+
+schema APIEndpoint
+  path: String
+  method: HTTPMethod
+  parameters: ℙ Parameter
+  authentication: 𝔹
+where
+  path ≠ ""
+  method ∈ {GET, POST, PUT, DELETE}
+end
+
+HTTPMethod ::= {GET, POST, PUT, DELETE, PATCH}
+
+schema Parameter
+  name: String
+  type: ParameterType
+  required: 𝔹
+end
+
+ParameterType ::= {STRING, INTEGER, BOOLEAN, OBJECT, ARRAY}
+
+schema JSONRequestFormat
+  encoding: Encoding
+  contentType: String
+  maxSize: ℕ
+end
+
+schema JSONResponseFormat
+  encoding: Encoding
+  contentType: String
+  includeMetadata: 𝔹
+end
+
+Encoding ::= {UTF8, UTF16, ASCII}
+
+-- Model Context Protocol (MCP) Specification
+schema MCPProtocol
+  version: String
+  transport: MCPTransport
+  capabilities: ℙ MCPCapability
+  tools: ℙ MCPTool
+where
+  -- MCP version
+  version = "1.0"
+  
+  -- Transport can be stdio or HTTP
+  transport ∈ {STDIO, HTTP}
+  
+  -- Capabilities supported
+  "tools/list" ∈ capabilities ∧
+  "tools/call" ∈ capabilities ∧
+  "resources/read" ∈ capabilities
+  
+  -- AtomSpace tools exposed via MCP
+  ∃ tool: MCPTool |
+    tool ∈ tools ∧ tool.name = "query_atomspace" ∧
+  ∃ tool: MCPTool |
+    tool ∈ tools ∧ tool.name = "create_atom"
+end
+
+MCPTransport ::= {STDIO, HTTP}
+MCPCapability ::= String
+
+schema MCPTool
+  name: String
+  description: String
+  inputSchema: JSONSchema
+  handler: ToolHandler
+end
+
+JSONSchema ::= String  -- Simplified representation
+ToolHandler ::= Function  -- Abstract function type
+
+--------------------------------------------------------------------------------
+-- SECTION 3: External Service API Contracts
+--------------------------------------------------------------------------------
+
+-- LLM Inference Service Contract (Aphrodite Engine)
+schema LLMInferenceContract
+  serviceURL: String
+  apiKey: String
+  model: String
+  maxTokens: ℕ
+  temperature: {r: ℝ | 0 ≤ r ≤ 2}
+  
+  -- Operations
+  generateText: TextPrompt → GeneratedText
+  generateEmbedding: String → Vector
+  streamGeneration: TextPrompt → Stream⟨TokenChunk⟩
+where
+  -- Service must be accessible
+  isValidURL(serviceURL)
+  
+  -- API key required for authentication
+  apiKey ≠ "" ⇒ isSecureConnection(serviceURL)
+  
+  -- Model must be loaded
+  model ≠ ""
+  
+  -- Token limit must be reasonable
+  0 < maxTokens ≤ 100000
+  
+  -- Temperature controls randomness
+  0 ≤ temperature ≤ 2
+  
+  -- Generation respects token limit
+  ∀ prompt: TextPrompt; result: GeneratedText |
+    result = generateText(prompt) ⇒
+    #result.tokens ≤ maxTokens
+end
+
+schema TextPrompt
+  text: String
+  systemPrompt: String
+  stopSequences: seq String
+where
+  text ≠ ""
+end
+
+schema GeneratedText
+  text: String
+  tokens: seq String
+  logprobs: seq ℝ
+  finishReason: FinishReason
+where
+  #tokens = #logprobs
+end
+
+FinishReason ::= {COMPLETED, LENGTH_LIMIT, STOP_SEQUENCE, ERROR}
+
+Vector ::= seq ℝ
+
+Stream⟨T⟩ ::= seq T
+
+schema TokenChunk
+  token: String
+  logprob: ℝ
+  index: ℕ
+end
+
+isSecureConnection: String → 𝔹
+
+-- Knowledge Graph Integration Contract (GnuCash)
+schema KnowledgeGraphContract
+  dataSource: String
+  schemaMapping: EntityType ⇸ AtomType
+  syncInterval: ℕ  -- seconds
+  bidirectional: 𝔹
+  
+  -- Operations
+  importEntities: ℙ Entity → ℙ UUID
+  exportAtoms: ℙ UUID → ℙ Entity
+  synchronize: () → SyncResult
+where
+  -- Data source must be accessible
+  dataSource ≠ ""
+  
+  -- Schema mapping must be complete
+  ∀ et: EntityType | et ∈ supportedEntityTypes ⇒
+    et ∈ dom schemaMapping
+  
+  -- Sync interval reasonable for performance
+  syncInterval ≥ 60  -- At least 1 minute
+  
+  -- Bidirectional sync requires write access
+  bidirectional = true ⇒ hasWriteAccess(dataSource)
+  
+  -- Import creates valid atoms
+  ∀ entities: ℙ Entity; uuids: ℙ UUID |
+    uuids = importEntities(entities) ⇒
+    ∀ uuid: UUID | uuid ∈ uuids ⇒
+      uuid ∈ dom atomSpaceUUIDs
+end
+
+EntityType ::= String
+supportedEntityTypes: ℙ EntityType
+
+schema Entity
+  entityID: String
+  entityType: EntityType
+  properties: String ⇸ String
+end
+
+schema SyncResult
+  entitiesImported: ℕ
+  atomsExported: ℕ
+  conflicts: ℙ Conflict
+  success: 𝔹
+end
+
+schema Conflict
+  entityID: String
+  atomUUID: UUID
+  reason: String
+end
+
+hasWriteAccess: String → 𝔹
+atomSpaceUUIDs: ℙ UUID
+
+-- Story/World Modeling Service Contract (KoboldCpp)
+schema WorldModelingContract
+  serviceURL: String
+  model: String
+  contextSize: ℕ
+  
+  -- Operations
+  generateStory: StoryPrompt → StoryOutput
+  updateWorldState: WorldState → Result
+  queryWorld: WorldQuery → WorldAnswer
+where
+  -- Service must be accessible
+  isValidURL(serviceURL)
+  
+  -- Model must support world modeling
+  model ≠ ""
+  
+  -- Context size determines memory
+  contextSize ≥ 2048
+  
+  -- Story generation preserves world consistency
+  ∀ prompt: StoryPrompt; output: StoryOutput |
+    output = generateStory(prompt) ⇒
+    isConsistentWithWorld(output, prompt.worldState)
+end
+
+schema StoryPrompt
+  prompt: String
+  worldState: WorldState
+  characters: ℙ Character
+  constraints: ℙ String
+end
+
+schema WorldState
+  facts: ℙ String
+  entities: ℙ Entity
+  relationships: ℙ Relationship
+end
+
+schema Character
+  name: String
+  traits: ℙ String
+  relationships: ℙ Relationship
+end
+
+schema Relationship
+  subject: String
+  predicate: String
+  object: String
+end
+
+schema StoryOutput
+  generatedText: String
+  updatedWorldState: WorldState
+  characterActions: ℙ Action
+end
+
+schema Action
+  character: String
+  actionType: String
+  target: String
+end
+
+schema WorldQuery
+  queryText: String
+  context: WorldState
+end
+
+schema WorldAnswer
+  answerText: String
+  confidence: {r: ℝ | 0 ≤ r ≤ 1}
+  sources: ℙ String
+end
+
+isConsistentWithWorld: StoryOutput × WorldState → 𝔹
+
+--------------------------------------------------------------------------------
+-- SECTION 4: Inter-Component Communication Protocols
+--------------------------------------------------------------------------------
+
+-- AtomSpace-CogServer Communication
+operation AtomSpaceServerCommunication
+  ΞAtomSpace
+  ΔCogServer
+  command?: String
+  response!: String
+where
+  -- CogServer parses command
+  let parsedCommand = parseCommand(command?)
+  
+  -- Execute on AtomSpace based on command type
+  (parsedCommand.type = QUERY ⇒
+    ∃ pattern: QueryPattern; results: seq UUID |
+      ExecuteQuery(pattern, results, _) ∧
+      response! = formatResults(results))
+  
+  ∨
+  
+  (parsedCommand.type = CREATE ⇒
+    ∃ atomType: AtomType; newUUID: UUID |
+      CreateAtom(atomType, _, _, _, _, newUUID) ∧
+      response! = formatUUID(newUUID))
+  
+  ∨
+  
+  (parsedCommand.type = UPDATE ⇒
+    ∃ uuid: UUID; success: 𝔹 |
+      UpdateAtom(uuid, _, _, success) ∧
+      response! = formatSuccess(success))
+end
+
+parseCommand: String → ParsedCommand
+
+schema ParsedCommand
+  type: CommandType
+  parameters: String ⇸ String
+end
+
+CommandType ::= {QUERY, CREATE, UPDATE, DELETE, INFERENCE}
+
+formatResults: seq UUID → String
+formatUUID: UUID → String
+formatSuccess: 𝔹 → String
+
+-- CogGML-AtomSpace Communication
+operation ShardAtomSpaceCommunication
+  ΔCognitiveShard
+  ΞAtomSpace
+  task?: CognitiveTask
+  results!: seq UUID
+where
+  -- Shard executes task using AtomSpace
+  task?.taskType = REASONING ⇒
+    ∃ pattern: QueryPattern; queryResults: seq UUID |
+      ExecuteQuery(pattern, queryResults, _) ∧
+      results! = queryResults
+  
+  ∨
+  
+  task?.taskType = PATTERN_MATCHING ⇒
+    ∃ pattern: QueryPattern; matches: seq UUID |
+      ExecuteQuery(pattern, matches, _) ∧
+      results! = matches
+  
+  -- Shard updates self-awareness metrics
+  ΔCognitiveShard.selfAwarenessMetrics.taskCompletionRate' =
+    calculateNewCompletionRate(task?, results!)
+end
+
+calculateNewCompletionRate: CognitiveTask × seq UUID → ℝ
+
+-- CogSelf-Subsystem Coordination
+operation CogSelfSubsystemCoordination
+  ΔCogSelf
+  ΔCogGMLSubsystem
+  ΔReasoningSubsystem
+  ΔLearningSubsystem
+where
+  -- CogSelf coordinates all subsystems
+  
+  -- Activate required shards
+  ∀ component: ComponentID |
+    component ∈ CogSelf.synergyManager.components ⇒
+    component = COGGML ⇒
+      #CogGMLSubsystem'.coordinator.activeShards ≥ 1
+  
+  -- Trigger reasoning if needed
+  CogSelf.goals contains reasoning goal ⇒
+    ReasoningSubsystem'.plnEngine.currentInferences ≠ ∅
+  
+  -- Trigger learning if needed
+  CogSelf.goals contains learning goal ⇒
+    LearningSubsystem'.mosesEngine.currentGeneration' >
+    LearningSubsystem.mosesEngine.currentGeneration
+  
+  -- Update synergy based on subsystem interactions
+  let interactions = 
+    measureSubsystemInteractions(
+      CogGMLSubsystem,
+      ReasoningSubsystem,
+      LearningSubsystem
+    )
+  
+  CogSelf'.synergyManager.overallSynergyLevel = 
+    calculateSynergyLevel(interactions)
+end
+
+measureSubsystemInteractions: 
+  CogGMLSubsystem × ReasoningSubsystem × LearningSubsystem → ℝ
+
+calculateSynergyLevel: ℝ → {r: ℝ | 0 ≤ r ≤ 1}
+
+--------------------------------------------------------------------------------
+-- SECTION 5: Error Handling and Recovery Protocols
+--------------------------------------------------------------------------------
+
+-- Storage Backend Error Recovery
+operation StorageErrorRecovery
+  ΔStorageBackendContract
+  error?: StorageError
+  recovered!: 𝔹
+where
+  -- Error types
+  error?.errorType = CONNECTION_LOST ⇒
+    -- Attempt reconnection with backoff
+    let reconnected = attemptReconnect(
+      backend,
+      maxRetries ⇒ 3,
+      initialDelay ⇒ 1000
+    )
+    recovered! = reconnected ∧
+    backend'.connected = reconnected
+  
+  ∨
+  
+  error?.errorType = WRITE_FAILURE ⇒
+    -- Retry write operation
+    let writeSucceeded = retryWrite(error?.failedOperation, maxRetries ⇒ 3)
+    recovered! = writeSucceeded
+  
+  ∨
+  
+  error?.errorType = CORRUPTION_DETECTED ⇒
+    -- Attempt data recovery
+    recovered! = false  -- Requires manual intervention
+    -- Log critical error
+end
+
+schema StorageError
+  errorType: StorageErrorType
+  errorMessage: String
+  failedOperation: Operation
+  timestamp: Timestamp
+end
+
+StorageErrorType ::= {CONNECTION_LOST, WRITE_FAILURE, READ_FAILURE,
+                      CORRUPTION_DETECTED, TIMEOUT}
+
+Operation ::= String  -- Simplified representation
+
+attemptReconnect: StorageNode × ℕ × ℝ → 𝔹
+retryWrite: Operation × ℕ → 𝔹
+
+-- Network Protocol Error Recovery
+operation NetworkErrorRecovery
+  ΔConnection
+  error?: NetworkError
+  recovered!: 𝔹
+where
+  error?.errorType = TIMEOUT ⇒
+    -- Increase timeout and retry
+    let newTimeout = error?.currentTimeout * 1.5
+    recovered! = retryWithTimeout(error?.operation, newTimeout)
+  
+  ∨
+  
+  error?.errorType = PROTOCOL_ERROR ⇒
+    -- Reset connection
+    Connection'.state = CONNECTING ∧
+    recovered! = false
+  
+  ∨
+  
+  error?.errorType = AUTHENTICATION_FAILURE ⇒
+    -- Require re-authentication
+    Connection'.state = AUTHENTICATING ∧
+    recovered! = false
+end
+
+schema NetworkError
+  errorType: NetworkErrorType
+  errorMessage: String
+  operation: String
+  currentTimeout: ℝ
+end
+
+NetworkErrorType ::= {TIMEOUT, PROTOCOL_ERROR, AUTHENTICATION_FAILURE,
+                      CONNECTION_REFUSED, BUFFER_OVERFLOW}
+
+retryWithTimeout: String × ℝ → 𝔹
+
+-- External Service Error Recovery
+operation ExternalServiceRecovery
+  error?: ServiceError
+  fallbackStrategy?: FallbackStrategy
+  recovered!: 𝔹
+where
+  error?.serviceType = LLM_INFERENCE ⇒
+    fallbackStrategy? = USE_CACHED_RESPONSES ⇒
+      recovered! = true
+    ∨
+    fallbackStrategy? = USE_ALTERNATIVE_SERVICE ⇒
+      let alternativeAvailable = checkAlternativeService()
+      recovered! = alternativeAvailable
+  
+  ∨
+  
+  error?.serviceType = WORLD_MODELING ⇒
+    fallbackStrategy? = DEGRADE_GRACEFULLY ⇒
+      recovered! = true  -- Continue without world modeling
+end
+
+schema ServiceError
+  serviceType: ServiceType
+  errorMessage: String
+  retryable: 𝔹
+end
+
+ServiceType ::= {LLM_INFERENCE, WORLD_MODELING, KNOWLEDGE_GRAPH}
+
+FallbackStrategy ::= {USE_CACHED_RESPONSES, USE_ALTERNATIVE_SERVICE,
+                      DEGRADE_GRACEFULLY, FAIL_FAST}
+
+checkAlternativeService: () → 𝔹
+
+--------------------------------------------------------------------------------
+-- SECTION 6: Performance and Quality of Service Contracts
+--------------------------------------------------------------------------------
+
+-- Storage Performance SLA
+schema StoragePerformanceSLA
+  backend: StorageBackendContract
+  maxReadLatency: ℝ  -- milliseconds
+  maxWriteLatency: ℝ  -- milliseconds
+  minThroughput: ℕ  -- operations per second
+  maxErrorRate: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Performance guarantees
+  backend.statistics.averageReadLatency ≤ maxReadLatency
+  backend.statistics.averageWriteLatency ≤ maxWriteLatency
+  
+  -- Throughput requirement
+  let throughput = 
+    (backend.statistics.totalReads + backend.statistics.totalWrites) /
+    measurementWindow
+  throughput ≥ minThroughput
+  
+  -- Error rate must be low
+  let errorRate = 
+    (backend.statistics.totalReads + backend.statistics.totalWrites - 
+     backend.statistics.atomsStored - backend.statistics.atomsFetched) /
+    max(backend.statistics.totalReads + backend.statistics.totalWrites, 1)
+  errorRate ≤ maxErrorRate
+end
+
+measurementWindow: ℝ  -- seconds
+
+-- Network Performance SLA
+schema NetworkPerformanceSLA
+  server: CogServer
+  maxResponseTime: ℝ  -- milliseconds
+  minAvailability: {r: ℝ | 0 ≤ r ≤ 1}
+  maxConcurrentConnections: ℕ
+where
+  -- Response time guarantee
+  server.networkStatistics.averageResponseTime ≤ maxResponseTime
+  
+  -- Availability requirement
+  let availability = 
+    server.uptime / (server.uptime + server.downtime)
+  availability ≥ minAvailability
+  
+  -- Connection capacity
+  server.networkStatistics.activeConnections ≤ maxConcurrentConnections
+end
+
+-- External Service SLA
+schema ExternalServiceSLA
+  service: LLMInferenceContract
+  maxLatency: ℝ  -- milliseconds
+  minSuccessRate: {r: ℝ | 0 ≤ r ≤ 1}
+  maxCostPerRequest: ℝ  -- dollars
+where
+  -- Latency guarantee
+  averageServiceLatency ≤ maxLatency
+  
+  -- Success rate requirement
+  let successRate = successfulRequests / totalRequests
+  successRate ≥ minSuccessRate
+  
+  -- Cost constraint
+  averageCostPerRequest ≤ maxCostPerRequest
+end
+
+averageServiceLatency: ℝ
+successfulRequests: ℕ
+totalRequests: ℕ
+averageCostPerRequest: ℝ
+
+--------------------------------------------------------------------------------
+-- SECTION 7: Integration Invariants
+--------------------------------------------------------------------------------
+
+-- Invariant: All storage operations maintain AtomSpace consistency
+invariant StorageAtomSpaceConsistency
+  ∀ backend: StorageBackendContract;
+    atom: Atom |
+    backend.store(atom).success = true ⇒
+    backend.fetch(atom.uuid) = atom
+
+-- Invariant: Network communication preserves data integrity
+invariant NetworkDataIntegrity
+  ∀ conn: Connection;
+    request: Request;
+    response: Response |
+    response.requestID = request.requestID ⇒
+    response.connectionID = request.connectionID
+
+-- Invariant: External services maintain semantic consistency
+invariant ExternalServiceConsistency
+  ∀ llm: LLMInferenceContract;
+    prompt: TextPrompt;
+    result: GeneratedText |
+    result = llm.generateText(prompt) ⇒
+    isSemanticallyconsistent(prompt.text, result.text)
+
+isSemanticallyconsistent: String × String → 𝔹
+
+-- Invariant: Integration errors trigger appropriate recovery
+invariant ErrorRecoveryGuarantee
+  ∀ error: StorageError ∪ NetworkError ∪ ServiceError |
+    error.retryable = true ⇒
+    ∃ recovery: RecoveryOperation |
+      recovery.error = error ∧
+      recovery.recovered = true ∨
+      recovery.attemptsExhausted = true
+
+RecoveryOperation ::= {error: Error, recovered: 𝔹, attemptsExhausted: 𝔹}
+Error ::= StorageError ∪ NetworkError ∪ ServiceError
+
+--------------------------------------------------------------------------------
+-- End of External Integrations Specification
+--------------------------------------------------------------------------------

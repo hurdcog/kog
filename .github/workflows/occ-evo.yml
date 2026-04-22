@@ -1,0 +1,2113 @@
+name: OCC Evolution - Complete Build
+
+# Comprehensive OpenCog Collection build workflow
+# Based on occ-build.yml structure with all components from ocall.yml
+# Implements proper serial-parallel dependency chains for optimal build time
+# Generated: December 12, 2025
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  MAKEFLAGS: -j2
+
+jobs:
+  # ============================================================================
+  # LAYER 1: Foundation (Parallel - No Dependencies)
+  # ============================================================================
+  
+  build-cogutil:
+    runs-on: ubuntu-latest
+    name: "L1: Build CogUtil (Foundation)"
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Cache CCache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: ccache-cogutil-${{ runner.os }}-${{ hashFiles('cogutil/**') }}
+        restore-keys: |
+          ccache-cogutil-${{ runner.os }}-
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          binutils-dev libiberty-dev \
+          libboost-dev libboost-filesystem-dev libboost-program-options-dev \
+          libboost-system-dev libboost-thread-dev libboost-regex-dev \
+          guile-3.0-dev python3-nose valgrind doxygen ccache
+    
+    - name: Install Sparsehash
+      run: |
+        chmod +x .github/scripts/install-sparsehash.sh
+        .github/scripts/install-sparsehash.sh
+    
+    - name: Configure CogUtil
+      run: |
+        mkdir -p cogutil/build
+        cd cogutil/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build CogUtil
+      run: |
+        cd cogutil/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd cogutil/build
+        make ${{ env.MAKEFLAGS }} tests
+    
+    - name: Run Tests
+      run: |
+        cd cogutil/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install CogUtil
+      run: |
+        cd cogutil/build
+        sudo make install
+        sudo ldconfig
+
+  build-coggml:
+    runs-on: ubuntu-latest
+    name: "L1: Build CogGML (ML Framework)"
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "coggml" ]; then
+          echo "CogGML directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure CogGML
+      if: hashFiles('coggml/CMakeLists.txt') != ''
+      run: |
+        mkdir -p coggml/build
+        cd coggml/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build CogGML
+      if: hashFiles('coggml/CMakeLists.txt') != ''
+      run: |
+        cd coggml/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install CogGML
+      if: hashFiles('coggml/CMakeLists.txt') != ''
+      run: |
+        cd coggml/build
+        sudo make install
+        sudo ldconfig
+
+  build-agentic-chatbots:
+    runs-on: ubuntu-latest
+    name: "L1: Build Agentic Chatbots"
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "agentic-chatbots" ]; then
+          echo "Agentic-chatbots directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Agentic Chatbots
+      if: hashFiles('agentic-chatbots/CMakeLists.txt') != ''
+      run: |
+        mkdir -p agentic-chatbots/build
+        cd agentic-chatbots/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Agentic Chatbots
+      if: hashFiles('agentic-chatbots/CMakeLists.txt') != ''
+      run: |
+        cd agentic-chatbots/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Agentic Chatbots
+      if: hashFiles('agentic-chatbots/CMakeLists.txt') != ''
+      run: |
+        cd agentic-chatbots/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 2: Core AtomSpace
+  # ============================================================================
+  
+  build-atomspace:
+    runs-on: ubuntu-latest
+    name: "L2: Build AtomSpace (Core)"
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Cache CCache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: ccache-atomspace-${{ runner.os }}-${{ hashFiles('atomspace/**') }}
+        restore-keys: |
+          ccache-atomspace-${{ runner.os }}-
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          binutils-dev libiberty-dev \
+          libboost-dev libboost-filesystem-dev libboost-program-options-dev \
+          libboost-system-dev libboost-thread-dev libboost-regex-dev \
+          guile-3.0-dev libgmp-dev \
+          cython3 python3-dev python3-nose \
+          valgrind doxygen ccache
+    
+    - name: Rebuild and Install CogUtil
+      run: |
+        mkdir -p cogutil/build
+        cd cogutil/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        make ${{ env.MAKEFLAGS }}
+        sudo make install
+        sudo ldconfig
+    
+    - name: Configure AtomSpace
+      run: |
+        mkdir -p atomspace/build
+        cd atomspace/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace
+      run: |
+        cd atomspace/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd atomspace/build
+        make ${{ env.MAKEFLAGS }} tests
+    
+    - name: Run Tests
+      run: |
+        cd atomspace/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install AtomSpace
+      run: |
+        cd atomspace/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 3: Storage Backend
+  # ============================================================================
+  
+  build-atomspace-storage:
+    runs-on: ubuntu-latest
+    name: "L3: Build AtomSpace Storage (Backend)"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-filesystem-dev libboost-system-dev libboost-thread-dev \
+          guile-3.0-dev cython3 python3-dev python3-nose \
+          valgrind doxygen
+    
+    - name: Rebuild Dependencies
+      run: |
+        # CogUtil
+        mkdir -p cogutil/build && cd cogutil/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+        cd ../..
+        
+        # AtomSpace
+        mkdir -p atomspace/build && cd atomspace/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+        cd ../..
+    
+    - name: Configure AtomSpace Storage
+      run: |
+        mkdir -p atomspace-storage/build
+        cd atomspace-storage/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace Storage
+      run: |
+        cd atomspace-storage/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd atomspace-storage/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd atomspace-storage/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install AtomSpace Storage
+      run: |
+        cd atomspace-storage/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 4: Storage Implementations (Parallel)
+  # ============================================================================
+  
+  build-atomspace-rocks:
+    runs-on: ubuntu-latest
+    name: "L4: Build AtomSpace RocksDB"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev libboost-thread-dev \
+          guile-3.0-dev librocksdb-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure AtomSpace Rocks
+      run: |
+        mkdir -p atomspace-rocks/build
+        cd atomspace-rocks/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace Rocks
+      run: |
+        cd atomspace-rocks/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace Rocks
+      run: |
+        cd atomspace-rocks/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-pgres:
+    runs-on: ubuntu-latest
+    name: "L4: Build AtomSpace PostgreSQL"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev libboost-thread-dev \
+          guile-3.0-dev libpq-dev libpqxx-dev postgresql-client
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure AtomSpace PostgreSQL
+      run: |
+        mkdir -p atomspace-pgres/build
+        cd atomspace-pgres/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace PostgreSQL
+      run: |
+        cd atomspace-pgres/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace PostgreSQL
+      run: |
+        cd atomspace-pgres/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-dht:
+    runs-on: ubuntu-latest
+    name: "L4: Build AtomSpace DHT"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev libboost-thread-dev \
+          guile-3.0-dev libopendht-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure AtomSpace DHT
+      run: |
+        mkdir -p atomspace-dht/build
+        cd atomspace-dht/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace DHT
+      run: |
+        cd atomspace-dht/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace DHT
+      run: |
+        cd atomspace-dht/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-bridge:
+    runs-on: ubuntu-latest
+    name: "L4: Build AtomSpace Bridge"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-bridge" ]; then
+          echo "AtomSpace Bridge not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace Bridge
+      if: hashFiles('atomspace-bridge/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-bridge/build
+        cd atomspace-bridge/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace Bridge
+      if: hashFiles('atomspace-bridge/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-bridge/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace Bridge
+      if: hashFiles('atomspace-bridge/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-bridge/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 5: Server Infrastructure
+  # ============================================================================
+  
+  build-cogserver:
+    runs-on: ubuntu-latest
+    name: "L5: Build CogServer (Network Server)"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-filesystem-dev libboost-system-dev libboost-thread-dev \
+          guile-3.0-dev cython3 python3-dev python3-nose \
+          libasio-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure CogServer
+      run: |
+        mkdir -p cogserver/build
+        cd cogserver/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build CogServer
+      run: |
+        cd cogserver/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd cogserver/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd cogserver/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install CogServer
+      run: |
+        cd cogserver/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 6: Server Extensions (Parallel)
+  # ============================================================================
+  
+  build-atomspace-cog:
+    runs-on: ubuntu-latest
+    name: "L6: Build AtomSpace Cog"
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure AtomSpace Cog
+      run: |
+        mkdir -p atomspace-cog/build
+        cd atomspace-cog/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace Cog
+      run: |
+        cd atomspace-cog/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace Cog
+      run: |
+        cd atomspace-cog/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-restful:
+    runs-on: ubuntu-latest
+    name: "L6: Build AtomSpace RESTful"
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-restful" ]; then
+          echo "AtomSpace RESTful not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace RESTful
+      if: hashFiles('atomspace-restful/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-restful/build
+        cd atomspace-restful/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace RESTful
+      if: hashFiles('atomspace-restful/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-restful/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace RESTful
+      if: hashFiles('atomspace-restful/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-restful/build
+        sudo make install
+        sudo ldconfig
+
+  build-attention:
+    runs-on: ubuntu-latest
+    name: "L6: Build Attention"
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Attention
+      run: |
+        mkdir -p attention/build
+        cd attention/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Attention
+      run: |
+        cd attention/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd attention/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd attention/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install Attention
+      run: |
+        cd attention/build
+        sudo make install
+        sudo ldconfig
+
+  build-learn:
+    runs-on: ubuntu-latest
+    name: "L6: Build Learn"
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Learn
+      run: |
+        mkdir -p learn/build
+        cd learn/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Learn
+      run: |
+        cd learn/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd learn/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd learn/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install Learn
+      run: |
+        cd learn/build
+        sudo make install
+        sudo ldconfig
+
+  build-spacetime:
+    runs-on: ubuntu-latest
+    name: "L6: Build SpaceTime"
+    needs: build-cogserver
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure SpaceTime
+      run: |
+        mkdir -p spacetime/build
+        cd spacetime/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build SpaceTime
+      run: |
+        cd spacetime/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install SpaceTime
+      run: |
+        cd spacetime/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 7: Reasoning Foundation (Parallel)
+  # ============================================================================
+  
+  build-unify:
+    runs-on: ubuntu-latest
+    name: "L7: Build Unify"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Unify
+      run: |
+        mkdir -p unify/build
+        cd unify/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Unify
+      run: |
+        cd unify/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd unify/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd unify/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install Unify
+      run: |
+        cd unify/build
+        sudo make install
+        sudo ldconfig
+
+  build-matrix:
+    runs-on: ubuntu-latest
+    name: "L7: Build Matrix"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Matrix
+      run: |
+        mkdir -p matrix/build
+        cd matrix/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Matrix
+      run: |
+        cd matrix/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Matrix
+      run: |
+        cd matrix/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 8: Reasoning Engine
+  # ============================================================================
+  
+  build-ure:
+    runs-on: ubuntu-latest
+    name: "L8: Build URE (Unified Rule Engine)"
+    needs: build-unify
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace unify; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure URE
+      run: |
+        mkdir -p ure/build
+        cd ure/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build URE
+      run: |
+        cd ure/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd ure/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd ure/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install URE
+      run: |
+        cd ure/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 9: Advanced Reasoning (Parallel)
+  # ============================================================================
+  
+  build-miner:
+    runs-on: ubuntu-latest
+    name: "L9: Build Miner"
+    needs: build-ure
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace unify ure; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Miner
+      run: |
+        mkdir -p miner/build
+        cd miner/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Miner
+      run: |
+        cd miner/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd miner/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd miner/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install Miner
+      run: |
+        cd miner/build
+        sudo make install
+        sudo ldconfig
+
+  build-asmoses:
+    runs-on: ubuntu-latest
+    name: "L9: Build AS-MOSES"
+    needs: build-ure
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-filesystem-dev libboost-program-options-dev \
+          libboost-system-dev libboost-thread-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace unify ure; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure AS-MOSES
+      run: |
+        mkdir -p asmoses/build
+        cd asmoses/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBoost_NO_SYSTEM_PATHS=OFF
+    
+    - name: Build AS-MOSES
+      run: |
+        cd asmoses/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AS-MOSES
+      run: |
+        cd asmoses/build
+        sudo make install
+        sudo ldconfig
+    
+    - name: Build Tests
+      run: |
+        cd asmoses/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd asmoses/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+
+  # ============================================================================
+  # LAYER 10: Multi-Dependency Components
+  # ============================================================================
+  
+  build-pln:
+    runs-on: ubuntu-latest
+    name: "L10: Build PLN (Probabilistic Logic)"
+    needs: [build-ure, build-spacetime]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential cxxtest \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver unify ure spacetime; do
+          if [ -d "$dir" ]; then
+            mkdir -p $dir/build && cd $dir/build
+            cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+            make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+            cd ../..
+          fi
+        done
+    
+    - name: Configure PLN
+      run: |
+        mkdir -p pln/build
+        cd pln/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build PLN
+      run: |
+        cd pln/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Build Tests
+      run: |
+        cd pln/build
+        make ${{ env.MAKEFLAGS }} tests
+      continue-on-error: true
+    
+    - name: Run Tests
+      run: |
+        cd pln/build
+        make check ARGS="${{ env.MAKEFLAGS }}"
+      continue-on-error: true
+    
+    - name: Install PLN
+      run: |
+        cd pln/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 11: Applications
+  # ============================================================================
+  
+  build-opencog:
+    runs-on: ubuntu-latest
+    name: "L11: Build OpenCog (Main Application)"
+    needs: [build-pln, build-learn, build-attention]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-system-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage cogserver unify ure spacetime pln learn attention; do
+          if [ -d "$dir" ]; then
+            mkdir -p $dir/build && cd $dir/build
+            cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+            make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+            cd ../..
+          fi
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "opencog" ]; then
+          echo "OpenCog directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure OpenCog
+      if: hashFiles('opencog/CMakeLists.txt') != ''
+      run: |
+        mkdir -p opencog/build
+        cd opencog/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build OpenCog
+      if: hashFiles('opencog/CMakeLists.txt') != ''
+      run: |
+        cd opencog/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install OpenCog
+      if: hashFiles('opencog/CMakeLists.txt') != ''
+      run: |
+        cd opencog/build
+        sudo make install
+        sudo ldconfig
+
+  build-benchmark:
+    runs-on: ubuntu-latest
+    name: "L11: Build Benchmark"
+    needs: build-opencog
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "benchmark" ]; then
+          echo "Benchmark directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+    
+    - name: Configure Benchmark
+      if: hashFiles('benchmark/CMakeLists.txt') != ''
+      run: |
+        mkdir -p benchmark/build
+        cd benchmark/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Benchmark
+      if: hashFiles('benchmark/CMakeLists.txt') != ''
+      run: |
+        cd benchmark/build
+        make ${{ env.MAKEFLAGS }}
+
+  build-agents:
+    runs-on: ubuntu-latest
+    name: "L11: Build Agents"
+    needs: build-opencog
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "agents" ]; then
+          echo "Agents directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential guile-3.0-dev
+    
+    - name: Configure Agents
+      if: hashFiles('agents/CMakeLists.txt') != ''
+      run: |
+        mkdir -p agents/build
+        cd agents/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Agents
+      if: hashFiles('agents/CMakeLists.txt') != ''
+      run: |
+        cd agents/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Agents
+      if: hashFiles('agents/CMakeLists.txt') != ''
+      run: |
+        cd agents/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 12: Specialized Domains (Parallel - AtomSpace Dependencies)
+  # ============================================================================
+  
+  build-vision:
+    runs-on: ubuntu-latest
+    name: "L12: Build Vision"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "vision" ]; then
+          echo "Vision directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Vision
+      if: hashFiles('vision/CMakeLists.txt') != ''
+      run: |
+        mkdir -p vision/build
+        cd vision/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Vision
+      if: hashFiles('vision/CMakeLists.txt') != ''
+      run: |
+        cd vision/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Vision
+      if: hashFiles('vision/CMakeLists.txt') != ''
+      run: |
+        cd vision/build
+        sudo make install
+        sudo ldconfig
+
+  build-sensory:
+    runs-on: ubuntu-latest
+    name: "L12: Build Sensory"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "sensory" ]; then
+          echo "Sensory directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Sensory
+      if: hashFiles('sensory/CMakeLists.txt') != ''
+      run: |
+        mkdir -p sensory/build
+        cd sensory/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Sensory
+      if: hashFiles('sensory/CMakeLists.txt') != ''
+      run: |
+        cd sensory/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Sensory
+      if: hashFiles('sensory/CMakeLists.txt') != ''
+      run: |
+        cd sensory/build
+        sudo make install
+        sudo ldconfig
+
+  build-lg-atomese:
+    runs-on: ubuntu-latest
+    name: "L12: Build Link Grammar Atomese"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev liblink-grammar-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Configure Link Grammar Atomese
+      run: |
+        mkdir -p lg-atomese/build
+        cd lg-atomese/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Link Grammar Atomese
+      run: |
+        cd lg-atomese/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Link Grammar Atomese
+      run: |
+        cd lg-atomese/build
+        sudo make install
+        sudo ldconfig
+
+  build-agi-bio:
+    runs-on: ubuntu-latest
+    name: "L12: Build AGI Bio"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "agi-bio" ]; then
+          echo "AGI Bio directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AGI Bio
+      if: hashFiles('agi-bio/CMakeLists.txt') != ''
+      run: |
+        mkdir -p agi-bio/build
+        cd agi-bio/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AGI Bio
+      if: hashFiles('agi-bio/CMakeLists.txt') != ''
+      run: |
+        cd agi-bio/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AGI Bio
+      if: hashFiles('agi-bio/CMakeLists.txt') != ''
+      run: |
+        cd agi-bio/build
+        sudo make install
+        sudo ldconfig
+
+  build-cheminformatics:
+    runs-on: ubuntu-latest
+    name: "L12: Build Cheminformatics"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "cheminformatics" ]; then
+          echo "Cheminformatics directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Cheminformatics
+      if: hashFiles('cheminformatics/CMakeLists.txt') != ''
+      run: |
+        mkdir -p cheminformatics/build
+        cd cheminformatics/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Cheminformatics
+      if: hashFiles('cheminformatics/CMakeLists.txt') != ''
+      run: |
+        cd cheminformatics/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Cheminformatics
+      if: hashFiles('cheminformatics/CMakeLists.txt') != ''
+      run: |
+        cd cheminformatics/build
+        sudo make install
+        sudo ldconfig
+
+  build-dimensional-embedding:
+    runs-on: ubuntu-latest
+    name: "L12: Build Dimensional Embedding"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "dimensional-embedding" ]; then
+          echo "Dimensional Embedding directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Dimensional Embedding
+      if: hashFiles('dimensional-embedding/CMakeLists.txt') != ''
+      run: |
+        mkdir -p dimensional-embedding/build
+        cd dimensional-embedding/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      continue-on-error: true
+    
+    - name: Build Dimensional Embedding
+      if: hashFiles('dimensional-embedding/CMakeLists.txt') != ''
+      run: |
+        cd dimensional-embedding/build
+        make ${{ env.MAKEFLAGS }}
+      continue-on-error: true
+
+  build-pattern-index:
+    runs-on: ubuntu-latest
+    name: "L12: Build Pattern Index"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "pattern-index" ]; then
+          echo "Pattern Index directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Pattern Index
+      if: hashFiles('pattern-index/CMakeLists.txt') != ''
+      run: |
+        mkdir -p pattern-index/build
+        cd pattern-index/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      continue-on-error: true
+    
+    - name: Build Pattern Index
+      if: hashFiles('pattern-index/CMakeLists.txt') != ''
+      run: |
+        cd pattern-index/build
+        make ${{ env.MAKEFLAGS }}
+      continue-on-error: true
+
+  build-generate:
+    runs-on: ubuntu-latest
+    name: "L12: Build Generate"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "generate" ]; then
+          echo "Generate directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Generate
+      if: hashFiles('generate/CMakeLists.txt') != ''
+      run: |
+        mkdir -p generate/build
+        cd generate/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Generate
+      if: hashFiles('generate/CMakeLists.txt') != ''
+      run: |
+        cd generate/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Generate
+      if: hashFiles('generate/CMakeLists.txt') != ''
+      run: |
+        cd generate/build
+        sudo make install
+        sudo ldconfig
+
+  build-visualization:
+    runs-on: ubuntu-latest
+    name: "L12: Build Visualization"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "visualization" ]; then
+          echo "Visualization directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Visualization
+      if: hashFiles('visualization/CMakeLists.txt') != ''
+      run: |
+        mkdir -p visualization/build
+        cd visualization/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      continue-on-error: true
+    
+    - name: Build Visualization
+      if: hashFiles('visualization/CMakeLists.txt') != ''
+      run: |
+        cd visualization/build
+        make ${{ env.MAKEFLAGS }}
+      continue-on-error: true
+
+  build-moses:
+    runs-on: ubuntu-latest
+    name: "L12: Build MOSES"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev libboost-filesystem-dev libboost-program-options-dev \
+          libboost-system-dev libboost-thread-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "moses" ]; then
+          echo "MOSES directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure MOSES
+      if: hashFiles('moses/CMakeLists.txt') != ''
+      run: |
+        mkdir -p moses/build
+        cd moses/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+      continue-on-error: true
+    
+    - name: Build MOSES
+      if: hashFiles('moses/CMakeLists.txt') != ''
+      run: |
+        cd moses/build
+        make ${{ env.MAKEFLAGS }}
+      continue-on-error: true
+
+  # ============================================================================
+  # LAYER 13: AI/ML Extensions
+  # ============================================================================
+  
+  build-cogself:
+    runs-on: ubuntu-latest
+    name: "L13: Build CogSelf"
+    needs: build-coggml
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "cogself" ]; then
+          echo "CogSelf directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure CogSelf
+      if: hashFiles('cogself/CMakeLists.txt') != ''
+      run: |
+        mkdir -p cogself/build
+        cd cogself/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build CogSelf
+      if: hashFiles('cogself/CMakeLists.txt') != ''
+      run: |
+        cd cogself/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install CogSelf
+      if: hashFiles('cogself/CMakeLists.txt') != ''
+      run: |
+        cd cogself/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-accelerator:
+    runs-on: ubuntu-latest
+    name: "L13: Build AtomSpace Accelerator"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-accelerator" ]; then
+          echo "AtomSpace Accelerator directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace Accelerator
+      if: hashFiles('atomspace-accelerator/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-accelerator/build
+        cd atomspace-accelerator/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace Accelerator
+      if: hashFiles('atomspace-accelerator/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-accelerator/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace Accelerator
+      if: hashFiles('atomspace-accelerator/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-accelerator/build
+        sudo make install
+        sudo ldconfig
+
+  # ============================================================================
+  # LAYER 14: Integration & Networking (Parallel)
+  # ============================================================================
+  
+  build-atomspace-rpc:
+    runs-on: ubuntu-latest
+    name: "L14: Build AtomSpace RPC"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev \
+          libgrpc++-dev libgrpc-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-rpc" ]; then
+          echo "AtomSpace RPC directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace RPC
+      if: hashFiles('atomspace-rpc/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-rpc/build
+        cd atomspace-rpc/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace RPC
+      if: hashFiles('atomspace-rpc/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-rpc/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace RPC
+      if: hashFiles('atomspace-rpc/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-rpc/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-websockets:
+    runs-on: ubuntu-latest
+    name: "L14: Build AtomSpace WebSockets"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev \
+          libwebsocketpp-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-websockets" ]; then
+          echo "AtomSpace WebSockets directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace WebSockets
+      if: hashFiles('atomspace-websockets/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-websockets/build
+        cd atomspace-websockets/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace WebSockets
+      if: hashFiles('atomspace-websockets/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-websockets/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace WebSockets
+      if: hashFiles('atomspace-websockets/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-websockets/build
+        sudo make install
+        sudo ldconfig
+
+  build-atomspace-metta:
+    runs-on: ubuntu-latest
+    name: "L14: Build AtomSpace MeTTa"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "atomspace-metta" ]; then
+          echo "AtomSpace MeTTa directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure AtomSpace MeTTa
+      if: hashFiles('atomspace-metta/CMakeLists.txt') != ''
+      run: |
+        mkdir -p atomspace-metta/build
+        cd atomspace-metta/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build AtomSpace MeTTa
+      if: hashFiles('atomspace-metta/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-metta/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install AtomSpace MeTTa
+      if: hashFiles('atomspace-metta/CMakeLists.txt') != ''
+      run: |
+        cd atomspace-metta/build
+        sudo make install
+        sudo ldconfig
+
+  build-integration:
+    runs-on: ubuntu-latest
+    name: "L14: Build Integration (MachSpace)"
+    needs: build-atomspace-storage
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace atomspace-storage; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "integration" ]; then
+          echo "Integration directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Integration
+      if: hashFiles('integration/CMakeLists.txt') != ''
+      run: |
+        mkdir -p integration/build
+        cd integration/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Integration
+      if: hashFiles('integration/CMakeLists.txt') != ''
+      run: |
+        cd integration/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Integration
+      if: hashFiles('integration/CMakeLists.txt') != ''
+      run: |
+        cd integration/build
+        sudo make install
+        sudo ldconfig
+
+  build-motor:
+    runs-on: ubuntu-latest
+    name: "L14: Build Motor"
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake build-essential \
+          libboost-dev guile-3.0-dev
+    
+    - name: Rebuild Dependencies
+      run: |
+        for dir in cogutil atomspace; do
+          mkdir -p $dir/build && cd $dir/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        done
+    
+    - name: Check Component Existence
+      run: |
+        if [ ! -d "motor" ]; then
+          echo "Motor directory not found, skipping"
+          exit 0
+        fi
+    
+    - name: Configure Motor
+      if: hashFiles('motor/CMakeLists.txt') != ''
+      run: |
+        mkdir -p motor/build
+        cd motor/build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    
+    - name: Build Motor
+      if: hashFiles('motor/CMakeLists.txt') != ''
+      run: |
+        cd motor/build
+        make ${{ env.MAKEFLAGS }}
+    
+    - name: Install Motor
+      if: hashFiles('motor/CMakeLists.txt') != ''
+      run: |
+        cd motor/build
+        sudo make install
+        sudo ldconfig

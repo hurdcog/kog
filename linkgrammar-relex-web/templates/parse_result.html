@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% load bootstrap_toolkit %}
+{% load custom_tags %}
+
+{% block extra_head %}
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+
+    <h3 class="muted">Explore the results</h3>
+
+    {% for content in result %}
+        <textarea rows="10" style="width: 100%">{{ content }}</textarea>
+    {% endfor %}
+
+    {% bootstrap_pagination result align="center" size="large" %}
+
+    {% if relex_simple %}
+        <label class="control-label" for="relex_simple">
+                RelEx output in simple format
+        </label>
+        <textarea id="relex_simple" rows="15"
+                {% quantity_proportionate_width relex_simple relex_opencog relex_stanford%}>
+            {{ relex_simple }}
+        </textarea>
+    {% endif %}
+
+    {% if relex_opencog %}
+        <label class="control-label" for="relex_opencog">
+                RelEx output in OpenCog format
+        </label>
+        <textarea id="relex_opencog" rows="15"
+                {% quantity_proportionate_width relex_simple relex_opencog relex_stanford%}>
+            {{ relex_opencog }}
+        </textarea>
+    {% endif %}
+
+    {% if relex_stanford %}
+        <label class="control-label" for="relex_stanford">
+                RelEx output in OpenCog format
+        </label>
+        <textarea id="relex_stanford" rows="15"
+                {% quantity_proportionate_width relex_simple relex_opencog relex_stanford%}>
+            {{ relex_stanford }}
+        </textarea>
+    {% endif %}
+
+    <br />
+    <a type="button" class="btn btn-success" href="/">Try another sentence!</a>
+
+
+{% endblock %}

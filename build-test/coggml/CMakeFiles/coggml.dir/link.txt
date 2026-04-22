@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/coggml.dir/link.d -shared -Wl,-soname,libcoggml.so -o libcoggml.so CMakeFiles/coggml.dir/src/microkernel.cpp.o CMakeFiles/coggml.dir/src/cognitive_shard.cpp.o CMakeFiles/coggml.dir/src/self_awareness.cpp.o CMakeFiles/coggml.dir/src/shard_coordinator.cpp.o

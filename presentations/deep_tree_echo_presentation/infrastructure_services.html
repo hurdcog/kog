@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Services: Core System Support</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #FFFFFF;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: #FFFFFF;
+            padding: 60px;
+        }
+        .slide-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .title-line {
+            width: 120px;
+            height: 3px;
+            background: #e94560;
+            margin-bottom: 32px;
+        }
+        .context-label {
+            font-size: 11px;
+            color: #0f4c81;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding: 6px 12px;
+            border: 1px solid #0f4c81;
+            display: inline-block;
+            background: rgba(15, 76, 129, 0.05);
+        }
+        .services-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .service-box {
+            border: 2px solid #0f4c81;
+            background: rgba(15, 76, 129, 0.02);
+            padding: 20px 24px;
+            min-height: 200px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .service-box.full-width {
+            grid-column: 1 / -1;
+        }
+        .service-number {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #e94560;
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 6px 14px;
+            letter-spacing: 1px;
+        }
+        .service-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        .service-role {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0f4c81;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .service-description {
+            font-size: 13px;
+            font-weight: 400;
+            color: #16213e;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        .service-functions {
+            font-size: 12px;
+            font-weight: 400;
+            color: #0f4c81;
+            line-height: 1.5;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #0f4c81;
+        }
+        .function-label {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .continuation-note {
+            border: 2px solid #e94560;
+            background: rgba(233, 69, 96, 0.03);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .note-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: #16213e;
+        }
+        .note-indicator {
+            font-size: 11px;
+            font-weight: 700;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Title -->
+        <div class="slide-title">Infrastructure Services: Core System Support</div>
+        <div class="title-line"></div>
+        
+        <!-- Context Label -->
+        <div class="context-label">Foundational Services • Part 1/2</div>
+        
+        <!-- Services Container -->
+        <div class="services-container">
+            
+            <!-- Service 1: P-System Membrane Manager -->
+            <div class="service-box">
+                <div class="service-number">SVC-01</div>
+                <div class="service-name">P-System Membrane Manager</div>
+                <div class="service-role">Membrane Lifecycle & Communication</div>
+                <div class="service-description">
+                    Manages membrane creation, destruction, splitting, and merging, implementing dynamic P-System membrane computing. Maintains hierarchy, routes messages, and enforces membrane rules.
+                </div>
+                <div class="service-functions">
+                    <span class="function-label">Functions:</span> Lifecycle management • Message routing • Rule enforcement • Hierarchy maintenance
+                </div>
+            </div>
+            
+            <!-- Service 2: Communication Protocols -->
+            <div class="service-box">
+                <div class="service-number">SVC-02</div>
+                <div class="service-name">Communication Protocols</div>
+                <div class="service-role">Inter-Component Messaging</div>
+                <div class="service-description">
+                    Provides standardized protocols for component communication regardless of implementation language or location. Supports synchronous and asynchronous patterns.
+                </div>
+                <div class="service-functions">
+                    <span class="function-label">Functions:</span> Message serialization • Routing • Delivery guarantees • Error handling • Pub-sub patterns
+                </div>
+            </div>
+            
+            <!-- Service 3: Security & Validation (Full Width) -->
+            <div class="service-box full-width">
+                <div class="service-number">SVC-03</div>
+                <div class="service-name">Security & Validation</div>
+                <div class="service-role">System-Wide Policy Enforcement</div>
+                <div class="service-description">
+                    Enforces security policies across all components beyond boundary protection. Includes access control, input validation, output sanitization, and audit logging. Operates transparently without requiring explicit security code in each component.
+                </div>
+                <div class="service-functions">
+                    <span class="function-label">Functions:</span> Access control (authorization) • Input validation (well-formedness) • Output sanitization (information leakage prevention) • Audit logging (security event recording) • Policy enforcement
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Continuation Note -->
+        <div class="continuation-note">
+            <div class="note-text">
+                Foundational services: membrane management, communication protocols, and security enforcement
+            </div>
+            <div class="note-indicator">
+                Continued →
+            </div>
+        </div>
+    </div>
+</body>
+</html>

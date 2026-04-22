@@ -1,0 +1,216 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_documentation open_issue_hurd]]
+
+
+# IRC, freenode, #hurd, 2011-08-10
+
+    < braunr> youpi: aren't sub-hurds actually called "neighbor hurds" ?
+    < youpi> no idea
+    < braunr> i also don't understand the recursive property
+    < youpi> a user can run a subhurd
+    < neal> braunr: What don't you understand?
+    < youpi> a user in a subhurd can run a subhurd
+    < youpi> etc
+    < braunr> i'm not sure it's really recursive
+    < neal> youpi: At some point it was observed that you don't strictly
+      require any resources from the "parent" Hurd.
+    < neal> youpi: i.e., you could have two Hurds running "directly" on Mach
+    < youpi> sure
+    < neal> youpi: Hence neighbor rather than sub
+    < youpi> but you need to be root for that
+    < youpi> or else your subhurd can't do much
+    < neal> you need to have been authorized to use the required resouces
+    < youpi> which is about the same :)
+    < neal> depends how they are delegated
+    < youpi> that's still asking root for something
+    < neal> if you say so
+    < youpi> which is most probably not the default
+    < braunr> well, either you depend on the parent to do things on your
+      behalf, or you directly have some privileged ports
+    < braunr> i'd agree with youpi that it's pretty much having root access at
+      some point
+    < youpi> and usually you don't have privileged ports by default :)
+    < braunr> but we don't need to restrict the presentation to user only sub
+      hurds
+    < braunr> people don't mind switching to root on their desktops
+    < braunr> which is one of the reasons they ask "what does the hurd really
+      bring me today ?"
+    < braunr> but being able to run truely separate hurds or recursive hurds is
+      something nice most OSes can't do easily
+    < youpi> switching to root becomes a *pain* when you have to do it 1 every
+      two commands
+    < braunr> yes sure, but some people might just say you're clumsy :x
+    < neal> The question is: can I start a sub-hurd from within another hurd
+      that survives the parent's hurd exiting?  The answer is yes.  The reason
+      is that the sub-hurd can be constructed in such a way that it does not
+      rely on the parent.  In this case, the parent does not necessarily
+      subjugate the sub-hurd.  Hence the name.
+    < braunr> but that's out of the scope of the discussion
+    < antrik> using the traditional, root only mechanism, neighbour-hurd is
+      indeed a more appropriate term. apart from the initial terminal being
+      proxied to the parent system by the boot program, they are really equal
+    < antrik> with zhengda's work on non-root subhurds, you rely on various
+      proxies in the parent system to access privileged resources; so subhurd
+      is indeed a more appropriate term in this case
+    < antrik> (not only non-root subhurds in fact... when using any of the
+      proxies, such as the network multiplexer -- even if still running as
+      root...)
+    < youpi> antrik: you could still give a com0 port as terminal
+    < antrik> I don't think that's actually supported in the boot
+      program... but it doesn't really matter, as you don't really need the
+      terminal anyways -- you can always log in through the network
+
+
+# IRC, freenode, #hurd, 2012-07-31
+
+    <gg0> subhurd seems like bsd jail (tried none of them)
+    <antrik> gg0: nope. BSD jails are mostly chroot AIUI. subhurd is quite
+      different
+    <antrik> gg0: you actually boot a completely new system instance
+    <antrik> complete with all the Hurd servers, UNIX daemons etc.
+    <braunr> jails are between subhhurds and chroots :p
+    <braunr> i suppose there is nothing against making the root server of the
+      subhurd use a file instead of a raw disk, is there ?
+    <gg0> well, I said jails cos afaik are more isolated from real system than
+      chroots
+    <braunr> yes
+    <gg0> maybe comparing subhurd to virtual machines would be more
+      appropriated then
+    <braunr> they're not VMs either
+    <gg0> say chroot -> jail -> subhurd -> vm ?
+    <braunr> unless you consider the microkernel to be a hypervisor, with its
+      own architecture, which some actually do
+    <braunr> gg0: something like that, yes
+    <gg0> [system-in-system evolution]
+    <braunr> a subhurd is an operating system instance
+    <braunr> i think the closest analogy you can get is openvz
+    <antrik> yeah, I'd also consider it closest. but it's still quite
+      different: with OpenVZ, the kernel facilities are only logically
+      isolated; but they use the same kernel code. with subhurds, most of the
+      system facilities are independent
+
+
+# IRC, freenode, #hurd, 2012-08-03
+
+    <antrik> hm... are Mach task IDs exposed to userspace?
+    <braunr> antrik: ids ?
+    <braunr> antrik: what do you call a mach task id ?
+    <antrik> task have numeric IDs in the kernel
+    <antrik> I wonder whether these are ever exposed to userspace
+    <braunr> i'm not sure
+    <braunr> i don't remember the had numeric IDs
+    <braunr> they*
+    <antrik> well, perhaps I'm making things up... but I believe I saw such IDs
+      in the debugger and/or in error messages
+    <braunr> probably their address
+    <braunr> or creation time orpc_sample
+    <antrik> braunr: well, any unique ID would do
+    <braunr> antrik: yes but i was wondering what kdb would actually show
+    <antrik> I just realised that it would be useful for debugging accross
+      subhurds or kernel/userspace if some kind of unique task IDs could be
+      shown in ps output
+    <braunr> yes
+    <braunr> this requires some thought though
+    <braunr> ps shouldn't show that
+    <braunr> there should be mach specific commands i suppose
+    <braunr> but then, gdb and other tools wouldn't have access to subhurd
+      tasks either
+    <antrik> why shouldn't ps show that? I don't think it's any more sensitive
+      information than all the other stuff ps shows...
+    <braunr> it doesn't feel right
+    <braunr> i would want my system instances to be truely isolated
+    <braunr> and use special "cross instance" facilities
+    <braunr> when necessary
+    <antrik> that's completely orthogonal to what I'm talking about
+    <braunr> like eth-multiplexer
+    <braunr> you seem to be talking about security
+    <braunr> or privacy
+    <antrik> we discussed such options when zhengda worked on rootless subhurd
+    <antrik> no, I'm talking about convenient debugging
+    <braunr> right
+    <braunr> i don't think it'zs orthogonal here
+    <braunr> if we increase separation, it becomes less convenient
+    <antrik> for debugging purposes you would *not* use the isolation options
+    <braunr> ok so you propose two modes of operations
+    <antrik> BTW, as an isolated subhurd relies on the parent, it makes no
+      sense to hide subhurd tasks from the parent hurd -- only hide parent hurd
+      task from the subhurd
+    <braunr> agreed
+    <antrik> so even with an isolated subhurd global task IDs would still be
+      useful
+
+
+# IRC, freenode, #hurd, 2012-08-06
+
+    <braunr> antrik: if i'm right, the root file system executable is read from
+      the parent, right ?
+    <antrik> braunr: probably... I'm not sure about that part
+    <braunr> antrik: i've installed the same packages in both the main and
+      subhurds to be sure
+    <braunr> and to have the right binary and debugging symbols in gdb anyway
+
+
+# IRC, freenode, #hurd, 2013-01-19
+
+    <zacts> what is the hurd equivalent of a freebsd jail?
+    <braunr> zacts: i'd say subhurds
+    <zacts> what advantages would a subhurd have over a freebsd jail?
+    <zacts> basically that is
+    <braunr> it virtually guarantees a mistake can't compromise the main system
+    <zacts> ah ok
+    <braunr> in theory, subhurds can run without root privileges
+    <braunr> (but there are currently a few things that prevent it)
+
+
+## IRC, freenode, #hurd, 2011-06-07
+
+    <zacts> would hurd jails be more powerful than FreeBSD jails? how so?
+    <braunr> not more powerful
+    <braunr> easier to develop
+    <braunr> safer
+    <braunr> perhaps more powerful too, but that entirely depends on the
+      features you want inside
+
+
+# IRC, freenode, #hurd, 2013-10-04
+
+    <braunr> hm, looks like we broke subhurds again
+    <braunr> freezes after starting exec
+    <teythoon> o_O
+    <braunr> looks like some translator refuses to start
+    <braunr> teythoon: we need better error reporting first :)
+
+[[open_issues/subhurd_error_messages]].
+
+    <braunr> and better visibility in general
+    <braunr> teythoon: it may be that the subhurd i'm using is a bit od
+    <braunr> old
+    <braunr> one weird thing about subhurds is that they actually use the
+      ext2fs and linker from the host
+    <braunr> so it's better if the subhurd and the host uses the same bootstrap
+      protocol :)
+    <teythoon> braunr: isn't boot --boot-root=DIR there to specify which root
+      translator and linker to use?
+    <braunr> teythoon: yes but you don't want your root file system mounted
+      from the host when starting your subhurd
+    <teythoon> you can mount it r/o just fine, no?
+    <braunr> ideally, we'd have a userspace version of grub reading the files
+      from the disk, as it's done when booting
+    <braunr> hm
+    <braunr> right
+
+
+## IRC, freenode, #hurd, 2013-10-07
+
+    <teythoon> braunr: btw, did you straighten out your subhurd issue?
+    <braunr> teythoon: no i haven't

@@ -1,0 +1,340 @@
+name: Build Chocolatey Package
+
+# Chocolatey packaging workflow for OpenCog Collection
+# Depends on successful Windows builds from occ-win-build.yml
+# Triggers on releases or manual dispatch
+
+on:
+  workflow_run:
+    workflows: ["OCC Windows Build"]
+    types:
+      - completed
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package'
+        required: true
+        default: '1.0.0'
+      use_artifacts:
+        description: 'Use artifacts from latest successful build'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  PACKAGE_NAME: opencog
+
+jobs:
+  build-chocolatey:
+    runs-on: windows-latest
+    name: Build Chocolatey Package
+    # Only run if Windows build succeeded or manual dispatch
+    if: |
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set Version
+      id: version
+      shell: pwsh
+      run: |
+        if ("${{ github.event_name }}" -eq "release") {
+          $version = "${{ github.event.release.tag_name }}".TrimStart('v')
+        } elseif ("${{ github.event.inputs.version }}") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          # Generate version from date and commit
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $commit = "${{ github.sha }}".Substring(0, 7)
+          $version = "$date-$commit"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Package version: $version"
+    
+    - name: Download Build Artifacts from Latest Run
+      if: github.event.inputs.use_artifacts == 'true' || github.event_name == 'workflow_run'
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-build-windows
+        path: artifacts/cogutil
+      continue-on-error: true
+    
+    - name: Download AtomSpace Artifacts
+      if: github.event.inputs.use_artifacts == 'true' || github.event_name == 'workflow_run'
+      uses: actions/download-artifact@v4
+      with:
+        name: atomspace-build-windows
+        path: artifacts/atomspace
+      continue-on-error: true
+    
+    - name: Download Moses Artifacts
+      if: github.event.inputs.use_artifacts == 'true' || github.event_name == 'workflow_run'
+      uses: actions/download-artifact@v4
+      with:
+        name: moses-build-windows
+        path: artifacts/moses
+      continue-on-error: true
+    
+    - name: Install Chocolatey
+      shell: pwsh
+      run: |
+        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        }
+        choco --version
+    
+    - name: Prepare Package Directory
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $toolsDir = "packaging/chocolatey/tools/opencog"
+        
+        # Create clean tools directory
+        if (Test-Path $toolsDir) {
+          Remove-Item -Recurse -Force $toolsDir
+        }
+        New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
+        
+        # Copy artifacts if available
+        if (Test-Path "artifacts") {
+          Write-Host "Copying build artifacts to package..."
+          
+          # Copy all artifacts to tools directory
+          if (Test-Path "artifacts/cogutil") {
+            Copy-Item -Recurse -Force "artifacts/cogutil/*" $toolsDir
+          }
+          if (Test-Path "artifacts/atomspace") {
+            Copy-Item -Recurse -Force "artifacts/atomspace/*" $toolsDir
+          }
+          if (Test-Path "artifacts/moses") {
+            Copy-Item -Recurse -Force "artifacts/moses/*" $toolsDir
+          }
+          
+          Write-Host "Artifacts copied successfully"
+        } else {
+          Write-Warning "No artifacts found - package will be empty"
+        }
+        
+        # List package contents
+        Write-Host "Package contents:"
+        Get-ChildItem -Recurse $toolsDir | Select-Object -First 50
+    
+    - name: Create Chocolatey Package Structure
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $chocoDir = "packaging/chocolatey"
+        
+        # Ensure directory exists
+        New-Item -ItemType Directory -Path $chocoDir -Force | Out-Null
+        
+        # Create nuspec file
+        $nuspecContent = @"
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>opencog</id>
+    <version>$version</version>
+    <title>OpenCog AGI Framework</title>
+    <authors>OpenCog Foundation</authors>
+    <owners>OpenCog Foundation</owners>
+    <projectUrl>https://opencog.org/</projectUrl>
+    <iconUrl>https://opencog.org/wp-content/uploads/2022/03/opencog-logo.png</iconUrl>
+    <licenseUrl>https://github.com/opencog/opencog/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      OpenCog is a project that aims to build an open source artificial general intelligence framework.
+      
+      This package includes:
+      - CogUtil: Core utilities and data structures
+      - AtomSpace: Hypergraph database for knowledge representation
+      - Moses: Meta-Optimizing Semantic Evolutionary Search
+      
+      For more information, visit https://opencog.org/
+    </description>
+    <summary>OpenCog AGI Framework - Core components for artificial general intelligence research</summary>
+    <releaseNotes>Windows native build with MSVC 2022</releaseNotes>
+    <copyright>Copyright © 2025 OpenCog Foundation</copyright>
+    <tags>opencog agi ai artificial-intelligence machine-learning cognitive-architecture atomspace</tags>
+    <packageSourceUrl>https://github.com/o9nn/occ</packageSourceUrl>
+    <docsUrl>https://wiki.opencog.org/</docsUrl>
+    <bugTrackerUrl>https://github.com/opencog/opencog/issues</bugTrackerUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
+"@
+        Set-Content "$chocoDir/opencog.nuspec" $nuspecContent
+        
+        # Create install script
+        $installScript = @"
+`$ErrorActionPreference = 'Stop'
+
+`$packageName = 'opencog'
+`$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
+`$installPath = Join-Path `$toolsDir 'opencog'
+
+Write-Host "Installing OpenCog AGI Framework..." -ForegroundColor Cyan
+Write-Host "Installation directory: `$installPath" -ForegroundColor Yellow
+
+# Check if installation directory exists
+if (Test-Path `$installPath) {
+    # Add bin directory to PATH if it exists
+    `$binPath = Join-Path `$installPath 'bin'
+    if (Test-Path `$binPath) {
+        Write-Host "Adding to system PATH: `$binPath" -ForegroundColor Green
+        Install-ChocolateyPath -PathToInstall `$binPath -PathType 'Machine'
+    }
+    
+    # Add lib directory to PATH if it exists
+    `$libPath = Join-Path `$installPath 'lib'
+    if (Test-Path `$libPath) {
+        Install-ChocolateyPath -PathToInstall `$libPath -PathType 'Machine'
+    }
+    
+    Write-Host ""
+    Write-Host "✅ OpenCog has been installed successfully!" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Installation directory: `$installPath" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Next steps:" -ForegroundColor Cyan
+    Write-Host "  1. Open a new command prompt or PowerShell window"
+    Write-Host "  2. Verify installation by checking for OpenCog binaries"
+    Write-Host "  3. Visit https://wiki.opencog.org/ for documentation"
+    Write-Host ""
+} else {
+    Write-Warning "Installation directory not found: `$installPath"
+    Write-Warning "Package may be incomplete or build artifacts were not available"
+}
+"@
+        New-Item -ItemType Directory -Path "$chocoDir/tools" -Force | Out-Null
+        Set-Content "$chocoDir/tools/chocolateyinstall.ps1" $installScript
+        
+        # Create uninstall script
+        $uninstallScript = @"
+`$ErrorActionPreference = 'Stop'
+
+`$packageName = 'opencog'
+`$toolsDir = "`$(Split-Path -parent `$MyInvocation.MyCommand.Definition)"
+`$installPath = Join-Path `$toolsDir 'opencog'
+
+Write-Host "Uninstalling OpenCog AGI Framework..." -ForegroundColor Cyan
+
+# Remove from PATH
+`$binPath = Join-Path `$installPath 'bin'
+if (Test-Path `$binPath) {
+    Uninstall-ChocolateyPath -PathToUninstall `$binPath -PathType 'Machine'
+}
+
+`$libPath = Join-Path `$installPath 'lib'
+if (Test-Path `$libPath) {
+    Uninstall-ChocolateyPath -PathToUninstall `$libPath -PathType 'Machine'
+}
+
+Write-Host "✅ OpenCog has been uninstalled successfully!" -ForegroundColor Green
+"@
+        Set-Content "$chocoDir/tools/chocolateyuninstall.ps1" $uninstallScript
+        
+        Write-Host "Chocolatey package structure created"
+    
+    - name: Build Chocolatey Package
+      shell: pwsh
+      run: |
+        cd packaging/chocolatey
+        choco pack opencog.nuspec
+        
+        if (Test-Path "*.nupkg") {
+          Write-Host "✅ Chocolatey package created successfully:" -ForegroundColor Green
+          Get-ChildItem *.nupkg | ForEach-Object { 
+            Write-Host "  📦 $_" -ForegroundColor Yellow
+            Write-Host "     Size: $([math]::Round($_.Length / 1MB, 2)) MB"
+          }
+        } else {
+          Write-Error "❌ Failed to create Chocolatey package"
+          exit 1
+        }
+    
+    - name: Test Package Installation
+      shell: pwsh
+      run: |
+        cd packaging/chocolatey
+        $package = Get-ChildItem *.nupkg | Select-Object -First 1
+        
+        Write-Host "Testing package installation: $package" -ForegroundColor Cyan
+        
+        # Test install in local mode
+        choco install $package.Name --source="'.'" --force --yes
+        
+        Write-Host "✅ Package installation test completed" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Upload Chocolatey Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: chocolatey-package
+        path: packaging/chocolatey/*.nupkg
+        retention-days: 30
+    
+    - name: Create Package Summary
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        
+        Write-Host ""
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+        Write-Host "  Chocolatey Package Build Summary" -ForegroundColor Cyan
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Package Name:    opencog" -ForegroundColor Yellow
+        Write-Host "Version:         $version" -ForegroundColor Yellow
+        Write-Host "Status:          ✅ Success" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Package Contents:" -ForegroundColor Yellow
+        if (Test-Path "packaging/chocolatey/tools/opencog") {
+          Get-ChildItem -Recurse "packaging/chocolatey/tools/opencog" | 
+            Select-Object -First 20 | 
+            ForEach-Object { Write-Host "  - $($_.FullName.Replace((Get-Location).Path, '.'))" }
+        }
+        Write-Host ""
+        Write-Host "To install locally:" -ForegroundColor Cyan
+        Write-Host "  choco install opencog --source='packaging/chocolatey'" -ForegroundColor White
+        Write-Host ""
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+    
+    - name: Publish to Chocolatey (Optional)
+      if: github.event_name == 'release' && github.event.release.prerelease == false
+      shell: pwsh
+      env:
+        CHOCO_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+      run: |
+        if ($env:CHOCO_API_KEY) {
+          cd packaging/chocolatey
+          $package = Get-ChildItem *.nupkg | Select-Object -First 1
+          
+          Write-Host "Publishing package to Chocolatey: $package" -ForegroundColor Cyan
+          choco push $package.Name --source https://push.chocolatey.org/ --api-key $env:CHOCO_API_KEY
+          
+          Write-Host "✅ Package published successfully!" -ForegroundColor Green
+        } else {
+          Write-Host "ℹ️ CHOCOLATEY_API_KEY not set, skipping publish" -ForegroundColor Yellow
+        }
+    
+    - name: Upload to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          packaging/chocolatey/*.nupkg

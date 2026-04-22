@@ -1,0 +1,29 @@
+opencog-attention (0.0~git20240330.def432d-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 30 Mar 2024 11:21:05 +0900
+
+opencog-attention (0.0~git20240326.def432d-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 26 Mar 2024 20:33:59 +0900
+
+opencog-attention (0.0~git20200823.d30097c-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 05:43:07 +0900
+
+opencog-attention (0.0~git20200404.2865761-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 09:25:56 +0900
+
+opencog-attention (0.0~git20200401.f07d9a9-1) mhatta-unstable; urgency=medium
+
+  * Initial release.
+  
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 01 Apr 2020 17:34:59 +0900

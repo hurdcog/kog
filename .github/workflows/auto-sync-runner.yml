@@ -1,0 +1,266 @@
+name: Auto Sync to cogpy/occ
+
+# Automatically sync changes from o9nn/occ to cogpy/occ after successful Windows builds
+# Uses git-pat for authentication
+# Runs on workflow completion or manual trigger
+
+on:
+  workflow_run:
+    workflows: ["OCC Windows Build - Fixed"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if build failed'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Dry run - show what would be synced without pushing'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  SOURCE_REPO: o9nn/occ
+  TARGET_REPO: cogpy/occ
+  SYNC_BRANCH: main
+
+jobs:
+  sync-repository:
+    runs-on: ubuntu-latest
+    name: Sync to cogpy/occ
+    if: |
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event.inputs.force_sync == 'true'
+    
+    steps:
+    - name: Checkout Source Repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.SOURCE_REPO }}
+        ref: ${{ env.SYNC_BRANCH }}
+        fetch-depth: 0
+        token: ${{ secrets.GIT_PAT }}
+    
+    - name: Configure Git
+      run: |
+        echo "=== Configuring Git ===" 
+        git config --global user.name "OpenCog Sync Bot"
+        git config --global user.email "opencog-bot@users.noreply.github.com"
+        echo "✓ Git configured"
+    
+    - name: Setup Git PAT Authentication
+      env:
+        GIT_PAT: ${{ secrets.GIT_PAT }}
+      run: |
+        echo "=== Setting up Git PAT Authentication ==="
+        
+        if [ -z "$GIT_PAT" ]; then
+          echo "❌ Error: GIT_PAT secret not found!"
+          echo "Please add the GIT_PAT secret to the o9nn org or repository secrets."
+          echo "Required PAT scopes: repo, admin:org, workflow"
+          echo "Create at: https://github.com/settings/tokens/new"
+          exit 1
+        fi
+        
+        # Validate PAT before using it
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GIT_PAT}" https://api.github.com/user)
+        if [ "$HTTP_STATUS" != "200" ]; then
+          echo "❌ Error: GIT_PAT is invalid or expired (HTTP $HTTP_STATUS)"
+          echo "Please regenerate the PAT and update the GIT_PAT secret."
+          echo "Create at: https://github.com/settings/tokens/new"
+          exit 1
+        fi
+        
+        # Configure git to use PAT for authentication
+        git config --global credential.helper store
+        echo "https://x-access-token:${GIT_PAT}@github.com" > ~/.git-credentials
+        
+        echo "✓ Git PAT authentication configured and validated"
+    
+    - name: Add Target Remote
+      run: |
+        echo "=== Adding Target Remote ==="
+        git remote add target https://x-access-token:${{ secrets.GIT_PAT }}@github.com/${{ env.TARGET_REPO }}.git
+        git remote -v
+        echo "✓ Target remote added"
+    
+    - name: Fetch Target Repository
+      run: |
+        echo "=== Fetching Target Repository ==="
+        git fetch target ${{ env.SYNC_BRANCH }}
+        echo "✓ Target repository fetched"
+    
+    - name: Check Sync Status
+      id: check_sync
+      run: |
+        echo "=== Checking Sync Status ==="
+        
+        # Get latest commits
+        SOURCE_COMMIT=$(git rev-parse HEAD)
+        TARGET_COMMIT=$(git rev-parse target/${{ env.SYNC_BRANCH }})
+        
+        echo "SOURCE_COMMIT=$SOURCE_COMMIT" >> $GITHUB_OUTPUT
+        echo "TARGET_COMMIT=$TARGET_COMMIT" >> $GITHUB_OUTPUT
+        
+        echo "Source commit: $SOURCE_COMMIT"
+        echo "Target commit: $TARGET_COMMIT"
+        
+        if [ "$SOURCE_COMMIT" = "$TARGET_COMMIT" ]; then
+          echo "NEEDS_SYNC=false" >> $GITHUB_OUTPUT
+          echo "✓ Repositories are already in sync"
+        else
+          echo "NEEDS_SYNC=true" >> $GITHUB_OUTPUT
+          echo "⚠ Repositories are out of sync - sync needed"
+          
+          # Show what will be synced
+          echo ""
+          echo "=== Commits to be synced ==="
+          git log --oneline target/${{ env.SYNC_BRANCH }}..HEAD | head -20
+        fi
+    
+    - name: Verify Build Artifacts
+      if: steps.check_sync.outputs.NEEDS_SYNC == 'true'
+      run: |
+        echo "=== Verifying Build Artifacts ==="
+        
+        # Check for critical files
+        CRITICAL_FILES=(
+          ".github/workflows/occ-win-build.yml"
+          "vcpkg.json"
+          "cogutil/CMakeLists.txt"
+          "atomspace/CMakeLists.txt"
+          "moses/CMakeLists.txt"
+        )
+        
+        ALL_EXIST=true
+        for file in "${CRITICAL_FILES[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✓ Found: $file"
+          else
+            echo "⚠ Missing: $file"
+            ALL_EXIST=false
+          fi
+        done
+        
+        if [ "$ALL_EXIST" = true ]; then
+          echo "✓ All critical files present"
+        else
+          echo "⚠ Some critical files missing, but continuing sync"
+        fi
+    
+    - name: Sync Changes (Dry Run)
+      if: |
+        steps.check_sync.outputs.NEEDS_SYNC == 'true' &&
+        github.event.inputs.dry_run == 'true'
+      run: |
+        echo "=== Dry Run - Changes that would be synced ==="
+        
+        # Show diff summary
+        echo ""
+        echo "Files changed:"
+        git diff --name-status target/${{ env.SYNC_BRANCH }}..HEAD
+        
+        echo ""
+        echo "Commit summary:"
+        git log --oneline --graph target/${{ env.SYNC_BRANCH }}..HEAD
+        
+        echo ""
+        echo "✓ Dry run complete - no changes pushed"
+    
+    - name: Sync Changes (Real)
+      if: |
+        steps.check_sync.outputs.NEEDS_SYNC == 'true' &&
+        github.event.inputs.dry_run != 'true'
+      run: |
+        echo "=== Syncing Changes to Target Repository ==="
+        
+        # Push to target repository
+        git push target HEAD:${{ env.SYNC_BRANCH }}
+        
+        echo "✓ Changes synced successfully"
+    
+    - name: Verify Sync
+      if: |
+        steps.check_sync.outputs.NEEDS_SYNC == 'true' &&
+        github.event.inputs.dry_run != 'true'
+      run: |
+        echo "=== Verifying Sync ==="
+        
+        # Fetch target again to verify
+        git fetch target ${{ env.SYNC_BRANCH }}
+        
+        SOURCE_COMMIT=$(git rev-parse HEAD)
+        TARGET_COMMIT=$(git rev-parse target/${{ env.SYNC_BRANCH }})
+        
+        if [ "$SOURCE_COMMIT" = "$TARGET_COMMIT" ]; then
+          echo "✅ Sync verified successfully!"
+          echo "Both repositories are now at commit: $SOURCE_COMMIT"
+        else
+          echo "❌ Sync verification failed!"
+          echo "Source: $SOURCE_COMMIT"
+          echo "Target: $TARGET_COMMIT"
+          exit 1
+        fi
+    
+    - name: Create Sync Summary
+      if: always()
+      run: |
+        echo "# Repository Sync Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "- **Source**: ${{ env.SOURCE_REPO }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Target**: ${{ env.TARGET_REPO }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ env.SYNC_BRANCH }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.check_sync.outputs.NEEDS_SYNC }}" = "true" ]; then
+          echo "## Sync Status" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "🔍 **Dry run completed** - No changes pushed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Sync completed successfully**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Commits Synced" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git log --oneline target/${{ env.SYNC_BRANCH }}..HEAD | head -10 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## Sync Status" >> $GITHUB_STEP_SUMMARY
+          echo "✓ Repositories already in sync - no action needed" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        echo "=== Cleaning up ==="
+        rm -f ~/.git-credentials
+        echo "✓ Cleanup complete"
+    
+    - name: Sync Summary
+      run: |
+        echo ""
+        echo "=== Sync Summary ==="
+        echo ""
+        echo "Source Repository: ${{ env.SOURCE_REPO }}"
+        echo "Target Repository: ${{ env.TARGET_REPO }}"
+        echo "Branch: ${{ env.SYNC_BRANCH }}"
+        echo ""
+        
+        if [ "${{ steps.check_sync.outputs.NEEDS_SYNC }}" = "true" ]; then
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "Status: Dry run completed"
+          else
+            echo "Status: ✅ Synced successfully"
+          fi
+        else
+          echo "Status: Already in sync"
+        fi
+        echo ""

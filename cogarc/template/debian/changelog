@@ -1,0 +1,5 @@
+@COMPONENT_NAME@ (@VERSION@) unstable; urgency=low
+
+  * Initial release
+
+ -- @AUTHOR@ <@EMAIL@>  @DATE@

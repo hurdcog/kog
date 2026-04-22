@@ -1,0 +1,73 @@
+/*
+ * Kernel Feature Integration System Call Interface
+ * MIG interface definition for kernel feature management
+ *
+ * Copyright (C) 2024 Free Software Foundation, Inc.
+ */
+
+subsystem kernel_feature 5300;
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+/*
+ * Enable kernel feature functionality
+ */
+routine kernel_feature_enable(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Disable kernel feature functionality  
+ */
+routine kernel_feature_disable(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t
+);
+
+/*
+ * Get current feature state
+ */
+routine kernel_feature_get_state(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t;
+    state           : uint32_t
+);
+
+/*
+ * Get feature statistics
+ */
+routine kernel_feature_get_stats(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t;
+    init_calls      : uint64_t;
+    enable_calls    : uint64_t;
+    disable_calls   : uint64_t;
+    total_operations: uint64_t;
+    avg_latency_us  : uint64_t;
+    max_latency_us  : uint64_t
+);
+
+/*
+ * Check if feature is enabled
+ */
+routine kernel_feature_is_enabled(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t;
+    enabled         : boolean_t
+);
+
+/*
+ * Reset feature statistics
+ */
+routine kernel_feature_reset_stats(
+    host            : host_t
+) -> (
+    return_code     : kern_return_t
+);

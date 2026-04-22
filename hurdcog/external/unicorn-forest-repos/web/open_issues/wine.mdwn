@@ -1,0 +1,188 @@
+[[!meta copyright="Copyright © 2010, 2011, 2013, 2014, 2015 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_porting]]
+
+## IRC, freenode, #hurd, 2015-02-09
+
+    <Andre_H> since Wine 1.7.28 it runs quite well on Gnu/Hurd - wiki.winehq.org/Hurd
+    <Andre_H> ( https://source.winehq.org/git/wine.git/commitdiff/6d50cfcac28f84e07777fc10874887356832102e )
+
+
+## IRC, freenode, #hurd, 2014-01-11
+
+    <gnu_srs1> Andre_H: Looks like the two committed patches did not go into
+      wine-1.6.2:-(
+    <gnu_srs1> Additionally, your PATH_MAX fixes was not accepted?
+    <Andre_H> gnu_srs1: well, the stable branch is called stable because not
+      everything get's there :)7
+    <Andre_H> gnu_srs1: the PATH_MAX patch needs more thinking...
+
+## IRC, freenode, #hurd, 2014-01-06
+
+    <Andre_H> Wanted to note that
+      http://www.gnu.org/software/hurd/open_issues/wine.html is wrong about
+      socket credentials, afaik they are still not implemented but that doesn't
+      block Wine anymore
+    <Andre_H> In fact all you need to run Wine are the patches followed by
+      https://source.winehq.org/patches/data/101439 (not yet upstream) or see
+      http://wiki.winehq.org/Hurd
+
+    <braunr> Andre_H: thanks for your report
+    <Andre_H> np :)
+    <Andre_H> braunr: can someone update
+      http://www.gnu.org/software/hurd/open_issues/wine.html please?
+    <braunr> Andre_H: well, you can :)
+    <Andre_H> log in with google -> check guidelines of your wiki -> try out
+      your wiki syntax -> laziness alarm :)
+    <gnu_srs> Andre_H: The reason why wine runs now is a bug in SCM_CREDS was
+      fixed, see the wine-devel ML.
+
+    <gnu_srs> Andre_H: s/SCM_CREDS/SCM_RIGHTS/
+    <Andre_H> gnu_srs: already updated our wiki :)
+    <Andre_H> gnu_srs: would you mind updating yours:
+      http://www.gnu.org/software/hurd/open_issues/wine.html :)
+
+    <Andre_H> gnu_srs: two commits for wine are in now :)
+
+
+## IRC, freenode, #hurd, 2013-12-31
+
+    <Andre_H> gnu_srs: i didn't need the patches for
+      dlls/mountmgr.sys/diskarb.c, maybe due to missing headers
+
+
+## IRC, freenode, #hurd, 2013-12-30
+
+    <gnu_srs> wine runs:)
+    <gnu_srs> It's just extremely slow.,..
+
+    <gnu_srs> gg0: please don't reopen #733604 , I've filed an updated one:
+      #7336045
+    <gnu_srs>  #733605
+    <gg0> gnu_srs: i've reassigned it from wine-1.6 (nonexistent) to wine
+      (correct), then to src:wine (more correct), but between such
+      reassignments you closed it so found command in the latter made it
+      reopening
+    <gg0> then i realized you could mess up bugs on your own, without help :)
+    <gnu_srs> gg0: tks anyway, now it is src:wine and the title is right. Maybe
+      you should have noted me on IRC?
+
+    <Andre_H> gnu_srs: what's your status about wine? i'm still about to get
+      things upstream...
+    <gnu_srs> Andre_H: see debian bug #733605
+
+# IRC, freenode, #hurd, 2013-12-29
+
+    <Andre_H> Hi,
+      http://www.gnu.org/software/hurd/open_issues/sendmsg_scm_creds.html seems
+      fixed in Debian GNU/Hurd 2013, do you know which patch they used? i
+      already asked in their channel, but well, there are only 18 people :)
+    <youpi> Andre_H: it hasn't been fixed in Debian GNU/Hurd. Work is discussed
+      on the bug-hurd mailing list
+    <Andre_H> youpi: thx for the info, i wonder why wine now works with some
+      hacks, but didn't in the past
+    <youpi> I guess some circumvention patch was added to wine
+    <youpi> does it actually really work, as in running applications for real?
+    <youpi> (I've nevere tried)
+    <Andre_H> youpi: i'm a wine developer and haven't seen circumventions for
+      hurd... i also just tried winelib apps last night, will try... let's say
+      powerpoint viewer today
+    <gnu_srs> Andre_H: How did you make wine run? I have patches for wine-1.4.1
+      and 1.6.1 to build (so far unpublished), but it does not yet run
+      properly.
+    <gnu_srs> test case: wine notepad
+    <Andre_H> gnu_srs: what's happening when you try that?
+    <gnu_srs> Andre_H: Currently it hangs at connect() (after creating the
+      /tmp/.wine1000/.../socket, etc, and starting again)
+    <gnu_srs> seems to be some problem with the HURD_DPORT_USE macro in eglibc,
+      investigation ongoing
+    <Andre_H> gnu_srs: well, i'm using the debian distro, maybe you're on
+      something else? you could also pastebin your hacks, so i could have a
+      look. i'm about to clean mine up to send them upstream... ntdll will be
+      quite hard...
+
+
+# IRC, freenode, #hurd, 2013-10-02
+
+    <gnu_srs> youpi: I've come a little further with wine, see debian bug
+      #724681 (same problem).
+    <gnu_srs> Now the problem  is probably due to the specific address space
+      and stack issues to be
+    <gnu_srs> fixed for wine to run as braunr pointed out some months ago
+      (IRC?) when we discussed wine.
+
+
+# IRC, freenode, #hurd, 2011-08-11
+
+    < arethusa> I've been trying to make Wine work inside a Debian GNU/Hurd VM,
+      and to that end, I've successfully compiled the latest sources from Git
+      after installing the libc (devel) packages from experimental and
+      personally patching Wine with http://pastebin.com/rg6dx09G
+
+[[rg6dx09G.patch]]
+
+    < arethusa> my question is, when trying to launch Wine, I'm seeing "wine
+      client error:0: sendmsg: (os/kern) invalid address" from the client side,
+      whereas the wineserver seems to be starting and running correctly, how
+      could I debug this issue further? using rpctrace doesn't seem to help, as
+      the trace just hangs when run on the Wine loader instead of yielding
+      insight
+    < kilobug> arethusa: isn't there a wine debuguer that can start a gdb when
+      wine encounters an error or something like that ?
+    < arethusa> it's too early for that
+    < kilobug> or least give you a full traceback of the wine code where the
+      error occur ?
+    < arethusa> the error is happening during initial connect to the
+      wineserver, in dlls/ntdll/server.c
+    < arethusa> but that doesn't help me figure out why sendmsg would error out
+      in this way
+    < arethusa>
+      http://source.winehq.org/git/wine.git/blob/HEAD:/dlls/ntdll/server.c#l361
+    < azeem_> arethusa: probably some of the msghdr entries are not supported
+      by the Hurd's glib
+    < azeem_> c
+    < pinotree> haha, socket credentials, which we don't support yet
+    < azeem_> yep
+    < pinotree> youpi: ↑ another case ;)
+    < azeem_> arethusa: just implement those and it should work
+    < kilobug> in pflocal ? or glibc ?
+    < pinotree> pflocal
+    < arethusa> azeem_: hmm, okay, thanks
+    < pinotree> arethusa: their lack is a known issue, and makes things like
+      dbus and gamin not work
+    < arethusa> it's
+      https://www.gnu.org/software/hurd/open_issues/sendmsg_scm_creds.html and
+      related links I assume?
+
+[[sendmsg_scm_creds]]
+
+    < youpi> yes
+    < pinotree> (but that patch is lame)
+
+
+
+
+
+On 2010-11-28, Austin English contacted us, stating that he's working on
+porting [Wine](http://winehq.org/) to the GNU/Hurd.
+
+It is not yet clear how difficult this is going to be, what sort of
+requirements Wine has: only libc / POSIX / etc., or if there are
+*advanced* things like [[system_call]] trapping involved, too.
+
+[[Samuel|samuelthibault]] suspects that *there's some need for LDT table
+allocation. There is kernel support for this,* however.
+
+
+
+
+

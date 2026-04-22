@@ -1,0 +1,7 @@
+The glibc source uses TopGit. See
+
+https://www.gnu.org/software/hurd/source_repositories/glibc.html
+
+for documentation on how to use it.
+
+Basically, you want to start from the tschwinge/Roger_Whittaker branch.

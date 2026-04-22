@@ -1,0 +1,60 @@
+Source: hurdcog-occ-bridge
+Section: devel
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 10),
+               python3,
+               python3-setuptools,
+               guile-3.0,
+               guile-3.0-dev,
+               hurdcog-machspace,
+               hurdcog-cogkernel-core,
+               opencog-atomspace,
+               cognumach
+Standards-Version: 4.1.3
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: hurdcog-occ-bridge
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         ${python3:Depends},
+         python3,
+         guile-3.0,
+         hurdcog-machspace,
+         hurdcog-cogkernel-core,
+         opencog-atomspace,
+         cognumach,
+         hurdcog
+Description: Integration bridges for OpenCog Collection and HurdCog
+ The HurdCog-OCC Bridge provides the critical integration layer that enables
+ cognitive synergy between the OpenCog Collection (Layer 2), HurdCog cognitive
+ operating system (Layer 1), and Cognumach microkernel (Layer 0).
+ .
+ Integration Components:
+  * AtomSpace-HurdCog Bridge: Python-based bidirectional communication
+  * MachSpace Synchronization: Real-time hypergraph sync
+  * Cognumach Scheme Interface: Microkernel cognitive primitives
+  * HurdCog Scheme Interface: OS-level cognitive operations
+  * Unified Integration Framework: Complete three-layer coordination
+ .
+ Bridge Capabilities:
+  * Send and receive atoms between AtomSpace and MachSpace
+  * Synchronize cognitive state across all three layers
+  * Enable attention-driven resource allocation from ECAN to OS
+  * Support learning loops from system behavior to AtomSpace
+  * Facilitate cross-layer reasoning with PLN at kernel level
+  * Provide cognitive fusion reactor coordination
+ .
+ The bridge implements the cognitive synergy architecture that allows:
+  - Layer 0 (Cognumach) to benefit from cognitive memory management
+  - Layer 1 (HurdCog) to leverage distributed hypergraph reasoning
+  - Layer 2 (OpenCog) to influence OS and kernel behavior
+  - All layers to participate in unified cognitive processes
+ .
+ This package is essential for enabling the AGI Operating System's
+ three-layer cognitive architecture, where intelligence emerges from
+ the synergistic interaction of microkernel, OS, and application-level
+ cognitive processes.

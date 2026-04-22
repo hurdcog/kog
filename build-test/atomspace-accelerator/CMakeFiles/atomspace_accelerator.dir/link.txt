@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/atomspace_accelerator.dir/link.d -shared -Wl,-soname,libatomspace_accelerator.so -o libatomspace_accelerator.so CMakeFiles/atomspace_accelerator.dir/src/inference_engine.cpp.o CMakeFiles/atomspace_accelerator.dir/src/accelerator.cpp.o CMakeFiles/atomspace_accelerator.dir/src/query_optimizer.cpp.o

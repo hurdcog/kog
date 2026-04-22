@@ -1,0 +1,45 @@
+[[!meta copyright="Copyright © 2012, 2013, 2014, 2015, 2016, 2018 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="FOSDEM 2017"]]
+
+<http://fosdem.org/2017>
+
+FOSDEM took place on February 4rd/5th at the Université Libre de
+Bruxelles.
+
+
+# GNU Guile room
+
+<https://archive.fosdem.org/2017/schedule/track/gnu_guile/>
+
+  * {{$ragkousis_guix_hurd}}
+
+
+
+# Microkernels devroom
+
+<https://archive.fosdem.org/2017/schedule/track/microkernels_and_component_based_os/>
+
+  * {{$winter_hurd}}
+
+
+[[!ymlfront data="""
+
+ragkousis_guix_hurd:
+
+  "presentation (including video) by Manolis Ragkousis: [*Adding GNU/Hurd support to GNU Guix and GuixSD*](https://archive.fosdem.org/2017/schedule/event/guixhurd/) ([slides](https://archive.fosdem.org/2017/schedule/event/guixhurd/attachments/slides/1850/export/events/attachments/guixhurd/slides/1850/guix_to_hurd_fosdem_2017.pdf))"
+
+winter_hurd:
+
+  "presentation (including video) by Justus Winter: [*Virtualization on the Hurd*](https://archive.fosdem.org/2017/schedule/event/microkernel_virtualization_on_hurd/) ([slides](https://archive.fosdem.org/2017/schedule/event/microkernel_virtualization_on_hurd/attachments/slides/1593/export/events/attachments/microkernel_virtualization_on_hurd/slides/1593/virtualization_on_the_hurd.pdf))"
+
+"""]]

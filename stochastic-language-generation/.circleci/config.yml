@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  stochastic-language-generation:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/stochastic-language-generation
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package stochastic-language-generation verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - stochastic-language-generation

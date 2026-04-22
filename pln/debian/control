@@ -1,0 +1,46 @@
+Source: pln
+Section: science
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 13),
+               cmake (>= 3.22),
+               g++ (>= 11),
+               libcogutil-dev (>= 1.0.0),
+               libatomspace-dev (>= 1.0.0),
+               guile-3.0-dev,
+               libboost-dev,
+               python3-dev
+Standards-Version: 4.6.2
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: libpln
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libatomspace (>= 1.0.0),
+         libcogutil (>= 1.0.0),
+         guile-3.0
+Description: Probabilistic Logic Networks reasoning engine (runtime)
+ PLN (Probabilistic Logic Networks) is a reasoning engine for uncertain
+ inference in the OpenCog cognitive architecture. It combines logic and
+ probability theory to enable reasoning under uncertainty.
+ .
+ This package contains the shared libraries for runtime use.
+
+Package: libpln-dev
+Section: libdevel
+Architecture: any
+Depends: libpln (= ${binary:Version}),
+         libatomspace-dev (>= 1.0.0),
+         libcogutil-dev (>= 1.0.0),
+         guile-3.0-dev,
+         ${misc:Depends}
+Description: Probabilistic Logic Networks reasoning engine (development files)
+ PLN (Probabilistic Logic Networks) is a reasoning engine for uncertain
+ inference in the OpenCog cognitive architecture. It combines logic and
+ probability theory to enable reasoning under uncertainty.
+ .
+ This package contains the header files and development libraries needed
+ for building applications with PLN.

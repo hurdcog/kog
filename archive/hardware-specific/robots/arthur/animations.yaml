@@ -1,0 +1,32 @@
+animations:
+  - Happy:
+    # Set to neutral at first
+    - name: Neutral
+      motors:
+        Smile_L: 0
+        Smile_R: 0
+      frames: 5
+      speed: 0
+      acceleration: 0.5
+    - name: Smile1
+      motors:
+        Smile_L: 1
+        Smile_R: 0.9
+      frames: 25
+      speed: 0
+      acceleration: 0.4
+    - name: Smile2
+      motors:
+        Smile_L: 0.5
+        Smile_R: 0.2
+        Eye_Brow_L: 0.3
+      frames: 25
+      speed: 0
+      acceleration: 0.4
+    - name: Neutral2
+      motors:
+        Smile_L: 1
+        Smile_R: 0.1
+      frames: 25
+      speed: 0
+      acceleration: 0.4

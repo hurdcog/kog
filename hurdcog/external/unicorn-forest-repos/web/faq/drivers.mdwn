@@ -1,0 +1,70 @@
+[[!meta copyright="Copyright © 2009, 2013, 2015 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag faq/support faq/_important]]
+
+[[!meta title="what hardware is supported? What drivers does GNU/Hurd have?"]]
+
+As of September 2024, the Hurd runs well on old Thinkpads.  We
+recommend the Thinkpad T60, which supports a maximum of 4GB of RAM,
+and you can use an [[SSD|hurd/rump/rumpdisk]].  If you have difficulty
+installing the Hurd, then try setting your harddrive mode to "legacy"
+in the BIOS.  A cheaper option is the T43 (2GB max RAM).
+
+Other working Thinkpads include the X200, T400, 
+[[T410|https://logs.guix.gnu.org/hurd/2025-04-25.log#103752]] or T500 Thinkpads,
+which support internet connectivity via the ethernet port.  You can
+use an [[SSD|hurd/rump/rumpdisk]] on these laptops, which support a
+maximum of 8GB of RAM.  The Debian installer images from 2023 fail to
+boot these machines, but you can install the Hurd via [[Debian's
+CrossInstall|hurd/running/debian/CrossInstall]] or 
+[[mmdebstrap|https://lists.debian.org/debian-hurd/2024/12/msg00003.html]].  
+
+_While the [[64 bit port|faq/64-bit]] is about as stable as the 32-bit 
+port, the rumpdisk support needed for it is still relatively experimental.
+For this reason we recommend casual Hurd users to use the 32 bit port._
+
+Other hardware that is known to work includes the [[Dell Inspiron
+1750|https://logs.guix.gnu.org/hurd/2024-09-28.log]] on i386
+Debian/Hurd.  It won't boot with the current installer (June 2023
+debian-hurd i386 net-install) because of an FPU issue (fixed
+upstream). I had to remove the optical drive. It hangs for one minute
+during boot on ACPI init, but otherwise fine when disabling full tree
+parsing.  The touchpad, keyboard, display, ethernet, and the hard
+drive works (in legacy mode).
+
+The Hurd can run on more recent Intel machines, but with [[no internet
+connectivity|hurd/running/debian/DebianAptOffline]]!  You can always
+use the Hurd via [[qemu|hurd/running/qemu]].
+
+Currently, for disks Mach integrates old drivers from Linux through
+some [[community/gsoc/project_ideas/driver_glue_code]], which provide
+IDE disk support, and we have an AHCI driver which provides [[SATA
+support|faq/sata_disk_drives]].  [[Rumpdisk|hurd/rump/rumpdisk]] lets
+us use modern hard drives, like SSDs.
+
+For network boards, we curently use the [[DDE]] toolkit to run linux
+2.6.32 drivers in userland processes, which we may eventually replace
+with [[rump drivers|hurd/rump]].  Note however that we have of course
+not tested all drivers. We obviously don't even have all kinds of
+hardware.  So we can not promise that they will all work. What
+probably works for sure is what we usually use: the rtl8139 and e1000
+drivers for instance. Firmware loading is not implemented yet.
+
+For graphical mode, Xorg is supported, e.g. with the vesa driver. DRM
+is not supported yet.  To run X then, you must use the proprietary
+BIOS, since coreboot/libreboot do not include a working vesa driver.
+
+Hurd developers are working on adding USB support with
+[[rumpusbdisk|hurd/rump/rumpusbdisk]].
+
+[[microkernel/mach/gnumach/ports/Xen]] is also supported, both blkfront and
+netfront.

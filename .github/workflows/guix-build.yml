@@ -1,0 +1,607 @@
+name: Guix Build - Reproducible Package
+
+# This workflow builds the OpenCog Collection (OCC) using GNU Guix
+# for reproducible, isolated builds following the guix.scm package definition
+#
+# Key features:
+# - Uses official Guix installer for GitHub Actions
+# - Caches Guix store for faster subsequent builds
+# - Builds from the local guix.scm package definition
+# - Generates build artifacts and reports
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+    inputs:
+      guix_channel:
+        description: 'Guix channel commit (leave empty for latest)'
+        required: false
+        default: ''
+      run_tests:
+        description: 'Run tests after build'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  # Guix build configuration
+  GUIX_BUILD_OPTIONS: "--verbosity=2"
+  # Number of parallel build jobs
+  GUIX_BUILD_CORES: "2"
+  # Locale settings for Guix
+  LC_ALL: "en_US.UTF-8"
+
+jobs:
+  # Stage 1: Validate Guix package definition
+  validate-guix-scm:
+    runs-on: ubuntu-latest
+    name: Validate guix.scm
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Check guix.scm exists
+      run: |
+        if [ ! -f "guix.scm" ]; then
+          echo "ERROR: guix.scm not found in repository root"
+          exit 1
+        fi
+        echo "Found guix.scm:"
+        head -50 guix.scm
+
+    - name: Validate Scheme syntax
+      run: |
+        # Basic syntax validation using grep for common issues
+        echo "Checking for balanced parentheses and basic syntax..."
+
+        # Count opening and closing parens
+        OPEN_PARENS=$(grep -o '(' guix.scm | wc -l)
+        CLOSE_PARENS=$(grep -o ')' guix.scm | wc -l)
+
+        if [ "$OPEN_PARENS" != "$CLOSE_PARENS" ]; then
+          echo "WARNING: Unbalanced parentheses detected"
+          echo "Open: $OPEN_PARENS, Close: $CLOSE_PARENS"
+        else
+          echo "Parentheses balanced: $OPEN_PARENS pairs"
+        fi
+
+        # Check for required definitions
+        if ! grep -q "define-public" guix.scm; then
+          echo "WARNING: No 'define-public' found - package may not be exported"
+        fi
+
+        if ! grep -q "(package" guix.scm; then
+          echo "ERROR: No '(package' definition found"
+          exit 1
+        fi
+
+        echo "Basic validation passed"
+
+  # Stage 2: Build with Guix
+  guix-build:
+    runs-on: ubuntu-latest
+    name: Build with GNU Guix
+    needs: validate-guix-scm
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Fix File Permissions
+      run: |
+        echo "=== Fixing File Permissions ==="
+        # Ensure all files are readable and directories are accessible
+        chmod -R a+rX .
+        
+        # Verify permissions
+        echo "Verifying permissions on key files:"
+        ls -la guix.scm
+        ls -la CMakeLists.txt
+        
+        echo "Permissions fixed successfully"
+
+    - name: Free Disk Space
+      run: |
+        echo "Freeing up disk space for Guix store..."
+        df -h
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        df -h
+
+    - name: Install GNU Guix
+      run: |
+        echo "=== Installing GNU Guix ==="
+
+        # Install dependencies for Guix
+        sudo apt-get update
+        sudo apt-get install -y \
+          wget \
+          gpg \
+          nscd \
+          xz-utils
+
+        # Download and run the Guix installer
+        cd /tmp
+        wget -q https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh
+        chmod +x guix-install.sh
+
+        # Run installer (requires yes for prompts)
+        echo "Running Guix installer..."
+        if yes '' | sudo -E ./guix-install.sh; then
+          # Ensure Guix is in PATH for all subsequent steps (SSR/CI best practice)
+          if [ -f "/var/guix/profiles/per-user/root/current-guix/etc/profile" ]; then
+              source /var/guix/profiles/per-user/root/current-guix/etc/profile
+          fi
+          export PATH="/var/guix/profiles/per-user/root/current-guix/bin:$PATH"
+          echo "PATH=/var/guix/profiles/per-user/root/current-guix/bin:$PATH" >> $GITHUB_ENV
+        else
+          # If official installer fails, try manual installation
+          echo "Official installer failed, trying alternative method..."
+
+          # Download binary tarball
+          GUIX_VERSION="1.4.0"
+          ARCH="x86_64-linux"
+          wget -q "https://ftp.gnu.org/gnu/guix/guix-binary-${GUIX_VERSION}.${ARCH}.tar.xz" \
+            -O guix-binary.tar.xz || \
+          wget -q "https://ftpmirror.gnu.org/guix/guix-binary-${GUIX_VERSION}.${ARCH}.tar.xz" \
+            -O guix-binary.tar.xz
+
+          # Extract to /
+          sudo tar --warning=no-timestamp -xf guix-binary.tar.xz -C /
+
+          # Create guix profile links
+          sudo mkdir -p ~root/.config/guix
+          sudo ln -sf /var/guix/profiles/per-user/root/current-guix ~root/.config/guix/current
+
+          # Source the profile
+          GUIX_PROFILE="/var/guix/profiles/per-user/root/current-guix"
+          source "$GUIX_PROFILE/etc/profile"
+
+          # Create build users group
+          sudo groupadd --system guixbuild 2>/dev/null || true
+          for i in $(seq -w 1 10); do
+            sudo useradd -g guixbuild -G guixbuild \
+              -d /var/empty -s "$(which nologin)" \
+              -c "Guix build user $i" --system \
+              "guixbuilder$i" 2>/dev/null || true
+          done
+
+          # Start guix-daemon
+          sudo /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon \
+            --build-users-group=guixbuild &
+          sleep 5
+
+          # Ensure Guix is in PATH for all subsequent steps (SSR/CI best practice)
+          if [ -f "/var/guix/profiles/per-user/root/current-guix/etc/profile" ]; then
+              source /var/guix/profiles/per-user/root/current-guix/etc/profile
+          fi
+          export PATH="/var/guix/profiles/per-user/root/current-guix/bin:$PATH"
+          echo "PATH=/var/guix/profiles/per-user/root/current-guix/bin:$PATH" >> $GITHUB_ENV
+        fi
+
+        echo "Guix installation complete"
+
+    - name: Configure Guix Environment
+      run: |
+        echo "=== Configuring Guix Environment ==="
+
+        # Source Guix profile
+        if [ -f "/var/guix/profiles/per-user/root/current-guix/etc/profile" ]; then
+          source /var/guix/profiles/per-user/root/current-guix/etc/profile
+        fi
+
+        # Add guix to PATH for current user
+        export PATH="/var/guix/profiles/per-user/root/current-guix/bin:$PATH"
+        export GUIX_LOCPATH="$HOME/.guix-profile/lib/locale"
+
+        # Verify guix is available
+        which guix || {
+          echo "ERROR: guix not found in PATH"
+          echo "PATH: $PATH"
+          exit 1
+        }
+
+        guix --version
+
+        # Save environment for subsequent steps
+        echo "PATH=/var/guix/profiles/per-user/root/current-guix/bin:$PATH" >> $GITHUB_ENV
+        echo "GUIX_LOCPATH=$HOME/.guix-profile/lib/locale" >> $GITHUB_ENV
+
+    - name: Update Guix Channels
+      run: |
+        echo "=== Updating Guix Channels ==="
+
+        # Pull latest Guix channel (or specific commit if provided)
+        if [ -n "${{ github.event.inputs.guix_channel }}" ]; then
+          echo "Using specific Guix commit: ${{ github.event.inputs.guix_channel }}"
+          sudo guix pull --commit=${{ github.event.inputs.guix_channel }} || {
+            echo "WARNING: guix pull failed, continuing with existing version"
+          }
+        else
+          echo "Pulling latest Guix channels..."
+          sudo guix pull --verbosity=1 || {
+            echo "WARNING: guix pull failed, continuing with existing version"
+          }
+        fi
+
+        # Show current Guix description
+        guix describe || true
+      continue-on-error: true
+
+    - name: Install Build Dependencies
+      run: |
+        echo "=== Installing Build Dependencies ==="
+        
+        # Install required packages that might not be auto-detected
+        # Note: Using guix environment instead of guix install for CI context
+        echo "Setting up Guix environment with required dependencies..."
+        guix install guile sparsehash 2>&1 || {
+          echo "WARNING: Some packages failed to install with regular user"
+          echo "This may be expected in CI environment - dependencies will be pulled during build"
+        }
+        
+        # Verify installations
+        echo ""
+        echo "=== Verifying Installed Dependencies ==="
+        
+        echo "Checking Guile version:"
+        guix show guile 2>/dev/null || echo "Guile package info not available"
+        
+        echo ""
+        echo "Checking for Guile in store:"
+        ls -d /gnu/store/*guile* 2>/dev/null | head -5 || echo "No Guile found in store (will be pulled during build)"
+        
+        echo ""
+        echo "Checking for SparseHash in store:"
+        ls -d /gnu/store/*sparsehash* 2>/dev/null | head -5 || echo "No SparseHash found in store (will be pulled during build)"
+        
+        echo ""
+        echo "Checking for Folly in store (optional):"
+        ls -d /gnu/store/*folly* 2>/dev/null | head -5 || echo "Folly not found in store (may not be available in Guix)"
+        
+        echo ""
+        echo "=== Dependency Installation Complete ==="
+      continue-on-error: true
+
+    - name: Cache Guix Store
+      uses: actions/cache@v4
+      with:
+        path: |
+          /gnu/store
+          ~/.cache/guix
+        key: guix-store-${{ runner.os }}-${{ hashFiles('guix.scm') }}
+        restore-keys: |
+          guix-store-${{ runner.os }}-
+      continue-on-error: true
+
+    - name: Show Build Configuration
+      run: |
+        echo "=== Build Configuration ==="
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo ""
+        echo "Guix Version:"
+        guix --version || echo "Unable to get Guix version"
+        echo ""
+        echo "System Information:"
+        uname -a
+        echo ""
+        
+        echo "=== Pre-Build Diagnostics ==="
+        
+        # Check Guile availability and version
+        echo "Guile version check:"
+        guile --version 2>/dev/null || echo "WARNING: guile command not found"
+        
+        # Check for required packages in Guix
+        echo ""
+        echo "Checking Guix package availability:"
+        guix show guile 2>/dev/null | head -10 || echo "Guile package not available via 'guix show'"
+        guix show sparsehash 2>/dev/null | head -10 || echo "SparseHash package not available via 'guix show'"
+        
+        echo ""
+        echo "Available Disk Space:"
+        df -h
+        echo ""
+        echo "guix.scm package definition:"
+        echo "---"
+        head -100 guix.scm
+        echo "---"
+
+    - name: Build OpenCog Collection Package
+      id: guix-build
+      run: |
+        echo "=== Starting Guix Build ==="
+        echo "Building from guix.scm..."
+
+        # Set build options
+        export GUIX_BUILD_OPTIONS="${{ env.GUIX_BUILD_OPTIONS }}"
+
+        # Attempt the build
+        BUILD_START=$(date +%s)
+
+        sudo guix build \
+          --file=guix.scm \
+          --cores=${{ env.GUIX_BUILD_CORES }} \
+          --keep-going \
+          --fallback \
+          2>&1 | tee guix-build.log
+
+        BUILD_STATUS=${PIPESTATUS[0]}
+        BUILD_END=$(date +%s)
+        BUILD_DURATION=$((BUILD_END - BUILD_START))
+
+        echo "Build completed in ${BUILD_DURATION} seconds"
+        echo "build_duration=${BUILD_DURATION}" >> $GITHUB_OUTPUT
+
+        if [ $BUILD_STATUS -eq 0 ]; then
+          echo "build_status=success" >> $GITHUB_OUTPUT
+
+          # Get the store path
+          STORE_PATH=$(sudo guix build --file=guix.scm 2>/dev/null | tail -1)
+          echo "store_path=${STORE_PATH}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Build Successful ==="
+          echo "Store path: ${STORE_PATH}"
+
+          # List build outputs
+          if [ -n "${STORE_PATH}" ] && [ -d "${STORE_PATH}" ]; then
+            echo ""
+            echo "Build outputs:"
+            ls -la "${STORE_PATH}/" || true
+
+            echo ""
+            echo "Installed binaries:"
+            ls -la "${STORE_PATH}/bin/" 2>/dev/null || echo "No bin directory"
+
+            echo ""
+            echo "Installed libraries:"
+            ls -la "${STORE_PATH}/lib/" 2>/dev/null || echo "No lib directory"
+          fi
+        else
+          echo "build_status=failed" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Build Failed ==="
+          echo "Check guix-build.log for details"
+
+          # Show last 100 lines of build log
+          echo ""
+          echo "Last 100 lines of build log:"
+          tail -100 guix-build.log
+
+          exit 1
+        fi
+
+    - name: Run Package Tests
+      if: github.event.inputs.run_tests == 'true' && steps.guix-build.outputs.build_status == 'success'
+      run: |
+        echo "=== Running Package Tests ==="
+
+        STORE_PATH="${{ steps.guix-build.outputs.store_path }}"
+
+        if [ -z "${STORE_PATH}" ]; then
+          echo "No store path available, skipping tests"
+          exit 0
+        fi
+
+        # Check if test directory exists
+        if [ -d "${STORE_PATH}/share/opencog-collection/tests" ]; then
+          echo "Running tests from ${STORE_PATH}/share/opencog-collection/tests"
+
+          for test_script in "${STORE_PATH}/share/opencog-collection/tests"/*.sh; do
+            if [ -f "$test_script" ]; then
+              echo "Running: $test_script"
+              bash "$test_script" || echo "Test $test_script failed"
+            fi
+          done
+        else
+          echo "No test directory found in package"
+        fi
+      continue-on-error: true
+
+    - name: Generate Build Report
+      if: always()
+      run: |
+        echo "# Guix Build Report" > guix-build-report.md
+        echo "" >> guix-build-report.md
+        echo "## Build Summary" >> guix-build-report.md
+        echo "" >> guix-build-report.md
+        echo "| Property | Value |" >> guix-build-report.md
+        echo "|----------|-------|" >> guix-build-report.md
+        echo "| Repository | ${{ github.repository }} |" >> guix-build-report.md
+        echo "| Branch | ${{ github.ref_name }} |" >> guix-build-report.md
+        echo "| Commit | ${{ github.sha }} |" >> guix-build-report.md
+        echo "| Build Status | ${{ steps.guix-build.outputs.build_status || 'unknown' }} |" >> guix-build-report.md
+        echo "| Build Duration | ${{ steps.guix-build.outputs.build_duration || 'N/A' }} seconds |" >> guix-build-report.md
+        echo "| Store Path | ${{ steps.guix-build.outputs.store_path || 'N/A' }} |" >> guix-build-report.md
+        echo "| Timestamp | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> guix-build-report.md
+        echo "" >> guix-build-report.md
+
+        if [ -f guix-build.log ]; then
+          echo "## Build Log (last 50 lines)" >> guix-build-report.md
+          echo "" >> guix-build-report.md
+          echo '```' >> guix-build-report.md
+          tail -50 guix-build.log >> guix-build-report.md
+          echo '```' >> guix-build-report.md
+        fi
+
+        echo "" >> guix-build-report.md
+        echo "## Package Definition" >> guix-build-report.md
+        echo "" >> guix-build-report.md
+        echo "The package was built using \`guix.scm\` in the repository root." >> guix-build-report.md
+        echo "" >> guix-build-report.md
+        echo "### Build Command" >> guix-build-report.md
+        echo '```bash' >> guix-build-report.md
+        echo "guix build --file=guix.scm" >> guix-build-report.md
+        echo '```' >> guix-build-report.md
+
+        # Display report
+        cat guix-build-report.md
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: guix-build-artifacts
+        path: |
+          guix-build.log
+          guix-build-report.md
+        retention-days: 30
+
+    - name: Create GitHub Summary
+      if: always()
+      run: |
+        echo "# Guix Build Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.guix-build.outputs.build_status }}" == "success" ]; then
+          echo "## Build Status: Success" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## Build Status: Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Duration | ${{ steps.guix-build.outputs.build_duration || 'N/A' }} seconds |" >> $GITHUB_STEP_SUMMARY
+        echo "| Store Path | \`${{ steps.guix-build.outputs.store_path || 'N/A' }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Usage" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "To build this package locally:" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "git clone ${{ github.server_url }}/${{ github.repository }}.git" >> $GITHUB_STEP_SUMMARY
+        echo "cd occ" >> $GITHUB_STEP_SUMMARY
+        echo "guix build -f guix.scm" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # Stage 3: Build derivation analysis (optional advanced stage)
+  analyze-derivation:
+    runs-on: ubuntu-latest
+    name: Analyze Build Derivation
+    needs: guix-build
+    if: success()
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install GNU Guix
+      run: |
+        # Quick Guix installation for analysis
+        sudo apt-get update
+        sudo apt-get install -y wget xz-utils
+
+        cd /tmp
+        wget -q https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh
+        chmod +x guix-install.sh
+        yes '' | sudo -E ./guix-install.sh || true
+
+        # Ensure Guix is in PATH for all subsequent steps (SSR/CI best practice)
+        if [ -f "/var/guix/profiles/per-user/root/current-guix/etc/profile" ]; then
+            source /var/guix/profiles/per-user/root/current-guix/etc/profile
+        fi
+        export PATH="/var/guix/profiles/per-user/root/current-guix/bin:$PATH"
+        echo "PATH=/var/guix/profiles/per-user/root/current-guix/bin:$PATH" >> $GITHUB_ENV
+      continue-on-error: true
+
+    - name: Generate Derivation Graph
+      run: |
+        echo "=== Generating Derivation Analysis ==="
+
+        # Show package dependencies
+        echo "Package inputs (dependencies):"
+        sudo guix show --file=guix.scm 2>/dev/null || echo "Unable to show package info"
+
+        echo ""
+        echo "Build graph (text format):"
+        sudo guix graph --type=bag --file=guix.scm 2>/dev/null | head -100 || echo "Unable to generate graph"
+      continue-on-error: true
+
+    - name: Check Reproducibility
+      run: |
+        echo "=== Checking Build Reproducibility ==="
+
+        # Get derivation hash
+        DRV=$(sudo guix build --file=guix.scm --derivation 2>/dev/null | tail -1)
+
+        if [ -n "$DRV" ]; then
+          echo "Derivation: $DRV"
+          echo ""
+          echo "This derivation hash ensures reproducible builds."
+          echo "The same guix.scm with the same Guix version will produce identical results."
+        else
+          echo "Could not determine derivation"
+        fi
+      continue-on-error: true
+
+  # Final stage: Report overall status
+  report-status:
+    runs-on: ubuntu-latest
+    name: Build Status Report
+    needs: [validate-guix-scm, guix-build]
+    if: always()
+
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: guix-build-artifacts
+        path: ./artifacts
+      continue-on-error: true
+
+    - name: Generate Final Report
+      run: |
+        echo "# Guix Build Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "## Pipeline Status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Validate guix.scm | ${{ needs.validate-guix-scm.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Guix Build | ${{ needs.guix-build.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ needs.guix-build.result }}" == "success" ]; then
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The OpenCog Collection package has been successfully built with GNU Guix." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To use this package:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Clone and build" >> $GITHUB_STEP_SUMMARY
+          echo "git clone ${{ github.server_url }}/${{ github.repository }}.git" >> $GITHUB_STEP_SUMMARY
+          echo "cd occ" >> $GITHUB_STEP_SUMMARY
+          echo "guix build -f guix.scm" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Enter development environment" >> $GITHUB_STEP_SUMMARY
+          echo "guix shell -f guix.scm" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The build failed. Check the artifacts for detailed logs." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Common issues:" >> $GITHUB_STEP_SUMMARY
+          echo "- Missing dependencies in guix.scm" >> $GITHUB_STEP_SUMMARY
+          echo "- Build configuration errors in CMake" >> $GITHUB_STEP_SUMMARY
+          echo "- Source file issues" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*Generated by guix-build.yml workflow*" >> $GITHUB_STEP_SUMMARY

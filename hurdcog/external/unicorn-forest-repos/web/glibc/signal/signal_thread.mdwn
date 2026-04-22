@@ -1,0 +1,91 @@
+[[!meta copyright="Copyright © 2011, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+For delivering a signal, Mach forwards an `msg_sig_post` message from the
+invoker of `kill` to the target process.  The target process' [[signal_thread]]
+job is it to listen to such messages and to set up signal handler contexts in
+other threads.
+
+
+# IRC, freenode, #hurd, 2011-04-20
+
+[[!tag open_issue_documentation]]
+
+    <braunr> bugs around signals are very tricky
+    <braunr> signals are actually the most hairy part of the hurd
+    <braunr> and the reason they're aynchronous is that they're handled by a
+      second thread
+    <braunr> (so yes, every process on the hurd has at least two threads)
+    <svante_> braunr: How to solve the asynch problem then if every process has
+      two threads?
+    <braunr> the easiest method would be to align ourselves on what most other
+      Unices do
+    <braunr> establish a "signal protocol" between kernel and userspace
+    <braunr> with a set of signal info in a table, most likely at the top of
+      the stack
+    <braunr> but this is explicitely what the original Mach developers didn't
+      want, and they were right IMO
+    <braunr> having two threads is very clean, but it creates incompatibilites
+      with what POSIX requires
+    <braunr> so there might be a radical choice to make here
+    <braunr> and i doubt we have the resources to make it happen
+    <svante_> What is the advantage of having two threads per process, a per
+      the original design?
+    <braunr> it's clean
+    <braunr> you don't have to define async-signal-safe functions
+    <braunr> it's like using sigwait() yourself in a separate thread, or
+      multiplexing them through signalfd()
+    <svante_> Regardless of the advantages, isn't two threads per process a
+      waste of resources?
+    <braunr> sure it is
+    <braunr> but does it really matter ?
+    <braunr> mach and the hurd were intended to be "hyperthreaded"
+
+[[open_issues/multithreading]].
+
+
+# IRC, freenode, #hurd, 2013-09-17
+
+    <teythoon> I just realized that I know next to nothing about signal
+      handling on the Hurd...
+    <teythoon> especially /hurd/inits role in it
+    <teythoon> reading glibcs kill.c it does not involve /hurd/init at all, but
+      /hurd/init is full of proxying code for the msg protocol
+    <teythoon> ah, /hurd/init mitms the signal handling logic in the libc for
+      its own signals
+    <teythoon> for msg_sig_post it sends a reply immediately, and then
+      processes the signal, I wonder why that is done
+    <teythoon> also it "forwards" any signals it receives to the child it
+      spawned (like /etc/hurd/runsystem), I wonder why...
+    <teythoon> good thing the comments tell what is done, not why...
+    <teythoon> so in theory kill -HUP 1 should have been forwarded to the
+      "runsystem" process, I wonder why that does not work if that one execs
+      sysvinit
+    <braunr> teythoon: can't help you there :/
+    <teythoon> braunr: I think I sorted it out on my own, we'll see how that
+      works out in practice ;)
+    <braunr> good
+
+
+## IRC, freenode, #hurd, 2013-09-18
+
+    <teythoon> braunr: I figured out why /hurd/init does this strange thing
+      with the msg protocol
+    <teythoon> braunr: it has no signal thread
+    <teythoon> I wonder how /hurd/exec and the initial filesystem handle
+      this...
+    <teythoon> err, afaics the signal thread is created in fork(), so any
+      process not created using it (ie manually using task_create) should lack
+      the signal thread, no?
+    <teythoon> that'd be the root fs, /hurd/{exec,init,auth,proc} and
+      /etc/hurd/runsystem (the child started by /hurd/init)
+    <teythoon> but I see only /hurd/init doing something about it, namely
+      setting a msgport and handling the msg protocol, relaying any messages to
+      the signal handling logic in the glibc

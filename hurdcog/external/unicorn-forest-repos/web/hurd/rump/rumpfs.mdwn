@@ -1,0 +1,31 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+# What is rumpfs?
+
+`Rumpfs` would let us use the [[NetBSD
+filesystems|https://man.netbsd.org/fstab.5]], namely FFS, which is a
+journaled filesystem that supports snapshots.  This is a significant
+improvement over the Hurd's current filesystem:
+[[ext2|hurd/translator/ext2fs]], which forces users to deal with
+occassional filesystem corruption.  With FFS, this would no longer be
+an issue, and NetBSD developers would maintain the FFS codebase.
+
+As of October 2024, rumpfs still needs to be implemented.
+
+Another option is to create an ext3fs.  We have a
+[[task|https://savannah.gnu.org/task/?5498]] for this, which mentions
+some existing experimental code.
+
+Another option is to create translators out of
+[[libguestfs|hurd/translator/libguestfs]].

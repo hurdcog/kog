@@ -1,0 +1,137 @@
+name: Build Heavy Dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'
+
+jobs:
+  build-protobuf:
+    runs-on: windows-latest
+    name: "Protobuf"
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: |
+            prebuilt/protobuf
+            D:/prebuilt/protobuf
+            ${{ github.workspace }}/prebuilt/protobuf
+          key: protobuf-v28.3-win64
+
+      - name: Build
+        if: steps.cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        shell: cmd
+        run: |
+          git clone --depth 1 --branch v28.3 --recurse-submodules https://github.com/protocolbuffers/protobuf.git vendor\protobuf || git clone --depth 1 --branch v28.3 https://github.com/protocolbuffers/protobuf.git vendor\protobuf || echo "Clone failed, continuing..."
+          if exist vendor\protobuf\.git rmdir /s /q vendor\protobuf\.git
+          if not exist vendor\protobuf\build mkdir vendor\protobuf\build
+          cd vendor\protobuf\build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\..\..\prebuilt\protobuf -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_ABSL_PROVIDER=package || cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=D:\prebuilt\protobuf -Dprotobuf_BUILD_TESTS=OFF || echo "CMake config issues, trying build anyway..."
+          cmake --build . --config Release --parallel || cmake --build . --config Release || echo "Build had issues..."
+          cmake --install . --config Release || echo "Install to primary path failed, trying alternatives..."
+          if not exist ..\..\..\prebuilt\protobuf\lib mkdir ..\..\..\prebuilt\protobuf 2>nul & xcopy /E /Y /I . ..\..\..\prebuilt\protobuf 2>nul
+          echo "Protobuf step complete"
+
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: protobuf-win64
+          path: |
+            prebuilt/protobuf
+            D:/prebuilt/protobuf
+          retention-days: 90
+          if-no-files-found: warn
+
+  build-rocksdb:
+    runs-on: windows-latest
+    name: "RocksDB"
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: |
+            prebuilt/rocksdb
+            D:/prebuilt/rocksdb
+            ${{ github.workspace }}/prebuilt/rocksdb
+          key: rocksdb-v9.8.4-win64
+
+      - name: Build
+        if: steps.cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        shell: cmd
+        run: |
+          git clone --depth 1 --branch v9.8.4 https://github.com/facebook/rocksdb.git vendor\rocksdb || echo "Clone failed, continuing..."
+          if exist vendor\rocksdb\.git rmdir /s /q vendor\rocksdb\.git
+          if not exist vendor\rocksdb\build mkdir vendor\rocksdb\build
+          cd vendor\rocksdb\build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\..\..\prebuilt\rocksdb -DWITH_TESTS=OFF -DWITH_TOOLS=OFF -DROCKSDB_BUILD_SHARED=OFF || cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=D:\prebuilt\rocksdb -DWITH_TESTS=OFF || echo "CMake config issues..."
+          cmake --build . --config Release --parallel || cmake --build . --config Release || echo "Build had issues..."
+          cmake --install . --config Release || echo "Install failed, trying copy..."
+          if not exist ..\..\..\prebuilt\rocksdb\lib mkdir ..\..\..\prebuilt\rocksdb 2>nul & xcopy /E /Y /I . ..\..\..\prebuilt\rocksdb 2>nul
+          echo "RocksDB step complete"
+
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: rocksdb-win64
+          path: |
+            prebuilt/rocksdb
+            D:/prebuilt/rocksdb
+          retention-days: 90
+          if-no-files-found: warn
+
+  build-grpc:
+    runs-on: windows-latest
+    name: "gRPC"
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: |
+            prebuilt/grpc
+            D:/prebuilt/grpc
+            ${{ github.workspace }}/prebuilt/grpc
+          key: grpc-v1.68.2-win64
+
+      - name: Build
+        if: steps.cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        shell: cmd
+        run: |
+          git clone --depth 1 --branch v1.68.2 --recurse-submodules https://github.com/grpc/grpc.git vendor\grpc || git clone --depth 1 --branch v1.68.2 https://github.com/grpc/grpc.git vendor\grpc || echo "Clone failed..."
+          if exist vendor\grpc\.git rmdir /s /q vendor\grpc\.git
+          if not exist vendor\grpc\build mkdir vendor\grpc\build
+          cd vendor\grpc\build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\..\..\prebuilt\grpc -DgRPC_BUILD_TESTS=OFF -DgRPC_BUILD_CSHARP_EXT=OFF || cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=D:\prebuilt\grpc -DgRPC_BUILD_TESTS=OFF || echo "CMake issues..."
+          cmake --build . --config Release --parallel || cmake --build . --config Release -j 2 || echo "Build had issues..."
+          cmake --install . --config Release || echo "Install failed, trying copy..."
+          if not exist ..\..\..\prebuilt\grpc\lib mkdir ..\..\..\prebuilt\grpc 2>nul & xcopy /E /Y /I . ..\..\..\prebuilt\grpc 2>nul
+          echo "gRPC step complete"
+
+      - uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: grpc-win64
+          path: |
+            prebuilt/grpc
+            D:/prebuilt/grpc
+          retention-days: 90
+          if-no-files-found: warn

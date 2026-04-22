@@ -1,0 +1,34 @@
+[[!meta copyright="Copyright © 2012, 2013, 2014, 2015, 2016, 2018, 2019, 2022 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="FOSDEM 2022"]]
+
+<http://fosdem.org/2022>
+
+FOSDEM has taken place on February 5th/6th online
+
+
+
+
+# Microkernels devroom
+
+<https://fosdem.org/2022/schedule/room/dmicrokernel/>
+
+  * {{$zammit_hurd}}
+
+
+[[!ymlfront data="""
+
+zammit_hurd:
+
+  "presentation (including video) by Damien Zammit: [*A practical solution for GNU/Hurd's lack of drivers: NetBSD's rumpkernel framework*](https://fosdem.org/2022/schedule/event/dzammit/) ([slides](https://fosdem.org/2022/schedule/event/dzammit/attachments/slides/4850/export/events/attachments/dzammit/slides/4850/rump_hurd_talk.pdf))"
+
+"""]]

@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: cogutil
+Source: https://github.com/cogpy/occ
+
+Files: *
+Copyright: 2008-2025 OpenCog Foundation
+License: AGPL-3.0+
+
+License: AGPL-3.0+
+ See /usr/share/common-licenses/AGPL-3

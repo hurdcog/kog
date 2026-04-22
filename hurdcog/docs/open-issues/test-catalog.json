@@ -1,0 +1,3298 @@
+{
+  "metadata": {
+    "generated_from": "/home/runner/work/9nu/9nu/docs/open-issues/open-issues.md",
+    "total_issues": 29,
+    "categories": [
+      "major_open_issues",
+      "technical",
+      "development",
+      "implementation",
+      "performance"
+    ],
+    "version": "1.0.0",
+    "description": "Comprehensive test catalog extracted from open issues documentation"
+  },
+  "test_catalog": {
+    "major_open_issues": [
+      {
+        "issue_title": "IPC Performance",
+        "description": "Issue: Message passing overhead compared to function calls",
+        "impact_area": "Overall system performance is slower than monolithic kernels",
+        "failure_mode": "Performance degradation",
+        "resolution_criteria": [
+          "Performance metrics show improvement",
+          "Solution implemented: Reduced context switching overhead",
+          "Solution implemented: Better message caching strategies"
+        ],
+        "dependencies": [
+          "kernel"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "Performance and Scalability",
+        "status": "Ongoing optimization efforts",
+        "solutions": [
+          "Virtual copy optimization for large data transfers",
+          "Reduced context switching overhead",
+          "Better message caching strategies"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_IPC_Performance",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.7,
+            "focus_areas": [
+              "major_open_issues",
+              "Performance and Scalability"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Memory Management",
+        "description": "Issue: External pager mechanism performance",
+        "impact_area": "Page fault handling and memory operations slower",
+        "failure_mode": "Resource exhaustion",
+        "resolution_criteria": [
+          "Solution implemented: Improved paging algorithms",
+          "Solution implemented: Better integration with GNU Mach",
+          "Solution implemented: Optimized memory object protocols"
+        ],
+        "dependencies": [
+          "GNU Mach"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "Performance and Scalability",
+        "status": "Research and optimization ongoing",
+        "solutions": [
+          "Improved paging algorithms",
+          "Better integration with GNU Mach",
+          "Optimized memory object protocols"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Memory_Management",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "Performance and Scalability"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Multiprocessing Support",
+        "description": "Issue: Limited SMP (Symmetric Multi-Processing) support",
+        "impact_area": "Cannot fully utilize modern multi-core hardware",
+        "failure_mode": "Functionality unavailable",
+        "resolution_criteria": [
+          "Solution implemented: GNU Mach SMP improvements",
+          "Feature implemented and functional",
+          "Solution implemented: Scalable locking mechanisms"
+        ],
+        "dependencies": [
+          "server",
+          "GNU Mach",
+          "SMP"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "Performance and Scalability",
+        "status": "Active development area",
+        "solutions": [
+          "GNU Mach SMP improvements",
+          "Thread-safe server implementations",
+          "Scalable locking mechanisms"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Multiprocessing_Support",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "Performance and Scalability"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Server Recovery",
+        "description": "Issue: Some server crashes can still affect system stability",
+        "impact_area": "System may become unresponsive after critical server failures",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Solution implemented: Better fault isolation",
+          "Solution implemented: Automatic server restart mechanisms",
+          "Solution implemented: Improved error handling and recovery"
+        ],
+        "dependencies": [
+          "server"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "System Stability",
+        "status": "Ongoing improvement",
+        "solutions": [
+          "Better fault isolation",
+          "Automatic server restart mechanisms",
+          "Improved error handling and recovery"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Server_Recovery",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "System Stability"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Resource Management",
+        "description": "Issue: Resource leaks and exhaustion in long-running systems",
+        "impact_area": "System degradation over time",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Solution implemented: Better resource tracking",
+          "Solution implemented: Automatic resource cleanup",
+          "Solution implemented: Improved memory management"
+        ],
+        "dependencies": [],
+        "category": "major_open_issues",
+        "subcategory": "System Stability",
+        "status": "Active investigation",
+        "solutions": [
+          "Better resource tracking",
+          "Automatic resource cleanup",
+          "Improved memory management"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Resource_Management",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "System Stability"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Device Drivers",
+        "description": "Issue: Limited hardware device support",
+        "impact_area": "Hurd runs on fewer systems than other operating systems",
+        "failure_mode": "Functionality unavailable",
+        "resolution_criteria": [
+          "Solution implemented: Driver Development Kit (DDE) improvements",
+          "Solution implemented: Linux driver compatibility layer",
+          "Solution implemented: Native driver development"
+        ],
+        "dependencies": [
+          "Linux driver"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "Hardware Support",
+        "status": "Ongoing driver development",
+        "solutions": [
+          "Driver Development Kit (DDE) improvements",
+          "Linux driver compatibility layer",
+          "Native driver development"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Device_Drivers",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "Hardware Support"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Architecture Support",
+        "description": "Issue: Limited to 32-bit x86, partial 64-bit support",
+        "impact_area": "Cannot run on modern 64-bit only systems",
+        "failure_mode": "Functionality unavailable",
+        "resolution_criteria": [
+          "Solution implemented: Complete x86_64 port",
+          "Solution implemented: ARM architecture exploration",
+          "Solution implemented: Cross-platform compatibility improvements"
+        ],
+        "dependencies": [
+          "x86_64"
+        ],
+        "category": "major_open_issues",
+        "subcategory": "Hardware Support",
+        "status": "64-bit port in progress",
+        "solutions": [
+          "Complete x86_64 port",
+          "ARM architecture exploration",
+          "Cross-platform compatibility improvements"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Architecture_Support",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_major_open_issues",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "major_open_issues",
+              "Hardware Support"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              3,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      }
+    ],
+    "technical": [
+      {
+        "issue_title": "IPC Overhead",
+        "description": "Challenge: Additional overhead from message passing",
+        "impact_area": "System functionality",
+        "failure_mode": "Performance degradation",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "server",
+          "IPC",
+          "kernel"
+        ],
+        "category": "technical",
+        "subcategory": "Microkernel Limitations",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_IPC_Overhead",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "Microkernel Limitations"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Server Dependencies",
+        "description": "Challenge: Complex dependencies between servers",
+        "impact_area": "Startup ordering and circular dependencies",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "server"
+        ],
+        "category": "technical",
+        "subcategory": "Microkernel Limitations",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Server_Dependencies",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "Microkernel Limitations"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Memory Object Model",
+        "description": "Issue: Complex memory object interface",
+        "impact_area": "Difficult to implement efficient pagers",
+        "failure_mode": "Resource exhaustion",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "technical",
+        "subcategory": "GNU Mach Issues",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Memory_Object_Model",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "GNU Mach Issues"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Port Namespace",
+        "description": "Issue: Port name space management complexity",
+        "impact_area": "Port exhaustion and namespace pollution",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "technical",
+        "subcategory": "GNU Mach Issues",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Port_Namespace",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "GNU Mach Issues"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "System Call Interface",
+        "description": "Issue: Complex mapping between POSIX calls and Hurd IPC",
+        "impact_area": "Performance overhead and complexity",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "server",
+          "IPC"
+        ],
+        "category": "technical",
+        "subcategory": "glibc Integration",
+        "status": "Ongoing optimization",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_System_Call_Interface",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "glibc Integration"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Thread Safety",
+        "description": "Issue: Some glibc functions not fully thread-safe with Hurd",
+        "impact_area": "Multi-threaded applications may have issues",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "glibc"
+        ],
+        "category": "technical",
+        "subcategory": "glibc Integration",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Thread_Safety",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_technical",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "technical",
+              "glibc Integration"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      }
+    ],
+    "development": [
+      {
+        "issue_title": "Process File System (procfs)",
+        "description": "Process File System (procfs)",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Active Development Projects",
+        "status": "Basic implementation complete",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Process_File_System_(procfs)",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Active Development Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Sound System",
+        "description": "Sound System",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Active Development Projects",
+        "status": "Experimental implementation",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Sound_System",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Active Development Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Network Stack Improvements",
+        "description": "Network Stack Improvements",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Active Development Projects",
+        "status": "Basic networking functional",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Network_Stack_Improvements",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Active Development Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Testing Framework",
+        "description": "Testing Framework",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Active Development Projects",
+        "status": "Basic testing infrastructure",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Testing_Framework",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Active Development Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Distributed Systems Support",
+        "description": "Distributed Systems Support",
+        "impact_area": "System functionality",
+        "failure_mode": "Functionality unavailable",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Research Projects",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Distributed_Systems_Support",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Research Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Security Enhancements",
+        "description": "Security Enhancements",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Research Projects",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Security_Enhancements",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.8,
+            "focus_areas": [
+              "development",
+              "Research Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Real-time Support",
+        "description": "Real-time Support",
+        "impact_area": "System functionality",
+        "failure_mode": "Functionality unavailable",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "development",
+        "subcategory": "Research Projects",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Real-time_Support",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_development",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "development",
+              "Research Projects"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      }
+    ],
+    "implementation": [
+      {
+        "issue_title": "Translator Architecture",
+        "description": "Challenge: Consistent translator interfaces",
+        "impact_area": "Compatibility and maintainability",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "implementation",
+        "subcategory": "Code Organization",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Translator_Architecture",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_implementation",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "implementation",
+              "Code Organization"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Library Dependencies",
+        "description": "Challenge: Circular dependencies between libraries",
+        "impact_area": "Build complexity, runtime issues",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "implementation",
+        "subcategory": "Code Organization",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Library_Dependencies",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_implementation",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "implementation",
+              "Code Organization"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Cross-Compilation Complexity",
+        "description": "Issue: Complex build requirements for cross-compilation",
+        "impact_area": "Difficult development environment setup",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "implementation",
+        "subcategory": "Build System Issues",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Cross-Compilation_Complexity",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_implementation",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "implementation",
+              "Build System Issues"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Dependency Management",
+        "description": "Issue: Complex dependencies between components",
+        "impact_area": "Build order sensitivity, maintenance overhead",
+        "failure_mode": "Build/runtime failure",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [],
+        "category": "implementation",
+        "subcategory": "Build System Issues",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Dependency_Management",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_implementation",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "implementation",
+              "Build System Issues"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      }
+    ],
+    "performance": [
+      {
+        "issue_title": "Context Switching",
+        "description": "Location: Kernel-user space transitions",
+        "impact_area": "High overhead for system operations",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Solution implemented: Reduced transitions, batched operations"
+        ],
+        "dependencies": [
+          "kernel"
+        ],
+        "category": "performance",
+        "subcategory": "Identified Bottlenecks",
+        "status": "Unknown",
+        "solutions": [
+          "Reduced transitions, batched operations"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Context_Switching",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_performance",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "performance",
+              "Identified Bottlenecks"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              1,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Memory Allocation",
+        "description": "Location: Dynamic memory management",
+        "impact_area": "Fragmentation and allocation overhead",
+        "failure_mode": "Resource exhaustion",
+        "resolution_criteria": [
+          "Solution implemented: Better allocators, memory pools"
+        ],
+        "dependencies": [],
+        "category": "performance",
+        "subcategory": "Identified Bottlenecks",
+        "status": "Unknown",
+        "solutions": [
+          "Better allocators, memory pools"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Memory_Allocation",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_performance",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "performance",
+              "Identified Bottlenecks"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              1,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "I/O Operations",
+        "description": "Location: File system and device operations",
+        "impact_area": "Slower than direct kernel access",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Solution implemented: Caching, asynchronous I/O"
+        ],
+        "dependencies": [
+          "kernel"
+        ],
+        "category": "performance",
+        "subcategory": "Identified Bottlenecks",
+        "status": "Unknown",
+        "solutions": [
+          "Caching, asynchronous I/O"
+        ],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_I/O_Operations",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_performance",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "performance",
+              "Identified Bottlenecks"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              1,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "IPC Optimization",
+        "description": "IPC Optimization",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "IPC"
+        ],
+        "category": "performance",
+        "subcategory": "Optimization Strategies",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_IPC_Optimization",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_performance",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "performance",
+              "Optimization Strategies"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      },
+      {
+        "issue_title": "Caching Strategies",
+        "description": "Caching Strategies",
+        "impact_area": "System functionality",
+        "failure_mode": "Functional error",
+        "resolution_criteria": [
+          "Issue resolved and tested"
+        ],
+        "dependencies": [
+          "server"
+        ],
+        "category": "performance",
+        "subcategory": "Optimization Strategies",
+        "status": "Unknown",
+        "solutions": [],
+        "cognitive_grammar_hooks": {
+          "concept_nodes": [
+            {
+              "name": "Issue_Caching_Strategies",
+              "type": "ConceptNode"
+            },
+            {
+              "name": "Category_performance",
+              "type": "ConceptNode"
+            }
+          ],
+          "predicate_nodes": [
+            {
+              "name": "has_impact",
+              "type": "PredicateNode"
+            },
+            {
+              "name": "requires_solution",
+              "type": "PredicateNode"
+            }
+          ],
+          "inference_rules": [
+            {
+              "rule": "if issue exists and solution implemented then issue resolved",
+              "confidence": 0.8
+            }
+          ],
+          "attention_allocation": {
+            "priority": 0.5,
+            "focus_areas": [
+              "performance",
+              "Optimization Strategies"
+            ]
+          }
+        },
+        "ggml_kernel_shapes": {
+          "tensor_shapes": {
+            "issue_embedding": [
+              1,
+              384
+            ],
+            "category_embedding": [
+              1,
+              128
+            ],
+            "solution_embeddings": [
+              0,
+              256
+            ]
+          },
+          "kernel_operations": [
+            {
+              "op": "embed_issue",
+              "input_shape": [
+                1,
+                "variable"
+              ],
+              "output_shape": [
+                1,
+                384
+              ]
+            },
+            {
+              "op": "classify_category",
+              "input_shape": [
+                1,
+                384
+              ],
+              "output_shape": [
+                1,
+                8
+              ]
+            },
+            {
+              "op": "rank_solutions",
+              "input_shape": [
+                "variable",
+                256
+              ],
+              "output_shape": [
+                "variable",
+                1
+              ]
+            }
+          ],
+          "memory_layout": {
+            "issue_cache": {
+              "size": "1MB",
+              "alignment": 64
+            },
+            "solution_cache": {
+              "size": "512KB",
+              "alignment": 32
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,227 @@
+Eyes_Pitch:
+  motor_id: 8
+  init: 1563
+  min: 1240
+  max: 1801
+  labelleft: Eyes_Pitch
+  sort_no: 80
+  group: Eyes
+  speed: 0
+  acceleration: 0
+  pau:
+      parser:
+        name: getproperty
+        property: m_eyeGazeLeftPitch
+      function:
+        - name: linear
+          min: 0.252
+          max: -0.342
+
+Eye_R:
+  motor_id: 0
+  init: 1440
+  min: 1164
+  max: 1643
+  labelleft: Eye_R
+  sort_no: 90
+  group: Eyes
+  speed: 0
+  acceleration: 0
+  pau:
+      parser:
+        name: getproperty
+        property: m_eyeGazeRightYaw
+      function:
+        - name: linear
+          min: -0.49
+          max: 0.38
+
+Eyelid_U_R:
+  motor_id: 1
+  init: 1576
+  min: 1345
+  max: 1762
+  labelleft: Eyelid_U_R
+  sort_no: 60
+  group: Eyes
+  speed: 0
+  acceleration: 0
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: eye-blink.UP.R;eye-flare.UP.R
+      function:
+        - name: weightedsum
+          imin: 0.554
+          terms:
+          - {min: 0, max: 0.6, imax: 0}
+          - {min: 0, max: 1, imax: 1}
+
+EyeLid_L_R:
+  motor_id: 2
+  init: 1609
+  min: 1358
+  max: 1788
+  labelleft: EyeLid_L_R
+  sort_no: 110
+  group: Eyes
+  speed: 0
+  acceleration: 0
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: eye-flare.LO.R;eye-blink.LO.R
+      function:
+        - name: weightedsum
+          imin: 0.584
+          terms:
+          - {min: 0, max: 1, imax: 0}
+          - {min: 0, max: 1, imax: 1}
+
+Jaw_Forward_R:
+  motor_id: 3
+  init: 825
+  min: 820
+  max: 1120
+  labelleft: Jaw_Forward_R
+  sort_no: 230
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Lower_Lip_C:
+  motor_id: 15
+  init: 1343
+  min: 1263
+  max: 1800
+  labelleft: Lower_Lip_C
+  sort_no: 280
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: lip.DN.C;lip.DN.C
+      function:
+        - name: weightedsum
+          imin: 0.149
+          terms:
+          - {min: 0, max: -0.3, imax: 0}
+          - {min: 0, max: 0.8, imax: 1}
+
+Lower_Lip_Roll_C:
+  motor_id: 14
+  init: 1840
+  min: 1530
+  max: 2125
+  labelleft: Lower_Lip_Roll_C
+  sort_no: 290
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Lower_Lip_R:
+  motor_id: 4
+  init: 1500
+  min: 1116
+  max: 2100
+  labelleft: Lower_Lip_R
+  sort_no: 260
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: lip.DN.R;lip.DN.R
+      function:
+        - name: weightedsum
+          imin: 0.39
+          terms:
+          - {min: 0, max: 0.4, imax: 0}
+          - {min: 0, max: -0.3, imax: 1}
+
+Lower_Lip_Roll_R:
+  motor_id: 5
+  init: 1500
+  min: 870
+  max: 2025
+  labelleft: Lower_Lip_Roll_R
+  sort_no: 270
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Lip_Upper_R:
+  motor_id: 10
+  init: 1270
+  min: 900
+  max: 1600
+  labelleft: Lip_Upper_R
+  sort_no: 190
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Sneer_L:
+  motor_id: 12
+  init: 1620
+  min: 1270
+  max: 1637
+  labelleft: Sneer_L
+  sort_no: 140
+  group: Eyes
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: sneer.L
+      function:
+        - name: linear
+          min: 1
+          max: 0
+
+Upper_Lip_Forward:
+  motor_id: 13
+  init: 1550
+  min: 1370
+  max: 2175
+  labelleft: Upper_Lip_Forward
+  sort_no: 210
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Lower_Lip_Forward:
+  motor_id: 14
+  init: 1800
+  min: 1190
+  max: 2175
+  labelleft: Lower_Lip_Forward
+  sort_no: 300
+  group: Lips
+  speed: 0.3
+  acceleration: 0.1
+  
+Brow_Outer_R:
+  motor_id: 9
+  init: 1345
+  min: 820
+  max: 1768
+  labelleft: Brow_Outer_R
+  sort_no: 10
+  group: Brow
+  speed: 0.3
+  acceleration: 0.1
+  pau:
+      parser:
+        name: fsshapekey
+        shapekey: brow_outer_UP.R;brow_outer_DN.R
+      function:
+        - name: weightedsum
+          imin: 0.554
+          terms:
+          - {min: 0, max: 1, imax: 0}
+          - {min: 0, max: 1, imax: 1}

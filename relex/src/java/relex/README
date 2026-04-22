@@ -1,0 +1,53 @@
+
+Directory structure overview:
+-----------------------------
+
+RelationExtractor.java:
+	This is the main class, wrapping together all of the various
+	functions.  It should be taken to be an "example" of how
+	to use RelEx in other systems. Yet, it is fully functional, and
+	implements main(), which accepts sentences and generates output
+	of various forms, depending on the command-line flags.
+
+algs:
+	Code for applying the dependency relation detection patterns.
+	Dependency relations are discovered by applying a series of
+	pattern templates or 'rules' to a graph of the parsed text. The
+	result of finding a pattern-match is that the resulting rule is
+	applied, which casues the graph to be modified in some way.
+
+concurrent:
+	Provide infrastructure for multi-threaded (parallel) execution.
+	Not normally used or needed; intended only for improving
+	performance for production servers.
+
+corpus:
+	Code to handle multiple-sentence corpuses. Includes a class to
+	split a document into multiple sentences, and another to perform
+	entity extraction. The current system uses OpenNLP for sentence
+	detection, so this directory contains code to wrap the OpenNLP
+	system.
+
+feature:
+	The core classes for representing the graph of linguistic
+	relationships and features.  The graph of linguistics relationships
+	is the central data structure around which RelEx operates.
+
+morphy:
+	A simple, easy-to-use class for finding the base forms (lemmas)
+	of a word. The current system uses WordNet to determine the lemmas,
+	and so most of the code here is a wrapper around WordNet.
+
+output:
+	A collection of disparate classes that display the RelEx graph in
+	various formats. Notable are a set of classes that generate
+	OpenCog hypergraphs.
+
+parser:
+	Interfaces to the link grammar parser. Two choices: an in-process
+	JNI binding to the C-language liblink-grammar-java.so, and an
+	out-of-process server, reachable via a socket interface.
+
+stats:
+	Some simple classes providing very basic statistical support,
+	including some TruthValue (a la OpenCog) classes.

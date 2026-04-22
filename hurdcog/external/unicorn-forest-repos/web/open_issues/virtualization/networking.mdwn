@@ -1,0 +1,88 @@
+[[!meta copyright="Copyright © 2010, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+Collection about stuff that is relevant for *virtualization* and *networking*.
+
+  * [[Virtual_Square_View-OS]]
+
+  * [*Virtual Networks*](http://virtualsquare.org/vn.html)
+
+  * [User Level Networking](http://uln.sourceforge.net/)
+
+  * [Virtual Distributed Ethernet](http://vde.sourceforge.net/)
+
+  * [Application Level
+    Environment4Networking](http://sourceforge.net/projects/ale4net/)
+
+    *Ale4NET used dyn library call diversion to define networking at process
+    level.* -- what we're doing with our approach for overriding the default
+    [[hurd/translator/pfinet]] by setting environment variables.
+
+    Project is now part of [[Virtual_Square_View-OS]].
+
+
+# OpenVPN
+
+[[community/meetings/GHM2013]].
+
+OpenVPN can use pfinet's tun as it is, and be configured completely as joe user,
+as shown below. Note that the tun0 node name has to begin with "tun", so pfinet
+knows it's a tun.
+
+    $ mkdir -p $HOME/servers/socket
+    $ touch $HOME/servers/tun0
+    $ settrans -ca $HOME/servers/socket/2 /hurd/pfinet $HOME/servers/tun0 -a 10.0.0.1 -p 10.0.0.2
+    $ cat vpn.conf
+    client
+    dev tun
+    dev-node /home/samy/servers/tun0
+    ...
+    $ openvpn --config vpn.conf --verb 5
+    ...
+
+So we let openvpn running, and now we can make applications use the pfinet
+TCP/IP stack started above: the remap command below starts a new shell, where
+it redirects /servers/socket/2 (where the system TCP/IP stack resides) onto
+$HOME/servers/socket/2 (where the new TCP/IP stack resides).
+
+    $ remap /servers/socket/2 $HOME/servers/socket/2
+    $ wget www.gnu.org
+
+Ideally openvpn would be made to setup pfinet itself, but at least for now it
+can be configured by hand like that.
+
+It would probably be possible to make pfinet able to produce a tap too, would
+need some code.
+
+## IRC, freenode, #hurd, 2013-09-07
+
+    <d3f> anyone here knows how /dev/net is handled on the hurd? Programs using
+      it say it's not a directory. I tried creating one and setting a netdde
+      translator for a tun device in it, but this may be wrong as it doesn't
+      work
+    <teythoon> d3f: what does /dev/net do?
+    <teythoon> ah, its tun/tap stuff...
+    <d3f> on my gnu/linux it includes a tun device
+    <teythoon> right
+    <d3f> I am still reading about the Hurd and try to understand /hurd/netdde
+      and devnode but by now I am quite sure I will need those to set a tun
+      networktranslator on /dev/net/tun?
+    <teythoon> hm, I don't think netdde or devnode will be of any help
+    <teythoon> afaiui devnode makes mach devices available in the hurdish way,
+      i.e. available for lookup in the filesystem
+    <teythoon> d3f: ping youpi if he shows up, he hacked up openvpn to work on
+      the hurd
+    <d3f> yeah I know, I talked to him as I am tring to get tinc working on the
+      Hurd (tinc builds by now). I will give him a shot about creating the
+      "tun" device
+
+tun has indeed nothing to do with devnode and netdde, it's pfinet which creates it, as documented above.

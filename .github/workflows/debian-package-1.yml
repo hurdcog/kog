@@ -1,0 +1,394 @@
+name: Build Debian Package
+
+# Debian/Ubuntu packaging workflow for OpenCog Collection
+# Creates .deb packages for Debian-based distributions
+# Supports multiple Ubuntu/Debian versions
+
+on:
+  # Temporarily disabled - only manual and release triggers
+  # push:
+  #   branches: [ "main", "master" ]
+  # pull_request:
+  #   branches: [ "main", "master" ]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+      distributions:
+        description: 'Target distributions (comma-separated: focal,jammy,noble)'
+        required: false
+        default: 'jammy,noble'
+
+env:
+  PACKAGE_NAME: opencog-occ
+  MAINTAINER: "OpenCog Community <opencog@googlegroups.com>"
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  build-debian:
+    runs-on: ubuntu-latest
+    name: Build Debian Package
+    strategy:
+      matrix:
+        distro: [jammy, noble]
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    
+    - name: Determine Package Version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+        elif [ -n "${{ github.event.inputs.version }}" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          # Generate version from date and commit
+          VERSION="$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "📦 Package version: $VERSION"
+    
+    - name: Install Build Dependencies
+      run: |
+        echo "=== Installing Build Dependencies ==="
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          debhelper \
+          devscripts \
+          dh-make \
+          fakeroot \
+          lintian \
+          libboost-all-dev \
+          libgsl-dev \
+          guile-3.0-dev \
+          cxxtest \
+          libpq-dev \
+          libssl-dev \
+          uuid-dev
+        echo "✓ Dependencies installed"
+    
+    - name: Create Debian Package Directory
+      run: |
+        echo "=== Creating Debian Package Structure ==="
+        mkdir -p debian-build
+        cd debian-build
+        
+        # Create debian directory structure
+        mkdir -p debian/source
+        
+        echo "✓ Package structure created"
+    
+    - name: Create Debian Control File
+      run: |
+        echo "=== Creating Debian Control File ==="
+        cat > debian-build/debian/control << 'EOF'
+Source: opencog-occ
+Section: science
+Priority: optional
+Maintainer: ${{ env.MAINTAINER }}
+Build-Depends: debhelper (>= 12),
+               cmake (>= 3.16),
+               libboost-all-dev,
+               libgsl-dev,
+               guile-3.0-dev,
+               cxxtest,
+               libpq-dev,
+               libssl-dev,
+               uuid-dev
+Standards-Version: 4.5.0
+Homepage: https://github.com/o9nn/occ
+Vcs-Git: https://github.com/o9nn/occ.git
+Vcs-Browser: https://github.com/o9nn/occ
+
+Package: opencog-occ
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         libboost-filesystem1.74.0 | libboost-filesystem1.81.0 | libboost-filesystem1.83.0,
+         libboost-system1.74.0 | libboost-system1.81.0 | libboost-system1.83.0,
+         libgsl27 | libgsl28,
+         guile-3.0,
+         libpq5
+Description: OpenCog cognitive architecture framework
+ OpenCog Collection (OCC) is a comprehensive monorepo of OpenCog cognitive
+ architecture components including:
+ .
+  * CogUtil: Foundation utilities and data structures
+  * AtomSpace: Hypergraph knowledge representation system
+  * Moses: Meta-optimizing semantic evolutionary search
+  * CogServer: Network server for AtomSpace
+  * URE: Unified Rule Engine
+  * PLN: Probabilistic Logic Networks
+ .
+ This package provides the complete OpenCog framework for building
+ artificial general intelligence applications.
+
+Package: opencog-occ-dev
+Architecture: any
+Depends: opencog-occ (= ${binary:Version}), ${misc:Depends}
+Description: OpenCog cognitive architecture framework - development files
+ Development files, headers, and libraries for building applications
+ with the OpenCog framework.
+EOF
+        echo "✓ Control file created"
+    
+    - name: Create Debian Changelog
+      run: |
+        echo "=== Creating Debian Changelog ==="
+        cat > debian-build/debian/changelog << EOF
+opencog-occ (${{ steps.version.outputs.VERSION }}-1) ${{ matrix.distro }}; urgency=medium
+
+  * Automated build from GitHub Actions
+  * Windows build fixes: M_PI header ordering
+  * Comprehensive build workflow implementation
+  * Core components: cogutil, atomspace, moses, cogserver, ure
+
+ -- ${{ env.MAINTAINER }}  $(date -R)
+EOF
+        echo "✓ Changelog created"
+    
+    - name: Create Debian Rules File
+      run: |
+        echo "=== Creating Debian Rules File ==="
+        cat > debian-build/debian/rules << 'EOF'
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+		# Build CogUtil first
+		mkdir -p cogutil/build && cd cogutil/build && \
+		cmake .. \
+			-DCMAKE_INSTALL_PREFIX=/usr \
+			-DCMAKE_BUILD_TYPE=Release && \
+		cd $(CURDIR)
+		
+		# Build AtomSpace (depends on CogUtil)
+		mkdir -p atomspace/build && cd atomspace/build && \
+		cmake .. \
+			-DCMAKE_INSTALL_PREFIX=/usr \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DCMAKE_PREFIX_PATH=/usr && \
+		cd $(CURDIR)
+		
+		# Build Moses (depends on CogUtil)
+		mkdir -p moses/build && cd moses/build && \
+		cmake .. \
+			-DCMAKE_INSTALL_PREFIX=/usr \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DCMAKE_PREFIX_PATH=/usr && \
+		cd $(CURDIR)
+		
+		# Build CogServer (depends on AtomSpace) - if exists
+		if [ -d "cogserver" ]; then \
+			mkdir -p cogserver/build && cd cogserver/build && \
+			cmake .. \
+				-DCMAKE_INSTALL_PREFIX=/usr \
+				-DCMAKE_BUILD_TYPE=Release \
+				-DCMAKE_PREFIX_PATH=/usr && \
+			cd $(CURDIR); \
+		fi
+		
+		# Build URE (depends on AtomSpace) - if exists
+		if [ -d "ure" ]; then \
+			mkdir -p ure/build && cd ure/build && \
+			cmake .. \
+				-DCMAKE_INSTALL_PREFIX=/usr \
+				-DCMAKE_BUILD_TYPE=Release \
+				-DCMAKE_PREFIX_PATH=/usr && \
+			cd $(CURDIR); \
+		fi
+
+override_dh_auto_build:
+		# Build CogUtil
+		cd cogutil/build && $(MAKE) -j$(nproc) && cd $(CURDIR)
+		
+		# Install CogUtil to temporary location for other builds
+		cd cogutil/build && $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install && cd $(CURDIR)
+		
+		# Build AtomSpace
+		cd atomspace/build && \
+			CMAKE_PREFIX_PATH=$(CURDIR)/debian/tmp/usr $(MAKE) -j$(nproc) && \
+			cd $(CURDIR)
+		
+		# Build Moses
+		cd moses/build && \
+			CMAKE_PREFIX_PATH=$(CURDIR)/debian/tmp/usr $(MAKE) -j$(nproc) && \
+			cd $(CURDIR)
+		
+		# Build CogServer - if exists
+		if [ -d "cogserver/build" ]; then \
+			cd cogserver/build && \
+			CMAKE_PREFIX_PATH=$(CURDIR)/debian/tmp/usr $(MAKE) -j$(nproc) && \
+			cd $(CURDIR); \
+		fi
+		
+		# Build URE - if exists
+		if [ -d "ure/build" ]; then \
+			cd ure/build && \
+			CMAKE_PREFIX_PATH=$(CURDIR)/debian/tmp/usr $(MAKE) -j$(nproc) && \
+			cd $(CURDIR); \
+		fi
+
+override_dh_auto_install:
+		# Install all components to package directory
+		cd cogutil/build && $(MAKE) DESTDIR=$(CURDIR)/debian/opencog-occ install && cd $(CURDIR)
+		cd atomspace/build && $(MAKE) DESTDIR=$(CURDIR)/debian/opencog-occ install && cd $(CURDIR)
+		cd moses/build && $(MAKE) DESTDIR=$(CURDIR)/debian/opencog-occ install && cd $(CURDIR)
+		
+		# Install optional components if they were built
+		if [ -d "cogserver/build" ]; then \
+			cd cogserver/build && $(MAKE) DESTDIR=$(CURDIR)/debian/opencog-occ install && cd $(CURDIR); \
+		fi
+		if [ -d "ure/build" ]; then \
+			cd ure/build && $(MAKE) DESTDIR=$(CURDIR)/debian/opencog-occ install && cd $(CURDIR); \
+		fi
+
+override_dh_auto_test:
+	# Skip tests for now
+	@echo "Skipping tests"
+EOF
+        chmod +x debian-build/debian/rules
+        echo "✓ Rules file created"
+    
+    - name: Create Additional Debian Files
+      run: |
+        echo "=== Creating Additional Debian Files ==="
+        
+        # Copyright file
+        cat > debian-build/debian/copyright << 'EOF'
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: opencog-occ
+Upstream-Contact: OpenCog Community <opencog@googlegroups.com>
+Source: https://github.com/o9nn/occ
+
+Files: *
+Copyright: 2025 OpenCog Community
+License: AGPL-3.0+
+
+License: AGPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU Affero General
+ Public License version 3 can be found in "/usr/share/common-licenses/AGPL-3".
+EOF
+        
+        # Compat file
+        echo "12" > debian-build/debian/compat
+        
+        # Source format
+        echo "3.0 (native)" > debian-build/debian/source/format
+        
+        # Install file for main package
+        cat > debian-build/debian/opencog-occ.install << 'EOF'
+usr/lib/*/lib*.so.*
+usr/bin/*
+usr/share/opencog/*
+EOF
+        
+        # Install file for dev package
+        cat > debian-build/debian/opencog-occ-dev.install << 'EOF'
+usr/include/*
+usr/lib/*/lib*.so
+usr/lib/*/lib*.a
+usr/lib/*/cmake/*
+usr/lib/*/pkgconfig/*
+EOF
+        
+        echo "✓ Additional files created"
+    
+    - name: Copy Source Files
+      run: |
+        echo "=== Copying Source Files ==="
+        
+        # Copy essential source directories
+        for dir in cogutil atomspace moses cogserver attention ure pln miner; do
+          if [ -d "$dir" ]; then
+            cp -r "$dir" debian-build/
+            echo "  Copied: $dir"
+          fi
+        done
+        
+        # Copy CMake files and other essentials
+        cp -r cmake debian-build/ 2>/dev/null || true
+        cp CMakeLists.txt debian-build/ 2>/dev/null || true
+        cp LICENSE debian-build/ 2>/dev/null || true
+        cp README.md debian-build/ 2>/dev/null || true
+        
+        echo "✓ Source files copied"
+    
+    - name: Build Debian Package
+      run: |
+        echo "=== Building Debian Package ==="
+        cd debian-build
+        
+        # Build the package
+        dpkg-buildpackage -us -uc -b
+        
+        echo "✓ Package built successfully"
+      continue-on-error: true
+    
+    - name: List Generated Packages
+      run: |
+        echo "=== Generated Packages ==="
+        ls -lh *.deb 2>/dev/null || echo "No .deb files found"
+    
+    - name: Run Lintian
+      run: |
+        echo "=== Running Lintian (Package Quality Check) ==="
+        lintian *.deb || true
+      continue-on-error: true
+    
+    - name: Upload Debian Packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-packages-${{ matrix.distro }}-${{ steps.version.outputs.VERSION }}
+        path: |
+          *.deb
+          *.changes
+        retention-days: 30
+      continue-on-error: true
+    
+    - name: Package Summary
+      run: |
+        echo "=== Debian Package Summary ==="
+        echo ""
+        echo "Distribution: ${{ matrix.distro }}"
+        echo "Version: ${{ steps.version.outputs.VERSION }}"
+        echo ""
+        
+        if ls *.deb 1> /dev/null 2>&1; then
+          echo "✅ Packages created:"
+          for deb in *.deb; do
+            echo "  - $deb ($(du -h "$deb" | cut -f1))"
+          done
+          echo ""
+          echo "To install:"
+          echo "  sudo dpkg -i opencog-occ_*.deb"
+          echo "  sudo apt-get install -f  # Fix dependencies"
+        else
+          echo "⚠ No packages created (build may have failed)"
+        fi

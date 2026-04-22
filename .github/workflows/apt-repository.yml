@@ -1,0 +1,249 @@
+name: Publish APT Repository
+
+on:
+  workflow_run:
+    workflows: ["Build Debian Packages"]
+    types:
+      - completed
+  workflow_dispatch:
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+  APT_REPO_BRANCH: apt-repo
+  DISTRIBUTIONS: "jammy focal noble"
+
+jobs:
+  publish-apt-repo:
+    runs-on: ubuntu-latest
+    name: Publish Debian Packages to APT Repository
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install APT Repository Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          dpkg-dev \
+          apt-utils \
+          gnupg2 \
+          reprepro \
+          createrepo-c
+    
+    - name: Download Debian Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-debian-packages'
+        path: ./packages
+        merge-multiple: true
+    
+    - name: List Downloaded Packages
+      run: |
+        echo "📦 Downloaded Debian packages:"
+        find ./packages -name "*.deb" -type f -exec ls -lh {} \;
+        echo ""
+        echo "Total packages: $(find ./packages -name "*.deb" -type f | wc -l)"
+    
+    - name: Setup GPG Key
+      env:
+        GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+      run: |
+        if [ -z "$GPG_PRIVATE_KEY" ]; then
+          echo "⚠️  GPG_PRIVATE_KEY not set, generating new key..."
+          
+          # Generate GPG key for signing
+          cat >gpg-batch <<EOF
+        %no-protection
+        Key-Type: RSA
+        Key-Length: 4096
+        Subkey-Type: RSA
+        Subkey-Length: 4096
+        Name-Real: OpenCog Package Signing
+        Name-Email: packages@opencog.org
+        Expire-Date: 0
+        EOF
+          
+          gpg --batch --generate-key gpg-batch
+          rm gpg-batch
+          
+          # Export the key
+          gpg --armor --export packages@opencog.org > public.key
+          echo "✅ Generated new GPG key"
+        else
+          echo "📝 Importing GPG private key..."
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          
+          # Export public key
+          gpg --armor --export > public.key
+          echo "✅ Imported GPG key"
+        fi
+        
+        # List keys
+        gpg --list-keys
+    
+    - name: Create APT Repository Structure
+      run: |
+        mkdir -p apt-repo/conf
+        
+        # Create distributions configuration
+        for dist in $DISTRIBUTIONS; do
+          cat >> apt-repo/conf/distributions <<EOF
+        Origin: OpenCog
+        Label: OpenCog
+        Codename: $dist
+        Architectures: amd64 arm64 armhf i386 source
+        Components: main
+        Description: OpenCog Framework APT Repository
+        SignWith: yes
+        
+        EOF
+        done
+        
+        echo "✅ Created APT repository structure"
+    
+    - name: Add Packages to Repository
+      run: |
+        cd apt-repo
+        
+        # Add each package to the appropriate distribution
+        for deb in ../packages/*.deb; do
+          if [ -f "$deb" ]; then
+            echo "Adding package: $(basename $deb)"
+            
+            # Add to all distributions
+            for dist in $DISTRIBUTIONS; do
+              reprepro -Vb . includedeb $dist "$deb" || echo "Failed to add $(basename $deb) to $dist"
+            done
+          fi
+        done
+        
+        echo "✅ Added all packages to repository"
+    
+    - name: Generate Repository Metadata
+      run: |
+        cd apt-repo
+        
+        # Generate Packages and Release files
+        for dist in $DISTRIBUTIONS; do
+          echo "Generating metadata for $dist..."
+          reprepro -Vb . export $dist
+        done
+        
+        # Copy public key to repository
+        cp ../public.key .
+        
+        echo "✅ Generated repository metadata"
+    
+    - name: Create Repository Instructions
+      run: |
+        cat > apt-repo/README.md <<'EOF'
+        # OpenCog APT Repository
+        
+        This repository provides Debian packages for the OpenCog Framework.
+        
+        ## Supported Distributions
+        
+        - Ubuntu 24.04 (Noble Numbat)
+        - Ubuntu 22.04 (Jammy Jellyfish)
+        - Ubuntu 20.04 (Focal Fossa)
+        
+        ## Installation Instructions
+        
+        ### 1. Add Repository GPG Key
+        
+        ```bash
+        curl -fsSL https://cogpy.github.io/occ/apt-repo/public.key | sudo gpg --dearmor -o /usr/share/keyrings/opencog-archive-keyring.gpg
+        ```
+        
+        ### 2. Add Repository to Sources
+        
+        For Ubuntu 22.04 (Jammy):
+        ```bash
+        echo "deb [signed-by=/usr/share/keyrings/opencog-archive-keyring.gpg] https://cogpy.github.io/occ/apt-repo jammy main" | sudo tee /etc/apt/sources.list.d/opencog.list
+        ```
+        
+        For Ubuntu 24.04 (Noble):
+        ```bash
+        echo "deb [signed-by=/usr/share/keyrings/opencog-archive-keyring.gpg] https://cogpy.github.io/occ/apt-repo noble main" | sudo tee /etc/apt/sources.list.d/opencog.list
+        ```
+        
+        ### 3. Update Package Index
+        
+        ```bash
+        sudo apt-get update
+        ```
+        
+        ### 4. Install OpenCog Packages
+        
+        Install core components:
+        ```bash
+        sudo apt-get install opencog-cogutil opencog-atomspace
+        ```
+        
+        Install all components:
+        ```bash
+        sudo apt-get install opencog-cogutil opencog-atomspace opencog-atomspace-storage \
+                             opencog-unify opencog-ure opencog-cogserver opencog-pln
+        ```
+        
+        ## Available Packages
+        
+        - `opencog-cogutil` - Core utilities
+        - `opencog-atomspace` - Hypergraph knowledge representation
+        - `opencog-atomspace-storage` - Persistence backends
+        - `opencog-atomspace-rocks` - RocksDB storage backend
+        - `opencog-unify` - Unification framework
+        - `opencog-ure` - Unified Rule Engine
+        - `opencog-cogserver` - Network server
+        - `opencog-attention` - Attention allocation
+        - `opencog-spacetime` - Spatiotemporal reasoning
+        - `opencog-learn` - Learning algorithms
+        - `opencog-moses` - Evolutionary program learning
+        - `opencog-pln` - Probabilistic Logic Networks
+        - `opencog-miner` - Pattern mining
+        
+        ## Troubleshooting
+        
+        If you encounter GPG errors, ensure the keyring file has correct permissions:
+        ```bash
+        sudo chmod 644 /usr/share/keyrings/opencog-archive-keyring.gpg
+        ```
+        
+        For more information, visit: https://wiki.opencog.org/
+        EOF
+        
+        echo "✅ Created repository instructions"
+    
+    - name: Publish to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./apt-repo
+        publish_branch: gh-pages
+        destination_dir: apt-repo
+        keep_files: false
+        force_orphan: false
+    
+    - name: Summary
+      run: |
+        echo "## 📦 APT Repository Published" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The Debian packages have been published to the APT repository." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Repository URL" >> $GITHUB_STEP_SUMMARY
+        echo "https://cogpy.github.io/occ/apt-repo" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Packages Published" >> $GITHUB_STEP_SUMMARY
+        find ./packages -name "*.deb" -type f -exec basename {} \; | sort >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Installation" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "curl -fsSL https://cogpy.github.io/occ/apt-repo/public.key | sudo gpg --dearmor -o /usr/share/keyrings/opencog-archive-keyring.gpg" >> $GITHUB_STEP_SUMMARY
+        echo 'echo "deb [signed-by=/usr/share/keyrings/opencog-archive-keyring.gpg] https://cogpy.github.io/occ/apt-repo jammy main" | sudo tee /etc/apt/sources.list.d/opencog.list' >> $GITHUB_STEP_SUMMARY
+        echo "sudo apt-get update" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY

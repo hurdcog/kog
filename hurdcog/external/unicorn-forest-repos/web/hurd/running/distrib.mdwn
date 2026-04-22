@@ -1,0 +1,75 @@
+[[!template id=note text="""**GNU Free System Distribution Guidelines (GNU
+FSDG)**
+
+The [Free Software Foundation](http://www.fsf.org/) can't recommend Debian
+GNU/Hurd or the Arch distribution; we must suppose that they don't meet our
+freedom standards any more than Debian GNU/Linux and the Arch distribution
+based on the Linux kernel do.  Likewise we have not evaluated other GNU/Hurd
+distributions in regard to ethical criteria.  Please visit
+<http://www.gnu.org/distros/free-system-distribution-guidelines.html> to learn
+what those standards are."""]]
+
+There are several GNU distributions that are built on the Hurd. If you develop a Hurd-based distro or know of one that isn't on this list yet, feel free to add it!
+
+###Working distributions of GNU/Hurd: 
+
+* [[Debian]]
+* [[Guix]]
+
+###GNU/Hurd distributions in early stages of development: 
+
+* [[Arch|arch_hurd]] (features a LiveCD)
+* [[Nix]]
+
+###Defunct GNU/Hurd distributions:
+
+  * Bee GNU/Hurd.  Castellano distribution, pkgsrc package based.
+  * Unofficial port to Gentoo and the portage system.  It was
+    [announced](http://forums.gentoo.org/viewtopic.php?t=41939&amp;postdays=0&amp;postorder=asc&amp;start=0)
+    March 17, 2003 in the Gentoo forums, but development stopped at some point.
+
+####IRC, freenode, #hurd, 2013-01-15:
+
+        <WhiteKIBA> we are trying to revive Gentoo/hurd
+        <WhiteKIBA> we are using debian as a start
+        <WhiteKIBA> we installed portage on debian and are now bootstrapping the system into a folder
+        <WhiteKIBA> except glibc everything seems fine 
+        <_d3f> braunr: http://wiki.rout0r.org/index.php/Gentoo/Hurd/en - if you want to know more.
+
+####IRC, freenode, #hurd, 2013-02-01:
+
+        <WhiteKIBA> natsukao: http://wiki.rout0r.org/index.php/Gentoo/Hurd/en I am working on it
+        <WhiteKIBA> if i can get glibc to compile correctly i can create a stage3 but at the moment it fails
+
+####IRC, freenode, #hurd, 2013-02-02:
+
+        <alexxy> WhiteKIBA: you may be interested in my try to run gentoo/hurd
+        <alexxy> WhiteKIBA: http://omrb.pnpi.spb.ru/gitweb/?p=gentoo/hurd.git;a=summary
+
+
+# Using
+
+Debian [[debian/after_install]] instructions are a must-read to prepare an
+usable system.
+
+[[debian/Package_troubleshooting]] reports known bugs, quirks and workarounds
+about getting applications to work (if possible).
+
+
+# For Developers
+
+<dl>
+  <dt>[[SavannahProjects]]</dt>
+  <dd> Savannah is a CVS &amp; Bug system evolved from a free version of the code that powers <a href="http://sf.net" target="_top">sourceforge.net</a>. It has forked and been slightly modified for use by FSF, GNU and non-GNU projects. Actual Development takes place here. There is also a <a href="http://savannah.gnu.org/people/?group=hurd" target="_top">help wanted</a> list. </dd>
+</dl>
+
+<dl>
+  <dt>[[porting/guidelines]] FAQ</dt>
+  <dd> What does it take to move a piece of Debian packaged software to the GNU/Hurd port? </dd>
+</dl>
+
+
+# External
+
+* [Ognyan Kulev Collection](https://web.archive.org/web/20080513192630/http://www.bddebian.com/~wiki/) of links (unsupported)
+* [2000 Jim Franklin Collection](http://angg.twu.net/the_hurd_links.html) of links

@@ -1,0 +1,321 @@
+[[!meta copyright="Copyright © 2009, 2011, 2012, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_documentation]]
+
+[[!toc]]
+
+
+# IRC, freenode, #hurd, 2011-01-12
+
+    <Pete-J> Hello i am just curious of the development of Hurd - what's the
+      current mission on the microkernel i see projects like l4 and viengoos,
+      will one of these projects replace Mach? or will you stick with Mach
+    <Pete-J> as i understand is that Mach is a first generation microkernel
+      that's very old in design and causes alot of issues
+    <Pete-J> that's where l4 and viengoos comes in - they are trying to be the
+      next generation Mach - am i correct?
+    <neal> l4 is not a drop in replacement for Mach
+    <neal> it doesn't actually do much resource management
+    <neal> for instance, you still have to implement a memory manager
+    <neal> this is where several issues are with Mach
+    <neal> l4 doesn't address those issues; it punts to the operating system
+    <Pete-J> and what about viengoos?
+    <neal> it's unfinished
+    <neal> and it implemented some untested ideas
+    <neal> i.e., parts of viengoos were research
+    <neal> there has not been a sufficient evaluation of those ideas to
+      determine whether they are a good approach
+    <Pete-J> meaning that viengoos is a research kernel that could aid Mach?
+    <neal> I'm not sure I understand your question
+    <Pete-J> Well is viengoos trying to be a replacement for Mach, or will
+      viengoos be an experiment of new ideas that could be implemented in Mach?
+    <Pete-J> i am sorry for my limited english
+    <neal> viengoos was designed with a Hurd-like user-land in mind
+    <neal> in that sense it was a Mach replacement
+    <neal> (unlike L4)
+    <neal> viengoos consisted of a few experiments
+    <neal> one could implement them in mach
+    <neal> but it would require exposing new interfaces
+    <neal> in which case, I'm not sure you could call the result Mach
+    <Pete-J> Well as i understand you develop two microkernels side by side,
+      wouldnt it be more effective to investigate viengoos more and maybe move
+      the focus to viengoos?
+    <antrik> no
+    <antrik> having something working all the time is crucial
+    <antrik> it's very hard to motivate people to work on a project that might
+      be useful, in a couple of years, perhaps...
+    <Pete-J> Well Mach is meant to be replaced one day - i see no reason to
+      keep on developing it just because it works at this moment
+    <Pete-J> *if Mach is meant to be replaced
+    <antrik> it's not at all clear that it will be replaced by something
+      completely different. I for my part believe that modifying the existing
+      Mach is a more promising approach
+    <Pete-J> as i understand man power is something you need - and by spreading
+      out the developers just makes the progress more slow
+    <antrik> but even if it *were* to be replaced one day, it doesn't change
+      the fact that we need it *now*
+    <antrik> all software will be obsolete one day. doesn't mean it's not worth
+      working on
+    <antrik> the vast majority of work is not on the microkernel anyways, but
+      on the system running on top of it
+    <Pete-J> ahh i see
+    <antrik> manpower is not something that comes from nowhere. again, having
+      something working is crucial in a volunteer project like this
+    <antrik> there are no fixed plans
+
+
+# Olaf, 2011-04-10
+
+This version mixes up three distinct phases: rewrite from scratch; redesign;
+own microkernel.
+
+While Okuji initially might have intended a direct port of the existing Hurd
+code, by the time I started following Hurd development (2004 IIRC), it has been
+long clear that Hurd/L4 is a rewrite from scratch.
+
+The next phase was the desire of Neal and especially Macrus to completely
+reinvent the design of the Hurd. This was mostly fueled by Shapiro's influence,
+resulting in a security-above-everything rage. It was in this phase that not
+only the original L4 has been abandonend, but also all thoughts about using
+newer L4 variants (which might have been suitable) were forsaken in favor of
+Shapiro's Coyotos.
+
+The whole idea of redesigning the Hurd -- especially for security concerns --
+is highly controversial: I always strongly objected to it; and Marcus later
+admitted himself that he got carried away and lost sight of what really matters
+for the Hurd. (But only after realising that Shapiro's notion of high security
+is fundamentally incompatible with the GNU philosophy.) I opted for not
+explicitely mentioning this aspect in the FAQ at all, as it's impossible to
+explain properly in a compact form, and probably impossible at all to do it in
+an objective fashion.
+
+The final phase -- following the realisation of incompatibility with
+Shapiro/Coyotos -- was the attempt to create new microkernels specifically for
+Hurd's needs. Marcus abandonned his pretty soon, and never made it public, so I
+didn't mention it at all; but Viengoos is still relevant in certain ways.
+
+BTW, my original text also more explicitely answers the question what happened
+to the Coyotos port -- which after all is what the title promises...
+
+All in all, I still think my text was better. If you have any conerns with it,
+please discuss them...
+
+
+# seL4
+
+## IRC, freenode, #hurd, 2011-09-27
+
+    <cjuner> Does anyone remember/know if/why not seL4 was considered for
+      hurd-l4? Is anyone aware of any differences between seL4 and coyotos?
+
+
+## IRC, freenode, #hurd, 2011-09-29
+
+    <antrik> cjuner: the seL4 project was only at the beginning when the
+      decision was made. so was Coyotos, but Shapiro promised back then that
+      building on EROS, it would be done very fast (a promise he couldn't keep
+      BTW); plus he convinced the people in question that it's safer to build
+      on his ideas...
+    <antrik> it doesn't really matter though, as by the time the ngHurd people
+      were through with Coyotos, they had already concluded that it doesn't
+      make sense to build upon *any* third-party microkernel
+    <cjuner> antrik, what was the problem with coyotos? what would be the
+      problem with sel4 today?
+    <cjuner> antrik, yes I did read the FAQ. It doesn't mention seL4 at all
+      (there isn't even much on the hurd-l4 mailing lists, I think that being
+      due to seL4 not having been released at that point?) and it does not
+      specify what problems they had with coyotos.
+    <antrik> cjuner: it doesn't? I thought it mentioned "newer L4 variants" or
+      something like that... but the text was rewritten a couple of times, so I
+      guess it got lost somewhere
+    <antrik> cjuner: unlike original L4, it's probably possible to implement a
+      system like the Hurd on top on seL4, just like on top of
+      Coyotos. however, foreign microkernels are always created with foreign
+      design ideas in mind; and building our own design around them is always
+      problematic. it's problematic with Mach, and it will be problematic with
+      any other third-party microkernel
+    <antrik> Coyotos specifically has different ideas about memory protection,
+      different ideas about task startup, different ideas about memory
+      handling, and different ideas about resource allocation
+    <cjuner> antrik, do any specific problems of the foreign designs,
+      specifically of seL4 or coyotos come to mind?
+    <antrik> cjuner: I mentioned several for Coyotos. I don't have enough
+      understanding of the matters to go into much more detail
+    <antrik> (and I suspect you don't have enough understanding of these
+      matters to take away anything useful from more detail ;-) )
+    <antrik> I could try to explain the issues I mentioned for Coyotos (as far
+      as I understand them), but would that really help you?
+
+
+# Xnu (Darwin)
+
+
+## IRC, freenode, #hurd, 2012-03-30
+
+    <mel__> did people consider to port Hurd to Darwin? i.e. replace GNU Mach
+      with Darwin?
+    <braunr> no
+    <braunr> well, quickly only
+    <mel__> wouldn't it be a reasonable idea?
+    <mel__> after all, Darwin is production-ready and contains a Mach side.
+    <braunr> not more than fixing gnumach itself, or using linux instead
+    <mel__> well.
+    <braunr> those implementations have diverged with time
+    <mel__> i see
+    <mel__> the fsf should pay people for fixing gnu mach then. :)
+    <antrik> mel__: indeed someone consided Xnu (the actual kernel of Darwin) a
+      while back; but I think he shelved the idea again. not sure about the
+      exact reasons
+    <antrik> Xnu implements a few improvements that might be helpful; but it
+      doesn't address the really fundamental issues that matter for a true
+      multiserver system...
+
+
+# IRC, freenode, #hurd, 2014-02-04
+
+    <bwright> Is hurd still using the Mach Microkernel?
+    <bwright> I am assuming the L4 port failed?
+    <teythoon> yes / yes, i believe so
+    <bwright> I am currently working as an intern on seL4 a verified
+      microkernel variant of L4.
+    <bwright> I was sort of interested as to why the port failed if there are
+      any old mailing list posts etc.
+    <bwright> Obviously if it is too much trouble to dig them up that is
+      understandable.
+    <teythoon> most interesting, i'm interested in software verification as
+      well :)
+    <teythoon> there's some stuff in the wiki
+    <bwright> (I am writing a multiserver atm on top of it)
+    <teythoon>
+      http://www.gnu.org/software/hurd/history/port_to_another_microkernel.html
+    <bwright> Awesome thanks.
+    <braunr> bwright: iirc, l4 lacked some important asynchronous stuff
+    <braunr> the all synchronous model proved insufficient for an efficient
+      posix conforming system
+    <bwright> Yep, posix can get very annoying in places.
+    <bwright> Variants of l4 have async stuff that could probably work.
+    <braunr> okl4 is the only one i know of that does this
+    <braunr> but it may not have been the only issue
+    <bwright> That is the one I am working with :p
+    <braunr> the l4-hurd mailing list archives should tell you more about this
+    <bwright> Great :D
+    <bwright> Going to read through them and look into it.
+    <braunr> there was also an attempt on coyotos which failed for other
+      reasons related to the overall security mechanisms of the system iirc
+    <braunr> enjoy ;p
+    <bwright> On a side note I am also very interested in Multiservers.
+    <braunr> so are we :)
+    <bwright> I wouldn't mind hacking on hurd for fun in my spare time.
+    <braunr> it would probably be appreciated
+    <bwright> Currently porting a fuse implementation to L4 which is taking all
+      my time. But might hang out in the chat and mess around where I can.
+
+
+## IRC, freenode, #hurd, 2014-02-06
+
+    <antrik> bwright: the original l4hurd was abandoned because original L4
+      didn't have any capability support, and implementing them in userspace
+      turned out too complex and too much overhead
+    <antrik> capability-enhanced L4 variants were only emerging at that time;
+      and while they were evaluated briefly, the Hurd/L4 initiators turned to
+      other ideas instead. the feasability of a Hurd port on a modern L4
+      variant was never evaluated deeply
+    <antrik> ultimately, the conclusion was that system design and microkernel
+      design are interwoven very tightly, and it doesn't make sense to try to
+      build something as complex as the Hurd on top of a microkernel not
+      specifically designed for it
+    <antrik> (this is in fact the same reason why the original Hurd on Mach
+      turned out so problematic...)
+    <cluck> antrik: fwiw i agree with what you said but it's a good idea to
+      keep stuff like genode in mind, in fact i'd go as far as saying that in a
+      microkernel it's a good thing to have interchangeable modules that can be
+      easily swapped :)
+
+
+# IRC, freenode, #hurd, 2014-02-09
+
+    <cusement> braunr: would you share your negative opinions about
+      disadvantages of the existing L4s? A link to a dicussion is also fine of
+      course. I know my questions might be annoying, since im not deeply into
+      the materia yet. But Im interested in working on a open source kernel &
+      OS alternative suitable for mid/long term requirements, after I was
+      struggling with many deficits of monolithic kernels for years.
+    <braunr> cusement: there are two i know of: 1/ many of them are purely
+      synchronous, a property that makes it hard to provide some async unix
+      facilities like signals or select and 2/ they don't implement
+      capabilities, merely thread-based messaging, so capabilities would have
+      to be implemented in user space
+    <cusement> i was recently reasearching for alternatives, since i am simply
+      fed up with the chaotic situation with the Linux kernel
+    <cusement> like Mach, XNU , ... 
+    <cusement> well, im still doing my research on alternatives, ATM i simply
+      found L4 to have more future potential than Mach
+    <braunr> cusement: can i ask you why you think that ?
+    <cusement> for example i like the fact that there is (at least one) L4
+      variant that is proofen "right" on theoretical basis, since i am very
+      interested in creating a system with high security
+    <braunr> cusement: what do you think does the formal proof bring to a piece
+      of code that is, by definition, small enough to be easily audited ?
+    <cusement> braunr: statistics. i could also write a small piece of parser
+      manually, but when it comes to security, i rather prefer a parser
+      generator, since it ensures that it will actually create a parser that
+      will be secure, no metter with which grammar definition i feed it
+    <braunr> cusement: i agree, but the part of the system it covers is so
+      small it requires more justification
+    <braunr> cusement: any other main reason ?
+    <braunr> (we're not going to debate the merits of sel4 right now :))
+    <azeem> cusement: if you are experienced in Linux device drivers, maybe you
+      want to check out DDE?
+    <cusement> braunr: well, i first actually have to check what the precise
+      scope of the L4 proof was to judge about its importance. I actually just
+      started to re-spawn my interest in micro kernels after years where i
+      abondened it for myself as being not practical relevant.
+    <braunr> ok
+    <cusement> azeem: that was actually one of the biggest reasons for me to
+      look at HURD. Because i am very unhappy about the chaotic driver
+      situation in Linux, with no isolation whatsoever.
+    <braunr> cusement: the hurd design is focused on quite more than that
+    <braunr> cusement: it's a property of practically all multiserver systems
+      out there to isolate each other
+    <braunr> other properties makes the hurd apart
+    <cusement> braunr: i know, but there also hybrids like XNU where drivers
+      are still in kernel space
+    <braunr> i don't consider xnu to be a multiserver system
+    <cusement> braunr: well, xnu also runs various fundamental services as
+      separate tasks / servers
+    <braunr> cusement: let me check
+    <cusement> xnu is mach based, and every mach derivative uses a multiserver
+      design, doesnt it?
+    <braunr> no
+    <braunr> practically all mach based systems were monoliths in userspace
+    <cusement> you mean kernel space
+    <azeem> cusement: certainly at least the NeXT/OS X Mach-based setup is not
+      very multiserver
+    <braunr> cusement: no i mean userspace
+    <braunr> darwin and mac os x are good examples of such systems
+    <cusement> braunr: so you mean individual fundamental OS tasks on XNU are
+      actually just processed by one server
+    <cusement> havent really digged too deep in XNU, because of its monolithic
+      driver concept
+    <braunr> cusement: yes
+    <braunr> it's basically a bsd server on top of mach
+    <cusement> ok, got it
+    <antrik> braunr: OS X actually runs the UNIX server in kernel space as well
+      AFAIK
+
+
+## IRC, freenode, #hurd, 2014-02-10
+
+    <antrik> braunr: I believe all the "modern" L4 variants have some kind of
+      capability support -- though they differ in the details, and when Marcus
+      and Neal did the initial evaluation of the first two of them, it was not
+      yet clear yet whether it would suffice for the needs of the Hurd...

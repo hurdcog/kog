@@ -1,0 +1,66 @@
+[[!meta copyright="Copyright © 2011, 2012, 2013, 2014 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_documentation open_issue_hurd]]
+
+[[!toc]]
+
+
+# IRC, freenode, #hurd, 2011-06-01
+
+    <antrik> ugh... I just realized why settrans -a without -f doesn't
+      generally work on filesystem translators
+    <antrik> obviously, it needs -R too!
+
+
+# IRC, freenode, #hurd, 2012-08-17
+
+    <antrik> youpi: no, only the -g is redundant; i.e. -ga is the same as -a
+    <antrik> (actually, not redundant, but rather simply meaningless in this
+      case)
+    <antrik> -g tells what to do with an active translator *when a passive one
+      is changed*
+    <antrik> if no passive one is changed, it does nothing
+    <antrik> (and I realized that after using the Hurd for only 6 years or so
+      ;-) )
+    <braunr> it's not obvious
+    <antrik> braunr: indeed. it's not obvious at all from the --help output :-(
+    <antrik> not sure though how to make it clearer
+    <braunr> the idea isn't obvious
+    <braunr> perhaps telling that "setting a passive translator" also applies
+      to removing it, i.e. setting it to none
+    <antrik> braunr: well, the fact that a translator is unset by setting it to
+      nothing is unclear in general, not only for passive translator. I agree
+      that pointing this out should make things much more clear in general...
+
+
+# <a name="chroot">`--chroot`</a>
+
+## IRC, freenode, #hurd, 2013-08-29
+
+    <teythoon> btw, I somehow feel settrans is being abused for chroot and
+      friends, there is no translator setting involved
+    <youpi> chroot, the command? or the settrans option?
+    <youpi> I don't understand what you are pointing at
+    <teythoon> the settrans option being used by fakeroot, remap and (most
+      likely) our chroot
+    <youpi> our chroot is just a file_reparent call
+    <youpi> fakeroot and remap do start a translator
+
+[[virtualization/remap_root_translator]], [[virtualization/fakeroot]].
+
+    <teythoon> yes, but it is not being bound to a node, which is (how I
+      understand it) what settrans does
+    <teythoon> the point being that if settrans is being invoked with --chroot,
+      it does something completely different (see the big if (chroot) {...}
+      blocks)
+    <teythoon> to a point that it might be better of in a separate command
+    <youpi> Mmm, indeed, a lot of the options don't make sense for chroot

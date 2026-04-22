@@ -1,0 +1,49 @@
+version: 2.0
+
+jobs:
+  @COMPONENT_NAME@:
+    docker:
+      - image: $CIRCLE_PROJECT_USERNAME/opencog-deps
+        user: root
+        environment:
+          CCACHE_DIR: /ws/ccache
+    working_directory: /ws/@COMPONENT_NAME@
+    steps:
+      - run:
+          name: Start restoring ccache
+          command: date +%d-%m-%Y > /tmp/date
+      - restore_cache:
+          keys:
+            - ccache-{{ checksum "/tmp/date" }}
+            - ccache-
+      - checkout
+      - run:
+          name: Set number of make jobs
+          command: echo "export MAKEFLAGS=-j2" >> $BASH_ENV
+      - run:
+          name: CMake Configure
+          command: mkdir build && cd build && cmake ..
+      - run:
+          name: Build
+          command: cd build && make
+      - run:
+          name: Build tests
+          command: cd build && make tests
+      - run:
+          name: Run tests
+          command: cd build && make check ARGS="$MAKEFLAGS"
+      - run:
+          name: Print test log
+          command: cat build/tests/Testing/Temporary/LastTest.log
+          when: always
+      - persist_to_workspace:
+          root: /ws/
+          paths:
+            - @COMPONENT_NAME@
+            - ccache
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - @COMPONENT_NAME@

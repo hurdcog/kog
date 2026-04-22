@@ -1,0 +1,65 @@
+### 2-week actionable plan
+
+- Build & CI hardening
+  - Verify WSL build path end-to-end
+    - Run: ./configure --host=i686-gnu CC='gcc -m32' LD='ld -melf_i386' MIG='mig' && make -j$(nproc) && make check
+    - DoD: clean build; all tests pass locally and in CI
+  - Add “warnings-as-errors” job (trial)
+    - CI: duplicate build-test with CFLAGS += -Werror
+    - DoD: job green or suppressed with allow-failure until cleanup complete
+
+- Constants and time-math cleanup
+  - Sweep kernel for magic numbers and replace with `kern/constants.h`
+    - Targets: `kern/` and `ipc/` only (exclude `linux/`, `xen/`)
+    - Replace: 0x7fffffff (done for printf), 1000000 time conversions, 150 thread-state sizes, 8192 IPC sizes (already centralized), 512 IPC stats (centralized), 0x7fff masks (verify)
+    - Add time constants: NANOSECONDS_PER_SECOND, MICROSECONDS_PER_SECOND
+    - DoD: grep shows no stray literals in `kern/` and `ipc/`; build/tests green
+
+- Strict-aliasing audit
+  - Build with current flags and collect warnings
+    - Run: make clean && make -j$(nproc) 2> build-warnings.txt
+    - Address any -Wstrict-aliasing findings (prefer memcpy or may_alias)
+    - DoD: 0 strict-aliasing warnings
+
+- Static analysis
+  - cppcheck + scan-build gates (already in CI, make failures non-fatal → convert to gating after cleanup)
+    - Run locally and fix high-signal issues
+    - DoD: CI static analysis steps show no new criticals; convert cppcheck to error-exit in CI
+
+- Tests: IPC and VM
+  - IPC large-message boundary test
+    - Add `tests/test-ipc-large.c`: send/receive near `IPC_REPLY_SIZE_DEFAULT`, verify success
+    - Wire into `tests/user-qemu.mk` and `USER_TESTS`
+    - DoD: test passes locally and in CI
+  - VM negative/fault test
+    - Add `tests/test-vm-fault.c`: map page RW, unmap, confirm access triggers failure path (via return codes, not relying on crash)
+    - DoD: test passes; harness recognizes success/failure markers
+
+- Documentation
+  - Extend README troubleshooting (QEMU not found, MIG missing, 32-bit toolchain tips)
+  - Link `doc/debugging-qemu-gdb.md` from README
+  - DoD: docs present; quickstart works on a clean WSL Ubuntu
+
+- Autotools modernization (low risk passes)
+  - Try bumping `AC_PREREQ` and relax/remove `config.status.dep.patch` hack
+  - Test: `./bootstrap && ./configure && make` on Ubuntu 22.04
+  - DoD: builds cleanly without the hack; else revert and open follow-up task
+
+- Performance microbench (optional if time permits)
+  - Add `tests/test-ipc-throughput.c`: measure messages/sec for small payload
+  - DoD: prints metrics; non-flaky in CI
+
+Ownership and parallelization
+- Constants/time cleanup: 1 dev
+- Tests (IPC/VM): 1 dev
+- CI hardening/static analysis: 1 dev
+- Docs + Autotools: 1 dev
+
+Acceptance checklist
+- All CI jobs green (including x86_64 user32)
+- New tests added and passing: `test-vm-boundary` (done), `test-ipc-large`, `test-vm-fault`
+- `kern/` and `ipc/` free of targeted magic numbers
+- Strict-aliasing warnings = 0
+- README updated with troubleshooting and links
+
+If you want, I can start with the IPC large-message test and the time constants now.

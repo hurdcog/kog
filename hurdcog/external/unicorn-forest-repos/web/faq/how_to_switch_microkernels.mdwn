@@ -1,0 +1,26 @@
+[[!meta copyright="Copyright © 2009, 2010, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag faq/general]]
+
+[[!meta title="How difficult would it be to switch to another microkernel?"]]
+
+The microkernel has to provide memory management and user-level-managed page
+faulting, thread scheduling, and IPC.
+
+One would have to reimplement the `mach/` and `sysdeps/mach/` parts of [[glibc]]
+and [[libpthread]].  One would have to rewrite mig to generate the new IPCs. One
+would have to rewrite libpager to handle paging.
+
+All `mach_` calls in glibc and hurd would need to be updated.
+
+Quite a few other Hurd tools also assume a [[microkernel/Mach]] kernel and
+would have to be adapted or rewritten.

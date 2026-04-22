@@ -1,0 +1,47 @@
+Source: agi-os-cognitive-init
+Section: admin
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11),
+               python3,
+               python3-setuptools,
+               dh-python
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: agi-os-cognitive-init
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         agi-os-unified,
+         hurdcog,
+         opencog-atomspace,
+         python3-yaml
+Description: Cognitive initialization and bootstrap services for AGI-OS
+ This package provides intelligent initialization and bootstrap services
+ for the AGI Operating System, enabling the system to start up with
+ cognitive awareness and adapt its configuration based on hardware
+ capabilities and system goals.
+ .
+ Unlike traditional init systems that follow fixed startup sequences,
+ the cognitive init system can reason about service dependencies,
+ prioritize initialization based on attention values, and adapt the
+ startup process based on learned patterns and system state.
+ .
+ Key features include:
+  - Cognitive-aware system startup and initialization
+  - Initial knowledge base loading and validation
+  - Cognitive service orchestration and dependency resolution
+  - Self-configuration based on hardware capabilities
+  - Adaptive startup sequence based on learned patterns
+  - Integration with Ontogenetic Looms for system evolution
+  - Attention-based service prioritization
+  - Graceful degradation when components are unavailable
+  - Boot-time reasoning for optimal configuration
+  - Integration with systemd for compatibility
+ .
+ This package enables the AGI-OS to exhibit intelligent behavior from
+ the moment of system startup, rather than requiring manual configuration
+ or fixed initialization sequences.

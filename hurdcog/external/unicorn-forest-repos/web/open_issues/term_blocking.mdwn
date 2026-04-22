@@ -1,0 +1,339 @@
+[[!meta copyright="Copyright © 2009, 2011, 2012, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+There must be some blocking / dead-locking (?) problem in `term`.
+
+[[!toc]]
+
+
+# Original Findings
+
+    # w | grep [t]sch
+    tschwing  p1 192.168.10.60: Tue 8PM  0:03  2172 /bin/bash
+    tschwing  p2 192.168.10.60: Tue 4PM 40hrs   689 emacs
+    tschwing  p3 192.168.10.60:  8:52PM 11:37 15307 /bin/bash
+    tschwing  p0 192.168.10.60:  6:42PM 11:47  8104 /bin/bash
+    tschwing  p8 192.168.10.60:  8:27AM  0:02 16510 /bin/bash
+
+Now open a new screen window, or login shell, or...
+
+    # ps -Af | tail
+    [...]
+    tschwinge 16538  676  p6  0:00.08 /bin/bash
+        root 16554   128  co  0:00.09 ps -Af
+        root 16555   128  co  0:00.01 tail
+
+`bash` is started (on `p6`), but newer makes it to the shell promt; doesn't
+even start to execute `.bash_profile` / `.bashrc`.  The next shell started, on
+the next available pseudoterminal, will work without problems.
+
+The `term` on `p6` has already been running before:
+
+    # ps -Af | grep [t]typ6
+        root  6871     3   -  5:45.86 /hurd/term /dev/ptyp6 pty-master /dev/ttyp6
+
+In this situation, `w` will sometimes report erroneous values for *IDLE*
+for the process using that terminal.
+
+Killed that `term` instance, and things were fine again.
+
+
+All this reproducible happens while running the [[GDB testsuite|gdb]].
+
+---
+
+Have a freshly started shell blocking on such a `term` instance.
+
+    $ ps -F hurd-long -p 1766 -T -Q
+      PID TH#  UID  PPID  PGrp  Sess TH  Vmem   RSS %CPU     User   System Args
+     1766        0     3     1     1  6  131M 1.14M  0.0  0:28.85  5:40.91 /hurd/term /dev/ptyp3 pty-master /dev/ttyp3
+            0                                        0.0  0:05.76  1:08.48
+            1                                        0.0  0:00.00  0:00.01
+            2                                        0.0  0:06.40  1:11.52
+            3                                        0.0  0:05.76  1:09.89
+            4                                        0.0  0:05.42  1:06.74
+            5                                        0.0  0:05.50  1:04.25
+
+... and after 5:45 h:
+
+    $ ps -F hurd-long -p 21987 -T -Q
+      PID TH#  UID  PPID  PGrp  Sess TH  Vmem   RSS %CPU     User   System Args
+    21987     1001   676 21987 21987  2  148M 2.03M  0.0  0:00.02  0:00.07 /bin/bash
+            0                                        0.0  0:00.02  0:00.07 
+            1                                        0.0  0:00.00  0:00.00 
+
+    $ ps -F hurd-long -p 1766 -T -Q
+      PID TH#  UID  PPID  PGrp  Sess TH  Vmem   RSS %CPU     User   System Args
+     1766        0     3     1     1  6  131M 1.14M  0.0  0:29.04  5:42.38 /hurd/term /dev/ptyp3 pty-master /dev/ttyp3
+            0                                        0.0  0:05.76  1:08.48
+            1                                        0.0  0:00.00  0:00.01
+            2                                        0.0  0:06.41  1:11.90
+            3                                        0.0  0:05.82  1:10.28
+            4                                        0.0  0:05.52  1:07.06
+            5                                        0.0  0:05.52  1:04.63
+
+    $ sudo gdb /hurd/term 1766
+    [sudo] password for tschwinge: 
+    GNU gdb (GDB) 7.0-debian
+    Copyright (C) 2009 Free Software Foundation, Inc.
+    License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+    and "show warranty" for details.
+    This GDB was configured as "i486-gnu".
+    For bug reporting instructions, please see:
+    <http://www.gnu.org/software/gdb/bugs/>...
+    Reading symbols from /hurd/term...Reading symbols from /usr/lib/debug/hurd/term...done.
+    (no debugging symbols found)...done.
+    Attaching to program `/hurd/term', pid 1766
+    [New Thread 1766.1]
+    [New Thread 1766.2]
+    [New Thread 1766.3]
+    [New Thread 1766.4]
+    [New Thread 1766.5]
+    [New Thread 1766.6]
+    Reading symbols from /lib/libhurdbugaddr.so.0.3...Reading symbols from /usr/lib/debug/lib/libhurdbugaddr.so.0.3...
+    [System doesn't respond anymore, but no kernel crash.]
+
+---
+
+The very same behavior is still observable as of 2011-03-24.
+
+Next: rebooted; on console started root shell, screen, a few spare windows; as
+user started GDB test suite, noticed the PTY it's using; in a root shell
+started GDB (the system one, for `.debug` stuff) on `/hurd/term`, `set
+noninvasive on`, attach to the *term* that GDB is using.
+
+---
+
+[[2011-07-04]].
+
+---
+
+2012-11-05
+
+Log file from a 2011-09-07 run:
+
+    [...]
+    Running ../../../master/gdb/testsuite/gdb.base/readline.exp ...
+    spawn [...]/gdb/testsuite/../../gdb/gdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+    GNU gdb (GDB) 7.3.50.20110906-cvs
+    Copyright (C) 2011 Free Software Foundation, Inc.
+    License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+    and "show warranty" for details.
+    This GDB was configured as "i686-unknown-gnu0.3".
+    For bug reporting instructions, please see:
+    <http://www.gnu.org/software/gdb/bugs/>.
+    (gdb) set height 0
+    (gdb) set width 0
+    (gdb) dir
+    Reinitialize source path to empty? (y or n) y
+    Source directories searched: $cdir:$cwd
+    (gdb) dir ../../../master/gdb/testsuite/gdb.base
+    Source directories searched: [...]/gdb/testsuite/../../../master/gdb/testsuite/gdb.base:$cdir:$cwd
+    (gdb) p 1
+    $1 = 1
+    PASS: gdb.base/readline.exp: Simple operate-and-get-next - send p 1
+    (gdb) p 2
+    $2 = 2
+    PASS: gdb.base/readline.exp: Simple operate-and-get-next - send p 2
+    (gdb) p 3
+    $3 = 3
+    PASS: gdb.base/readline.exp: Simple operate-and-get-next - send p 3
+    (gdb) p 3(gdb) p 3PASS: gdb.base/readline.exp: Simple operate-and-get-next - C-p to p 3
+    ^H2(gdb) p 2PASS: gdb.base/readline.exp: Simple operate-and-get-next - C-p to p 2
+    ^H1(gdb) p 1PASS: gdb.base/readline.exp: Simple operate-and-get-next - C-p to p 1
+    ^OFAIL: gdb.base/readline.exp: Simple operate-and-get-next - C-o for p 1
+    FAIL: gdb.base/readline.exp: operate-and-get-next with secondary prompt - send if 1 > 0
+    FAIL: gdb.base/readline.exp: print 42 (timeout)
+    FAIL: gdb.base/readline.exp: arrow keys with secondary prompt (timeout)
+    spawn [...]/gdb/testsuite/../../gdb/gdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+    ERROR: (timeout) GDB never initialized after 10 seconds.
+    ERROR: no fileid for coulomb
+    ERROR: no fileid for coulomb
+    UNRESOLVED: gdb.base/readline.exp: Simple operate-and-get-next - send p 7
+    testcase ../../../master/gdb/testsuite/gdb.base/readline.exp completed in 646 seconds
+    Running ../../../master/gdb/testsuite/gdb.base/wchar.exp ...
+    Executing on host: gcc  -c -g  -o [...]/gdb/testsuite/gdb.base/wchar0.o ../../../master/gdb/testsuite/gdb.base/wchar.c    (timeout = 300)
+    spawn gcc -c -g -o [...]/gdb/testsuite/gdb.base/wchar0.o ../../../master/gdb/testsuite/gdb.base/wchar.c
+    Executing on host: gcc [...]/gdb/testsuite/gdb.base/wchar0.o  -g  -lm   -o [...]/gdb/testsuite/gdb.base/wchar    (timeout = 300)
+    spawn gcc [...]/gdb/testsuite/gdb.base/wchar0.o -g -lm -o [...]/gdb/testsuite/gdb.base/wchar
+    get_compiler_info: gcc-4-6-1
+    spawn [...]/gdb/testsuite/../../gdb/gdb -nw -nx -data-directory [...]/gdb/testsuite/../data-directory
+    ERROR: (timeout) GDB never initialized after 10 seconds.
+    ERROR: no fileid for coulomb
+    ERROR: no fileid for coulomb
+    ERROR: no fileid for coulomb
+    ERROR: couldn't load [...]/gdb/testsuite/gdb.base/wchar into [...]/gdb/testsuite/../../gdb/gdb (timed out).
+    ERROR: no fileid for coulomb
+    ERROR: Delete all breakpoints in delete_breakpoints (timeout)
+    ERROR: no fileid for coulomb
+    UNRESOLVED: gdb.base/wchar.exp: setting breakpoint at wchar.c:34 (timeout)
+    testcase ../../../master/gdb/testsuite/gdb.base/wchar.exp completed in 797 seconds
+    [...]
+
+
+# IRC, freenode, #hurd, 2012-08-09
+
+In context of the [[select]] issue.
+
+    <braunr> i wonder where the tty allocation is made
+    <braunr> it could simply be that current applications don't handle old BSD
+      ptys correctly
+    <braunr> hm no, allocation is fine
+    <braunr> does someone know why there is no term instance for /dev/ttypX ?
+    <braunr> showtrans says "/hurd/term /dev/ttyp0 pty-slave /dev/ptyp0" though
+    <youpi> braunr: /dev/ttypX share the same translator with /dev/ptypX
+    <braunr> youpi: but how ?
+    <youpi> see the main function of term
+    <youpi> it attaches itself to the other node
+    <youpi> with file_set_translator
+    <youpi> just  like pfinet can attach itself to /servers/socket/26 too
+    <braunr> youpi: isn't there a possible race when the same translator tries
+      to sets itself on several nodes ?
+    <youpi> I don't know
+    <tschwinge> There is.
+    <braunr> i guess it would just faikl
+    <braunr> fail
+    <tschwinge> I remember some discussion about this, possibly in context of
+      the IPv6 project.
+    <braunr> gdb shows weird traces in term
+    <braunr> i got this earlier today: http://www.sceen.net/~rbraun/gdb.txt
+    <braunr> 0x805e008 is the ptyctl, the trivs control for the pty
+    <tschwinge> braunr: How do you mean »weird«?
+    <braunr> tschwinge: some peropen (po) are never destroyed
+    <tschwinge> Well, can't they possibly still be open?
+    <braunr> they shouldn't
+    <braunr> that's why term doesn't close cleany, why select still reports
+      readiness, and why screen loops on it
+    <braunr> (and why each ssh session uses a different pty)
+    <tschwinge> ... but only on darnassus, I think?  (I think I haven't seen
+      this anywhere else.)
+    <braunr> really ?
+    <braunr> i had it on my virtual machines too
+    <tschwinge> But perhaps I've always been rebooting systems quickly enough
+      to not notice.
+    <tschwinge> OK, I'll have a look next time I boot mine.
+    <braunr> i suppose it's why you can't login anymore quickly when syslog is
+      running
+
+[[syslog]]?
+
+    <braunr> i've traced the problem to ptyio.c, where pty_open_hook returns
+      EBUSY because ptyopen is still true
+    <braunr> ptyopen remains true because pty_po_create_hook doesn't get called
+    <youpi> tschwinge: I've seen the pty issue on exodar too, and on my qemu
+      image too
+    <braunr> err, pty_po_destroy_hook
+    <tschwinge> OK.
+    <braunr> and pty_po_destroy_hook doesn't get called from users.c because
+      po->cntl != ptyctl
+    <braunr> which means, somehow, the pty never gets closed
+    <youpi> oddly enough it seems to happen on all qemu systems I have, and no
+      xen system I have
+    <braunr> Oo
+    <braunr> are they all (xen and qemu) up to date ?
+    <braunr> (so we can remove versions as a factor)
+    <tschwinge> Aha.  I only hve Xen and real hardware.
+    <youpi> braunr: no
+    <braunr> youpi: do you know any obscur site about ptys ? :)
+    <youpi> no
+    <youpi> well, actually yes
+    <youpi> http://dept-info.labri.fr/~thibault/a (in french)
+    <braunr> :D
+    <braunr> http://www.linusakesson.net/programming/tty/index.php looks
+      interesting
+    <youpi> indeed
+
+
+## IRC, freenode, #hurdfr, 2012-08-09
+
+    <braunr> youpi: ce que j'ai le plus de mal à comprendre, c'est ce qu'est un
+      "controlling tty"
+    <youpi> c'est le plus obscur d'obscur :)
+    <braunr> s'il est exclusif à une appli, comment ça doit se comporter sur un
+      fork, etc..
+    <youpi> de manière simple, c'est ce qui permet de faire ^C
+    <braunr> eh oui, et c'est sûrement là que ça explose
+    <youpi> c'est pas exclusif, c'est hérité
+    <braunr>
+      http://homepage.ntlworld.com/jonathan.deboynepollard/FGA/bernstein-on-ttys/cttys.html
+
+
+## IRC, freenode, #hurd, 2012-08-10
+
+    <braunr> youpi: and just to be sure about the test procedure, i log on a
+      system, type tty, see e.g. ttyp0, log out, and in again, then tty returns
+      ttyp1, etc..
+    <youpi> yes
+    <braunr> youpi: and an open (e.g. cat) on /dev/ptyp0 returns EBUSY
+    <youpi> indeed
+    <braunr> so on xen it doesn't
+    <braunr> grmbl
+    <youpi> I've never seen it, more precisely
+    <braunr> i also have the problem with a non-accelerated qemu
+    <braunr> antrik: do you have the term problems we've seen on your bare
+      hardware ?
+    <antrik> I'm not sure what problem you are seeing exactly :-)
+    <braunr> antrik: when logging through ssh, tty first returns ttyp0, and the
+      second time (after logging out from the first session) ttyp1
+    <braunr> antrik: and term servers that have been used are then stuck in a
+      busy state
+    <antrik> braunr: my ptys seem to be reused just fine
+    <braunr> or perhaps they didn't have the bug
+    <braunr> antrik: that's so weird
+    <antrik> (I do *sometimes* get hanging ptys, but that's a different issue
+      -- these are *not* busy; they just hang when reused...)
+    <braunr> antrik: yes i saw that too
+    <antrik> braunr: note though that my hurd package is many months old...
+    <antrik> (in fact everything on this system)
+    <braunr> antrik: i didn't see anything relevant about the term server in
+      years
+    <braunr> antrik: what shell do you use ?
+    <antrik> yeah, but such errors could be caused by all kinds of changes in
+      other parts of the Hurd, glibc, whatever...
+    <antrik> bash
+
+
+## IRC, freenode, #hurd, 2012-12-27
+
+    <youpi> we however have a similar symptom with screen
+    <youpi> shells don't terminate
+    <braunr> yes
+    <youpi> or at least the window doesn't close
+    <braunr> the screen problem is the same as the term servers not being properly closed
+    <youpi> k
+    <braunr> that one is still on my todo list
+    <braunr> and not easy
+    <youpi> like so many small items on the TODO lists :)
+    <braunr> that one is an important one :)
+    <braunr> because we're still using legacy pty, the number of terms is
+      limited
+    <braunr> which means at some point we can't log in any more using them
+    <braunr> (i regularly kill pty terms on darnassus to avoid that)
+    <braunr> it prevents screen and rsyslogd iirc from working correctly, which
+      is very annoying
+    <braunr> there may be other issues
+
+
+# Formal Verification
+
+This issue may be a simple programming error, or it may be more complicated.
+
+Methods of [[formal_verification]] should be applied to confirm that there is
+no error in `/hurd/term`'s logic itself.  There are tools for formal
+verification/[[code_analysis]] that can likely help here.
+
+There is a [[!FF_project 277]][[!tag bounty]] on this task.

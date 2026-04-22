@@ -1,0 +1,3 @@
+# ATenCog subcomponents
+
+complete me...

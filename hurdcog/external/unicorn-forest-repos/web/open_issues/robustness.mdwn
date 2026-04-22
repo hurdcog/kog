@@ -1,0 +1,217 @@
+[[!meta copyright="Copyright © 2011, 2013, 2014, 2016 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_documentation open_issue_hurd]]
+
+[[!toc]]
+
+
+# IRC, freenode, #hurd, 2011-11-18
+
+    <nocturnal> I'm learning about GNU Hurd and was speculating with a friend
+      who is also a computer enthusiast. I would like to know if Hurds
+      microkernel can recover services should they crash? and if it can, does
+      that recovery code exist in multiple services or just one core kernel
+      service? 
+    <braunr> nocturnal: you should read about passive translators
+    <braunr> basically, there is no dedicated service to restore crashed
+      servers
+    <etenil> Hi everyone!
+    <braunr> services can crash and be restarted, but persistence support is
+      limited, and rather per serivce
+    <braunr> actually persistence is more a side effect than a designed thing
+    <braunr> etenil: hello
+    <etenil> braunr: translators can also be spawned on an ad-hoc basis, for
+      instance when accessing a particular file, no?
+    <braunr> that's what being passive, for a translator, means
+    <etenil> ah yeah I thought so :)
+
+
+# Reincarnation Server
+
+## IRC, freenode, #hurd, 2011-11-19
+
+    <chromaticwt> will hurd ever have the equivalent of a rs server?, is that
+      even possible with hurd?
+    <youpi> chromaticwt: what is an rs server ?
+    <chromaticwt> a reincarnation server
+    <youpi> ah, like minix. Well, the main ground issue is restoring existing
+      information, such as pids of processes, etc.
+    <youpi> I don't know how minix manages it
+    <antrik> chromaticwt: I have a vision of a session manager that could also
+      take care of reincarnation... but then, knowing myself, I'll probably
+      never imlement it
+    <youpi> we do get proc  crashes from times to times
+    <youpi> it'd be cool to see the system heal itself :)
+    <braunr> i need a better description of reincarnation
+    <braunr> i didn't think it would make core servers like proc able to get
+      resurrected in a safe way
+    <antrik> depends on how it is implemented
+    <antrik> I don't know much about Minix, but I suspect they can recover most
+      core servers
+    <antrik> essentially, the condition is to make all precious state be
+      constantly serialised, and held by some third party, so the reincarnated
+      server could restore it
+    <braunr> should it work across reboots ?
+    <antrik> I haven't thought about the details of implementing it for each
+      core server; but proc should be doable I guess... it's not necessary for
+      the system to operate, just for various UNIX mechanisms
+    <antrik> well, I'm not aware of the Minix implementation working across
+      reboots. the one I have in mind based on a generic session management
+      infrastructure should though :-)
+
+
+## IRC, freenode, #hurd, 2012-12-06
+
+    <Tekk_> out of curiosity, would it be possible to strap on a resurrection
+      server to hurd?
+    <Tekk_> in the future, that is
+    <braunr> sure
+    <Tekk_> cool :)
+    <braunr> but this requires things like persistence
+    <spiderweb> like a reincarnation server?
+    <braunr> it's a lot of works, with non negligible overhead
+    <Tekk_> spiderweb: yes, exactly. I didn't remember tanenbaum's wording on
+      that
+    <braunr> i'm pretty sure most people would be against that
+    <spiderweb> braunr: why so?
+    <Tekk_> it was actually the feature that convinced me that ukernels were a
+      good idea
+    <Tekk_> spiderweb: because then you need a process that keeps track of all
+      the other servers
+    <Tekk_> and they have to be replying to "useless" pings to see if they're
+      still alive
+    <braunr> spiderweb: the hurd community isn't looking for a system reliable
+      in critical environments
+    <braunr> just a general purpose system
+    <braunr> and persistence requires regular data saves
+    <braunr> it's expensive
+    <Tekk_> as well as that
+    <braunr> we already have performance problems because of the nature of the
+      system, adding more without really looking for the benefits is useless
+    <spiderweb> so you can't theoretically have both?
+    <braunr> persistence and performance ?
+    <braunr> it's hard
+    <Tekk_> spiderweb: you need to modify the other translators to be
+      persistent
+    <braunr> only the ones you care about actually
+    <braunr> but it's just better to make the critical servers very stable
+    <Tekk_> so it's not just turning on and off the reincarnation
+    <braunr> (there isn't that much code there)
+    <braunr> and the other servers restartable
+    <mcsim> braunr: I think that if there will be aim to make something like
+      resurrection server than it will be needed rewrite most servers to make
+      them stateless, isn't it?
+    <braunr> that's a lot easier and already works with non essential passive
+      translators
+    <Tekk_> mcsim: pretty much
+    <braunr> mcsim: only those you care about
+    <braunr> mcsim: the proc auth exec servers for example, perhaps the file
+      system servers that can act as root fs, but the others would simply be
+      restarted by the passive translator mechanism
+    <spiderweb> what about restarting device drivers, that would be simple
+      right?
+    <braunr> that's perfectly doable, yes
+    <spiderweb> (being an OS newbie) - it does seem to me that the whole
+      reincarnation server concept could quite possibly be a band aid.
+    <braunr> spiderweb: no it really works
+    <braunr> many systems do that actually
+    <braunr> let me give you a link
+    <braunr>
+      http://ftp.sceen.net/curios_improving_reliability_through_operating_system_structure.pdf
+    <braunr> it's a bit old, but there is a review of systems aiming at
+      resilience and how they achieve part of it
+    <spiderweb> neat, thanks
+    <braunr> actually it's not that old at all
+    <braunr> around 2007
+
+
+## IRC, freenode, #hurd, 2013-08-26
+
+    < teythoon> I came across some paper about process reincarnation and
+      created a little prototype a while back:
+    < teythoon> http://darnassus.sceen.net/cgit/teythoon/reincarnation.git/
+    < teythoon> and I looked into restarting the exec server in case it
+      dies. the exec server is an easy target since it has no state of its own
+    < teythoon> the only problem is that there is no exec server around to
+      start a new one
+    < youpi> teythoon: there could be another exec server only used to
+      (re)start the exec server
+    < youpi> that other exec server could even be restarted by the normal exec
+      server
+    < pinotree> what about a watchdog server?
+    < teythoon> youpi: yes, I had the same idea, i actually patched /hurd/init
+      to do that, it's just not yet working
+    < pinotree> make it watch other servers (exec included), and make exec
+      watch the watchdog only
+    < teythoon> pinotree: look at my prototype, there is a watchdog server
+    < braunr> teythoon: what's the point of reincarnation without persistence ?
+    < teythoon> braunr: there is no point in reincarnation w/o persistence of
+      course
+    < teythoon> my prototype does a limited form of persistence
+    < teythoon> the point was to see whether I can mitm a translator and
+      restart it on demand and to gain more insight into the whole translator
+      mechanism
+    < braunr> teythoon: ok
+    < teythoon> braunr: see the readme, it retains state across reincarnations
+    < braunr> teythoon: how ?
+    < teythoon> braunr: the server can store a checkpoint using the
+      reincarnation_checkpoint procedure
+    < teythoon>
+      http://darnassus.sceen.net/cgit/teythoon/reincarnation.git/blame/HEAD:/reincarnation.defshttp://darnassus.sceen.net/cgit/teythoon/reincarnation.git/blame/HEAD:/reincarnation.defs
+    < teythoon> uh >,< sorry, pasted twice
+    < braunr> oh ok
+
+
+## IRC, freenode, #hurd, 2014-02-01
+
+    <pere> btw, can hurd upgrade the kernel without reboot?
+    <teythoon> no
+    <teythoon> but since most functionality is not within the kernel, the more
+      interesting question is, what parts of the hurd can be replaced at
+      runtime
+    <pere> ok.  what is the answer to that question?
+    <teythoon> no hurd server can be restarted transparently, i.e. w/o its
+      clients noticing that
+    <teythoon> however, if a server is not in use, it can be easily restarted
+    <teythoon> transparently restarting servers would be nice
+    <teythoon> and i believe it is even possible on mach
+    <braunr> teythoon: how ?
+    <teythoon> one has to retain two things, client-related state and the port
+      right
+    <braunr> doesn't that require persistence ?
+    <teythoon> it does
+    <teythoon> but i see no reason why it should not be possible to implement
+      this on top of mach
+    <braunr> maybe
+    <teythoon> the most crucial thing is to preserve the receive port, and to
+      replace the server without race-conditions
+    <teythoon> receive rights can be transfered using the notification
+      mechanism
+
+    <antrik> braunr: restarting servers doesn't exactly require
+      persistance. you only need to pass the state from the old server to the
+      new one, rather than serialising it for on-disk storage. it's a slightly
+      easier requirement...
+    <antrik> (most notably, you don't need any magic to keep the capabilities
+      around -- just pass them over using normal IPC)
+    <teythoon> antrik: i agree, but then again, once this is in place, adding
+      persistence is only a little step
+    <antrik> teythoon: depends. if it's implemented with persistence in mind
+      from the beginning, it might be a fairly small step indeed; but
+      otherwise, it could be two entirely different things
+    <antrik> this also depends on the kind of persistence you want
+    <antrik> I must say that for the kind of persistence *I* would like, it is
+      indeed quite related
+    <teythoon> well, please elaborate a little :)
+    <teythoon> what do you have in mind ?
+    <antrik> busy right now... remind me some other time if I forget :-)
+    <teythoon> sure

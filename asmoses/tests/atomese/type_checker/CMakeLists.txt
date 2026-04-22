@@ -1,0 +1,11 @@
+ADD_CXXTEST(AtomeseTypeCheckerUTest)
+TARGET_LINK_LIBRARIES(AtomeseTypeCheckerUTest
+	asmosesutils
+	atomese
+	moses
+	ascombo
+	asmoses_types
+	atom_types
+	${ATOMSPACE_LIBRARIES}
+	${COGUTIL_LIBRARY}
+)

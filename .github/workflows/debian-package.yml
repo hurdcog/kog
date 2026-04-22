@@ -1,0 +1,281 @@
+name: Build Debian Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package'
+        required: true
+        default: '1.0.0'
+      distribution:
+        description: 'Debian distribution'
+        required: true
+        default: 'bookworm'
+        type: choice
+        options:
+          - bookworm
+          - bullseye
+          - sid
+
+env:
+  PACKAGE_NAME: opencog
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  build-debian:
+    runs-on: ubuntu-latest
+    name: Build Debian Package
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    
+    - name: Set Version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+        else
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Package version: $VERSION"
+        
+        DISTRIBUTION="${{ github.event.inputs.distribution }}"
+        if [ -z "$DISTRIBUTION" ]; then
+          DISTRIBUTION="bookworm"
+        fi
+        echo "DISTRIBUTION=$DISTRIBUTION" >> $GITHUB_OUTPUT
+        echo "Distribution: $DISTRIBUTION"
+    
+    - name: Install Build Dependencies
+      run: |
+        echo "=== Installing Debian Build Tools ==="
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          devscripts \
+          dh-make \
+          fakeroot \
+          lintian \
+          cmake \
+          pkg-config \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          libboost-date-time-dev \
+          libboost-regex-dev \
+          libboost-serialization-dev \
+          cxxtest \
+          python3-dev \
+          python3-pip \
+          guile-3.0-dev \
+          libgmp-dev
+        
+        echo "✓ Build dependencies installed"
+    
+    - name: Prepare Debian Package Structure
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        DISTRIBUTION="${{ steps.version.outputs.DISTRIBUTION }}"
+        
+        echo "=== Preparing Debian Package Structure ==="
+        
+        # Create debian directory if it doesn't exist
+        if [ ! -d "debian" ]; then
+          mkdir -p debian
+        fi
+        
+        # Copy from opencog-debian if available
+        if [ -d "opencog-debian/debian" ]; then
+          echo "Using existing debian packaging from opencog-debian/"
+          cp -r opencog-debian/debian/* debian/
+        fi
+        
+        # Update changelog
+        cat > debian/changelog << EOF
+opencog ($VERSION-1) $DISTRIBUTION; urgency=medium
+
+  * New upstream release $VERSION
+  * Built from GitHub Actions
+  * See https://github.com/cogpy/occ/releases for details
+
+ -- OpenCog Build Bot <build@opencog.org>  $(date -R)
+EOF
+        
+        # Update control file
+        cat > debian/control << EOF
+Source: opencog
+Section: science
+Priority: optional
+Maintainer: OpenCog Foundation <info@opencog.org>
+Build-Depends: debhelper (>= 11),
+               cmake (>= 3.12),
+               libboost-dev (>= 1.71),
+               libboost-filesystem-dev,
+               libboost-program-options-dev,
+               libboost-system-dev,
+               libboost-thread-dev,
+               libboost-date-time-dev,
+               libboost-regex-dev,
+               libboost-serialization-dev,
+               cxxtest,
+               python3-dev,
+               guile-3.0-dev,
+               libgmp-dev
+Standards-Version: 4.5.1
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: opencog
+Architecture: any
+Depends: \${shlibs:Depends}, \${misc:Depends},
+         libboost-filesystem1.74.0 | libboost-filesystem1.71.0,
+         libboost-program-options1.74.0 | libboost-program-options1.71.0,
+         libboost-system1.74.0 | libboost-system1.71.0,
+         libboost-thread1.74.0 | libboost-thread1.71.0,
+         python3,
+         guile-3.0
+Description: Framework for Artificial General Intelligence (AGI)
+ OpenCog is a framework for developing Artificial General Intelligence (AGI).
+ It provides a comprehensive set of tools and components for cognitive
+ computing, including:
+ .
+ * AtomSpace - A hypergraph database for knowledge representation
+ * Pattern Matcher - Advanced pattern matching and query system
+ * URE - Unified Rule Engine for logical reasoning
+ * PLN - Probabilistic Logic Networks
+ * MOSES - Meta-Optimizing Semantic Evolutionary Search
+ * CogServer - Network server for AtomSpace access
+ .
+ This package contains the core OpenCog framework components.
+
+Package: opencog-dev
+Architecture: any
+Depends: opencog (= \${binary:Version}),
+         \${misc:Depends},
+         libboost-dev,
+         cmake
+Description: OpenCog development files
+ Development files for the OpenCog AGI framework, including headers
+ and CMake configuration files for building OpenCog extensions.
+EOF
+        
+        # Create rules file
+        cat > debian/rules << 'EOF'
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON
+
+override_dh_auto_test:
+	# Skip tests for now to speed up packaging
+	@echo "Skipping tests for packaging build"
+
+override_dh_strip:
+	dh_strip --dbgsym-migration='opencog-dbg (<< $(VERSION))'
+EOF
+        chmod +x debian/rules
+        
+        # Create copyright file
+        cat > debian/copyright << EOF
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: opencog
+Upstream-Contact: OpenCog Foundation <info@opencog.org>
+Source: https://github.com/cogpy/occ
+
+Files: *
+Copyright: 2008-2025 OpenCog Foundation
+License: AGPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ .
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU Affero General Public
+ License version 3 can be found in "/usr/share/common-licenses/AGPL-3".
+EOF
+        
+        # Create compat file
+        echo "11" > debian/compat
+        
+        # Create source/format
+        mkdir -p debian/source
+        echo "3.0 (quilt)" > debian/source/format
+        
+        echo "✓ Debian package structure prepared"
+    
+    - name: Build Debian Package
+      run: |
+        echo "=== Building Debian Package ==="
+        
+        # Build the package
+        dpkg-buildpackage -us -uc -b
+        
+        # Move packages to dist directory
+        mkdir -p dist
+        mv ../*.deb dist/ || true
+        mv ../*.buildinfo dist/ || true
+        mv ../*.changes dist/ || true
+        
+        echo "✓ Debian package built"
+        
+        echo "=== Package Contents ==="
+        ls -lh dist/
+    
+    - name: Run Lintian
+      run: |
+        echo "=== Running Lintian Checks ==="
+        lintian dist/*.deb || true
+      continue-on-error: true
+    
+    - name: Test Package Installation
+      run: |
+        echo "=== Testing Package Installation ==="
+        sudo dpkg -i dist/*.deb || true
+        sudo apt-get install -f -y || true
+        
+        echo "=== Installed Files ==="
+        dpkg -L opencog | head -20
+      continue-on-error: true
+    
+    - name: Upload Debian Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-package-${{ steps.version.outputs.DISTRIBUTION }}
+        path: |
+          dist/*.deb
+          dist/*.buildinfo
+          dist/*.changes
+        retention-days: 30
+    
+    - name: Upload to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*.deb

@@ -1,0 +1,18 @@
+agi-os-unified (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of unified AGI Operating System
+  * Complete three-layer architecture integration
+  * Layer 1: Cognumach enhanced microkernel
+  * Layer 2: HurdCog cognitive operating system
+  * Layer 3: OpenCog Collection AGI framework
+  * Cognitive synergy across all system layers
+  * Distributed hypergraph processing
+  * Real-time cognitive monitoring and dashboard
+  * Self-optimization and learning capabilities
+  * Probabilistic reasoning and attention allocation
+  * Production-ready Debian packaging
+  * GNU Guix reproducible build support
+  * Complete development environment
+  * World's first AGI-native operating system
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2024 16:00:00 +0000

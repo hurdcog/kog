@@ -1,0 +1,492 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (L4_SUBDIRS): New variable.  Set to l4 directories
+	if USE_L4 is true, otherwise leave empty.
+	(SUBDIRS): Remove libl4 and laden.  Replace with $(USE_L4).
+	Rearrange order.
+
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (--enable-l4-abi): Replace option with...
+	(--enable-l4): ... this option.
+	(l4_abi): Set appropriately.
+	(USE_L4): Define as a preprocessor macro (if appropriate) and an
+	automake conditional.
+	* README: Update build instructions.
+
+2008-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Rename amd64 to x86_64.  Update users.
+
+2008-12-17  Neal H. Walfield  <neal@gnu.org>
+
+	* libviengoos: New directory.
+	* Makefile.am (SUBDIRS): Add libviengoos.
+	* configure.ac: Include libviengoos/headers.m4.  Generate
+	libviengoos/Makefile.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Move build requirements prior to build instructions.
+	Suggested by: Ben Asselstine <benasselstine@gmail.com>.
+
+2008-11-20  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't look for inkscape.
+	* README: Don't mention inkscape.
+
+2008-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (C_CHECKS): Add `-fstack-protector-all' for all
+	runtime check levels except level 0.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (USE_L4): AC_DEFINE it.
+	(USER_CPPFLAGS): Add -DUSE_L4.
+	(KERNEL_CPPFLAGS): Likewise.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am: Don't build libstdc++.
+
+2008-11-18  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Improve text.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Remove reference to patching Pistachio and libl4.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Generate benchmarks/sqlite/Makefile.
+
+2008-11-11  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (libc-stmp): Only touch sysroot/lib/libc.a, don't
+	overwrite it.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* Revert last change.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (libc-stmp): Don't create an empty
+	sysroot/lib/libc.a.
+
+2008-08-22  Neal H. Walfield  <neal@gnu.org>
+
+	* libhurd-cap: Remove.
+	* libhurd-cap-server: Likewise.
+	* physmem: Likewise.
+	* task: Likewise.
+	* wortel: Likewise.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (--enable-runtime-checks): If zero, don't just
+	define DEBUG_ELIDE, define it to 1.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Spell DEBUG_ELIDE correctly.
+
+2008-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (--enable-runtime-checks): Fix spelling.
+
+2008-06-21  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* README (Using the Cross-Compiler): New section.
+
+2008-06-20  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (--enable-runtime-checks): New command line option.
+	(USER_CPPFLAGS, KERNEL_CPPFLAGS): Add $CPP_CHECKS.
+	(USER_CFLAGS, KERNEL_CFLAGS): Add $C_CHECKS.
+
+2008-06-20  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* README (Documentation): New section.
+
+2008-06-18  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am [HAVE_CROSS] (all-local): Depend on libstdc++.
+
+2008-06-05  Neal H. Walfield  <neal@gnu.org>
+
+	* libc.a.in: Remove -lhurd-cap.
+	* Makefile.am (libc-stmp): Remove dependency on
+	viengoos/libhurd-cap.a.
+
+2008-06-01  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefoo.am (PATH): Move definition...
+	* configure.ac: ... here.
+
+2008-05-31  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.ac (USER_CFLAGS, KERNEL_CFLAGS, CHECK_CFLAGS): Don't
+	specify ``-fno-stack-protector''.
+
+	* configure.ac (ABS_BUILDDIR): Use a more portable way to set.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* benchmarks: New directory.
+	* configure.ac: Generate benchmarks/Makefile and
+	benchmarks/boehm-gc/Makefile.
+	* Makefile.am (SUBDIRS): Add benchmarks.
+
+2008-05-30  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.ac (missing_progs): Rename to...
+	(missing_doc_progs): ... this.
+	(DOC): New variable.  Used to indicate whether to documentation
+	files can be built.
+	Make it non-fatal if the documentation can't be built.
+	* Makefile.am (SUBDIRS): Use $(DOC).
+
+	* configure.ac (AM_MAINTAINER_MODE): Get rid of it.
+	* README: Reflect that.
+
+	* README: Suggest ``make -j''.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Call AM_PROG_CC_C_O.
+
+2008-05-30  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefoo.am (abs_builddir): Define.
+
+2008-05-30  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.in (libc_cv_gnu89_inline): Fill depending on a compile-time
+	test, as per glibc HEAD, 2007-11-07.
+	(USER_CFLAGS, KERNEL_CFLAGS, CHECK_CFLAGS): Use it.
+	
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.ac: Include `newlib/headers.m4' and
+	`libc-parts/headers.m4'.
+	(ccheaders, SYSINCLUDES): Remove.
+	(USER_CPPFLAGS, USER_LDFLAGS, KERNEL_CPPFLAGS): Adapt to building with
+	a cross compiler.
+	(USER_LDADD): Remove.
+	(CHECK_CPPFLAGS): Define `_GNU_SOURCE' and `_ENABLE_TESTS'.
+	(CHECK_CFLAGS): New.
+	(HAVE_CROSS, TRAVERSE_HIERARCHY): New conditionals.
+	(--enable-tests, ENABLE_TESTS): New command line option with
+	conditional.
+	(libc.a.in): Instantiate as `sysroot/lib/libc.a'.
+	* libc.a.in: Rewritten to no longer specify file paths, but instead
+	linker switches.
+	* Makefile.am (SUBDIRS): Only recurse into if [TRAVERSE_HIERARCHY].
+	(libc-stmp): Only consider if [HAVE_CROSS].
+	[! HAVE_CROSS && ! ENABLE_TESTS]: Build `cross-compiler'.
+	(cross-compiler): New target.
+	Include `Makefoo.am', `binutils/Makefrag.am' and `gcc/Makefrag.am'.
+	* Makefoo.am: New file.
+	* binutils: New directory.
+	* gcc: Likewise.
+	* README: Update.
+
+	* build-aux/config.sub: Detect *-*-viengoos-gnu systems.
+
+	* build-aux/config.guess: New file, from today's config git trunk.
+	* build-aux/config.sub: Likewise.
+
+	* configure.ac (AC_CONFIG_AUX_DIR): Instantiate.
+	(AM_INIT_AUTOMAKE): Add a number of options.
+	* README: Adapt.
+
+2008-05-27  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: If host_cpu is "amd64", set arch_amd64 to true,
+	not arch_alpha.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (CFLAGS): Remove variable.
+	(USER_CFLAGS): New variable.
+	(USER_CPPFLAGS): Likewise.
+	(USER_LDFLAGS): Likewise.
+	(USER_LDADD): Likewise.
+	(KERNEL_CFLAGS): Likewise.
+	(KERNEL_CPPFLAGS): Likewise.
+	(CHECK_CPPFLAGS): Likewise.
+
+	* Makefile.am (SUBDIRS): Build . after building laden and
+	viengoos.
+
+2008-02-16  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (all-local): Depend on libc-stmp.
+	(libc-stmp): New target.  Depend on libraries.
+	(SUBDIRS): Add . after libraries and before programs.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Generate hieronymus/Makefile.
+	* Makefile.am (SUBDIRS): Add hieronymus.
+	* README: Update boot instructions.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.ac (STATIC_GLIBC): Remove.
+
+2008-02-01  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't check for fig2dev.  Check for inkscape.
+
+2008-01-26  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't check for latex, dvips or ps2pdf.  Check for
+	pdflatex and bibtex.
+
+2008-01-26  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* configure.ac (ABS_SRCDIR): Use ``readlink -f'' instead of
+	``realpath''.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Update build instructions.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (LIBC_M): Set to location of C math library.
+	Substitute.
+	* libc.a.in: Add @LIBC_M@.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* libc.a.in: New file.
+	* configure.ac (LIBC): Set to location of C library files.
+	Substitute.
+	(LIBC_A): Set to location of C library archive.  Substitute.
+	(ABS_BUILDDIR): Set to absolute location of build directory.
+	Substitute.
+	(ABS_SRCDIR): Set to absolute location of source directory.
+	Substitute.
+	Generate libc.a.
+
+	* Makefile.am (SUBDIRS): Build C library as earlier.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Check for ln.
+	Add new option --with-newlib.
+	Generate newlib/Makefile.
+	* Makefile.am (NEWLIB_SUBDIRS): New variable.
+	(SUBDIRS): Add it.
+	* newlib: New directory.
+	
+2008-01-13  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Add -fno-stack-protector.
+
+2008-01-02  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (CFLAGS): Make the default optimization level -O2.
+
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't use AC_C_CONST or AC_C_VOLATILE.  The former
+	doesn't work with -Werror and we assume gcc.
+	
+2007-12-23  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't overwrite the value of CFLAGS, add to it.
+
+2007-12-11  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Update email address.
+
+2007-11-23  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Add note that Pistachio must be compiled with the Pager
+	ExchangeRegisters configure option enabled.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* README: Update building and booting instructions.
+
+2007-11-16  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Don't include wortel/config.m4 or
+	physmem/config.m4.  Include viengoos/config.m4.
+ 
+	Don't include libhurd-cap/headers.m4,
+	libhurd-cap-server/headers.m4, wortel/headers.m4 or
+	physmem/headers.m4.  Include viengoos/headers.m4.
+
+	Don't generate libhurd-cap/Makefile, libhurd-cap-server/Makefile,
+	wortel/Makefile, physmem/Makefile, task/Makefile, or
+	deva/Makefile.  Generate viengoos/Makefile.
+
+	* Makefile.am (SUBDIRS): Remove libhurd-cap, libhurd-cap-server,
+	wortel, physmem, task and deva.  Add viengoos.
+
+2007-10-17  Neal H. Walfield  <neal@gnu.org>
+
+	* libbitarray: New directory.
+	* configure.ac: m4_include libbitarray/headers.m4.
+	(AC_CONFIGU_FILES): Add libbitarray/Makefile.
+	* Makefile.am (SUBDIRS): Add libbitarray.
+
+2007-08-06  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Configure libl4/v2/Makefile,
+	libl4/v2/ia32/Makefile and libl4/x2/Makefile.
+
+2007-07-27  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac (l4_abi_v2): New variable.
+	(l4_abi_x2): Likewise.
+	(l4-abi): New enable argument.
+	(L4_ABI_V2): New automake conditional.
+	(L4_ABI_X2): Likewise.
+	* README: Document option.
+
+2005-04-08  Neal H. Walfield  <neal@gnu.org>
+
+	* configure.ac: Add include for physmem/headers.m4.
+
+2005-02-09  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac (AC_CONFIG_FILES): Add libl4/tests/Makefile.
+
+2005-01-31  Marcus Brinkmann  <marcus@gnu.org>
+
+	* README: Revert last change for now.
+	
+	* README: Add patch for L4 local and remote xfer timeouts support.
+
+2005-01-23  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Fall back to libc.a on GNU/Hurd.
+	New option --with-libc.
+	(WITH_LIBC): New automake conditional.
+	* Makefile.am (LIBC_SUBDIRS): New variable.
+	(SUBDIRS): Add $(LIBC_SUBDIRS).
+	* libc: New directory.
+
+2005-01-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Support ripping parts from libcrt.a on GNU/Hurd.
+
+	* README: Add patch for L4 TLS support.
+
+	* configure.ac (AC_CONFIG_FILES): Add ruth/Makefile.
+	* Makefile.am (SUBDIRS): Add ruth.
+
+2005-01-11  Neal H. Walfield  <neal@gnu.org>
+
+	* libhurd-mm: New directory.
+	* Makefile.am (SUBDIRS): Add libhurd-mm.
+	* configure.ac: Add include for libhurd-mm/headers.m4.
+	 (AC_CONFIG_FILES): Add libhurd-mm/Makefile.
+
+2004-12-25  Neal H. Walfield  <neal@gnu.org>
+
+	* libhurd-btree: New directory.
+	* Makefile.am (SUBDIRS): Add libhurd-btree.
+	* configure.ac (AC_CONFIG_FILES): Add libhurd-btree/Makefile.
+	Add include for libhurd-btree/headers.m4.
+
+2004-11-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac (CFLAGS): Set after AC_PROG_CC.
+
+2004-10-29  Marcus Brinkmann  <marcus@gnu.org>
+
+	* platform: New directory.
+	* configure.ac (AC_CONFIG_FILES): Add platform/alpha/Makefile,
+	platform/amd64/Makefile, platform/ia32/Makefile,
+	platform/ia64/Makefile, platform/powerpc/Makefile,
+	platform/powerpc64/Makefile and platform/Makefile.
+	* Makefile.am (SUBDIRS): Add platform.
+
+2004-10-28  Marcus Brinkmann  <marcus@gnu.org>
+
+	* deva: New directory.
+	* configure.ac (AC_CONFIG_FILES): Add deva/Makefile.
+	* Makefile.am (SUBDIRS): Add deva.
+
+2004-04-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Add include for wortel/headers.m4.
+
+2004-04-15  Marcus Brinkmann  <marcus@gnu.org>
+
+	* task: New directory.
+	* configure.ac (AC_CONFIG_FILES): Add task/Makefile.
+	* Makefile.am (SUBDIRS): Add task.
+
+2004-03-25  Marcus Brinkmann  <marcus@gnu.org>
+
+	* acinclude.m4: Quote the macro name.
+
+2004-03-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Add include for hurd/headers.m4.
+	(AC_CONFIG_FILES): Add hurd/Makefile.
+	* Makefile.am (SUBDIRS): Add hurd.
+	* hurd: New directory. 
+
+2004-03-20  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Add include for libhurd-cap-server/headers.m4.
+	(AC_CONFIG_FILES): Add libhurd-cap-server/Makefile.
+	* Makefile.am (SUBDIRS): Add libhurd-cap-server.
+	* libhurd-cap-server: New directory.
+
+2004-03-17  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Add include for libpthread/headers.m4.
+	(AC_CONFIG_FILES): Add libpthread/Makefile.
+	* Makefile.am (SUBDIRS): Add libpthread.
+
+	* libpthread: New directory, populated with Neal H. Walfields
+	pthread implementation.
+
+2004-03-09  Daniel Wagner  <wagi@gmx.ch>
+
+	* configure.ac: Add check for fig2dev.
+	* doc/Makefile.am (EXTRA_DIST): New target.
+	(tex_files, fig_files, eps_files, eps_cleanfiles): New variable
+	(SUFFIXES): Add eps, fig and pdf to the list.
+	(.fig.eps): New generic rule.
+	(MAINTAINERCLEANFILES): New target.
+	* doc/ddf_insert_event.fig: New file.
+	
+2003-10-12  Marcus Brinkmann  <marcus@gnu.org>
+
+	* acinclude.m4: New file.
+	* configure.ac: Include laden/config.m4, wortel/config.m4, and
+	physmem/config.m4.
+
+2003-09-22  Marcus Brinkmann  <marcus@gnu.org>
+
+	* configure.ac: Always define the automake conditionals ARCH_* to
+	true or false.
+
+	* configure.ac: Define $arch to ia32 or powerpc.  Do not include
+	arch specific libl4/headers.m4.
+
+	* configure.ac: Add detection of powerpc architecture.
+	(AC_CONFIG_FILES): Add libl4/powerpc/Makefile.
+
+2003-09-07  Neal H. Walfield  <neal@cs.uml.edu>
+
+	* configure.ac: Check for latex, dvips and ps2pdf.  Bail if not
+	found.  Generate doc/Makefile.
+
+2003-07-26  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.
+

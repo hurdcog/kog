@@ -1,0 +1,52 @@
+name: Update Winget Package for OpenCog
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update'
+        required: true
+
+jobs:
+  update:
+    name: Update Winget Manifest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install cargo binstall
+        uses: cargo-bins/cargo-binstall@268643a6b5ea099f5718ee5cd3ff7dc89a5eb49b
+
+      - name: Install komac
+        run: |
+          cargo binstall komac@2.11.2 -y
+
+      - name: Determine Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "VERSION=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "Updating to version: ${VERSION#v}"
+
+      - name: Update manifest
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          WINGET_TOKEN: ${{ secrets.WINGET_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$WINGET_TOKEN" ]; then
+            echo "⚠️  WINGET_GITHUB_TOKEN not set, skipping winget update"
+            echo "To enable winget updates, add WINGET_GITHUB_TOKEN to repository secrets"
+            exit 0
+          fi
+          
+          echo "Updating winget manifest for OpenCog version $VERSION"
+          komac update --version $VERSION \
+            --urls "https://github.com/cogpy/occ/releases/download/v$VERSION/opencog-$VERSION-win64.zip" \
+            --token $WINGET_TOKEN \
+            --submit \
+            OpenCog.OpenCog || echo "Winget update failed or package not yet registered"

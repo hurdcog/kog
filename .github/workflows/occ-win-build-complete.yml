@@ -1,0 +1,516 @@
+name: OCC Windows Build - Complete Stack
+
+# Comprehensive Windows build workflow for OpenCog Collection (OCC) monorepo
+# Builds all core components in dependency order with proper artifact passing
+# Components: cogutil -> atomspace -> moses -> cogserver -> attention -> ure -> pln -> miner -> asmoses
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_GENERATOR: "Visual Studio 17 2022"
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+jobs:
+  # Stage 1: Build CogUtil (Foundation)
+  build-cogutil:
+    runs-on: windows-latest
+    name: Build CogUtil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Create vcpkg cache directory
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
+        Write-Host "✓ vcpkg cache directory created" -ForegroundColor Green
+    
+    - name: Cache vcpkg binary packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: vcpkg-binary-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: vcpkg-binary-${{ runner.os }}-
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies ===" -ForegroundColor Cyan
+        & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    
+    - name: Configure CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring CogUtil ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path cogutil/build | Out-Null
+        Set-Location cogutil/build
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Building CogUtil ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 2
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Install CogUtil
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing CogUtil ===" -ForegroundColor Cyan
+        Set-Location cogutil/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload CogUtil Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: cogutil-build
+        path: install/**
+        retention-days: 1
+
+  # Stage 2: Build AtomSpace (depends on CogUtil)
+  build-atomspace:
+    runs-on: windows-latest
+    name: Build AtomSpace
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download CogUtil Build
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-build
+        path: install
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies ===" -ForegroundColor Cyan
+        & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    
+    - name: Configure AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring AtomSpace ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path atomspace/build | Out-Null
+        Set-Location atomspace/build
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Building AtomSpace ===" -ForegroundColor Cyan
+        Set-Location atomspace/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 2
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Install AtomSpace
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing AtomSpace ===" -ForegroundColor Cyan
+        Set-Location atomspace/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload AtomSpace Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: atomspace-build
+        path: install/**
+        retention-days: 1
+
+  # Stage 3: Build Moses (depends on CogUtil)
+  build-moses:
+    runs-on: windows-latest
+    name: Build Moses
+    needs: build-cogutil
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download CogUtil Build
+      uses: actions/download-artifact@v4
+      with:
+        name: cogutil-build
+        path: install
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies ===" -ForegroundColor Cyan
+        & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    
+    - name: Configure Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Configuring Moses ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path moses/build | Out-Null
+        Set-Location moses/build
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+    
+    - name: Build Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Building Moses ===" -ForegroundColor Cyan
+        Set-Location moses/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 2
+        Write-Host "✓ Build complete" -ForegroundColor Green
+    
+    - name: Install Moses
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Moses ===" -ForegroundColor Cyan
+        Set-Location moses/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+    
+    - name: Upload Moses Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: moses-build
+        path: install/**
+        retention-days: 1
+
+  # Stage 4: Build CogServer (depends on AtomSpace)
+  build-cogserver:
+    runs-on: windows-latest
+    name: Build CogServer
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download AtomSpace Build
+      uses: actions/download-artifact@v4
+      with:
+        name: atomspace-build
+        path: install
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies ===" -ForegroundColor Cyan
+        & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    
+    - name: Check CogServer Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "cogserver") {
+          Write-Host "✓ CogServer directory found" -ForegroundColor Green
+        } else {
+          Write-Host "⚠ CogServer directory not found, skipping build" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure CogServer
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "cogserver")) { exit 0 }
+        Write-Host "=== Configuring CogServer ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path cogserver/build | Out-Null
+        Set-Location cogserver/build
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Build CogServer
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "cogserver/build")) { exit 0 }
+        Write-Host "=== Building CogServer ===" -ForegroundColor Cyan
+        Set-Location cogserver/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 2
+        Write-Host "✓ Build complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Install CogServer
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "cogserver/build")) { exit 0 }
+        Write-Host "=== Installing CogServer ===" -ForegroundColor Cyan
+        Set-Location cogserver/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Upload CogServer Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: cogserver-build
+        path: install/**
+        retention-days: 1
+      continue-on-error: true
+
+  # Stage 5: Build URE (Unified Rule Engine, depends on AtomSpace)
+  build-ure:
+    runs-on: windows-latest
+    name: Build URE
+    needs: build-atomspace
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Download AtomSpace Build
+      uses: actions/download-artifact@v4
+      with:
+        name: atomspace-build
+        path: install
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+    
+    - name: Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "=== Installing Dependencies ===" -ForegroundColor Cyan
+        & "$env:VCPKG_ROOT/vcpkg.exe" install --triplet x64-windows
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    
+    - name: Check URE Directory
+      shell: pwsh
+      run: |
+        if (Test-Path "ure") {
+          Write-Host "✓ URE directory found" -ForegroundColor Green
+        } else {
+          Write-Host "⚠ URE directory not found, skipping build" -ForegroundColor Yellow
+          exit 0
+        }
+    
+    - name: Configure URE
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "ure")) { exit 0 }
+        Write-Host "=== Configuring URE ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path ure/build | Out-Null
+        Set-Location ure/build
+        $env:CMAKE_PREFIX_PATH = "$env:GITHUB_WORKSPACE/install"
+        cmake .. `
+          -G "$env:CMAKE_GENERATOR" `
+          -A x64 `
+          -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE/install" `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
+        Write-Host "✓ Configuration complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Build URE
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "ure/build")) { exit 0 }
+        Write-Host "=== Building URE ===" -ForegroundColor Cyan
+        Set-Location ure/build
+        cmake --build . --config $env:BUILD_TYPE --parallel 2
+        Write-Host "✓ Build complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Install URE
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "ure/build")) { exit 0 }
+        Write-Host "=== Installing URE ===" -ForegroundColor Cyan
+        Set-Location ure/build
+        cmake --install . --config $env:BUILD_TYPE
+        Write-Host "✓ Installation complete" -ForegroundColor Green
+      continue-on-error: true
+    
+    - name: Upload URE Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: ure-build
+        path: install/**
+        retention-days: 1
+      continue-on-error: true
+
+  # Final Stage: Package Complete Build
+  package-complete:
+    runs-on: windows-latest
+    name: Package Complete Build
+    needs: [build-cogutil, build-atomspace, build-moses, build-cogserver, build-ure]
+    if: always()
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Download All Builds
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Merge All Builds
+      shell: pwsh
+      run: |
+        Write-Host "=== Merging All Builds ===" -ForegroundColor Cyan
+        New-Item -ItemType Directory -Force -Path complete-build | Out-Null
+        
+        # Copy all artifacts to complete-build directory
+        Get-ChildItem -Path artifacts -Directory | ForEach-Object {
+          Write-Host "Merging: $($_.Name)" -ForegroundColor Yellow
+          Copy-Item -Path "$($_.FullName)\*" -Destination complete-build -Recurse -Force
+        }
+        
+        Write-Host "✓ Merge complete" -ForegroundColor Green
+    
+    - name: Create Build Manifest
+      shell: pwsh
+      run: |
+        Write-Host "=== Creating Build Manifest ===" -ForegroundColor Cyan
+        
+        $manifest = @"
+OCC Windows Build - Complete Stack
+===================================
+
+Build Date: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+Build Type: $env:BUILD_TYPE
+Platform: Windows x64
+Compiler: MSVC (Visual Studio 2022)
+
+Components Built:
+- CogUtil: ${{ needs.build-cogutil.result }}
+- AtomSpace: ${{ needs.build-atomspace.result }}
+- Moses: ${{ needs.build-moses.result }}
+- CogServer: ${{ needs.build-cogserver.result }}
+- URE: ${{ needs.build-ure.result }}
+
+Installation:
+1. Extract complete-build.zip to desired location
+2. Add bin/ directory to PATH
+3. Set OPENCOG_HOME environment variable
+
+Usage:
+- CogUtil libraries: lib/cogutil.lib
+- AtomSpace libraries: lib/atomspace.lib
+- Moses executables: bin/moses.exe
+
+Documentation: https://github.com/o9nn/occ
+"@
+        
+        Set-Content -Path complete-build/BUILD_MANIFEST.txt -Value $manifest
+        Write-Host "✓ Manifest created" -ForegroundColor Green
+    
+    - name: Upload Complete Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: occ-windows-complete-build
+        path: complete-build/**
+        retention-days: 7
+    
+    - name: Build Summary
+      shell: pwsh
+      run: |
+        Write-Host "=== OCC Windows Build Summary ===" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Component Status:" -ForegroundColor Yellow
+        Write-Host "  CogUtil:    ${{ needs.build-cogutil.result }}" -ForegroundColor $(if ("${{ needs.build-cogutil.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host "  AtomSpace:  ${{ needs.build-atomspace.result }}" -ForegroundColor $(if ("${{ needs.build-atomspace.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host "  Moses:      ${{ needs.build-moses.result }}" -ForegroundColor $(if ("${{ needs.build-moses.result }}" -eq "success") { "Green" } else { "Red" })
+        Write-Host "  CogServer:  ${{ needs.build-cogserver.result }}" -ForegroundColor $(if ("${{ needs.build-cogserver.result }}" -eq "success") { "Green" } else { "Yellow" })
+        Write-Host "  URE:        ${{ needs.build-ure.result }}" -ForegroundColor $(if ("${{ needs.build-ure.result }}" -eq "success") { "Green" } else { "Yellow" })
+        Write-Host ""
+        
+        $criticalSuccess = "${{ needs.build-cogutil.result }}" -eq "success" -and 
+                          "${{ needs.build-atomspace.result }}" -eq "success" -and 
+                          "${{ needs.build-moses.result }}" -eq "success"
+        
+        if ($criticalSuccess) {
+          Write-Host "✅ Critical components built successfully!" -ForegroundColor Green
+          Write-Host "Complete build artifact: occ-windows-complete-build" -ForegroundColor Cyan
+          exit 0
+        } else {
+          Write-Host "❌ Critical component builds failed" -ForegroundColor Red
+          exit 1
+        }

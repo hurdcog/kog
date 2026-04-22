@@ -1,0 +1,138 @@
+2008-11-20  Neal H. Walfield  <neal@gnu.org>
+
+	* slab.h (hurd_slab_constructor_t): Improve documentation.
+	(hurd_slab_destructor_t): Likewise.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Set to $(USER_CPPFLAGS).
+	(AM_CFLAGS): Set to $(USER_CFLAGS).
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty libhurd-slab/libhurd-slab.a.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+	Create symbolic link to package's library in `sysroot/lib/'.
+	* Makefile.am [ENABLE_TESTS]: Don't build package's library.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Add -I$(LIBC)/include.
+
+2005-06-22  Neal H. Walfield  <neal@gnu.org>
+
+	* slab.h: Clean up comments.
+	(SLAB_CLASS): New macro.
+
+2005-01-06  Neal H. Walfield  <neal@gnu.org>
+
+	* slab.h (hurd_slab_allocate_buffer_t): New type.
+	(hurd_slab_deallocate_buffer_t): Likewise.
+	(struct hurd_slab_space): New fields allocate_buffer and
+	deallocate_buffer.
+	(HURD_SLAB_SPACE_INITIALIZER): Add new arguments ALLOC and DEALLOC
+	and take them into account when creating the slab.
+	(hurd_slab_create): New parameters ALLOCATE_BUFFER and
+	DEALLOCATE_BUFFER.
+	(hurd_slab_init): Likewise.
+
+	* slab.c (allocate_buffer): New function.
+	(deallocate_buffer): Likewise.
+	(reap): When deallocating a buffer, use allocate_buffer.
+	(grow): When allocating or deallocating a buffer, call
+	allocate_buffer or deallocate_buffer as appropriate.
+	(hurd_slab_init): Add new arguments ALLOCATE_BUFFER and
+	DEALLOCATE_BUFFER and take them into account when setting up
+	SPACE.
+	(hurd_slab_create): Likewise.
+
+2004-11-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* slab.c (hurd_slab_destroy): Remove unused variable PREVP.
+
+2004-04-05  Marcus Brinkmann  <marcus@gnu.org>
+
+	* slab.c (hurd_slab_destroy): Fix typo.
+	(hurd_slab_free): Likewise.
+
+2004-04-01  Marcus Brinkmann  <marcus@gnu.org>
+
+	* slab.h: Include <pthread.h>.
+	(hurd_slab_init): New prototype.
+	(struct hurd_slab_space): Rename member inited to initialized.
+	* slab.c (hurd_slab_init): New function.
+	(hurd_slab_create): Implement in terms of hurd_slab_init.
+	
+2004-03-31  Marcus Brinkmann  <marcus@gnu.org>
+
+	* slab.c (grow): Do not zero out memory returned by mmap with
+	MAP_ANONYMOUS.  It already is zeroed.
+
+2004-03-26  Johan Rydberg  <jrydberg@gnu.org>
+
+        * slab.c (space_list): Remove variable.
+        (list_lock): Likewise.
+        (hurd_slab_reap): Remove function.
+        (insert_space): Likewise.
+        (hurd_slab_create): Do not call insert_space.  Delay
+        initialization of slab to first allocation.
+        (hurd_slab_destroy): Do not remove space from global list.
+        (init_space): New function.
+        (hurd_slab_dealloc): Assert that space is initialized.
+        (hurd_slab_free): New function.
+	(struct hurd_slab_space): Move from here ...
+        * slab.h (struct hurd_slab_space): ... to here.
+	(HURD_SLAB_SPACE_INITIALIZER): Defined.
+        (hurd_slab_reap): Remove prototype.
+	(hurd_slab_free): New prototype.
+
+2004-03-25  Johan Rydberg  <jrydberg@gnu.org>
+
+        * slab.c (grow): Release memory if constructor fails to initialize
+        object.  Return error value from constructor.
+        (reap): Make function static.  Do not take space lock.
+        (hurd_slab_reap): Take space lock.
+        (hurd_slab_destroy): Implement.
+
+2004-03-21  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Add -I$(top_srcdir)/libc-parts for
+	now.
+
+	* slab.h (hurd_slab_destroy): New prototype.
+	* slab.c (hurd_slab_destroy): Dummy implementation.
+
+2003-10-11  Marcus Brinkmann  <marcus@gnu.org>
+
+	* slab.h (hurd_slab_constructor_t): Add new HOOK argument.
+	(hurd_slab_destructor_t): Likewise.
+	(hurd_slab_create): Likewise.
+	* slab.c (struct hurd_slab_space): New member HOOK.  Move member
+	LOCK to beginning of struct.
+	(grow): Call constructor with hook value.
+	(reap): Call destructor with hook value.
+	(hurd_slab_create): Add argument HOOK, initialize (*SPACE)->hook.
+
+
+2003-09-17  Johan Rydberg  <jrydberg@night.trouble.net>
+
+	* slab.h: Add alignment argument.
+	* slab.c: Rewrittten.
+
+2003-08-17  Marcus Brinkmann  <marcus@gnu.org>
+
+	* Initial check-in.
+
+
+Copyright 2003 Free Software Foundation, Inc.
+
+This file is free software; as a special exception the author gives
+unlimited permission to copy and/or distribute it, with or without
+modifications, as long as this notice is preserved.
+ 
+This file is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

@@ -1,0 +1,14 @@
+Windows Build Trigger - December 23, 2025
+
+This file triggers the Windows build workflow after deploying critical vcpkg fixes.
+
+Commit: df3aef81b
+Purpose: Test vcpkg manifest mode configuration
+Expected: vcpkg setup completes without "pathspec" errors
+
+Build components:
+- CogUtil
+- AtomSpace  
+- Moses
+
+Auto-sync: Enabled (will sync to cogpy/occ on success)

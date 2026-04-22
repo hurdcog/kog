@@ -1,0 +1,42 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Community"]]
+
+
+There is an ever expanding community of people developing and running GNU/Hurd
+systems! This page tries to list all the places where we commonly hang out.
+
+---
+# Online Communities
+
+* [[Communication]] -- How communication and coordination works within the group.
+* [[Shared-Wiki-Weblog|Weblogs]] -- A shared weblog by Hurd developers and enthusiasts. 
+* [[User Pages|/user]]
+* [[Meetings]] -- Meetings with Hurd developer attendance.
+* [[GSoC]] -- Participation in the Google Summer of Code
+* [[Hurd/HurdDevelopers]] -- Who's who?
+* [Hurd User's Guide](http://www.gnu.org/software/hurd/users-guide/using_gnuhurd.html).
+* [[Orkut]]
+* [[FaceBook]]
+* [Advogato.org -- Hurd Project page](http://advogato.org/proj/HURD/)
+* [Google+](https://plus.google.com/114942488385711891227)
+* [reddit](http://www.reddit.com/r/hurd)
+* [[Media_Appearances]]
+
+---
+# Hurd User Groups
+
+* [[THUG]] - Toronto (GNU/)Hurd User Group
+* [[CHUG]] - Californian HUG
+* [[DHUG]] - Dunedin (GNU/)Hurd User Group
+* [[HurdBR]] - Brasilian, portuguese speaking, HUG
+* [HurdIT](http://hurd-it.sf.net/) - An Italian speaking HUG
+* [HurdES](http://hurd.es.gnu.org/) - **Currently down**. Spanish HUG
+* [HurdFR](http://www.hurdfr.org/) - **Currently down**. French HUG
+

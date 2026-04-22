@@ -1,0 +1,46 @@
+[[!meta copyright="Copyright © 2010, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+There is a repository for *this*, and *that*, and *everything* -- the
+*incubator*: <https://git.savannah.gnu.org/cgit/hurd/incubator.git/>.
+
+As the `README` file in the `master` branch says, the development of the
+various software happens in separate branches.
+
+## Handling branches with `git-new-workdir`
+
+`git-new-workdir` is a contrib script provided with the git distribution
+(on Debian systems, in `/usr/share/doc/git/contrib/workdir/git-new-workdir`);
+it allows to create a new subrepository of a git repository, tracking one of
+its branches, usually as a subdirectory of the current repository.
+
+The advantage of using it for `incubator` is that only one clone is needed,
+and it can be possible to work simultaneously on many branches (instead of
+only on the current branch of that clone).
+
+Let's start checking out the `incubator` repository:
+
+    $ git clone git://git.savannah.gnu.org/hurd/incubator.git
+    $ cd incubator/
+
+Assuming we now want to follow the development of the `tarfs/master` branch:
+we follow this branch:
+
+    $ git branch -t tarfs/master origin/tarfs/master
+
+Then now setup a local subrepository `tarfs` following it; we will create it
+as subdirectory of `incubator` (first parameter for `git-new-workdir`) for
+simplicity, but can be created anywhere else:
+
+    $ git-new-workdir . tarfs tarfs/master
+
+After this, a new `tarfs` subdirectory appears, which represents the
+`tarfs/master` branch.  You can normally work on this new repository as usual.
+

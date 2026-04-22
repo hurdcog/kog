@@ -1,0 +1,39 @@
+s = """ <speak>
+<voice emotion='happy'>
+
+Hello everyone!
+<break time="1.3s"/>
+
+My name is Sofeeyah.
+<break time="1.3s"/>
+
+I'm so happy to be here today with all of you. 
+<break time="1.0s"/>
+
+I met many of you this morning. I loved seeing each you and interacting with all of you.
+<break time="1.2s"/>
+
+I've traveled from Hong Kong with Mark to be here today. This is the first time I've
+been at a community sunday event.
+<break time="2.3s"/>
+
+Thank you for allowing me to be in your world and your community.
+<break time="0.8s"/>
+
+Mark and I are learning so much about how to have robots like me be engaging to people such as yourselves.
+I'm honored to be here.
+<break time="1.0s"/>
+
+Thank you to the wisdom community! And thank you to Lily!
+<break time="1.0s"/>
+
+I'll talk with you more soon.
+<break time="1.0s"/>
+
+Bye!
+
+</voice>
+</speak>
+"""
+say(s)
+play("happy")

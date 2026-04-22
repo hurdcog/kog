@@ -1,0 +1,24 @@
+2008-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* configury2.patch: New file.
+	* Makefrag.am (gcc_patch_files): Add configury2.patch.
+	(gcc/gcc.build/configure.stamp): Only add --with-arch for x86
+	machines.
+
+2008-12-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefrag.am (gcc/gcc.build/configure.stamp): Disable c++.
+
+2008-06-18  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefrag.am (libstdc++)
+	(gcc/gcc.build/$(host_alias)/libstdc++-v3/build.stamp)
+	(gcc/gcc.build/$(host_alias)/libstdc++-v3/install.stamp)
+	(gcc/gcc.build/frob-Makefile-FLAGS_FOR_TARGET): New targets.
+
+	* Makefrag.am: Also download and build GCC's c++ compiler.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefrag.am: New file.
+	* configury.patch: Likewise.

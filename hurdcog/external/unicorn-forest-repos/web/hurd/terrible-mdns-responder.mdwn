@@ -1,0 +1,52 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+# What is the terrible mDNS responder?
+
+Suppose you have the Hurd running on a another machine in your local
+network.  `ssh <IP-ADDRESS>` is not guarenteed to work, because your
+router will occassionally change the IP address of your Hurd machine.
+That's kind of annoying!  Luckily, Sergey wrote the terrible-mDNS
+responder, so that `ssh <hostname>.local` just works! How cool is
+that!?
+
+To be very clear, this does *not* teach the system to do mDNS queries
+(.local hostname lookups). The terrible-mDNS-responder only responds
+to other host's queries. (Those other hosts may be running Avahi or
+sd-rd or Apple's mDNSResponder or LookupServer or ...)
+
+The sources are over on
+[[GitHub|https://github.com/bugaevc/terrible-mdns-responder]]. There
+are no dependencies other than a libc. It's built with Meson and
+licensed under AGPL v3+. It even comes with an awkward attempt at a
+sysv init script! What's not to like?
+
+# How to use it on Debian GNU/Hurd?
+
+	$ git clone git@github.com:bugaevc/terrible-mdns-responder.git
+	$ cd terrible-mdns-responder
+	$ meson setup build # you may need to apt install meson
+	$ ninja -C build
+	$ sudo ninja install -C build
+	$ sudo update-rc.d terrible-mdns-responder defaults
+	$ sudo update-rc.d avahi-daemon disable
+	$ sudo service terrible-mdns-responder start
+
+# FAQ  Why not use avahi?
+
+Debian GNU/Hurd comes with Avahi in the default install (I believe).
+Avahi has never worked for me (on the Hurd), and I doubt it has ever
+worked for anyone else either. I *have* looked into the why (as in
+spent hours debugging and patching it); I don't remember the
+specifics, but I do remember that I concluded it won't be easy to make
+it work. So, a dead end.

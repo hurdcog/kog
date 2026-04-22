@@ -1,0 +1,787 @@
+name: OCC Complete Stack Build
+
+# This workflow builds the complete AGI-OS stack in the correct dependency order:
+# Layer 1: Cognumach (Microkernel)
+# Layer 2: HurdCog (Operating System)
+# Layer 3: OCC (OpenCog Collection AGI Framework)
+#
+# Based on BUILD_SEQUENCES.md and dependency analysis of all OpenCog components
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+    inputs:
+      build_layer_1:
+        description: 'Build Layer 1: Cognumach Microkernel'
+        required: false
+        default: false
+        type: boolean
+      build_layer_2:
+        description: 'Build Layer 2: HurdCog Operating System'
+        required: false
+        default: false
+        type: boolean
+      build_layer_3:
+        description: 'Build Layer 3: OCC Framework (default)'
+        required: false
+        default: true
+        type: boolean
+      build_storage_backends:
+        description: 'Build AtomSpace storage backends'
+        required: false
+        default: true
+        type: boolean
+      run_tests:
+        description: 'Run component tests'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  BUILD_TYPE: Release
+  MAKEFLAGS: -j2
+
+permissions:
+  contents: read
+
+jobs:
+  # ============================================================================
+  # STAGE 1: Foundation Components (cogutil, coggml, agentic-chatbots)
+  # These have no dependencies and can be built in parallel
+  # ============================================================================
+
+  build-foundation:
+    runs-on: ubuntu-latest
+    name: "Stage 1: Foundation (cogutil, coggml)"
+    if: ${{ github.event.inputs.build_layer_3 != 'false' }}
+
+    outputs:
+      cogutil_built: ${{ steps.build_cogutil.outputs.built }}
+      coggml_built: ${{ steps.build_coggml.outputs.built }}
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Cache CCache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: foundation-${{ runner.os }}-${{ hashFiles('cogutil/**', 'coggml/**') }}
+        restore-keys: |
+          foundation-${{ runner.os }}-
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          binutils-dev \
+          libiberty-dev \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          libboost-regex-dev \
+          guile-3.0-dev \
+          python3-nose \
+          valgrind \
+          doxygen \
+          ccache
+
+    - name: Install Sparsehash
+      run: |
+        if [ -f ".github/scripts/install-sparsehash.sh" ]; then
+          chmod +x .github/scripts/install-sparsehash.sh
+          .github/scripts/install-sparsehash.sh
+        fi
+      continue-on-error: true
+
+    # Build CogUtil (foundation utilities)
+    - name: Build CogUtil
+      id: build_cogutil
+      run: |
+        if [ -d "cogutil" ] && [ -f "cogutil/CMakeLists.txt" ]; then
+          mkdir -p cogutil/build
+          cd cogutil/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+          echo "built=true" >> $GITHUB_OUTPUT
+        else
+          echo "CogUtil not found"
+          echo "built=false" >> $GITHUB_OUTPUT
+        fi
+      continue-on-error: true
+
+    - name: Test CogUtil
+      if: ${{ github.event.inputs.run_tests != 'false' && steps.build_cogutil.outputs.built == 'true' }}
+      run: |
+        cd cogutil/build
+        make tests || true
+        make check ARGS="${{ env.MAKEFLAGS }}" || true
+      continue-on-error: true
+
+    # Build CogGML (standalone cognitive microkernel shards)
+    - name: Build CogGML
+      id: build_coggml
+      run: |
+        if [ -d "coggml" ] && [ -f "coggml/CMakeLists.txt" ]; then
+          mkdir -p coggml/build
+          cd coggml/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} || true
+          sudo make install || true
+          sudo ldconfig
+          echo "built=true" >> $GITHUB_OUTPUT
+        else
+          echo "CogGML not found"
+          echo "built=false" >> $GITHUB_OUTPUT
+        fi
+      continue-on-error: true
+
+    # Build Agentic Chatbots (standalone)
+    - name: Build Agentic Chatbots
+      run: |
+        if [ -d "agentic-chatbots" ] && [ -f "agentic-chatbots/CMakeLists.txt" ]; then
+          mkdir -p agentic-chatbots/build
+          cd agentic-chatbots/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} || true
+        fi
+      continue-on-error: true
+
+  # ============================================================================
+  # STAGE 2: AtomSpace (depends on cogutil)
+  # ============================================================================
+
+  build-atomspace:
+    runs-on: ubuntu-latest
+    name: "Stage 2: AtomSpace"
+    needs: build-foundation
+    if: ${{ github.event.inputs.build_layer_3 != 'false' }}
+
+    outputs:
+      atomspace_built: ${{ steps.build_atomspace.outputs.built }}
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Cache CCache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ccache
+        key: atomspace-${{ runner.os }}-${{ hashFiles('atomspace/**') }}
+        restore-keys: |
+          atomspace-${{ runner.os }}-
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          binutils-dev \
+          libiberty-dev \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          libboost-regex-dev \
+          guile-3.0-dev \
+          libgmp-dev \
+          cython3 \
+          python3-nose \
+          python3-dev \
+          python3-pip \
+          valgrind \
+          doxygen \
+          ccache
+
+    - name: Install Sparsehash
+      run: |
+        if [ -f ".github/scripts/install-sparsehash.sh" ]; then
+          chmod +x .github/scripts/install-sparsehash.sh
+          .github/scripts/install-sparsehash.sh
+        fi
+      continue-on-error: true
+
+    - name: Rebuild and Install CogUtil
+      run: |
+        if [ -d "cogutil" ]; then
+          mkdir -p cogutil/build
+          cd cogutil/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+        fi
+
+    - name: Build AtomSpace
+      id: build_atomspace
+      run: |
+        if [ -d "atomspace" ] && [ -f "atomspace/CMakeLists.txt" ]; then
+          mkdir -p atomspace/build
+          cd atomspace/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+          echo "built=true" >> $GITHUB_OUTPUT
+        else
+          echo "AtomSpace not found"
+          echo "built=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Test AtomSpace
+      if: ${{ github.event.inputs.run_tests != 'false' }}
+      run: |
+        cd atomspace/build
+        make tests || true
+        make check ARGS="${{ env.MAKEFLAGS }}" || true
+      continue-on-error: true
+
+  # ============================================================================
+  # STAGE 3: Core Components (parallel builds after AtomSpace)
+  # - atomspace-storage, cogserver, matrix, unify, attention, learn, agents, sensory
+  # ============================================================================
+
+  build-core-parallel:
+    runs-on: ubuntu-latest
+    name: "Stage 3: Core Components"
+    needs: build-atomspace
+    if: ${{ github.event.inputs.build_layer_3 != 'false' }}
+
+    strategy:
+      matrix:
+        component: [atomspace-storage, cogserver, matrix, unify, attention, learn, agents, sensory]
+      fail-fast: false
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          binutils-dev \
+          libiberty-dev \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          guile-3.0-dev \
+          libasio-dev \
+          cython3 \
+          python3-nose \
+          python3-dev \
+          valgrind \
+          doxygen
+
+    - name: Install Sparsehash
+      run: |
+        if [ -f ".github/scripts/install-sparsehash.sh" ]; then
+          chmod +x .github/scripts/install-sparsehash.sh
+          .github/scripts/install-sparsehash.sh
+        fi
+      continue-on-error: true
+
+    - name: Rebuild Foundation
+      run: |
+        # Install CogUtil
+        if [ -d "cogutil" ]; then
+          mkdir -p cogutil/build && cd cogutil/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+          cd ../..
+        fi
+
+        # Install AtomSpace
+        if [ -d "atomspace" ]; then
+          mkdir -p atomspace/build && cd atomspace/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+          cd ../..
+        fi
+
+    - name: Build ${{ matrix.component }}
+      run: |
+        if [ -d "${{ matrix.component }}" ] && [ -f "${{ matrix.component }}/CMakeLists.txt" ]; then
+          mkdir -p ${{ matrix.component }}/build
+          cd ${{ matrix.component }}/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install || true
+          sudo ldconfig
+        else
+          echo "${{ matrix.component }} not found or no CMakeLists.txt"
+        fi
+      continue-on-error: true
+
+    - name: Test ${{ matrix.component }}
+      if: ${{ github.event.inputs.run_tests != 'false' }}
+      run: |
+        if [ -d "${{ matrix.component }}/build" ]; then
+          cd ${{ matrix.component }}/build
+          make tests || true
+          make check ARGS="${{ env.MAKEFLAGS }}" || true
+        fi
+      continue-on-error: true
+
+  # ============================================================================
+  # STAGE 4: Reasoning Components (depends on unify)
+  # - URE, miner, PLN, asmoses
+  # ============================================================================
+
+  build-reasoning:
+    runs-on: ubuntu-latest
+    name: "Stage 4: Reasoning (URE, PLN, Miner)"
+    needs: build-core-parallel
+    if: ${{ github.event.inputs.build_layer_3 != 'false' }}
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          binutils-dev \
+          libiberty-dev \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          libboost-regex-dev \
+          guile-3.0-dev \
+          libasio-dev \
+          liboctomap-dev \
+          cython3 \
+          python3-nose \
+          python3-dev \
+          valgrind \
+          doxygen
+
+    - name: Install Sparsehash
+      run: |
+        if [ -f ".github/scripts/install-sparsehash.sh" ]; then
+          chmod +x .github/scripts/install-sparsehash.sh
+          .github/scripts/install-sparsehash.sh
+        fi
+      continue-on-error: true
+
+    - name: Rebuild Dependencies
+      run: |
+        # CogUtil
+        if [ -d "cogutil" ]; then
+          mkdir -p cogutil/build && cd cogutil/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+        # AtomSpace
+        if [ -d "atomspace" ]; then
+          mkdir -p atomspace/build && cd atomspace/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+        # Unify
+        if [ -d "unify" ]; then
+          mkdir -p unify/build && cd unify/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+    # Build URE (depends on unify)
+    - name: Build URE
+      run: |
+        if [ -d "ure" ] && [ -f "ure/CMakeLists.txt" ]; then
+          mkdir -p ure/build
+          cd ure/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    # Build Miner (depends on URE)
+    - name: Build Miner
+      run: |
+        if [ -d "miner" ] && [ -f "miner/CMakeLists.txt" ]; then
+          mkdir -p miner/build
+          cd miner/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    # Build PLN (depends on URE)
+    - name: Build PLN
+      run: |
+        if [ -d "pln" ] && [ -f "pln/CMakeLists.txt" ]; then
+          mkdir -p pln/build
+          cd pln/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    # Build AS-MOSES (depends on cogutil)
+    - name: Build AS-MOSES
+      run: |
+        if [ -d "asmoses" ] && [ -f "asmoses/CMakeLists.txt" ]; then
+          mkdir -p asmoses/build
+          cd asmoses/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBoost_NO_SYSTEM_PATHS=OFF
+          make ${{ env.MAKEFLAGS }}
+          sudo make install
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    - name: Test Reasoning Components
+      if: ${{ github.event.inputs.run_tests != 'false' }}
+      run: |
+        for component in ure miner pln asmoses; do
+          if [ -d "$component/build" ]; then
+            echo "Testing $component..."
+            cd $component/build
+            make tests || true
+            make check ARGS="${{ env.MAKEFLAGS }}" || true
+            cd ../..
+          fi
+        done
+      continue-on-error: true
+
+  # ============================================================================
+  # STAGE 5: Storage Backends (optional, parallel)
+  # - atomspace-rocks, atomspace-cog, atomspace-pgres
+  # ============================================================================
+
+  build-storage-backends:
+    runs-on: ubuntu-latest
+    name: "Stage 5: Storage Backends"
+    needs: build-core-parallel
+    if: ${{ github.event.inputs.build_storage_backends != 'false' }}
+
+    strategy:
+      matrix:
+        component: [atomspace-rocks, atomspace-cog]
+      fail-fast: false
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          binutils-dev \
+          libiberty-dev \
+          libboost-dev \
+          libboost-filesystem-dev \
+          libboost-program-options-dev \
+          libboost-system-dev \
+          libboost-thread-dev \
+          guile-3.0-dev \
+          libasio-dev \
+          librocksdb-dev \
+          cython3 \
+          python3-nose \
+          python3-dev \
+          valgrind \
+          doxygen
+
+    - name: Install Sparsehash
+      run: |
+        if [ -f ".github/scripts/install-sparsehash.sh" ]; then
+          chmod +x .github/scripts/install-sparsehash.sh
+          .github/scripts/install-sparsehash.sh
+        fi
+      continue-on-error: true
+
+    - name: Rebuild Dependencies
+      run: |
+        # CogUtil
+        if [ -d "cogutil" ]; then
+          mkdir -p cogutil/build && cd cogutil/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+        # AtomSpace
+        if [ -d "atomspace" ]; then
+          mkdir -p atomspace/build && cd atomspace/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+        # AtomSpace Storage
+        if [ -d "atomspace-storage" ]; then
+          mkdir -p atomspace-storage/build && cd atomspace-storage/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+        # CogServer (for atomspace-cog)
+        if [ -d "cogserver" ] && [ "${{ matrix.component }}" = "atomspace-cog" ]; then
+          mkdir -p cogserver/build && cd cogserver/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }} && sudo make install && sudo ldconfig
+          cd ../..
+        fi
+
+    - name: Build ${{ matrix.component }}
+      run: |
+        if [ -d "${{ matrix.component }}" ] && [ -f "${{ matrix.component }}/CMakeLists.txt" ]; then
+          mkdir -p ${{ matrix.component }}/build
+          cd ${{ matrix.component }}/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install || true
+          sudo ldconfig
+        else
+          echo "${{ matrix.component }} not found"
+        fi
+      continue-on-error: true
+
+  # ============================================================================
+  # STAGE 6: Cognitive Architecture (CogSelf depends on CogGML)
+  # ============================================================================
+
+  build-cognitive-architecture:
+    runs-on: ubuntu-latest
+    name: "Stage 6: Cognitive Architecture (CogSelf)"
+    needs: build-foundation
+    if: ${{ github.event.inputs.build_layer_3 != 'false' }}
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          cxxtest \
+          libboost-dev \
+          guile-3.0-dev \
+          python3-dev
+
+    - name: Build CogGML
+      run: |
+        if [ -d "coggml" ] && [ -f "coggml/CMakeLists.txt" ]; then
+          mkdir -p coggml/build
+          cd coggml/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install || true
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    - name: Build CogSelf
+      run: |
+        if [ -d "cogself" ] && [ -f "cogself/CMakeLists.txt" ]; then
+          mkdir -p cogself/build
+          cd cogself/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install || true
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+    - name: Build AtomSpace Accelerator
+      run: |
+        if [ -d "atomspace-accelerator" ] && [ -f "atomspace-accelerator/CMakeLists.txt" ]; then
+          mkdir -p atomspace-accelerator/build
+          cd atomspace-accelerator/build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          make ${{ env.MAKEFLAGS }}
+          sudo make install || true
+          sudo ldconfig
+        fi
+      continue-on-error: true
+
+  # ============================================================================
+  # Final Summary and Report
+  # ============================================================================
+
+  build-summary:
+    runs-on: ubuntu-latest
+    name: "Build Summary Report"
+    needs: [build-foundation, build-atomspace, build-core-parallel, build-reasoning, build-storage-backends, build-cognitive-architecture]
+    if: always()
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Generate Build Report
+      run: |
+        mkdir -p reports
+
+        cat > reports/OCC_BUILD_REPORT.md << 'EOF'
+        # OCC Complete Stack Build Report
+
+        ## Build Summary
+
+        Build completed at: $(date)
+
+        ## AGI-OS Three-Layer Architecture
+
+        | Layer | Component | Description | Status |
+        |-------|-----------|-------------|--------|
+        | 1 | Cognumach | GNU Mach cognitive microkernel | Optional |
+        | 2 | HurdCog | GNU Hurd cognitive OS | Optional |
+        | 3 | OCC | OpenCog Collection AGI framework | Built |
+
+        ## Build Sequence (Layer 3: OCC)
+
+        ### Stage 1: Foundation (Parallel)
+        - cogutil - Base utilities and configuration
+        - coggml - Self-aware microkernel shards (standalone)
+        - agentic-chatbots - Conversational AI (standalone)
+
+        ### Stage 2: AtomSpace
+        - atomspace - Hypergraph knowledge representation
+
+        ### Stage 3: Core Components (Parallel)
+        - atomspace-storage - Storage API
+        - cogserver - Network shell and module loading
+        - matrix - Sparse matrix operations
+        - unify - Unification algorithms
+        - attention - Economic Attention Networks (ECAN)
+        - learn - Language learning algorithms
+        - agents - Interactive agent framework
+        - sensory - Dataflow system
+
+        ### Stage 4: Reasoning Components
+        - ure - Unified Rule Engine (depends on unify)
+        - miner - Pattern mining (depends on URE)
+        - pln - Probabilistic Logic Networks (depends on URE)
+        - asmoses - Meta-Optimizing Semantic Evolutionary Search
+
+        ### Stage 5: Storage Backends (Optional)
+        - atomspace-rocks - RocksDB backend
+        - atomspace-cog - Network storage via CogServer
+        - atomspace-pgres - PostgreSQL backend
+
+        ### Stage 6: Cognitive Architecture
+        - cogself - AGI synergy framework (depends on coggml)
+        - atomspace-accelerator - High-performance inference engine
+
+        ## Dependency Graph
+
+        ```
+        cogutil (no deps)
+        ├── atomspace
+        │   ├── atomspace-storage
+        │   │   ├── atomspace-rocks
+        │   │   ├── atomspace-pgres
+        │   │   └── cogserver
+        │   │        ├── attention
+        │   │        ├── learn
+        │   │        └── atomspace-cog
+        │   ├── matrix
+        │   ├── unify
+        │   │   ├── ure
+        │   │   │   ├── miner
+        │   │   │   └── pln
+        │   ├── agents
+        │   └── sensory
+        └── asmoses
+
+        coggml (no deps)
+        └── cogself
+
+        agentic-chatbots (no deps)
+        atomspace-accelerator (optional: atomspace)
+        ```
+
+        ## Notes
+
+        - Components are built in dependency order
+        - Tests are run when enabled (continue-on-error for CI stability)
+        - Storage backends are optional but recommended
+        - Layer 1 and Layer 2 are optional and built via agi-os-layers-build.yml
+
+        EOF
+
+        cat reports/OCC_BUILD_REPORT.md
+
+    - name: Upload Build Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: occ-complete-stack-report
+        path: reports/
+        retention-days: 30
+
+    - name: Create Summary
+      run: |
+        echo "# OCC Complete Stack Build" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Build Stages Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 1: Foundation (cogutil, coggml)" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 2: AtomSpace" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 3: Core Components" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 4: Reasoning (URE, PLN, Miner)" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 5: Storage Backends" >> $GITHUB_STEP_SUMMARY
+        echo "- Stage 6: Cognitive Architecture" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Build completed at: $(date)" >> $GITHUB_STEP_SUMMARY

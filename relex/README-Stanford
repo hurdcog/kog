@@ -1,0 +1,559 @@
+
+             Stanford Parser Compatibility Mode
+             ----------------------------------
+                      October 2009
+
+The Stanford parser provides a defacto standard definition of dependency
+relations used in parsing.  Relex has a compatibility mode which
+attempts to generate the same output as the Stanford parser.  This is
+an interesting thing to do, for two reasons:
+
+   1) It provides a way of double-checking parse results,
+   2) RelEx is more than three times faster than the "factored"
+      version of the Stanford parser, although it is slower than the
+      PCFG version.
+
+The compatibility mode is currently in "beta": it is mostly implemented,
+but still has a number of rough spots that need work.
+
+Compatibility mode is enabled with the --stanford flag, passed to
+RelationExtractor. So for example, edit "relation-extractor.sh"
+and add "--stanford" to the command line there.
+
+A set of test sentences, testing operation of the current parser,
+are documented below. An automated test case, testing compatibility,
+can be run by issueing the command "ant test", which will compile and
+run src/java_test/relex/test/TestStanford.java.
+
+The current RelEx implementation, and the notes below, are all relative
+to the version of the Stanford parser that is available at the time of
+this writing.  RelEx is attempting to be functionally compatible, while
+using the documentation as a guide.  There are a number of areas where
+the actual operation of the Stanford parser does not match the
+documentation for it -- it either fails to generate the markup as
+claimed, or it generates undocumented dependencies.  Thus, creating
+"compatibility" is somewhat of an inexact science. The status of
+various test sentences are reviewed below.
+
+Note that compatibility is strongly influenced by the parse ranking
+algorithm. The Link-Grammar parser often generates several candidate
+parses for a sentence, and then ranks them according to liklihood.
+It can be configured to use one of several different ranking algorithms.
+Thus, the "top-most" parse, used by the test case, is subject to change
+depending on the ranking algorithm. That is, precision (but not recall)
+is strongly dependent on the parse ranking.
+
+
+What its not
+------------
+This mode is NOT an API compatibility. The API's are completely
+different. The compatibility is in the dependencies generated.
+
+Missing at this time is compatible part-of-speech tagging. At this
+time, RelEx generates much simpler part-of-speech tags, and there has
+been no effort made to ensure their accuracy.
+
+RelEx cannot be trained to learn other languages. RelEx is
+hand-crafted, and handles English only. (We have vague plans to do
+better someday...)
+
+
+Issues:
+-------
+The stanford parser has several different operational modes, wherein
+it generates different relations, dependeing on the mode. A fair number
+of the relations, including csubjpass, infmod, pcomp, possessive, punct,
+purpcl, tmod and xcomp, are not generated in the default mode.  At this
+time RelEx is attempting to be compatible only with the default mode.
+
+At this time, link-grammar handles conjunctions in a novel way.
+These are not percolated up to RelEx in a proper manner, and are
+thus are mostly not handled.
+
+Some other rough spots/issues are marked with XXX below.
+
+
+Version
+-------
+The current Stanford parser version is labelled as:
+
+    Stanford Lexicalized Parser v1.6.1 - 19 Oct 2008.
+
+The ruling documentation is taken to be:
+
+   Stanford typed dependencies manual, Marie-Catherine de Marneffe
+   and Christopher D. Manning September 2008, available at:
+   http://nlp.stanford.edu/software/dependencies_manual.pdf
+
+Documentation for the Penn Tagset can be found at:
+ftp://ftp.cis.upenn.edu/pub/treebank/doc/tagguide.ps.gz
+http://www.ims.uni-stuttgart.de/projekte/CorpusWorkbench/CQP-HTMLDemo/PennTreebankTS.html
+http://www.mozart-oz.org/mogul/doc/lager/brill-tagger/penn.html
+http://www.comp.leeds.ac.uk/ccalas/tagsets/upenn.html
+http://bulba.sdsu.edu/jeanette/thesis/PennTags.html
+
+
+Test sentences
+--------------
+A list of test sentences, and status. Many/most of these sentences are
+taken from the examples provided in the Stanford documentation.
+Additional test sentences can be found in "TestStanford.java".
+
+The parsing of these sentences are tested automatically by running
+"ant test", which runs the test case "TestStanford.java".
+
+Who invented sliced bread?
+    Stanford output:
+       nsubj(invented-2, Who-1)
+       amod(bread-4, sliced-3)
+       dobj(invented-2, bread-4)
+    RelEx status: OK
+
+Jim runs quickly.
+    Stanford output:
+       nsubj(runs-2, Jim-1)
+       advmod(runs-2, quickly-3)
+    RelEx status: OK
+
+The bird, a robin, sang sweetly.
+    Stanford output:
+       det(bird-2, The-1)
+       nsubj(sang-7, bird-2)
+       det(robin-5, a-4)
+       appos(bird-2, robin-5)
+       advmod(sang-7, sweetly-8)
+    RelEx status: OK
+
+There is a place we can go.
+    Stanford output:
+       expl(is-2, There-1)
+       det(place-4, a-3)
+       nsubj(is-2, place-4)
+       nsubj(go-7, we-5)
+       aux(go-7, can-6)
+       dep(is-2, go-7)
+    RelEx status:
+       Not testing this sentence, since stanford outputs a
+       "dep" which is not documented in thier manual.
+       Other than that, the parse works.
+
+The linebacker gave the quarterback a push.
+    Stanford output:
+       det(linebacker-2, The-1)
+       nsubj(gave-3, linebacker-2)
+       det(quarterback-5, the-4)
+       iobj(gave-3, quarterback-5)
+       det(push-7, a-6)
+       dobj(gave-3, push-7)
+    RelEx status: OK
+
+He stood at the goal line.
+    Stanford output:
+       nsubj(stood-2, He-1)
+       det(line-6, the-4)
+       nn(line-6, goal-5)
+       prep_at(stood-2, line-6)
+    RelEx status: OK
+
+She looks very beautiful.
+    Stanford output:
+       nsubj(looks-2, She-1)
+       advmod(beautiful-4, very-3)
+       acomp(looks-2, beautiful-4)
+    RelEx status: OK
+
+The accident happened as the night was falling.
+    Stanford output:
+       det(accident-2, The-1)
+       nsubj(happened-3, accident-2)
+       mark(falling-8, as-4)
+       det(night-6, the-5)
+       nsubj(falling-8, night-6)
+       aux(falling-8, was-7)
+       advcl(happened-3, falling-8)
+    RelEx status: OK
+
+If you know who did it, you should tell the teacher.
+    Stanford output:
+       mark(know-3, If-1)
+       nsubj(know-3, you-2)
+       advcl(tell-10, know-3)
+       nsubj(did-5, who-4)
+       ccomp(know-3, did-5)
+       dobj(did-5, it-6)
+       nsubj(tell-10, you-8)
+       aux(tell-10, should-9)
+       det(teacher-12, the-11)
+       dobj(tell-10, teacher-12)
+    RelEx status: OK
+
+The man has been killed by the police.
+    Stanford output:
+       det(man-2, The-1)
+       nsubjpass(killed-5, man-2)
+       aux(killed-5, has-3)
+       auxpass(killed-5, been-4)
+       det(police-8, the-7)
+       agent(killed-5, police-8)
+    Relex status: OK.
+    Hmm ... but the above seems broken -- it leaves out "by" from the
+    parse, using "agent" instead. Very strange! But that's what we'll
+    do too.
+
+Effects caused by the protein are important.
+    Stanford output:
+       nsubj(important-7, Effects-1)
+       partmod(Effects-1, caused-2)
+       det(protein-5, the-4)
+       agent(caused-2, protein-5)
+       cop(important-7, are-6)
+    RelEx status: OK
+
+Sam, my brother, has arrived.
+    Stanford output:
+       nsubj(arrived-7, Sam-1)
+       poss(brother-4, my-3)
+       appos(Sam-1, brother-4)
+       aux(arrived-7, has-6)
+    RelEx status: OK
+
+What is that?
+    Stanford output:
+       attr(is-2, What-1)
+       nsubj(is-2, that-3)
+    RelEx status: OK
+
+Reagan has died.
+    Stanford output:
+       nsubj(died-3, Reagan-1)
+       aux(died-3, has-2)
+    RelEx status: OK
+
+He should leave.
+    Stanford output:
+       nsubj(leave-3, He-1)
+       aux(leave-3, should-2)
+    RelEx status: OK
+
+Kennedy has been killed.
+    Stanford output:
+       nsubjpass(killed-4, Kennedy-1)
+       aux(killed-4, has-2)
+       auxpass(killed-4, been-3)
+    RelEx status: OK
+
+Kennedy was killed.
+    Stanford output:
+       nsubjpass(killed-3, Kennedy-1)
+       auxpass(killed-3, was-2)
+    RelEx status: OK
+
+Kennedy got killed.
+    Stanford output:
+       nsubjpass(killed-3, Kennedy-1)
+       auxpass(killed-3, got-2)
+    RelEx status: OK
+
+He says that you like to swim.
+    Stanford output:
+       nsubj(says-2, He-1)
+       complm(like-5, that-3)
+       nsubj(like-5, you-4)
+       ccomp(says-2, like-5)
+       nsubj(swim-7, to-6)
+       ccomp(like-5, swim-7)
+    RelEx status: Not testing. The "nsubj(swim, to)" seems insane to me
+      RelEx currently generates aux(swim-7, to-6) which seems
+      reasonable to me.
+
+Bill is big.
+    Stanford output:
+       nsubj(big-3, Bill-1)
+       cop(big-3, is-2)
+    RelEx status: OK
+       (This is an example where the use of the predicative adjective
+       would have been more conceptually correct!)
+
+Bill is an honest man.
+    Stanford output:
+       nsubj(man-5, Bill-1)
+       cop(man-5, is-2)
+       det(man-5, an-3)
+       amod(man-5, honest-4)
+    RelEx status: OK
+
+What she said makes sense.
+    Stanford output:
+       dobj(said-3, What-1)
+       nsubj(said-3, she-2)
+       csubj(makes-4, said-3)
+       dobj(makes-4, sense-5)
+    RelEx status: OK
+
+What she said is not true.
+    Stanford output:
+       dobj(said-3, What-1)
+       nsubj(said-3, she-2)
+       csubj(true-6, said-3)
+       cop(true-6, is-4)
+       neg(true-6, not-5)
+    RelEx status: OK
+
+That she lied was suspected by everyone.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate csubjpass.
+    RelEx status: nominal
+
+Which book do you prefer?
+    Stanford output:
+       det(book-2, Which-1)
+       dobj(prefer-5, book-2)
+       aux(prefer-5, do-3)
+       nsubj(prefer-5, you-4)
+    RelEx status: OK
+
+There is a ghost in the room.
+    Stanford output:
+       expl(is-2, There-1)
+       det(ghost-4, a-3)
+       nsubj(is-2, ghost-4)
+       det(room-7, the-6)
+       prep_in(is-2, room-7)
+    RelEx status: OK
+
+I don’t have anything to say.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate infmod.
+    RelEx status: nominal
+
+She gave me a raise.
+    Stanford output:
+       nsubj(gave-2, She-1)
+       iobj(gave-2, me-3)
+       det(raise-5, a-4)
+       dobj(gave-2, raise-5)
+    RelEx status: OK
+
+Forces engaged in fighting after insurgents attacked.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate mark.
+    RelEx status: nominal
+
+The director is 65 years old.
+    Stanford output:
+       det(director-2, The-1)
+       nsubj(old-6, director-2)
+       cop(old-6, is-3)
+       num(years-5, 65-4)
+       measure(old-6, years-5)
+    RelEx status: OK
+
+Sam eats 3 sheep.
+    Stanford output:
+       nsubj(eats-2, Sam-1)
+       num(sheep-4, 3-3)
+       dobj(eats-2, sheep-4)
+    RelEx status: OK
+
+I lost $ 3.2 billion.
+    Stanford output:
+       nsubj(lost-2, I-1)
+       dobj(lost-2, $-3)
+       number($-3, 3.2-4)
+       number($-3, billion-5)
+
+    RelEx status: nominal
+       I don't get it. There's a subtle distinction between num and
+       number that Stanford is making that I dont' understand.  RelEx
+       currently generates:
+          number(billion-5, 3.2-4)
+          num($-3, billion-5)
+       which I think is more correct.
+
+Truffles picked during the spring are tasty.
+    Stanford output:
+       nsubj(tasty-7, Truffles-1)
+       partmod(Truffles-1, picked-2)
+       det(spring-5, the-4)
+       prep_during(picked-2, spring-5)
+       cop(tasty-7, are-6)
+    RelEx status: OK
+
+We have no information on whether users are at risk.
+They heard about you missing classes.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate pcomp.
+    RelEx status: nominal
+
+I sat on the chair.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate pobj.
+    RelEx status: nominal
+       Relex is currently producing the same results as Stanford.
+
+We went to their offices to get Bill's clothes.
+    Stanford output:
+       nsubj(went-2, We-1)
+       xsubj(get-7, We-1)
+       poss(offices-5, their-4)
+       prep_to(went-2, offices-5)
+       aux(get-7, to-6)
+       xcomp(went-2, get-7)
+       poss(clothes-10, Bill-8)
+       dobj(get-7, clothes-10)
+    RelEx status:
+Under construction:
+       xsubj(get-7, We-1)
+       xcomp(went-2, get-7)
+prep_to2(went-2, get-7)
+
+All the boys are here.
+    Stanford output:
+       predet(boys-3, All-1)
+       det(boys-3, the-2)
+       nsubj(are-4, boys-3)
+       advmod(are-4, here-5)
+    RelEx status:
+       Predet is generated, as described in stanford docs. However,
+       the copular structure is different. More generally, link
+       grammar treats predeterminers differently (AL link) and
+       this needs some additional resolution. Also, it is not clear
+       to me why Stanford doesn't treat this as being copular, i.e.
+          nsubj(here-5, boys-3)
+          cop(here-5, are-4)
+       the way that it treats other copulas (e.g. "The garage is
+       next to the house." gets nsubj(next-4, garage-2) cop(next-4,
+       is-3).
+
+I saw a cat in a hat.
+I saw a cat with a telescope.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate prep. Instead,
+       Stanford is producing a collapsed prep. Worse, these
+       sentences are ambiguous -- is the cat holding a telescope,
+       or am I looking through one?  The top-ranked parses for
+       RelEx indicate that the seeing is doine through the telescope
+       (and that the seeing is done while wearing a hat). By contrast,
+       Stanford currently presumes that the cat has a hat, and a
+       telescope -- these parses are generated by RelEx, but are
+       ranked lower.
+    RelEx status: OK
+
+He is responsible for meals.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate prep. Instead,
+       stanford is producing a collapsed prep.
+    RelEx status: OK
+       i.e. RelEx is producing the same thing as Stanford at this time.
+
+They shut down the station.
+    Stanford output:
+       nsubj(shut-2, They-1)
+       prt(shut-2, down-3)
+       det(station-5, the-4)
+       dobj(shut-2, station-5)
+    RelEx status: OK
+
+Go home!
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate punct.
+    RelEx status: nominal
+
+He talked to him in order to secure the account.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate purpcl.
+    RelEx status: nominal
+        xxx relex gets xcomp wrong here, and needs an xsubj
+
+About 200 people came to the party.
+    Stanford output:
+       quantmod(200-2, About-1)
+       num(people-3, 200-2)
+       nsubj(came-4, people-3)
+       det(party-7, the-6)
+       prep_to(came-4, party-7)
+    RelEx status: OK
+
+I saw the book which you bought.
+    Stanford output:
+       Stanford is not outputting what the documentation says it
+       should -- it was supposed to illustrate ref. Instead, it
+       is generating rel, exactly the same as below. No surprise,
+       since syntactically, these sentences are identical.
+    RelEx status: OK
+       (I.e. relex is generatng exactly the same thing as the
+       stanford parser currently is.)
+
+I saw the man who you love.
+    Stanford output:
+       nsubj(saw-2, I-1)
+       det(man-4, the-3)
+       dobj(saw-2, man-4)
+       dobj(love-7, man-4)
+       rel(love-7, who-5)
+       nsubj(love-7, you-6)
+       rcmod(man-4, love-7)
+    RelEx status: OK
+
+I saw the man whose wife you love.
+    Stanford output:
+       nsubj(saw-2, I-1)
+       det(man-4, the-3)
+       dobj(saw-2, man-4)
+       poss(wife-6, whose-5)
+       dobj(love-8, wife-6)
+       rel(love-8, wife-6)
+       nsubj(love-8, you-7)
+       rcmod(man-4, love-8)
+    RelEx status: Incomplete
+      Not yet generating the rel and the rcmod. under construction.
+      shouldn't be hard ...
+
+Last night, I swam in the pool.
+    Stanford output:
+       (Stanford is not outputting what the documentation says it
+        should -- it was supposed to illustrate tmod.)
+    RelEx status: nominal
+
+He says that you like to swim.
+    Stanford output:
+       (Stanford is not outputting what the documentation says it
+        should -- it was supposed to illustrate xcomp.)
+    RelEx status: nominal
+
+I am ready to leave.
+    Stanford output:
+       nsubj(ready-3, I-1)
+       cop(ready-3, am-2)
+       aux(leave-5, to-4)
+       xcomp(ready-3, leave-5)
+    RelEx status: OK
+
+Tom likes to eat fish.
+    Stanford output:
+       nsubj(likes-2, Tom-1)
+       xsubj(eat-4, Tom-1)
+       aux(eat-4, to-3)
+       xcomp(likes-2, eat-4)
+       dobj(eat-4, fish-5)
+    RelEx status: OK
+
+
+Under construction:
+
+The garage is next to the house.
+    Stanford output:
+       det(garage-2, The-1)
+       nsubj(next-4, garage-2)
+       cop(next-4, is-3)
+       det(house-7, the-6)
+       prep_to(next-4, house-7)

@@ -1,0 +1,47 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+The word "mux" is reserved in the Hurd terminology to mean invoking
+user specific translators based on the filename, which is what usermux
+and [[hostmux]] do.  While, `hostmux` invokes a
+translator based on the host name, `usermux` invokes a
+translator based on the user name.  You should be able to use
+`usermux` with [[nfs]].
+
+## irc log 2010-08-25
+
+	<ArneBab> does that mean you could very easily use nfs to
+	          automatically mount the home folders of users by just
+			  accessing them?
+	<youpi> that's usermux, yes
+	<giselher> I am confused where is the difference ?
+	<youpi> usermux is specialized in user names
+	<youpi> i.e. it can translate it into a uid before giving it as
+	        parameter to the underlying translator, for instance
+	<ArneBab> what I meant is a little different, I think:
+	<ArneBab> each user has his/her own computer with the disk
+	<ArneBab> and all can access each others  folders as if they were local
+	<youpi> that could be done too
+	<youpi> it's a bit like autofs on linux
+	<giselher> settrans -ca nfs: /hurd/usermux /hurd/nfs server && cd nfs:/puplic
+	<giselher> ^-- is that right?
+	<ArneBab> youpi: but it can be done by anyone, not just root.
+	<youpi> ArneBab: sure
+	<youpi> giselher: I guess so
+	<ArneBab> and that is a huge difference. It lowers a barrier,
+	hopefully to such an extend that many more users can utilize it.
+	<anatoly> but it'll distinguish different computers?
+	<ArneBab> once the hurd has many more users, that is :)
+	<anatoly> s/but/but how
+	<youpi> anatoly: by a level of directories
+	<anatoly> cd nfs:/foo.bar:/blabla - it's how it should be?
+

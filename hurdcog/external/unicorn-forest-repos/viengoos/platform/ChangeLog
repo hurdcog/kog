@@ -1,0 +1,62 @@
+2008-11-19  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (ARCH_SUBDIR) [ARCH_X86_64]: Set to x86_64.
+	* amd64/Makefile.am: Move from here...
+	* x86_64/Makefile.am: ... to here.
+	* amd64/bits/atomic.h: Move from here...
+	* x86_64/bits/atomic.h: ... to here.
+	* amd64/bits/endian.h: Move from here...
+	* x86_64/bits/endian.h: ... to here.
+	* amd64/bits/wordsize.h: Move from here...
+	* x86_64/bits/wordsize.h: ... to here.
+	* amd64/sys/io.h: Move from here...
+	* x86_64/sys/io.h: ... to here.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: Link files into `sysroot/include/' instead of `include/'.
+
+2008-02-20  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* amd64/sys/io.h: New file, from today's glibc CVS HEAD.
+	* amd64/Makefile.am (noinst_HEADERS): Add it.
+	* ia32/sys/io.h: New file, from today's glibc CVS HEAD.
+	* ia32/Makefile.am (noinst_HEADERS): Add it.
+	* headers.m4: Link it.
+	* README: Document them.
+
+2008-01-30  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* amd64/bits/endian.h: New file, from today's glibc CVS HEAD.
+	* amd64/Makefile.am (noinst_HEADERS): Add it.
+	* ia32/bits/endian.h: New file, from today's glibc CVS HEAD.
+	* ia32/Makefile.am (noinst_HEADERS): Add it.
+	* endian.h: New file, from today's glibc CVS HEAD.
+	* Makefile.am (noinst_HEADERS): Add it.
+	* headers.m4: Link them.
+	* README: Document them.
+
+	* amd64/bits/wordsize.h: New file, from today's glibc CVS HEAD.
+	* amd64/Makefile.am (noinst_HEADERS): Add it.
+	* ia32/bits/wordsize.h: New file, from today's glibc CVS HEAD.
+	* ia32/Makefile.am (noinst_HEADERS): Add it.
+	* headers.m4: Link it.
+	* README: Document it.
+
+2008-01-26  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am: Typo fixes.
+
+2004-11-30  Neal H. Walfield  <neal@gnu.org>
+
+	* compiler.h: New file.
+	* headers.m4: Set up compiler.h.
+
+2004-10-29  Marcus Brinkmann  <marcus@gnu.org>
+
+	* powerpc/bits/atomic.h: Include the common powerpc version from
+	GLIBC (#include_next won't work in our setup).
+	* powerpc64/bits/atomic.h: Likewise.
+
+	* Initial commit.
+

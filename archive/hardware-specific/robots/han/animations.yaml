@@ -1,0 +1,7 @@
+animations:
+- Empty:
+  - acceleration: 0
+    frames: 1
+    motors: {neck0: 0.5}
+    name: Empty
+    speed: 0

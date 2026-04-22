@@ -1,0 +1,81 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: hurdcog
+Upstream-Contact: OpenCog Developers <opencog@googlegroups.com>
+Source: https://github.com/cogpy/occ
+
+Files: *
+Copyright: 1991-2024 Free Software Foundation, Inc.
+           2008-2024 OpenCog Foundation
+           2024 OpenCog Contributors
+License: GPL-2+
+
+Files: cogkernel/*
+Copyright: 2024 OpenCog Foundation
+           2024 OpenCog Contributors
+License: AGPL-3.0+
+
+Files: dashboard/*
+Copyright: 2024 OpenCog Foundation
+License: GPL-3+
+
+Files: debian/*
+Copyright: 2024 OpenCog Developers <opencog@googlegroups.com>
+License: GPL-2+
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: AGPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ .
+ You should have received a copy of the GNU Affero General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU Affero General
+ Public License version 3 can be found in "/usr/share/common-licenses/AGPL-3".
+
+Comment:
+ HurdCog combines components from the GNU Hurd project (GPL-2+) with
+ OpenCog cognitive computing components (AGPL-3.0+). The Hurd servers
+ and translators retain their original GPL-2+ license, while the
+ cognitive kernel components use AGPL-3.0+ consistent with OpenCog.
+ The dashboard uses GPL-3+ for compatibility with both.

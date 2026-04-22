@@ -1,0 +1,17 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+Ikiwiki has a "Talk" or "Discussion" feature at the top of the page.
+
+Interestingly, this feature is seldom used on the Hurd wiki. For information about this feature, please take a look at the article on Wikipedia:
+
+https://en.wikipedia.org/wiki/Help:Talk_pages
+
+`MutoShack, March 22, 2019` - I'll go first. How come the footer bar on the homepage isn't updated for 2019? I modified the copyright section, but this page still says "2016 FSF"! Editing the page and viewing the ?updated version does not work, but it displays 2019 just fine on other wiki pages!
+
+`MutoShack, March 23, 2019` - Okay, it's because the copyright is manually inserted into this page. If it is deleted, then Ikiwiki will automaticall default to /copyright. I think that makes the most sense. If we need to change /copyright from "Contributing Authors" to "Free Software Foundation", it is easy enough to do so, which will result in a site-wide change. I'm going to remove the manually inserted \[\[!meta copyright\]\] Markdown tags on pages so this scalability is possible. There is no need for the manual tag.

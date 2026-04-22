@@ -1,0 +1,463 @@
+{
+  "opencog/cogserver/modules/commands/BuiltinRequestsModule.cc": {
+    "posix_headers": [
+      {
+        "line": 29,
+        "header": "unistd.h",
+        "windows_equiv": [
+          "io.h",
+          "process.h"
+        ],
+        "code": "#include <unistd.h>"
+      }
+    ],
+    "alt_operators": []
+  },
+  "opencog/cogserver/modules/python/PythonModule.cc": {
+    "alt_operators": [
+      {
+        "line": 81,
+        "operator": "not",
+        "replacement": "!",
+        "code": "logger().info(\"[PythonModule] Initialising Python CogServer module.\");"
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/cogserver/server/CogServer.cc": {
+    "posix_headers": [
+      {
+        "line": 20,
+        "header": "unistd.h",
+        "windows_equiv": [
+          "io.h",
+          "process.h"
+        ],
+        "code": "#include <unistd.h>"
+      },
+      {
+        "line": 22,
+        "header": "sys/time.h",
+        "windows_equiv": [
+          "winsock2.h"
+        ],
+        "code": "#include <sys/time.h>"
+      }
+    ],
+    "alt_operators": []
+  },
+  "opencog/cogserver/server/CogServerMain.cc": {
+    "alt_operators": [
+      {
+        "line": 133,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// unknown option (|| help)"
+      },
+      {
+        "line": 133,
+        "operator": "or",
+        "replacement": "||",
+        "code": "// unknown option (|| help)"
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/cogserver/server/ModuleManager.cc": {
+    "posix_headers": [
+      {
+        "line": 22,
+        "header": "dlfcn.h",
+        "windows_equiv": [
+          "Windows.h (LoadLibrary)"
+        ],
+        "code": "#include <dlfcn.h>"
+      },
+      {
+        "line": 24,
+        "header": "unistd.h",
+        "windows_equiv": [
+          "io.h",
+          "process.h"
+        ],
+        "code": "#include <unistd.h>"
+      }
+    ],
+    "alt_operators": [
+      {
+        "line": 365,
+        "operator": "not",
+        "replacement": "!",
+        "code": "\"libscheme-shell.so, \""
+      }
+    ]
+  },
+  "opencog/cogserver/server/RequestManager.cc": {
+    "posix_headers": [
+      {
+        "line": 24,
+        "header": "unistd.h",
+        "windows_equiv": [
+          "io.h",
+          "process.h"
+        ],
+        "code": "#include <unistd.h>"
+      },
+      {
+        "line": 26,
+        "header": "sys/time.h",
+        "windows_equiv": [
+          "winsock2.h"
+        ],
+        "code": "#include <sys/time.h>"
+      }
+    ],
+    "alt_operators": []
+  },
+  "opencog/cogserver/server/ServerConsole.cc": {
+    "alt_operators": [
+      {
+        "line": 94,
+        "operator": "or",
+        "replacement": "||",
+        "code": "unsigned char c = line[i];"
+      },
+      {
+        "line": 164,
+        "operator": "or",
+        "replacement": "||",
+        "code": ""
+      },
+      {
+        "line": 178,
+        "operator": "or",
+        "replacement": "||",
+        "code": "unsigned char ok[] = {'\\n', 0};"
+      },
+      {
+        "line": 179,
+        "operator": "or",
+        "replacement": "||",
+        "code": "Send((const char *) ok);"
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/cogserver/shell/JsonShellModule.cc": {
+    "alt_operators": [
+      {
+        "line": 50,
+        "operator": "or",
+        "replacement": "||",
+        "code": "_cogserver.unregisterRequest(shelloutRequest::info().id);"
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/cogserver/shell/SexprShellModule.cc": {
+    "alt_operators": [
+      {
+        "line": 54,
+        "operator": "or",
+        "replacement": "||",
+        "code": ""
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/network/GenericShell.cc": {
+    "alt_operators": [
+      {
+        "line": 111,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "show_output = !hush;"
+      },
+      {
+        "line": 167,
+        "operator": "not",
+        "replacement": "!",
+        "code": "//    expression is an infinite loop (or simply is taking too long)"
+      },
+      {
+        "line": 178,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// The above requirements force us to create ! just one, but two"
+      },
+      {
+        "line": 203,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// Queue up the expr, where it will be evaluated in another thread."
+      },
+      {
+        "line": 277,
+        "operator": "or",
+        "replacement": "||",
+        "code": "//"
+      },
+      {
+        "line": 291,
+        "operator": "or",
+        "replacement": "||",
+        "code": "while (m <= i)"
+      },
+      {
+        "line": 292,
+        "operator": "or",
+        "replacement": "||",
+        "code": "{"
+      },
+      {
+        "line": 415,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "return;"
+      },
+      {
+        "line": 415,
+        "operator": "or",
+        "replacement": "||",
+        "code": "return;"
+      },
+      {
+        "line": 458,
+        "operator": "not",
+        "replacement": "!",
+        "code": "evalque.push(expr + \"\\n\");"
+      },
+      {
+        "line": 522,
+        "operator": "not",
+        "replacement": "!",
+        "code": "{"
+      },
+      {
+        "line": 544,
+        "operator": "not",
+        "replacement": "!",
+        "code": "{"
+      },
+      {
+        "line": 568,
+        "operator": "not",
+        "replacement": "!",
+        "code": ""
+      },
+      {
+        "line": 601,
+        "operator": "not",
+        "replacement": "!",
+        "code": "{"
+      },
+      {
+        "line": 635,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// That's right, call this twice in a row."
+      },
+      {
+        "line": 680,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "_pending_output += s;"
+      },
+      {
+        "line": 693,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "// If there's pending output, return that."
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/network/NetworkServer.cc": {
+    "posix_headers": [
+      {
+        "line": 21,
+        "header": "sys/socket.h",
+        "windows_equiv": [
+          "winsock2.h"
+        ],
+        "code": "#include <sys/socket.h>"
+      },
+      {
+        "line": 23,
+        "header": "sys/time.h",
+        "windows_equiv": [
+          "winsock2.h"
+        ],
+        "code": "#include <sys/time.h>"
+      }
+    ],
+    "alt_operators": [
+      {
+        "line": 53,
+        "operator": "not",
+        "replacement": "!",
+        "code": ""
+      },
+      {
+        "line": 91,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// thread exits).  That is why there is no delete of the *ss"
+      }
+    ]
+  },
+  "opencog/network/ServerSocket.cc": {
+    "alt_operators": [
+      {
+        "line": 82,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "rc += ss->connection_header() + \"\\n\";"
+      },
+      {
+        "line": 235,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "// The only problem here is that we don't have CAP_SYS_RESOURCE"
+      },
+      {
+        "line": 293,
+        "operator": "not",
+        "replacement": "!",
+        "code": "Exit();"
+      },
+      {
+        "line": 321,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "if (0 == cmdsize) return;"
+      },
+      {
+        "line": 323,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// Avoid lonely newlines. The various shells return these for"
+      },
+      {
+        "line": 422,
+        "operator": "not",
+        "replacement": "!",
+        "code": "//"
+      },
+      {
+        "line": 520,
+        "operator": "not",
+        "replacement": "!",
+        "code": "{"
+      },
+      {
+        "line": 529,
+        "operator": "not",
+        "replacement": "!",
+        "code": "asio::streambuf b;"
+      },
+      {
+        "line": 538,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "else"
+      },
+      {
+        "line": 542,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// talk to us, sending us binary garbage of some kind."
+      },
+      {
+        "line": 542,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "// talk to us, sending us binary garbage of some kind."
+      },
+      {
+        "line": 552,
+        "operator": "not",
+        "replacement": "!",
+        "code": ""
+      },
+      {
+        "line": 557,
+        "operator": "not",
+        "replacement": "!",
+        "code": ""
+      },
+      {
+        "line": 602,
+        "operator": "not",
+        "replacement": "!",
+        "code": "}"
+      },
+      {
+        "line": 612,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// there may still be some bytes sitting in the buffer. Get"
+      },
+      {
+        "line": 612,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "// there may still be some bytes sitting in the buffer. Get"
+      },
+      {
+        "line": 615,
+        "operator": "not",
+        "replacement": "!",
+        "code": "// newlines at the end."
+      }
+    ],
+    "posix_headers": []
+  },
+  "opencog/network/WebSocket.cc": {
+    "alt_operators": [
+      {
+        "line": 33,
+        "operator": "or",
+        "replacement": "||",
+        "code": ""
+      },
+      {
+        "line": 108,
+        "operator": "not",
+        "replacement": "!",
+        "code": "}"
+      },
+      {
+        "line": 228,
+        "operator": "not",
+        "replacement": "!",
+        "code": "/// socket, with keep-alive set. In either case, the remaining I/O gets"
+      },
+      {
+        "line": 252,
+        "operator": "not",
+        "replacement": "!",
+        "code": "return;"
+      },
+      {
+        "line": 252,
+        "operator": "and",
+        "replacement": "&&",
+        "code": "return;"
+      },
+      {
+        "line": 258,
+        "operator": "not",
+        "replacement": "!",
+        "code": "{"
+      },
+      {
+        "line": 297,
+        "operator": "not",
+        "replacement": "!",
+        "code": "//     closed at any time with `throw SilentException()` to"
+      }
+    ],
+    "posix_headers": []
+  }
+}

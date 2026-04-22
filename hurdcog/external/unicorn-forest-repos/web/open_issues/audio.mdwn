@@ -1,0 +1,115 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+[[!tag open_issue_hurd]]
+
+The Hurd currently does not have an audio framework or [[audio device
+drivers|hurd/rump/rumpsound]].  One option would be to port `ALSA` to
+the Hurd, but `ALSA` is suboptimal for a [[number of
+reasons|https://github.com/linuxaudio/Linux-Audio-Workgroup/wiki/Towards-Fixing-ALSA]]:
+
+* poor device enumeration.  If you unplug a sound card and plug it in
+  again, you could get a different card number.  The same problem can
+  happen when you reboot.
+* With `ALSA` you cannot use two sound cards as one virtual sound card
+  with synced time clocks.
+* `ALSA` makes it difficult to use a low latency application like
+  Ardour alongside a higher latency application, like a desktop
+  environment's sound notifications.
+* `ALSA` encourages applications to control hardware directly using a
+  push model, meaning that the application tries to decide when to
+  play sound. The pull model is much better, in that the audio
+  subsystem tells hardware when to play sound based on requests from
+  applications.
+* `ALSA` has backwards support for `OSS`, which is an even worse API,
+  which partially makes `ALSA` such a poor design.
+
+Pulseaudio and pipewire, which are built to support `ALSA`, have
+similar problems.  Our Hurd developer/audio-expert Damien Zammit
+believes that the Hurd sound subsystem should use the [[`JACK`
+daemon/API|https://logs.guix.gnu.org/hurd/2023-10-06.log]].  He is an
+audiophile, who wrote and maintains some [[`JACK`
+plugins|https://github.com/zamaudio/zam-plugins/releases]], and he
+also wrote [[native `JACK` support for Qubes
+OS|https://github.com/zamaudio/qubes-jack]].  Damien spoke to Paul
+Davis, who is the reason there is professional audio on Linux, and the
+author of Ardour DAW and JACK.  Paul suggested we write a new JACK
+backend directly with low level driver code, and hack on the driver
+code until it is working.  Then we could see how to define an API to
+move the driver level code into a hurd translator.  One potential
+issue is that JACK uses lots of POSIX `shmem` that the hurd lacks,
+though a patch exists in Debian or in the tg tree.
+
+We would have to create a hurd-jack backend for the `jackd` daemon. If
+clients do not support the `JACK` API, then they can connect to the
+Hurd's running pipewire daemon that would forward all sound requests
+to the jackd daemon.  We would have a hurd translator sitting on
+`/dev/snd` and use RPCs to create a hurdish API that implements all of
+the things that `jackd` needs.  We would not use `ALSA`'s API
+anywhere, but `ALSA`-only applications should be able to play sounds
+through pipewire.
+
+A sound card driver would expose a set of RPCs that jackd would need.
+We could implement that part ourselves, which would be the easy part.
+The difficult part is making the driver, so that `jackd` opens
+`/dev/snd` and calls the RPCs to control it.  Audio will not flow
+through `/dev/snd`.  Rather, a callback is registered with a pointer
+to some buffer.  We would *NOT* move the audio data via Mach messages,
+because that would be too slow.  Instead jackd would `mmap` the device
+buffer directly or use shared memory to a small ring-buffer.  The
+audio driver would `mmap` the device buffer directly, and we would
+share that with the caller.
+
+The audio driver would start and stop the sound card.  We just need to
+fill its buffer somehow.  The audio driver would know when to do this.
+It would schedule a writer and a reader probably based on timers.  The
+arrival of the audio IRQ tells you when the hw pointer is at the end
+of the cycle, but you don't just copy the buffer when this happens
+(like alsa does).  You use the timestamps of arrival of the audio IRQs
+to calibrate a delay locked loop.  At any time you want in between the
+audio irq, you can ask the question: where is the buffer pointer now?
+
+We would use some kind of timer interrupt to schedule the transfer
+when you want, depending on the requested latency.  This all happens
+in the audio driver, but it is controlled by `jackd`, and the audio
+driver will call the callback provided by the user application.
+
+The audio driver basically writes and reads zeroes until you fill it
+with some audio data, and if the callback blocks for too long and
+cannot deliver the audio in time for the next cycle, the audio drops
+the frame and you get silence, unless the audio driver is in the same
+process as `jackd`.  Somehow `jackd` gets access to a mmap-ed buffer.
+`jackd` handles all the routing between different audio applications
+by creating a process graph.
+
+[[rumpsound|hurd/rump/rumpsound]] has an audio driver, but it's based
+on SunOS and [[does not have many
+cards|https://logs.guix.gnu.org/hurd/2023-10-07.log]].  If rumpsound,
+does not give the Hurd many device drivers for sound cards, then we
+may be able to use `ALSA`'s well organized low-level functions that
+implement all the features of sound cards.  We will need to implement
+a pcm streaming driver that calls into ALSA low-level functions (it
+could be GPLv2). It's difficult to break out, so maybe we will just
+start with pci.  Damien got a sound card in qemu with `-soundhw ac97`,
+and `linux/sound/pci/intel8x0.c` should support that. The tricky bit
+will be sending audio data from the driver to another proccess without
+`mach_msg ()`.  We could possibly use a ring buffer.
+
+## irc logs
+
+[[https://logs.guix.gnu.org/hurd/2023-10-06.log|https://logs.guix.gnu.org/hurd/2023-10-06.log]]
+
+[[https://logs.guix.gnu.org/hurd/2023-10-07.log|https://logs.guix.gnu.org/hurd/2023-10-07.log]]
+
+[[https://logs.guix.gnu.org/hurd/2023-10-08.log|https://logs.guix.gnu.org/hurd/2023-10-08.log]]
+
+

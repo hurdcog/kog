@@ -1,0 +1,49 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+    <node name="dynamixel_manager" pkg="dynamixel_controllers" type="controller_manager.py" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                pan_tilt_port:
+                    port_name: "/dev/ttyUSB0"
+                    baud_rate: 1000000
+                    min_motor_id: 0
+                    max_motor_id: 4
+                    update_rate: 20
+        </rosparam>
+     </node>
+     <node name="neck_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port pan_tilt_port
+                Upper_Gimbal_L_controller
+                Upper_Gimbal_R_controller
+                Lower_Gimbal_L_controller
+                Lower_Gimbal_R_controller
+                Neck_Rotation_controller"
+          output="screen"/>
+
+    <node name="pololu_left" pkg="ros_pololu" type="ros_pololu_node.py" output="screen">
+        <param name="pololu_motors_yaml" value="$(find robots_config)/han/left_pololu.yaml" />
+        <param name="port_name" value="/dev/serial/by-id/usb-Pololu_Corporation_Pololu_Mini_Maestro_24-Channel_USB_Servo_Controller_00080376-if00" />
+        <param name="topic_prefix" value="left/" />
+        <param name="controller" value="Maestro" />
+        <param name="sync" value="off" />
+    </node>
+
+    <node name="pololu_right" pkg="ros_pololu" type="ros_pololu_node.py" output="screen">
+        <param name="pololu_motors_yaml" value="$(find robots_config)/han/right_pololu.yaml" />
+        <param name="port_name" value="/dev/serial/by-id/usb-Pololu_Corporation_Pololu_Mini_Maestro_24-Channel_USB_Servo_Controller_00080388-if00" />
+        <param name="topic_prefix" value="right/" />
+        <param name="controller" value="Maestro" />
+        <param name="sync" value="off" />
+    </node>
+
+    <node name="pololu_middle" pkg="ros_pololu" type="ros_pololu_node.py" output="screen">
+        <param name="pololu_motors_yaml" value="$(find robots_config)/han/middle_pololu.yaml" />
+        <param name="port_name" value="/dev/serial/by-id/usb-Pololu_Corporation_Pololu_Mini_Maestro_24-Channel_USB_Servo_Controller_00080379-if00" />
+        <param name="topic_prefix" value="middle/" />
+        <param name="controller" value="Maestro" />
+        <param name="sync" value="off" />
+    </node>
+
+</launch>

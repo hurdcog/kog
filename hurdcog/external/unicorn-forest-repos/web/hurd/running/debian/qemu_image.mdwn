@@ -1,0 +1,65 @@
+[//]: # ([[meta copyright="Copyright © 2011, 2012, 2014, 2016 Free Software Foundation, Inc."]])
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Debian's QEMU Image"
+
+There is a QEMU image with [[Debian GNU/Hurd|debian]] pre-installed available
+at <https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/debian-hurd.img.tar.gz>.
+
+Usage:
+
+* Install qemu-kvm via your distribution's package manager (it might just be named qemu)
+* Download the image, unpack it, and run it:
+
+<!-- Code snippits embedded in lists are garbage. Do not remove this comment. -->
+
+	$ wget https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/debian-hurd.img.tar.gz
+	$ tar -xz < debian-hurd.img.tar.gz
+	$ kvm -m 1G -drive cache=writeback,file=$(echo debian-hurd-*.img) -no-reboot -net user,hostfwd=tcp:127.0.0.1:2222-:22 -net nic,model=e1000
+
+* Log in as root (the root password is empty)
+* Set up a root password with `passwd`
+
+* update the system with `apt update && apt upgrade`
+
+* Log in as demo (the demo password is empty)
+* Set up a demo password with `passwd`
+
+* You can also create another non-root user with `adduser <username>`
+* and set the non-root user password with `passwd <username>`
+* and add the non-root user to the sudo group via `gpasswd -a <user> sudo`
+
+* logout via `logout`
+
+Optionally you may use `--curses` to keep your keyboard layout. If need be modprobe kvm_amd, kvm intel and kvm to get kvm support (which is much, much faster).
+
+Note that if you do not have a command named `kvm`, you can try something across the lines of:
+
+	$ qemu-system-i386 --enable-kvm -drive cache=writeback,file=$(echo debian-hurd-*.img) -net user,hostfwd=tcp:127.0.0.1:2222-:22 -net nic,model=e1000
+
+Or, if your machine does not allow for KVM acceleration, omit `--enable-kvm` from the command.
+
+
+
+Please also read the README file: <https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/README>
+
+<!-- It is unconventional, in wikis, to write external links like [...](http://...).
+     Usually a link to an external site should always be fully visible, but I think
+     people can understand where these lead, but revert if this is a bad idea.-->
+
+If you have troubles extracting the image, you can use
+the [gz version](https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/debian-hurd.img.gz),
+the [zip version](https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/debian-hurd.img.zip),
+or even the [plain version](https://cdimage.debian.org/cdimage/ports/latest/hurd-i386/debian-hurd.img) (5GiB!)
+
+See the discussion about [[hurd/running/qemu/writeback_caching]].
+
+[[!if test="destpage(hurd/running/qemu)" then="" else="For more detailed
+instructions, please see the [[hurd/running/QEMU]] page."]]

@@ -1,0 +1,32 @@
+# OCC GitHub App Dependencies
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.22
+
+# GitHub Integration
+PyGithub==2.1.1
+PyJWT==2.8.0
+cryptography==46.0.5
+
+# HTTP Client
+httpx==0.26.0
+requests==2.32.4
+
+# Data Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database (Optional - for state management)
+sqlalchemy==2.0.25
+alembic==1.13.1
+
+# Redis (Optional - for caching)
+redis==5.0.1
+
+# Logging and Monitoring
+python-json-logger==2.0.7
+
+# Utilities
+python-dotenv==1.0.0

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Mesh Web Agent Example</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        .log-entry.info { color: #0066cc; }
+        .log-entry.success { color: #28a745; }
+        .log-entry.warning { color: #ffc107; }
+        .log-entry.error { color: #dc3545; }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🧠 Cognitive Mesh Web Agent</h1>
+    
+    <div class="container">
+        <h2>Connection Status</h2>
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button id="connectBtn">Connect</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+
+    <div class="grid">
+        <div class="container">
+            <h2>Cognitive Tasks</h2>
+            <input type="text" id="taskInput" placeholder="Enter task description...">
+            <button id="submitTaskBtn" disabled>Submit Task</button>
+            <div id="taskResult" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="container">
+            <h2>Agent Registration</h2>
+            <input type="text" id="agentType" placeholder="Agent type" value="web_agent">
+            <button id="registerBtn" disabled>Register Agent</button>
+            <div id="agentInfo" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Cognitive State</h2>
+        <div id="cognitiveState">No data yet...</div>
+    </div>
+
+    <div class="container">
+        <h2>Attention Allocation</h2>
+        <div id="attentionAllocation">No data yet...</div>
+    </div>
+
+    <div class="container">
+        <h2>Event Log</h2>
+        <div id="log" class="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script src="cognitive_client.js"></script>
+    <script>
+        // Initialize clients
+        const wsClient = new CognitiveMeshClient('ws://localhost:8000/ws');
+        const apiClient = new CognitiveMeshAPI('http://localhost:8000');
+        let agentId = null;
+
+        // UI Elements
+        const statusDiv = document.getElementById('status');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const submitTaskBtn = document.getElementById('submitTaskBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logDiv = document.getElementById('log');
+
+        // Logging
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        // Connection handlers
+        connectBtn.onclick = async () => {
+            try {
+                log('Connecting to cognitive mesh...', 'info');
+                await wsClient.connect();
+                statusDiv.textContent = 'Connected';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                submitTaskBtn.disabled = false;
+                registerBtn.disabled = false;
+                log('Successfully connected to cognitive mesh', 'success');
+
+                // Subscribe to all events
+                await wsClient.subscribe([
+                    'cognitive.state.update',
+                    'attention.allocation.change',
+                    'agent.registration',
+                    'task.completion'
+                ]);
+            } catch (error) {
+                log(`Connection failed: ${error.message}`, 'error');
+            }
+        };
+
+        disconnectBtn.onclick = () => {
+            wsClient.disconnect();
+            statusDiv.textContent = 'Disconnected';
+            statusDiv.className = 'status disconnected';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            submitTaskBtn.disabled = true;
+            registerBtn.disabled = true;
+            log('Disconnected from cognitive mesh', 'warning');
+        };
+
+        // Event handlers
+        wsClient.on('connected', () => {
+            log('WebSocket connection established', 'success');
+        });
+
+        wsClient.on('disconnected', () => {
+            log('WebSocket connection closed', 'warning');
+        });
+
+        wsClient.on('cognitive.state.update', (state) => {
+            log('Received cognitive state update', 'info');
+            document.getElementById('cognitiveState').innerHTML = `
+                <strong>Status:</strong> ${state.status}<br>
+                <strong>Active Processes:</strong> ${state.active_processes || 0}<br>
+                <strong>Cognitive Load:</strong> ${(state.cognitive_load || 0).toFixed(2)}<br>
+                <strong>Memory Usage:</strong> ${(state.memory_usage || 0).toFixed(2)} MB
+            `;
+        });
+
+        wsClient.on('attention.allocation.change', (attention) => {
+            log('Received attention allocation update', 'info');
+            const allocations = Object.entries(attention.allocations || {})
+                .map(([key, value]) => `${key}: ${(value * 100).toFixed(1)}%`)
+                .join('<br>');
+            document.getElementById('attentionAllocation').innerHTML = `
+                <strong>Focus Target:</strong> ${attention.focus_target || 'None'}<br>
+                <strong>Allocations:</strong><br>${allocations || 'None'}
+            `;
+        });
+
+        wsClient.on('task.completion', (result) => {
+            log(`Task completed: ${result.task_id} (confidence: ${result.confidence})`, 'success');
+        });
+
+        wsClient.on('agent.registration', (agent) => {
+            log(`New agent registered: ${agent.agent_id}`, 'info');
+        });
+
+        // Task submission
+        submitTaskBtn.onclick = async () => {
+            const taskInput = document.getElementById('taskInput');
+            const description = taskInput.value.trim();
+            
+            if (!description) {
+                log('Please enter a task description', 'warning');
+                return;
+            }
+
+            try {
+                log(`Submitting task: ${description}`, 'info');
+                const result = await wsClient.submitTask({
+                    description: description,
+                    priority: 5,
+                    context: { agent_id: agentId }
+                });
+                
+                document.getElementById('taskResult').innerHTML = `
+                    <strong>Task ID:</strong> ${result.task_id}<br>
+                    <strong>Status:</strong> ${result.status}<br>
+                    <strong>Confidence:</strong> ${result.confidence.toFixed(2)}
+                `;
+                
+                log(`Task completed successfully: ${result.task_id}`, 'success');
+                taskInput.value = '';
+            } catch (error) {
+                log(`Task submission failed: ${error.message}`, 'error');
+            }
+        };
+
+        // Agent registration
+        registerBtn.onclick = async () => {
+            const agentType = document.getElementById('agentType').value;
+            
+            try {
+                log(`Registering agent: ${agentType}`, 'info');
+                const agent = await apiClient.registerAgent(agentType, 
+                    ['web_interface', 'user_interaction'],
+                    { browser: navigator.userAgent, url: window.location.href }
+                );
+                
+                agentId = agent.agent_id;
+                document.getElementById('agentInfo').innerHTML = `
+                    <strong>Agent ID:</strong> ${agent.agent_id}<br>
+                    <strong>Type:</strong> ${agent.agent_type}<br>
+                    <strong>Status:</strong> ${agent.status}
+                `;
+                
+                log(`Agent registered successfully: ${agentId}`, 'success');
+            } catch (error) {
+                log(`Agent registration failed: ${error.message}`, 'error');
+            }
+        };
+
+        // Keyboard shortcuts
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !submitTaskBtn.disabled) {
+                submitTaskBtn.click();
+            }
+        });
+
+        log('Web agent initialized. Click Connect to begin.', 'info');
+    </script>
+</body>
+</html>

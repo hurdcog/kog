@@ -1,0 +1,23 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+KeyKOS is a microkernel developed for System/370-compliant, single-core computer processors. starting in the 1970's by Tymshare. Besides mounting tapes and tending to the printers, KeyKOS is meant for unattended operation.
+
+KeyKOS was created as a result of the research project done by the Tymshare group called GNOSIS, an operating system concept.
+
+It's an interesting concept for an operating system. The kernel can take a two-state system as an input, and turn it into a many-state system. This allows for objects such as files, directories, and address spaces to be moved out of kernelspace and into userspace.
+
+KeyKOS is secure. Every operating system wants to be "secure", but what is the "standard baseline" for security? KeyKOS has a very clear image of this, as it was developed to try and meet the DOD "Orange book" standard: "*Department of Defense Trusted Computer System Evaluation Criteria*". After an inspection, KeyKOS was deemed as a "high B", a step or two down from the highest rank: A1.  
+
+The article "KeyKOS - A Secure, High-Performance Environment for S/370" describes that there are some aspects of KeyKOS which are difficult to understand, as they stray from OS convention. It advises the reader, when learning about KeyKOS, to think of the Monty Python quote "And now for something completely different".
+
+# External Links
+* [KeyKOS](https://web.archive.org/web/20110621235952/https://www.cis.upenn.edu/~KeyKOS/KeyKOS.html) on the Wayback Machine.
+* [Roots of KeyKOS](http://www.cap-lore.com/CapTheory/KK/EKK.html) - A short but comprehensive history.
+* [The DOD Orange Book (PDF)](https://csrc.nist.gov/csrc/media/publications/conference-paper/1998/10/08/proceedings-of-the-21st-nissc-1998/documents/early-cs-papers/dod85.pdf) - The book itself is really expensive to buy, so here's some PDF file of it.
+* [The DOD Orange Book - 2014 print (PDF)](https://web.archive.org/web/20140429193839/http://www.dtic.mil/whs/directives/corres/pdf/850001_2014.pdf) - The re-issue.

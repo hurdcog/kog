@@ -1,0 +1,7 @@
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/atomspace_accelerator.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/edit_cache.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/rebuild_cache.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/list_install_components.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/install.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/install/local.dir
+/home/runner/work/occ/occ/build-test/atomspace-accelerator/CMakeFiles/install/strip.dir

@@ -1,0 +1,12 @@
+hurdcog-cogkernel-core (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of HurdCog Cognitive Kernel Core
+  * Implements minimal bootstrap system for cognitive initialization
+  * Provides cognitive interface framework for decision-making
+  * Integrates with MachSpace for distributed cognition
+  * Supports autonomous agents and workflow orchestration
+  * Implements tensor-shaped membranes within recursive P-System
+  * Provides foundation for self-modification and meta-cognition
+  * Enables cognitive synergy across microkernel, OS, and application layers
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2025 00:00:00 +0000

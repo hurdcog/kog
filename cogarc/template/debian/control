@@ -1,0 +1,31 @@
+Source: @COMPONENT_NAME@
+Section: science
+Priority: optional
+Maintainer: @AUTHOR@ <@EMAIL@>
+Build-Depends: debhelper (>= 13),
+               cmake (>= 3.12),
+               libcogutil-dev (>= @COGUTIL_MIN_VERSION@),
+@DEBIAN_BUILD_DEPENDS@
+Standards-Version: 4.5.0
+Homepage: https://opencog.org
+Vcs-Git: https://github.com/opencog/@COMPONENT_NAME@.git
+Vcs-Browser: https://github.com/opencog/@COMPONENT_NAME@
+
+Package: lib@COMPONENT_NAME@
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: @COMPONENT_DESCRIPTION@
+ This package contains the runtime library for @COMPONENT_NAME_CAMEL@.
+ .
+ @COMPONENT_DESCRIPTION_LONG@
+
+Package: lib@COMPONENT_NAME@-dev
+Architecture: any
+Depends: lib@COMPONENT_NAME@ (= ${binary:Version}),
+         ${misc:Depends},
+         libcogutil-dev (>= @COGUTIL_MIN_VERSION@)
+Description: @COMPONENT_DESCRIPTION@ - development files
+ This package contains the development files (headers, static libraries)
+ for @COMPONENT_NAME_CAMEL@.
+ .
+ @COMPONENT_DESCRIPTION_LONG@

@@ -1,0 +1,183 @@
+[[!meta copyright="Copyright © 1998, 1999, 2001, 2002, 2007, 2008, 2009, 2011,
+2013, 2015, 2016 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+[[!toc]]
+
+Richard Stallman (RMS) started GNU in 1983, as a project to create a
+complete free operating system.  In the text of the [GNU
+Manifesto](http://www.gnu.org/gnu/manifesto.html), he
+mentioned that there is a primitive kernel.  In the first GNUsletter,
+Feb. 1986, he says that GNU's kernel is TRIX, which was developed at
+the Massachusetts Institute of Technology.
+
+By December of 1986, the Free Software Foundation (FSF) had "started
+working on the changes needed to TRIX" [Gnusletter, Jan. 1987].
+Shortly thereafter, the FSF began "negotiating with Professor Rashid
+of Carnegie-Mellon University about working with them on the
+development of the Mach kernel" [Gnusletter, June, 1987].  The text
+implies that the FSF wanted to use someone else's work, rather than
+have to fix TRIX.
+
+In [Gnusletter, Feb. 1988], RMS was talking about taking Mach and
+putting the Berkeley Sprite filesystem on top of it, "after the parts
+of Berkeley Unix... have been replaced."
+
+Six months later, the FSF is saying that "if we can't get Mach, we'll
+use TRIX or Berkeley's Sprite."  Here, they present Sprite as a
+full-kernel option, rather than just a filesystem.
+
+In January, 1990, they say "we aren't doing any kernel work.  It does
+not make sense for us to start a kernel project now, when we still
+hope to use Mach" [Gnusletter, Jan. 1990].  Nothing significant occurs
+until 1991, when a more detailed plan is announced:
+
+<BLOCKQUOTE>
+We are still interested in a multi-process kernel running on top of
+Mach.  The CMU lawyers are currently deciding if they can release Mach
+with distribution conditions that will enable us to distribute it.  If
+they decide to do so, then we will probably start work.  CMU has
+available under the same terms as Mach a single-server partial Unix
+emulator named Poe; it is rather slow and provides minimal
+functionality.  We would probably begin by extending Poe to provide
+full functionality.  Later we hope to have a modular emulator divided
+into multiple processes.  [Gnusletter, Jan. 1991].
+</BLOCKQUOTE>
+
+RMS explains the relationship between [[the Hurd and
+Linux|hurd-and-linux]], where he mentions
+that the FSF started developing the Hurd in 1990.  As of [Gnusletter,
+Nov. 1991], the Hurd (running on Mach) is GNU's official kernel.
+
+
+# Announcements
+
+These are all the announcements made over the years. Most of them were
+either sent to the <A HREF="news:gnu.announce">gnu.announce</A> news group or Hurd interest
+mailing lists.
+
+  * [[hurd-announce]] -- GNU Hurd announcement, May 91
+  * [[hurd-announce2]] -- GNU Hurd announcement, Nov 93
+  * [[hurd-flash]] -- News flash, Apr 94 -- it boots!
+  * [[hurd-flash2]] -- News flash, May 94
+  * [[hurd-flash3]] -- News flash, Jul 94 -- emacs runs!
+  * [[hurd-flash4]] -- News flash, Aug 94
+  * [[hurd-flash5]] -- News flash, Sep 94 -- gcc runs!
+  * [[hurd-flash6]] -- News flash, Nov 94
+  * [[hurd-flash7]] -- New Snapshot, Apr 95
+  * [[hurd-flash8]] -- New Snapshot, Jul 95 -- ext2fs support
+  * [[hurd-flash9]] -- News Flash, Nov 95 -- ftp works!
+  * [[hurd-flash10]] -- New Snapshot, Apr 96 -- NFS and lots else works!
+  * [[hurd-flash11]] -- Binary image available, Apr 96
+    This and [NetBSD](http://www.netbsd.org/) boot flopies should be enough to
+    get a working GNU/Hurd system!
+  * [[hurd-flash12]] -- Test release status (Jul 96)
+  * [[hurd-flash13]] -- Test release announcement (Aug 96)
+  * [[!message-id desc="GNU Hurd 0.1"
+    "199609070249.WAA24297@geech.gnu.ai.mit.edu"]] (1996-09-06)
+  * [[!message-id desc="GNU Mach 1.0"
+    "199704142043.QAA01894@churchy.gnu.ai.mit.edu"]] (1997-04-14)
+  * [[!message-id desc="GNU Mach 1.1"
+    "199705091753.NAA15557@sugar-bombs.gnu.ai.mit.edu"]] (1997-05-09)
+  * [[!message-id desc="GNU Mach 1.1.1"
+    "199705121633.MAA26409@sugar-bombs.gnu.ai.mit.edu"]] (1997-05-12)
+  * [[!message-id desc="GNU Mach 1.1.2"
+    "199706102159.RAA13943@churchy.gnu.ai.mit.edu"]] (1997-06-10?)
+  * [[hurd-flash14]] -- Release 0.2 announcement (Hurd)
+  * [[hurd-flash15]] -- Release 0.2 announcement (complete GNU system)
+      * [[!message-id desc="GNU 0.2"
+        "199706162021.QAA18370@sugar-bombs.gnu.ai.mit.edu"]] (1997-06-16)
+  * [[!message-id desc="GNU MIG 1.0.1"
+    "199812040849.DAA07660@baalperazim.frob.com"]] (1998-12-04)
+  * [[!message-id desc="GNU Mach 1.2"
+    "199906211918.PAA26822@x15-cruise-basselope.mit.edu"]] (1999-06-21)
+  * [[!message-id desc="GNU MIG 1.1" "199906231741.NAA46739@pusey.mit.edu"]]
+    (1999-06-23)
+  * [[!message-id desc="GNU MIG 1.2" "20010622215446.I6130@212.23.136.22"]]
+    (2001-06-22)
+  * [[!message-id desc="GNU MIG 1.3"
+    "20020308220603.A90E61B9C4@perdition.linnaean.org"]] (2002-03-08)
+  * [[!message-id desc="GNU Mach 1.3"
+    "20020527203155.88DBE1BA15@perdition.linnaean.org"]] (2002-05-27)
+  * [[!message-id desc="GNU MIG 1.3.1"
+    "20020830194413.GA6819@outpost.dnsalias.org"]] (2002-08-30)
+  * [[GNU Hurd 0.5, GNU Mach 1.4, GNU MIG 1.4 released|news/2013-09-27]]
+    (2013-09-27)
+  * [[GNU Hurd 0.6, GNU Mach 1.5, GNU MIG 1.5
+    released|news/2015-04-10-releases]] (2015-04-10)
+  * [[GNU Hurd 0.7, GNU Mach 1.6, GNU MIG 1.6
+    released|news/2015-10-31-releases]] (2015-10-31)
+  * [[GNU Hurd 0.8, GNU Mach 1.7, GNU MIG 1.7
+    released|news/2016-05-18-releases]] (2016-05-18)
+  * [[GNU Hurd 0.9, GNU Mach 1.8, GNU MIG 1.8
+    released|news/2016-12-18-releases]] (2016-12-18)
+
+
+# An Incomplete GNU Hurd Timeline
+
+  * 1997: GNU Hurd 0.2.
+  * First attempts to [[port_to_another_microkernel]]
+  * Personal view of Marcus Brinkmann about [[!message-id desc="Hurd
+    development in 1998-2003"
+    "87mzkvx7u8.wl%marcus.brinkmann@ruhr-uni-bochum.de"]]
+  * 2002: GNU MIG 1.3, libio-based glibc, GNU Mach 1.3, Hurd L4 starts, work on
+    the transition from cthreads to pthreads starts, Hurd installation party in
+    Heidelberg, Toronto Hurd User Group meeting, Presentation at EpX in Paris
+    ([slides](http://kilobug.free.fr/hurd/pres-en/)).
+  * 2003: [Crosshurd](http://packages.debian.org/crosshurd), [LinuxTag
+    2003](http://lists.gnu.org/archive/html/help-hurd/2003-07/msg00029.html).
+  * 2005: Hurd/L4 at Libre Software Meeting.
+  * 2007: [[FOSDEM|community/meetings/fosdem_2007]], the [[critique and
+    position paper|news/2007-01-14]], [[libchannel for GSoC|news/2007-10-01]],
+    [[IPv6|news/2007-10-12]], Hurd/L4 abandoned, Hurd on Xen.
+  * 2008: [[Five successful GSoC projects|community/gsoc/2008]],
+    [[Hurd/Viengoos|news/2008-12-12]].
+  * 2009: [[GSoC unionmount translator|news/2009-09-30]], [[Start of Device
+    Drivers in Userspace|news/2009-11-30]].  66% of the Debian packages build.
+  * 2010: [Arch Hurd](http://www.archhurd.org/), [Initial Nix
+    port](http://hydra.nixos.org/jobset/gnu/hurd-master),
+    [[DDE|news/2010-02-28]], Thesis: [[Generalizing mobility for the
+    Hurd|news/2010-01-31]], [Hurd article in
+    LWN](http://lwn.net/Articles/395150/), [[procfs|hurd/translator/procfs]],
+    Talk: [It's about
+    Freedom](http://audio-video.gnu.org/video/ghm2010/GNU-Hurd_-_Its_About_Freedom,_Or_Why_you_should_care.ogv),
+    GSoC: Debian Installer, Hurd/Viengoos on hold.  68% of the Debian packages
+    build.
+  * 2011: [[GNU Hurd 0.401|news/2011-04-01]], xkb, [Hurd in
+    xkcd](http://xkcd.com/844/), Graphical Debian Installer,
+    [[bounties|2011-05-02-foss_factory]] on FOSS Factory, [[Lots of attention
+    from the press brought lots of rumors|news/2011-q2-ps]], [Talk at GHM in
+    Paris](http://www.gnu.org/ghm/2011/paris/#outline-container-2-5)
+    ([video](http://audio-video.gnu.org/video/ghm2011/Samuel_Thibault-GNU_Hurd.ogv)),
+    slab allocator, Continuous builds with Nix, improved build system, GSoC:
+    [[Java|user/jkoenig/java]].  70% of the Debian packages build.
+  * 2012: Half the Linux 2.6.32 network drivers build with DDE, [Continuous
+    testing with
+    Nix](http://lists.gnu.org/archive/html/bug-hurd/2012-03/msg00019.html),
+    improved debugging, memory mapping [with red-black
+    tree](http://lists.gnu.org/archive/html/bug-hurd/2012-04/msg00109.html),
+    switch to pthreads finished, [[live-filesystem-debugging
+    report|news/2012-q1-q2]].
+  * 2013: [Talk at
+    FOSDEM](https://fosdem.org/2013/schedule/event/hurd_microkernel/), [[Debian
+    GNU/Hurd 2013|news/2013-05-debian_gnu_hurd_2013]], talk at the [[GNU
+    Hackers Meeting in Paris|community/meetings/ghm2013]], *Happy 30th
+    birthday, GNU*: [[GNU Hurd 0.5, GNU Mach 1.4, GNU MIG 1.4
+    released|news/2013-09-27]].
+  * [...]
+  * 2015: [...], [[GNU Hurd 0.6, GNU Mach 1.5, GNU MIG 1.5
+    released|news/2015-04-10-releases]], [[Debian GNU/Hurd
+    2015|news/2015-04-29-debian_gnu_hurd_2015]], [[GNU Hurd 0.7, GNU Mach 1.6,
+    GNU MIG 1.6 released|news/2015-10-31-releases]], [...].
+  * 2016: [...], [[GNU Hurd 0.8, GNU Mach 1.7, GNU MIG 1.7
+    released|news/2016-05-18-releases]], [...], [[GNU Hurd 0.9, GNU Mach 1.8,
+    GNU MIG 1.8 released|news/2016-12-18-releases]].

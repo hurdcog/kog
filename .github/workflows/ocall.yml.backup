@@ -1,0 +1,142 @@
+# .github/workflows/ocall.yml
+
+name: ocog all
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  build-and-test:
+    name: Build and Test All Components
+    runs-on: cog9
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            cxxtest \
+            cython3 \
+            doxygen \
+            guile-3.0-dev \
+            libasio-dev \
+            libboost-all-dev \
+            libgrpc++-dev \
+            libopencv-dev \
+            liboctomap-dev \
+            libpq-dev \
+            libprotobuf-dev \
+            librocksdb-dev \
+            libssl-dev \
+            libwebsocketpp-dev \
+            protobuf-compiler \
+            python3-dev \
+            python3-nose \
+            uuid-dev \
+            valgrind
+          
+      - name: Install Cython
+        run: python3 -m pip install --upgrade pip cython
+
+      - name: Verify Asio Installation
+        run: |
+          echo "Verifying Asio installation..."
+          dpkg -L libasio-dev | grep asio.hpp || echo "Warning: asio.hpp not found in dpkg list"
+          find /usr/include -name "asio.hpp" 2>/dev/null || echo "Warning: asio.hpp not found in /usr/include"
+          echo "Asio verification complete"
+
+      - name: build & install all
+        run: |
+          # Cognitive Flowchart: Dependency-Based Build Order
+          # This sequencing is computed via topological sort of CMakeLists.txt FIND_PACKAGE dependencies
+          # ensuring that all prerequisites are built before dependent components.
+          # Components with no internal dependencies are built first, followed by layers of increasing dependency depth.
+          
+          for repo in \
+            cogutil \
+            atomspace \
+            atomspace-storage \
+            agi-bio \
+            atomspace-agents \
+            atomspace-dht \
+            atomspace-ipfs \
+            atomspace-metta \
+            atomspace-rpc \
+            atomspace-websockets \
+            cheminformatics \
+            dimensional-embedding \
+            generate \
+            matrix \
+            pattern-index \
+            sensory \
+            spacetime \
+            unify \
+            vision \
+            visualization \
+            atomese-simd \
+            atomspace-bridge \
+            atomspace-pgres \
+            atomspace-rocks \
+            cogserver \
+            lg-atomese \
+            ure \
+            moses \
+            asmoses \
+            atomspace-cog \
+            atomspace-restful \
+            attention \
+            learn \
+            miner \
+            pln \
+            opencog \
+            benchmark \
+            agents \
+            agentic-chatbots \
+            aphrodite-engine \
+            atomspace-accelerator \
+            blender_api_msgs \
+            coggml \
+            cognumach \
+            cogself \
+            ghost_bridge \
+            gnucash \
+            hurdcog \
+            integration \
+            koboldcpp \
+            motor \
+            perception
+          do
+            echo "spawning $repo..."
+            # Skip if directory doesn't exist
+            if [ ! -d "$repo" ]; then
+              echo "⚠️  Directory $repo not found, skipping..."
+              continue
+            fi
+            
+            # Skip if no CMakeLists.txt exists
+            if [ ! -f "$repo/CMakeLists.txt" ]; then
+              echo "⚠️  No CMakeLists.txt in $repo, skipping..."
+              continue
+            fi
+            
+            mkdir -p $repo/build/
+            cd $repo/build
+            cmake .. || { echo "❌ CMake failed for $repo"; cd ../..; continue; }
+            make -j$(nproc) || { echo "❌ Make failed for $repo"; cd ../..; continue; }
+            sudo make install || { echo "❌ Install failed for $repo"; cd ../..; continue; }
+            sudo ldconfig
+            cd ../..
+            echo "✅ Successfully built and installed $repo"
+          done
+          
+          echo ""
+          echo "=================================================================================="
+          echo "Build process completed!"
+          echo "=================================================================================="

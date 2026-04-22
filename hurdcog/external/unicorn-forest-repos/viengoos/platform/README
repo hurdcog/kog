@@ -1,0 +1,29 @@
+Here is a list of the sources of the files in this directory.
+
+GNU C library
+
+CVS snapshot from 2004-10-29:
+
+${glibc}/include/atomic.h			atomic.h
+${glibc}/sysdeps/alpha/bits/atomic.h		alpha/bits/atomic.h
+${glibc}/sysdeps/i386/i486/bits/atomic.h	ia32/bits/atomic.h
+${glibc}/sysdeps/ia64/bits/atomic.h		ia64/bits/atomic.h
+${glibc}/sysdeps/powerpc/powerpc32/bits/atomic.h powerpc/bits/atomic.h
+${glibc}/sysdeps/powerpc/powerpc64/bits/atomic.h powerpc64/bits/atomic.h
+${glibc}/sysdeps/powerpc/bits/atomic.h		powerpc/bits/atomic.h
+						powerpc64/bits/atomic.h
+${glibc}/sysdeps/x86_64/bits/atomic.h		amd64/bits/atomic.h
+
+CVS snapshot from 2008-01-30:
+
+${glibc}/sysdeps/wordsize-32/bits/wordsize.h	ia32/bits/wordsize.h
+${glibc}/sysdeps/x86_64/bits/wordsize.h		amd64/bits/wordsize.h
+
+${glibc}/string/endian.h			endian.h
+${glibc}/sysdeps/i386/bits/endian.h		ia32/bits/endian.h
+${glibc}/sysdeps/x86_64/bits/endian.h		amd64/bits/endian.h
+
+${glibc}/sysdeps/unix/sysv/linux/i386/sys/io.h	ia32/sys/io.h
+${glibc}/sysdeps/unix/sysv/linux/x86_64/sys/io.h amd64/sys/io.h
+
+Other architectures not supported for now.

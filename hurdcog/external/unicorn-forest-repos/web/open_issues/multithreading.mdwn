@@ -1,0 +1,599 @@
+[[!meta copyright="Copyright © 2010, 2011, 2012, 2013, 2014 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+Hurd servers / VFS libraries are multithreaded.  They can even be said to be
+"hyperthreaded".
+
+
+# Implementation
+
+  * well-known threading libraries
+
+      * [[/libpthread]]
+
+## IRC, freenode, #hurd, 2011-04-20
+
+    <braunr> so basically, a thread should consume only a few kernel resources
+    <braunr> in GNU Mach, it doesn't even consume a kernel stack because only
+      continuations are used
+
+[[microkernel/mach/gnumach/continuation]].
+
+    <braunr> and in userspace, it consumes 2 MiB of virtual memory, a few table
+      entries, and almost no CPU time
+    <svante_> What does "hyperthreaded" mean: Do you have a reference?
+    <braunr> in this context, it just means there are a lot of threads
+    <braunr> even back in the 90s, the expected number of threads could scale
+      up to the thousand
+    <braunr> today, it isn't much impressive any more
+    <braunr> but at the time, most systems didn't have LWPs yet
+    <braunr> and a process was very expensive
+    <svante_> Looks like I have some catching up to do: What is "continuations"
+      and LWP? Maybe I also need a reference to an overview on multi-threading.
+    <ArneBab> Lightweight process?
+      http://en.wikipedia.org/wiki/Light-weight_process
+    <braunr> LWPs are another names for kernel threads usually
+    <braunr> most current kernels support kernel preemption though
+
+[[microkernel/mach/gnumach/preemption]].
+
+    <braunr> which means their state is saved based on scheduler decisions
+    <braunr> unlike continuations where the thread voluntarily saves its state
+    <braunr> if you only have continuations, you can't have kernel preemption,
+      but you end up with one kernel stack per processor
+    <braunr> while the other model allows kernel preemption and requires one
+      kernel stack per thread
+    <svante_> I know resources are limited, but it looks like kernel preemption
+      would be nice to have. Is that too much for a GSoC student?
+    <braunr> it would require a lot of changes in obscure and sensitive parts
+      of the kernel
+    <braunr> and no, kernel preemption is something we don't actually need
+    <braunr> even current debian linux kernels are built without kernel
+      preemption
+    <braunr> and considering mach has hard limitations on its physical memory
+      management, increasing the amount of memory used for kernel stacks would
+      imply less available memory for the rest of the system
+    <svante_> Are these hard limits in mach difficult to change?
+    <braunr> yes
+    <braunr> consider mach difficult to change
+    <braunr> that's actually one of the goals of my stalled project
+    <braunr> which I hope to resume by the end of the year :/
+    <svante_> Reading Wikipedia it looks like LWP are "kernel treads" and other
+      threads are "user threads" at least in IBM/AIX. LWP in Linux is a thread
+      sharing resources and in SunOS they are "user threads". Which is closest
+      for Hurd?
+    <braunr> i told you
+    <braunr> 14:09 < braunr> LWPs are another names for kernel threads usually
+    <svante_> Similar to to the IBM definition then? Sorry for not remembering
+      what I've  been reading.
+
+
+# Design
+
+## Application Programs
+
+### [[glibc/signal/signal_thread]]
+
+## Hurd Servers
+
+See [[hurd/libports]]: roughly using one thread per
+incoming request.  This is not the best approach: it doesn't really make sense
+to scale the number of worker threads with the number of incoming requests, but
+instead they should be scaled according to the backends' characteristics.
+
+The [[hurd/Critique]] should have some more on this.
+
+[*Event-based Concurrency
+Control*](http://soft.vub.ac.be/~tvcutsem/talks/presentations/T37_nobackground.pdf),
+Tom Van Cutsem, 2009.
+
+
+### IRC, freenode, #hurd, 2012-07-08
+
+    <youpi> braunr: about limiting number of threads, IIRC the problem is that
+      for some threads, completing their work means triggering some action in
+      the server itself, and waiting for it (with, unfortunately, some lock
+      held), which never terminates when we can't create new threads any more
+    <braunr> youpi: the number of threads should be limited, but not globally
+      by libports
+    <braunr> pagers should throttle their writeback requests
+    <youpi> right
+
+
+### IRC, freenode, #hurd, 2012-07-16
+
+    <braunr> hm interesting
+    <braunr> when many threads are creating to handle requests, they
+      automatically create a pool of worker threads by staying around for some
+      time
+    <braunr> this time is given in the libport call
+    <braunr> but the thread always remain
+    <braunr> they must be used in turn each time a new requet comes in
+    <braunr> ah no :(, they're maintained by the periodic sync :(
+    <braunr> hm, still not that, so weird
+    <antrik> braunr: yes, that's a known problem: unused threads should go away
+      after some time, but that doesn't actually happen
+    <antrik> don't remember though whether it's broken for some reason, or
+      simply not implemented at all...
+    <antrik> (this was already a known issue when thread throttling was
+      discussed around 2005...)
+    <braunr> antrik: ok
+    <braunr> hm threads actually do finish ..
+    <braunr> libthreads retain them in a pool for faster allocations
+    <braunr> hm, it's worse than i thought
+    <braunr> i think the hurd does its job well
+    <braunr> the cthreads code never reaps threads
+    <braunr> when threads are finished, they just wait until assigned a new
+      invocation
+
+    <braunr> i don't understand ports_manage_port_operations_multithread :/
+    <braunr> i think i get it
+    <braunr> why do people write things in such a complicated way ..
+    <braunr> such code is error prone and confuses anyone
+
+    <braunr> i wonder how well nested functions interact with threads when
+      sharing variables :/
+    <braunr> the simple idea of nested functions hurts my head
+    <braunr> do you see my point ? :) variables on the stack automatically
+      shared between threads, without the need to explicitely pass them by
+      address
+    <antrik> braunr: I don't understand. why would variables on the stack be
+      shared between threads?...
+    <braunr> antrik: one function declares two variables, two nested functions,
+      and use these in separate threads
+    <braunr> are the local variables still "local"
+    <braunr> ?
+    <antrik> braunr: I would think so? why wouldn't they? threads have separate
+      stacks, right?...
+    <antrik> I must admit though that I have no idea how accessing local
+      variables from the parent function works at all...
+    <braunr> me neither
+
+    <braunr> why don't demuxers get a generic void * like every callback does
+      :((
+    <antrik> ?
+    <braunr> antrik: they get pointers to the input and output messages only
+    <antrik> why is this a problem?
+    <braunr> ports_manage_port_operations_multithread can be called multiple
+      times in the same process
+    <braunr> each call must have its own context
+    <braunr> currently this is done by using nested functions
+    <braunr> also, why demuxers return booleans while mach_msg_server_timeout
+      happily ignores them :(
+    <braunr> callbacks shouldn't return anything anyway
+    <braunr> but then you have a totally meaningless "return 1" in the middle
+      of the code
+    <braunr> i'd advise not using a single nested function
+    <antrik> I don't understand the remark about nested function
+    <braunr> they're just horrible extensions
+    <braunr> the compiler completely hides what happens behind the scenes, and
+      nasty bugs could come out of that
+    <braunr> i'll try to rewrite ports_manage_port_operations_multithread
+      without them and see if it changes anything
+    <braunr> but it's not easy
+    <braunr> also, it makes debugging harder :p
+    <braunr> i suspect gdb hangs are due to that, since threads directly start
+      on a nested function
+    <braunr> and if i'm right, they are created on the stack
+    <braunr> (which is also horrible for security concerns, but that's another
+      story)
+    <braunr> (at least the trampolines)
+    <antrik> I seriously doubt it will change anything... but feel free to
+      prove me wrong :-)
+    <braunr> well, i can see really weird things, but it may have nothing to do
+      with the fact functions are nested
+    <braunr> (i still strongly believe those shouldn't be used at all)
+
+
+### IRC, freenode, #hurd, 2012-08-31
+
+    <braunr> and the hurd is all but scalable
+    <gnu_srs> I thought scalability was built-in already, at least for hurd??
+    <braunr> built in ?
+    <gnu_srs> designed in
+    <braunr> i guess you think that because you read "aggressively
+      multithreaded" ?
+    <braunr> well, a system that is unable to control the amount of threads it
+      creates for no valid reason and uses global lock about everywhere isn't
+      really scalable
+    <braunr> it's not smp nor memory scalable
+    <gnu_srs> most modern OSes have multi-cpu support.
+    <braunr> that doesn't mean they scale
+    <braunr> bsd sucks in this area
+    <braunr> it got better in recent years but they're way behind linux
+    <braunr> linux has this magic thing called rcu
+    <braunr> and i want that in my system, from the beginning
+    <braunr> and no, the hurd was never designed to scale
+    <braunr> that's obvious
+    <braunr> a very common mistake of the early 90s
+
+
+### IRC, freenode, #hurd, 2012-09-06
+
+    <braunr> mel-: the problem with such a true client/server architecture is
+      that the scheduling context of clients is not transferred to servers
+    <braunr> mel-: and the hurd creates threads on demand, so if it's too slow
+      to process requests, more threads are spawned
+    <braunr> to prevent hurd servers from creating too many threads, they are
+      given a higher priority
+    <braunr> and it causes increased latency for normal user applications
+    <braunr> a better way, which is what modern synchronous microkernel based
+      systems do
+    <braunr> is to transfer the scheduling context of the client to the server
+    <braunr> the server thread behaves like the client thread from the
+      scheduler perspective
+    <gnu_srs> how can creating more threads ease the slowness, is that a design
+      decision??
+    <mel-> what would be needed to implement this?
+    <braunr> mel-: thread migration
+    <braunr> gnu_srs: is that what i wrote ?
+    <mel-> does mach support it?
+    <braunr> mel-: some versions do yes
+    <braunr> mel-: not ours
+    <gnu_srs> 21:49:03) braunr: mel-: and the hurd creates threads on demand,
+      so if it's too slow to process requests, more threads are spawned
+    <braunr> of course it's a design decision
+    <braunr> it doesn't "ease the slowness"
+    <braunr> it makes servers able to use multiple processors to handle
+      requests
+    <braunr> but it's a wrong design decision as the number of threads is
+      completely unchecked
+    <gnu_srs> what's the idea of creating more theads then, multiple cpus is
+      not supported?
+    <braunr> it's a very old decision taken at a time when systems and machines
+      were very different
+    <braunr> mach used to support multiple processors
+    <braunr> it was expected gnumach would do so too
+    <braunr> mel-: but getting thread migration would also require us to adjust
+      our threading library and our servers
+    <braunr> it's not an easy task at all
+    <braunr> and it doesn't fix everything
+    <braunr> thread migration on mach is an optimization
+    <mel-> interesting
+    <braunr> async ipc remains available, which means notifications, which are
+      async by nature, will create messages floods anyway
+
+
+### IRC, freenode, #hurd, 2013-02-23
+
+    <braunr> hmm let's try something
+    <braunr> iirc, we cannot limit the max number of threads in libports
+    <braunr> but did someone try limiting the number of threads used by
+      libpager ?
+    <braunr> (the only source of system stability problems i currently have are
+      the unthrottled writeback requests)
+    <youpi> braunr: perhaps we can limit the amount of requests batched by the
+      ext2fs sync?
+    <braunr> youpi: that's another approach, yes
+    <youpi> (I'm not sure to understand what threads libpager create)
+    <braunr> youpi: one for each writeback request
+    <youpi> ew
+    <braunr> but it makes its own call to
+      ports_manage_port_operations_multithread
+    <braunr> i'll write a new ports_manage_port_operations_multithread_n
+      function that takes a mx threads parameter
+    <braunr> and see if it helps
+    <braunr> i thought replacing spin locks with mutexes would help, but it's
+      not enough, the true problem is simply far too much contention
+    <braunr> youpi: i still think we should increase the page dirty timeout to
+      30 seconds
+    <youpi> wouldn't that actually increase the amount of request done in one
+      go?
+    <braunr> it would
+    <braunr> but other systems (including linux) do that
+    <youpi> but they group requests
+    <braunr> what linux does is scan pages every 5 seconds, and writeback those
+      who have been dirty for more than 30 secs
+    <braunr> hum yes but that's just a performance issue
+    <braunr> i mean, a separate one
+    <braunr> a great source of fs performance degradation is due to this
+      regular scan happenning at the same time regular I/O calls are made
+    <braunr> e.G. aptitude update
+    <braunr> so, as a first step, until the sync scan is truley optimized, we
+      could increase that interval
+    <youpi> I'm afraid of the resulting stability regression
+    <youpi> having 6 times as much writebacks to do
+    <braunr> i see
+    <braunr> my current patch seems to work fine for now
+    <braunr> i'll stress it some more
+    <braunr> (it limits the number of paging threads to 10 currently)
+    <braunr> but iirc, you fixed a deadlock with a debian patch there
+    <braunr> i think the case was a pager thread sending a request to the
+      kernel, and waiting for the kernel to call another RPC that would unblock
+      the pager thread
+    <braunr> ah yes it was merged upstream
+    <braunr> which means a thread calling memory_object_lock_request with sync
+      == 1 must wait for a memory_object_lock_completed
+    <braunr> so it can deadlock, whatever the number of threads
+    <braunr> i'll try creating two separate pools with a limited number of
+      threads then
+    <braunr> we probably have the same deadlock issue in
+      pager_change_attributes btw
+    <braunr> hm no, i can still bring a hurd down easily with a large i/o
+      request :(
+    <braunr> and now it just recovered after 20 seconds without any visible cpu
+      or i/o usage ..
+    <braunr> i'm giving up on this libpager issue
+    <braunr> it simply requires a redesign
+
+
+### IRC, freenode, #hurd, 2013-02-28
+
+    <smindinvern> so what causes the stability issues?  or is that not really
+      known yet?
+    <braunr> the basic idea is that the kernel handles the page cache
+    <braunr> and writebacks aren't correctly throttled
+    <braunr> so a huge number of threads (several hundreds, sometimes
+      thousands) are created
+    <braunr> when this pathological state is reached, it's very hard to recover
+      because of the various sources of (low) I/O in the system
+    <braunr> a simple line sent to syslog increases the load average
+    <braunr> the solution requires reworking the libpager library, and probably
+      the libdiskfs one too, perhaps others, certainly also the pagers
+    <braunr> maybe the kernel too, i'm not sure
+    <braunr> i'd say so because it manages a big part of the paging policy
+
+
+### IRC, freenode, #hurd, 2013-03-02
+
+    <braunr> i think i have a simple-enough solution for the writeback
+      instability
+
+[[hurd/libpager]].
+
+
+### IRC, freenode, #hurd, 2013-03-29
+
+    <braunr> some day i'd like to add a system call that threads can use to
+      terminate themselves, passing their stack as a parameter for deallocation
+    <braunr> then, we should review the timeouts used with libports management
+    <braunr> having servers go away when unneeded is a valuable and visible
+      feature of modularity
+
+[[open_issues/libpthread/t/fix_have_kernel_resources]].
+
+
+### IRC, freenode, #hurd, 2013-04-03
+
+    <braunr> youpi: i also run without the libports_stability patch
+    <braunr> and i'd like it to be removed unless you still have a good reason
+      to keep it around
+    <youpi> well, the reason I know is mentioned in the patch
+    <youpi> i.e. the box becomes unresponsive when all these threads wake up at
+      the same time
+    <youpi> maybe we could just introduce some randomness in the sleep time
+    <braunr> youpi: i didn't experience the problem
+    <youpi> well, I did :)
+    <braunr> or if i did, it was very short
+    <youpi> for the libports stability, I'd really say take a random value
+      between timeout/2 and timeout
+    <youpi> and that should just nicely fix the issue
+    <braunr> ok
+
+
+### IRC, freenode, #hurd, 2013-11-30
+
+"Thread storms".
+
+    <braunr> if you copy a large file for example, it is loaded in memory, each
+      page is touched and becomes dirty, and when the file system requests them
+      to be flushed, the kernel sends one message for each page
+    <braunr> the file system spawns a thread as soon as a message arrives and
+      there is no idle thread left
+    <braunr> if the amount of message is large and arrives very quickly, a lot
+      of threads are created
+    <braunr> and they compete for cpu time
+    <Gerhard> How do you plan to work around that?
+    <braunr> first i have to merge in some work about pagein clustering
+    <braunr> then i intend to implement a specific thread pool for paging
+      messages
+    <braunr> with a fixed size
+    <Gerhard> something compareable for a kernel scheduler?
+    <braunr> no
+    <braunr> the problem in the hurd is that it spawns threads as soon as it
+      needs
+    <braunr> the thread does both the receiving and the processing
+    <Gerhard> But you want to queue such threads?
+    <braunr> what i want is to separate those tasks for paging
+    <braunr> and manage action queues internally
+    <braunr> in the past, it was attempted to limit the amount ot threads in
+      servers, but since receiving is bound with processing, and some actions
+      in libpager depend on messages not yet received, file systems would
+      sometimes freeze
+    <Gerhard> that's entirely the task of the hurd? One cannot solve that in
+      the microkernel itself?
+    <braunr> it could, but it would involve redesigning the paging interface
+    <braunr> and the less there is in the microkernel, the better
+
+
+#### IRC, freenode, #hurd, 2013-12-03
+
+    <braunr> i think our greatest problem currently is our file system and our
+      paging library
+    <braunr> if someone can spend some time getting to know the details and
+      fixing the major problems they have, we would have a much more stable
+      system
+    <TimKack> braunr: The paging library because it cannot predict or keep
+      statistics on pages to evict or not?
+    <TimKack> braunr: I.e. in short - is it a stability problem or a
+      performance problem (or both :) )
+    <braunr> it's a scalability problem
+    <braunr> the sclability problem makes paging so slow that paging requests
+      stack up until the system becomes almost completely unresponsive
+    <TimKack> ah
+    <TimKack> So one should chase defpager code then 
+    <braunr> no
+    <braunr> defpager is for anonymous memory
+    <TimKack> vmm?
+    <TimKack> Ah ok ofc
+    <braunr> our swap has problems of its own, but we don't suffer from it as
+      much as from ext2fs
+    <TimKack> From what I have picked up from the mailing lists is the ext2fs
+      just because no one really have put lots of love in it? While paging is
+      because it is hard?
+    <TimKack> (and I am not at that level of wizardry!)
+    <braunr> no
+    <braunr> just because it was done at a time when memory was a lot smaller,
+      and developers didn't anticipate the huge growth of data that came during
+      the 90s and after
+    <braunr> that's what scalability is about
+    <braunr> properly dealing with any kind of quantity
+    <teythoon> braunr: are we talking about libpager ?
+    <braunr> yes
+    <braunr> and ext2fs
+    <teythoon> yeah, i got that one :p
+    <braunr> :)
+    <braunr> the linear scans are in ext2fs
+    <braunr> the main drawback of libpager is that it doesn't restrict the
+      amount of concurrent paging requests
+    <braunr> i think we talked about that recently
+    <teythoon> i don't remember
+    <braunr> maybe with someone else then
+    <teythoon> that doesn't sound too hard to add, is it ?
+    <teythoon> what are the requirements ?
+    <teythoon> and more importantly, will it make the system faster ?
+    <braunr> it's not too hard
+    <braunr> well
+    <braunr> it's not that easy to do reliably because of the async nature of
+      the paging requests
+    <braunr> teythoon: the problem with paging on top of mach is that paging
+      requests are asynchronous
+    <teythoon> ok
+    <braunr> libpager uses the bare thread pool from libports to deal with
+      that, i.e. a thread is spawned as soon as a message arrives and all
+      threads are busy
+    <braunr> if a lot of messages arrive in a burst, a lot of threads are
+      created
+    <braunr> libports implies a lot of contention (which should hopefully be
+      lowered with your payload patch)
+
+[[community/gsoc/project_ideas/object_lookups]].
+
+    <braunr> that contention is part of the scalability problem
+    <braunr> a simple solution is to use a more controlled thread pool that
+      merely queues requests until user threads can process them
+    <braunr> i'll try to make it clearer : we can't simply limit the amout of
+      threads in libports, because some paging requests require the reception
+      of future paging requests in order to complete an operation
+    <teythoon> why would that help with the async nature of paging requests ?
+    <braunr> it wouldn't
+    <teythoon> right
+    <braunr> thaht's a solution to the scalability problem, not to reliability
+    <teythoon> well, that kind of queue could also be useful for the other hurd
+      servers, no ?
+    <braunr> i don't think so
+    <teythoon> why not ?
+    <braunr> teythoon: why would it ?
+    <braunr> the only other major async messages in the hurd are the no sender
+      and dead name notification
+    <braunr> notifications*
+    <teythoon> we could cap the number of threads
+    <braunr> two problems with that solution
+    <teythoon> does not solve the dos issue, but makes it less interruptive,
+      no?
+    <braunr> 1/ it would dynamically scale
+    <braunr> and 2/ it would prevent the reception of messages that allow
+      operations to complete
+    <teythoon> why would it block the reception ?
+    <teythoon> it won't be processed, but accepting it should be possilbe 
+    <braunr> because all worker threads would be blocked, waiting for a future
+      message to arrive to complete, and no thread would be available to
+      receive that message
+    <braunr> accepting, yes
+    <braunr> that's why i was suggesting a separate pool just for that
+    <braunr> 15:35 < braunr> a simple solution is to use a more controlled
+      thread pool that merely queues requests until user threads can process
+      them
+    <braunr> "user threads" is a poor choice
+    <braunr> i used that to mirror what happens in current kernels, where
+      threads are blocked until the system tells them they can continue
+    <teythoon> hm
+    <braunr> but user threads don't handle their own page faults on mach
+    <teythoon> so how would the threads be blocked exactly, mach_msg ?
+      phread_locks ?
+    <braunr> probably a pthread_hurd_cond_wait_np yes
+    <braunr> that's not really the problem
+    <teythoon> why not ? that's the point where we could yield the thread and
+      steal some work from our queue
+    <braunr> this solution (a specific thread pool of a limited number of
+      threads to receive messages) has the advantage that it solves one part of
+      the scalability issue
+    <braunr> if you do that, you loose the current state, and you have to use
+      something like continuations instead
+    <teythoon> indeed ;)
+    <braunr> this is about the same as making threads uninterruptible when
+      waiting for IO in unix
+    <braunr> it makes things simpler
+    <braunr> less error prone
+    <braunr> but then, the problem has just been moved
+    <braunr> instead of a large number of threads, we might have a large number
+      of queued requests
+    <braunr> actually, it's not completely asynchronous
+    <braunr> the pageout code in mach uses some heuristics to slow down
+    <braunr> it's ugly, and is the reason why the system can get extremely slow
+      when swap is used
+    <braunr> solving that probably requires a new paging interface with the
+      kernel
+    <teythoon> ok, we will postpone this
+    <teythoon> I'll have to look at libpager for the protected payload series
+      anyways
+    <braunr> 15:38 < braunr> 1/ it would dynamically scale
+    <braunr> + not
+    <teythoon> why not ?
+    <braunr> 15:37 < teythoon> we could cap the number of threads
+    <braunr> to what value ?
+    <teythoon> we could adjust the number of threads and the queue size based
+      on some magic unicorn function
+    <braunr> :)
+    <braunr> this one deserves a smiley too
+    <teythoon> ^^
+
+
+### IRC, freenode, #hurd, 2014-03-02
+
+    <youpi> braunr: what is the status of the thread storm issue? do you have
+      pending code changes for this?
+    <youpi> I was wondering whether to make ext2fs use adaptative locks,
+      i.e. spin a bit and then block
+    <youpi> I don't remember whether anybody already did something like that
+    <braunr> youpi: no i don't
+    <braunr> youpi: i attempted switch from spin locks to mutexes once but it
+      doesn't solve the problem
+    <braunr> switching*
+    <gg0> found another storm maker:
+    <gg0> $ dpkg-reconfigure gnome-accessibility-themes
+    <gg0> aka update-icon-caches /usr/share/icons/HighContrast
+    <youpi> braunr: ok
+
+
+## Alternative approaches:
+
+  * <http://www.concurrencykit.org/>
+
+  * Continuation-passing style
+
+      * [[microkernel/Mach]] internally [[uses
+        continuations|microkernel/mach/gnumach/continuation]], too.
+
+  * [[Erlang-style_parallelism]]
+
+      * [[!wikipedia Actor_model]]; also see overlap with
+        {{$capability#wikipedia_object-capability_model}}.
+
+  * [libtcr - Threaded Coroutine Library](http://oss.linbit.com/libtcr/)
+
+  * <http://monkey.org/~provos/libevent/>
+
+---
+
+See also: [[multiprocessing]].

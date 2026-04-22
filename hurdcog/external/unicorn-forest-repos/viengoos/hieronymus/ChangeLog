@@ -1,0 +1,151 @@
+2009-01-16  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (main): Use uint64_t, not l4_uint64_t.
+	(main) [USE_L4]: Don't sleep in this case.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	Update according to new RPC interfaces.
+	* hieronymus.c (activity_alloc): Update use of rm_activity_policy,
+	rm_activity_info and rm_folio_object_alloc to be consistent with
+	new interface.  Replace use of rm_thread_wait_object_destroyed
+	with rm_object_reply_on_destruction.
+
+2008-07-08  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (modules.h): Generate an array of arguments from
+	each module's command line.
+	(ruth_commandline): Don't quote arguments.
+	* hieronymus.c (struct module): Remove field commandline, replace
+	with args.
+	(main): Create the argument vector based on the MODULES[I].ARGS.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (all-local) [ENABLE_TESTS]: Don't define target in
+	this case.  Fix spelling.
+	(md5sum): Generate the md5 hash of the binary we include, not the
+	original binary.
+	(modules.h): Depend on $(files).  Provide a default priority and
+	weight.
+	($(files)): Don't depend on modules.S.
+	(CLEANFILES): New variable.
+
+2008-07-04  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (main): Fix mask when extracting hexadecimal
+	digits.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (all-local): New target.
+	(hieronymus.striped): Likewise.
+	($(addsuffix .S, $(files))): Set BINARY to the binary's name.
+	($(files)): New target.
+	($(addsuffix .o, $(files))): Likewise.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c: Include <md5.h>.
+	(struct module): Add field md5sum.
+	(main): Calculate the md5 digest for the binary.  Compare it to
+	the hash calculated at compile time.  If they don't match, panic.
+	* Makefile.am (md5sum): New function.
+	(tovar): New function.
+	(modules.h): Use it.  Generate an md5 digest for the binary.
+
+2008-06-29  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (struct module): Add field delay.
+	(do_gather_stats): Don't initialize EPOCH here...
+	(main): ... but here.  After loading all the modules, free the
+	memory.  Start the modules according to their respective delay
+	parameters.
+	* Makefile.am (modules.h): Generate the delay parameter.
+	
+	(module_paths): Add benchmarks.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (do_gather_stats): Change to use activity_info
+	instead of activity_stats.
+
+	(main): Introduce code to delay process creation.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c: Include <stdlib.h>.
+	(module_count): Make a global static.
+	(activities): Likewise.
+	(all_done): New variable.
+	(now): New function.
+	(epoch): Likewise.
+	(struct stat): New structure.
+	(stats_count): New variable.
+	(stats): Likewise.
+	(do_gather_stats): New function.
+	(main): If --stats is specified, fork a thread to gather
+	statistics.  When all processes have exited, print out the
+	statistics.
+
+	(main): Name activities according to their first argument.
+
+2008-05-31  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am ($(addsuffix .o, $(files))): Use $(CCAS) instead of
+	$(AS).
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am [ENABLE_TESTS]: Don't build package's program.
+
+2008-05-29  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (modules.h): Add an empty string after the command
+	line removing the requirement that a module have a command line
+	variable.
+
+2008-05-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (modules.h): When generating variable names, replace
+	any -'s with _'s.
+	($(addsuffix .S, $(files))): Likewise.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (AM_CPPFLAGS): Remove variable.
+	(AM_LDFLAGS): Likewise.
+	(hieronymus_CPPFLAGS): New variable.
+	(hieronymus_CFLAGS): Likewise.
+	(hieronymus_LDFLAGS): Likewise.
+	(hieronymus_LDADD): Don't include libc.a directly, use the value
+	of $(USER_LDADD) instead.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (activity_alloc): Update user of storage_alloc to
+	be consistent with new API.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* hieronymus.c (main): Don't pass ACTIVITY_POLICY_VOID to
+	activity_alloc.  Build up a policy based on the configuration and
+	pass that instead.
+	(activity_alloc): Include ACTIVITY_POLICY_SIBLING_REL_SET in the
+	call to rm_activity_policy.
+	
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am ($(addsuffix .S, $(files))): Add a dependency on the
+	binary.  When invoking CPP, define BINARY to the calculated
+	location of the binary.
+	($(addsuffix .o, $(files))): Don't include search paths.
+	* module.S: Pass BINARY instead of the module's name to .incbin.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* ChangeLog: New file.
+	* Makefile.am: Likewise.
+	* module.S: Likewise.
+	* hieronymus.c: Likewise.
+

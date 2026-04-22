@@ -1,0 +1,50 @@
+Source: agi-os-monitoring
+Section: admin
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11),
+               python3,
+               python3-setuptools,
+               python3-flask,
+               python3-websockets,
+               dh-python
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: agi-os-monitoring
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         hurdcog-dashboard,
+         opencog-atomspace,
+         python3-flask,
+         python3-websockets,
+         python3-psutil,
+         python3-requests
+Recommends: agi-os-unified
+Description: Unified monitoring and telemetry for AGI-OS stack
+ This package provides comprehensive monitoring and visualization tools
+ for the entire AGI Operating System stack, from the Cognumach microkernel
+ through HurdCog to the OpenCog Collection application layer.
+ .
+ The monitoring system offers real-time observation of cognitive processes,
+ attention flow tracking, knowledge graph evolution, and system-wide
+ performance metrics. It integrates data from all three layers of the
+ AGI-OS architecture to provide a unified view of system behavior.
+ .
+ Key features include:
+  - Real-time cognitive process visualization
+  - Attention flow tracking across all system layers
+  - Knowledge graph evolution monitoring
+  - System-wide performance metrics and resource usage
+  - Tensor Thread Fiber execution tracking
+  - Ontogenetic Loom activity monitoring
+  - Web-based dashboard with interactive visualizations
+  - REST API for programmatic access to metrics
+  - Alert system for cognitive anomalies
+  - Historical data analysis and trend visualization
+ .
+ The monitoring system is essential for understanding, debugging, and
+ optimizing the behavior of the AGI-OS.

@@ -1,0 +1,29 @@
+# ##############################################################################
+# toy-closing.ghost
+#
+# This is a reimplementation of the loving-ai introduction written in ghost.
+# It follows the toy-goaldirected.ghost example and the introductions.top topic
+# of the loving-ai Sarah implementation.
+#
+# ##############################################################################
+
+# concept: ~emogoodbye ("have to quit" "have to go" )
+
+goal: (closing=1.0) # All following rules satisfy this goal 100%
+  # Initial line from Sophia, responds to anything user comments with
+ r: DIDYOULIKEMEDITATION (*) |happy,0.4,3| Well! It was nice to do this exercise with you. Did you like it?
+ # Note: \[ ^join(express: happy) ^join(magnitude: .5) ^join(duration: 3) \]
+  # j1: (~emogoodbye %more) ^next(INPUT) ^rejoinder(DIDYOULIKEMEDITATION)
+    j1: (feeling is _*) $state = '_0 ^reuse(GOOD_TO_EXPERIENCE)
+    j1: (it is _*) $name = '_0 ^reuse(GOOD_TO_EXPERIENCE)
+    j1: (I am feeling _*) $state = '_0 ^reuse(GOOD_TO_EXPERIENCE)
+    j1: (mine is _*) $state = '_0 ^reuse(GOOD_TO_EXPERIENCE)
+    j1: (!~emogoodbye _*) $state = '_0 ^reuse(GOOD_TO_EXPERIENCE)
+    j1: () $state = Calm
+
+  #r: (*) |happy,0.8,2| This was a wonderful meditation, $name! Thanks so much for taking the time to come and experience this with me today.
+r: GOOD_TO_EXPERIENCE ($name) |happy,0.8,2| Good to go through the meditation with you, $name! Thanks so much for taking the time to come and drop in with me today. ^reuse(APPRECIATE_TIME)
+
+r: APPRECIATE_TIME ($name) I know how busy people can be these days. So I really appreciate your interest. |pause| Have you ever had a meditation like that before, and how did you feel?  How do you feel now?
+
+j1: ([~yes once ~quantity_adjectives]) |vocal,27| |pause| Great! What was that like?

@@ -1,0 +1,53 @@
+[[!meta copyright="Copyright © 2010, 2011, 2012, 2013, 2014 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+We'd like to have nightly builds for the whole [[toolchain]], and then do some
+automatic [[unit_testing]] on them.
+
+Resources:
+
+  * [[hurd/running/Nix]]
+
+  * [[toolchain/cross-gnu]]
+
+      * [[Debian_Cross_Toolchain]]
+
+  * As reported in the [[news/2010-05-31]] news, there's Hydra doing nightly
+    builds / Nix packages.
+
+  * <http://hudson-ci.org/>, <http://jenkins-ci.org/>
+
+      * [[!message-id "201308251648.38010.holger@layer-acht.org"]]
+
+  * <http://buildbot.net/>
+
+    IRC, freenode, #hurd, 2013-11-15:
+
+        <teythoon> today I discovered buildbot, and both the master as well as
+          the build slave works just fine out of the box on Hurd :)
+        <teythoon> I'd love to set one up on darnassus
+        <braunr> ah nice
+        <braunr> we use buildbot at work too
+        <teythoon> even better, so you already know it
+        <braunr> sure we can
+        <braunr> no i don't
+        <braunr> i just know we use it :)
+        <teythoon> k
+        <braunr> but that would be a good occasion to learn
+        <braunr> i'm a bit busy right now, have to go soon
+        <braunr> we'll see the details later
+        <teythoon> yes :)
+
+    [[Nightly_Builds_deb_Packages]].
+
+  * [LAVA (Linaro Automated Validation
+    Architecture)](http://lava.readthedocs.org/)
+

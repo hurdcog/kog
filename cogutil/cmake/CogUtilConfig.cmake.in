@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+set(COGUTIL_VERSION "@SEMANTIC_VERSION@")
+
+# For in-tree builds, paths are already set by the root CMakeLists
+IF(NOT ATOMSPACE_IN_TREE_BUILD)
+    set(COGUTIL_INCLUDE_DIR "@CMAKE_INSTALL_PREFIX@/include")
+    set(COGUTIL_DATA_DIR   "@DATADIR@")
+    set(COGUTIL_LIBRARY "@CMAKE_INSTALL_PREFIX@/lib@LIB_DIR_SUFFIX@/opencog/libcogutil@CMAKE_SHARED_LIBRARY_SUFFIX@")
+ELSE()
+    # Use the CMake target directly for in-tree builds
+    set(COGUTIL_LIBRARY cogutil)
+ENDIF()
+set(COGUTIL_FOUND 1)
+

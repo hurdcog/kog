@@ -1,0 +1,40 @@
+Source: cogself
+Section: science
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 11),
+               cmake (>= 3.12),
+               g++ (>= 7),
+               libpthread-stubs0-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: libcogself1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: OpenCog CogSelf - 9-Layer Unified Self/Identity Model
+ CogSelf implements a 9-layer hierarchical self/identity model for the
+ OpenCog cognitive architecture, integrating:
+ .
+  Layer 0: Molecular Substrate (VES hormone channels)
+  Layer 1: Interoceptive Self (Craig + Damasio Proto-Self)
+  Layer 2: Autonomic Self-Regulation (Porges Polyvagal + Friston FEP)
+  Layer 3: Affective Core (Panksepp 7 systems)
+  Layer 4: Cognitive Architecture (Mischel CAPS + Active Inference)
+  Layer 5: Developmental Trajectory (Bowlby/Erikson/van der Kolk)
+  Layer 6: Narrative Identity (McAdams Level 3)
+  Layer 7: Social Self (Theory of Mind + Social Identity)
+  Layer 8: Meta-Self (Metzinger PSM + Hofstadter Strange Loops)
+ .
+ Also includes CogPrime Identity, AGI Goal Tracker, Synergy Manager,
+ and Distributed Identity components.
+
+Package: libcogself-dev
+Architecture: any
+Section: libdevel
+Depends: libcogself1 (= ${binary:Version}), ${misc:Depends}
+Description: OpenCog CogSelf - development files
+ Development headers and static libraries for the CogSelf 9-Layer
+ Unified Self/Identity Model.

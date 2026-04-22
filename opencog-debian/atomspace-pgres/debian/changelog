@@ -1,0 +1,10 @@
+opencog-atomspace-pgres (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian package release
+  * PostgreSQL backend for AtomSpace
+  * Full ACID-compliant distributed storage
+  * High-performance bulk operations
+  * Automatic schema management
+  * Integration with OpenCog ecosystem
+
+ -- OpenCog Developers <opencog@googlegroups.com>  Sat, 30 Nov 2024 14:00:00 +0000

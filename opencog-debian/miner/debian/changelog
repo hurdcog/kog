@@ -1,0 +1,65 @@
+opencog-miner (0.0~git20240330.dfe88ee-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 30 Mar 2024 10:12:38 +0900
+
+opencog-miner (0.0~git20240327.b30839e-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 27 Mar 2024 08:22:56 +0900
+
+opencog-miner (0.0~git20201222.b30839e-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 22 Dec 2020 13:37:29 +0900
+
+opencog-miner (0.0~git20201222.11b03c5-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 22 Dec 2020 13:37:21 +0900
+
+opencog-miner (0.0~git20200823.28ce5c3-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sun, 23 Aug 2020 06:27:51 +0900
+
+opencog-miner (0.0~git20200404.269903d-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Sat, 04 Apr 2020 09:19:42 +0900
+
+opencog-miner (0.0~git20200402.269903d-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 02 Apr 2020 12:38:26 +0900
+
+opencog-miner (0.0~git20190823.3ba47d3-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Fri, 23 Aug 2019 10:26:11 -0700
+
+opencog-miner (0.0~git20190822.3ba47d3-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Thu, 22 Aug 2019 09:42:07 -0700
+
+opencog-miner (0.0~git20190821.3ba47d3-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Wed, 21 Aug 2019 11:53:32 -0700
+
+opencog-miner (0.0~git20190820.a62b1b1-1) mhatta-unstable; urgency=medium
+
+  * New upstream snapshot.
+
+ -- Masayuki Hatta <mhatta@debian.org>  Tue, 20 Aug 2019 19:56:03 -0700

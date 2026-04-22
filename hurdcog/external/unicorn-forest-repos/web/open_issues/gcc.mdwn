@@ -1,0 +1,2517 @@
+[[!meta copyright="Copyright © 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
+2015, 2016, 2018 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_gcc]]
+
+Here's what's to be done for maintaining GCC.
+
+Apart from the target-specific configuration machinery, there shouldn't be any
+major differences within GCC between the GNU/Hurd and GNU/Linux ports, for
+example.  Especially all the compiler magic is all the same.
+
+[[!toc levels=2]]
+
+
+# [[General information|/gcc]]
+
+
+# Configuration
+
+<!--
+
+git checkout reviewed
+git diff --patience --stat=$COLUMNS,$COLUMNS --patch --src-prefix=./ --dst-prefix=./ --word-diff --color --find-renames --ignore-space-change ..upstream/trunk | awk '/^(\x1b\[[0-9]+m)?diff/ { c = " " $0; } /^(\x1b\[[0-9]+m)?@@/ { print c; } { print; }' | less
+-i
+/^---.*/([^.]*|.*\.texi.*|[^/]*gnu[^/]*|libgo/go/(net/sock_bsd\.go|syscall/exec_bsd\.go|syscall/libcall_posix\.go))$|hurd|linux|nacl|nptl|glibc($|[^x]|x[^x]|x$)|gs:|seg_gs|seg_tls
+
+-->
+
+Last reviewed up to the Git mirror's commit
+17f0f5acdcfb9181203ca9b6d8f8cbc64e5ce843 (2016-11-30).
+
+<http://gcc.gnu.org/install/configure.html> has documentation for the
+`configure` switches.
+
+  * Configure fragments that have `*linux*` cases might/should often contain
+    those for us (and GNU/k*BSD) as well.
+
+      * `configure.ac`
+
+      * `libstdc++-v3`
+
+          * `configure.host`
+
+            `abi_baseline_pair` etc. setting.  `config/abi/post/*-linux-gnu`.
+            TODO.
+
+          * `config/os/gnu-linux`
+
+            Is used for all GNU systems, as per `configure.host`.  Should
+            rename to `gnu-user` to reflect this?  TODO.
+
+      * `gcc/acinclude.m4`:`gcc_GAS_FLAGS`: always pass `--32` to assembler for
+        x86 Linux.  Probably we should just do the same, see `*-*-linux*`
+        comment in [[!message-id "87zjrjcasc.fsf@schwinge.name"]].
+
+      * `lib-prefix.m4` (present twice in GCC sources) contains one remaining
+        `linux`-only case.
+
+      * `libgcc`
+
+          * `config/t-linux`
+          * `config/i386/t-linux`
+
+        TODO, rename to `t-gnu-user`.
+
+          * `config/i386/linux-unwind.h`
+
+        TODO, probably needs porting, if we need this.
+        [[!GCC_PR 57851 desc="[patch] unwinding via signal trampoline for
+        kfreebsd*-gnu"]].
+
+          * `unwind-dw2-fde-dip.c`
+
+                #if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
+                    && defined(TARGET_DL_ITERATE_PHDR) \
+                    {+&& defined(__linux__)+}
+                {+# define USE_PT_GNU_EH_FRAME+}
+                {+#endif+}
+                
+                {+#if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \+}
+                {+    && defined(TARGET_DL_ITERATE_PHDR) \+}
+                    && (defined(__DragonFly__) || defined(__FreeBSD__))
+                # define ElfW __ElfN
+                # define USE_PT_GNU_EH_FRAME
+
+      * `libitm`
+
+        TODO:
+
+          * `libitm/config/linux`
+
+      * `liboffloadmic`
+
+      * `libgomp`
+
+          * `testsuite/libgomp.c/affinity-1.c`
+
+      * Check if linker supports -pie option with copy reloc
+
+            diff --git ./gcc/configure.ac ./gcc/configure.ac
+            {+AC_MSG_CHECKING(linker PIE support with copy reloc)+}
+            {+gcc_cv_ld_pie_copyreloc=no+}
+            {+if test $gcc_cv_ld_pie = yes ; then+}
+            {+  if test $in_tree_ld = yes ; then+}
+            {+    if test "$gcc_cv_gld_major_version" -eq 2 -a "$gcc_cv_gld_minor_version" -ge 25 -o "$gcc_cv_gld_major_version" -gt 2; then+}
+            {+      gcc_cv_ld_pie_copyreloc=yes+}
+            {+    fi+}
+            {+  elif test x$gcc_cv_as != x -a x$gcc_cv_ld != x ; then+}
+            {+    # Check if linker supports -pie option with copy reloc+}
+            {+    case "$target" in+}
+            {+    i?86-*-linux* | x86_64-*-linux*)+}
+            {+[...]+}
+            
+            diff --git ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-1.c ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-1.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-2.c ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-2.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-3.c ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-3.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-4.c ./gcc/testsuite/gcc.target/i386/pie-copyrelocs-4.c
+            @@ -0,0 +1,14 @@
+            {+/* [...] */+}
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+            {+/* { dg-require-effective-target pie_copyreloc } */+}
+            {+/* { dg-options "-O2 -fpie" } */+}
+
+            -checking linker PIE support with copy reloc... yes
+            +checking linker PIE support with copy reloc... no
+
+      * Testsuite
+
+            diff --git ./gcc/testsuite/gcc.target/i386/pr65248-1.c ./gcc/testsuite/gcc.target/i386/pr65248-1.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr65248-2.c ./gcc/testsuite/gcc.target/i386/pr65248-2.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr65248-3.c ./gcc/testsuite/gcc.target/i386/pr65248-3.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr65248-4.c ./gcc/testsuite/gcc.target/i386/pr65248-4.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr67215-1.c ./gcc/testsuite/gcc.target/i386/pr67215-1.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr67215-2.c ./gcc/testsuite/gcc.target/i386/pr67215-2.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr67215-3.c ./gcc/testsuite/gcc.target/i386/pr67215-3.c
+            @@ -0,0 +1,17 @@
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+            {+/* { dg-options "-O2 -fpic" } */+}
+
+            diff --git ./gcc/testsuite/gcc.target/i386/pr32219-9.c ./gcc/testsuite/gcc.target/i386/pr32219-9.c
+            @@ -0,0 +1,16 @@
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+            {+/* { dg-options "-O2 -fpie" } */+}
+
+            diff --git ./gcc/testsuite/gcc.target/i386/pr63495.c ./gcc/testsuite/gcc.target/i386/pr63495.c
+            @@ -0,0 +1,6 @@
+            {+/* PR c/63495 */+}
+            {+/* { dg-do compile { target { i?86-*-linux* x86_64-*-linux* } } } */+}
+
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-1.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-2.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-3.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-4.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-6.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-7.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-8.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-9.c
+            @@ -0,0 +1,13 @@
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            gcc/testsuite/c-c++-common/pr37743.c
+            gcc/testsuite/gcc.dg/iec-559-macros-9.c
+            gcc/testsuite/gcc.dg/pg-override.c
+            gcc/testsuite/gcc.dg/pg.c
+            gcc/testsuite/gcc.target/i386/fentry-override.c
+            gcc/testsuite/gcc.target/i386/fentry.c
+            gcc/testsuite/gcc.target/i386/struct-size.c
+            Linux?
+
+            libstdc++-v3/testsuite/21_strings/c_strings/char/69626.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/2.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/3.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/4.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/5.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/cons/6.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/locking/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/locking/2.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/locking/3.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/locking/4.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/modifiers/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_lock/modifiers/2.cc
+            libstdc++-v3/testsuite/30_threads/shared_timed_mutex/cons/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_timed_mutex/try_lock/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_timed_mutex/try_lock/2.cc
+            libstdc++-v3/testsuite/30_threads/shared_timed_mutex/try_lock/3.cc
+            libstdc++-v3/testsuite/30_threads/shared_mutex/cons/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_mutex/try_lock/1.cc
+            libstdc++-v3/testsuite/30_threads/shared_mutex/try_lock/2.cc
+            Linux?
+
+            diff --git ./gcc/testsuite/gcc.dg/tm/memopt-15.c ./gcc/testsuite/gcc.dg/tm/memopt-15.c
+            @@ -1,4 +1,4 @@
+            /* { dg-do compile { target { {+i?86-*-linux*+} x86_64-*-linux* } } } */
+            /* { dg-options "-fgnu-tm -O" } */
+
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-1.c ./gcc/testsuite/gcc.target/i386/pr61296-1.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-2.c ./gcc/testsuite/gcc.target/i386/pr61296-2.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-3.c ./gcc/testsuite/gcc.target/i386/pr61296-3.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-4.c ./gcc/testsuite/gcc.target/i386/pr61296-4.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-5.c ./gcc/testsuite/gcc.target/i386/pr61296-5.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-6.c ./gcc/testsuite/gcc.target/i386/pr61296-6.c
+            diff --git ./gcc/testsuite/gcc.target/i386/pr61296-7.c ./gcc/testsuite/gcc.target/i386/pr61296-7.c
+            @@ -0,0 +1,27 @@
+            {+/* PR target/61296 */+}
+            {+/* { dg-do compile { target { *-*-linux* } } } */+}
+
+            gcc/testsuite/gcc.target/i386/mcount_pic.c
+            gcc/testsuite/gcc.target/i386/nop-mcount.c
+            gcc/testsuite/gcc.target/i386/record-mcount.c
+            Linux?
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.dg/fdata-sections-2.c
+             diff --git ./gcc/testsuite/gcc.dg/fdata-sections-2.c ./gcc/testsuite/gcc.dg/fdata-sections-2.c
+            @@ -0,0 +1,18 @@
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-1.c
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-2.c
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-3.c
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-4.c
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            +++ ./gcc/testsuite/gcc.target/i386/pr66275.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68018.c
+            {+/* { dg-do compile { target { *-*-linux* && { ! ia32 } } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-1.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-2.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-3.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-4.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-5.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr68937-6.c
+            {+/* { dg-do compile { target { *-*-linux* && ia32 } } } */+}
+            {+/* { dg-options "-O2 -fpic -fno-plt -mregparm=3" } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-10.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-11.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-12.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-13.c
+            {+/* { dg-do compile { target { *-*-linux* && { ! ia32 } } } } */+}
+            {+/* { dg-require-effective-target maybe_x32 } */+}
+            {+/* { dg-options "-O2 -mx32 -fpic -fno-plt -maddress-mode=long" } */+}
+
+            diff --git ./gcc/testsuite/gcc.target/i386/iamcu/abi-iamcu.exp ./gcc/testsuite/gcc.target/i386/iamcu/abi-iamcu.exp
+            @@ -0,0 +1,42 @@
+            {+[...]+}
+            {+if { (![istarget x86_64-*-linux*] && ![istarget i?86-*-linux*])+}
+            {+     || ![is-effective-target ia32] } then {+}
+            {+  return+}
+            {+}+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/pr70750-1.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr70750-2.c
+             diff --git ./gcc/testsuite/gcc.target/i386/pr70750-2.c ./gcc/testsuite/gcc.target/i386/pr70750-2.c
+            @@ -0,0 +1,11 @@
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-11.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-12.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-13.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-14.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-15.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-16.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-17.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-24.c
+            +++ ./gcc/testsuite/gcc.target/i386/interrupt-8.c
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-1.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-2.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-3.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-4.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-5.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-6.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr67400-7.c
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-14.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-15.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-16.c
+            +++ ./gcc/testsuite/gcc.target/i386/pr66232-17.c
+            {+/* { dg-do compile { target *-*-linux* } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-gd-1.c
+            {+/* { dg-do compile { target { *-*-linux* && tls_get_addr_via_got } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-gd-2.c
+            {+/* { dg-do run { target { *-*-linux* } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-gd-3.c
+            {+/* { dg-do compile { target { *-*-linux* && { ia32 && tls_get_addr_via_got } } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-ld-1.c
+            {+/* { dg-do compile { target { *-*-linux* && tls_get_addr_via_got } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-ld-2.c
+            {+/* { dg-do run { target { *-*-linux* } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gcc.target/i386/noplt-ld-3.c
+            {+/* { dg-do compile { target { *-*-linux* && { ia32 && tls_get_addr_via_got } } } } */+}
+
+            --- /dev/null
+            +++ ./gcc/testsuite/gnat.dg/trampoline3.adb
+            +++ ./gcc/testsuite/gnat.dg/trampoline4.adb
+            {+-- { dg-do compile { target *-*-linux* } }+}
+
+
+  * `hurd/usr`
+
+    `NATIVE_SYSTEM_HEADER_DIR`, `638454a19c1c08f01c10517bc72a114250fc4f33`,
+    [[!message-id "mcrzkhcbftp.fsf@coign.corp.google.com"]].
+
+    Debian.
+
+      * Eventually: get rid of this special-casing.  [[!message-id
+        "gckk1s$e0b$1@ger.gmane.org"]].
+
+  * [`-fsplit-stack`](http://nickclifton.livejournal.com/6889.html)
+
+        #define TARGET_CAN_SPLIT_STACK
+        #define TARGET_THREAD_SPLIT_STACK_OFFSET 0x30
+
+        libgcc/config/i386/morestack.S
+        libgcc/config/i386/t-stack-i386
+        libgcc/config/t-stack
+        libgcc/generic-morestack-thread.c
+        libgcc/generic-morestack.c
+        libgcc/generic-morestack.h
+        libgcc/config/i386/morestack.S:	cmpl	%gs:0x30,%eax		# See if we have enough space.
+        libgcc/config/i386/morestack.S:	# gcc/config/i386/linux.h.
+        libgcc/config/i386/morestack.S:	movl	%eax,%gs:0x30		# Save the new stack boundary.
+        libgcc/config/i386/morestack.S:	movl	%eax,%gs:0x30		# Save the new stack boundary.
+        libgcc/config/i386/morestack.S:	movl	%ecx,%gs:0x30		# Save new stack boundary.
+        libgcc/config/i386/morestack.S:	# gcc/config/i386/linux64.h.
+        libgcc/config/i386/morestack.S:	movl	%eax,%gs:0x30
+        libgcc/config/i386/morestack.S:	movl	%gs:0x30,%eax
+        libgcc/config/i386/morestack.S:	movl	%eax,%gs:0x30
+        libgcc/generic-morestack-thread.c:   can build glibc.  */
+        libgcc/generic-morestack-thread.c:   not be necessary if glibc supports -fsplit-stack directly.  */
+        libgcc/generic-morestack.c:   can build glibc.  */
+        libgcc/generic-morestack.c:     since stack splitting only works on GNU/Linux anyhow.  */
+        libgcc/generic-morestack.c:#if defined(__GLIBC__) && defined(__linux__)
+        libgcc/generic-morestack.c:  /* In glibc, the first two real time signals are used by the NPTL
+
+    IRC, freenode, #hurd, 2014-01-10:
+
+        <gnu_srs1> Hi, I assume gcc -fsplit-stack is not yet supported?
+        <braunr> gnu_srs1:
+          https://lists.gnu.org/archive/html/bug-hurd/2013-06/msg00100.html
+        <gnu_srs1> braunr: That's exactly where the problem is:
+          src/libgcc/generic-morestack.c:814:__morestack_load_mmap
+        <gnu_srs1> no return value recorded
+        <gnu_srs1> creating a call: page = mmap ((void*)0x0, 0, 4, 2, -1, 0);,
+          returning EINVAL
+        <braunr> lenght of 0 ?
+        <gnu_srs1> yes, __morestack_current_segment, is zero
+        <braunr> mmap is expected to return einval if the requested mapping has
+          a size of 0 ..
+        <braunr> i don't know what split stack is, but i remember it's a
+          problem for the hurd
+        <gnu_srs1> sorry, the address is zero from the above, and the length in
+          the call is zero too
+        <braunr> yes that's what i understood
+        <braunr> and i'm telling you it's normal
+        <braunr> the size is invalid
+        <gnu_srs1> libgcc/generic-morestack.c:  mmap
+          (__morestack_current_segment, 0, PROT_READ, MAP_ANONYMOUS, -1, 0);
+        <braunr> well this is wrong
+        <gnu_srs1> and the error code stays, not being reset in subsequent
+          calls
+        <gnu_srs1> causing an error later on
+        <braunr> as roland says in
+          https://lists.gnu.org/archive/html/bug-hurd/2013-06/msg00102.html, it
+          should be possible to support split-stack now that we have tls
+        <gnu_srs1> as thomas reported
+        <braunr> i don't see the relation between split-stack and the mmap
+          invocation
+        <gnu_srs1> tls s in 2.17-97, right? that's the one I tried
+        <braunr> tls is there, but not split stack support
+        <braunr> and libpthread still has bugs related to changing the stack
+          apparently
+        <braunr> fixed upstream but not yet in debian packages
+        <braunr> unless you want to try with the thread destruction packages
+        <braunr> not sure it will change much though
+
+      * Also see `libgcc/config/i386/morestack.S`: comments w.r.t
+        `TARGET_THREAD_SPLIT_STACK_OFFSET`/`%gs:0x30` usage; likely needs
+        porting.
+
+      * As per `libgcc/config/i386/t-stack-i386`, the former file is only used
+        for `-fsplit-stack` support -- which is currently enabled for us in
+        `libgcc/config.host`.
+
+      * `gcc/config/gnu-user.h` defines `*SPLIT_STACK*` macros -- which aren't
+        valid for us (yet), I think.
+
+      * Also see [[!sourceware_PR 10686]], glibc commit
+        ecbf434213c0333d81706074e4d107ac45011635 `Reserve new TLS field for x86
+        and x86_64` (`__private_ss`).
+
+      * Might `-fsplit-stack` be useful for us with respect to our
+        [[multithreaded|multithreading]] libraries?
+
+      * -fsplit-stack issue in context of [[gccgo]]
+
+            mmap errno 1073741846
+            fatal error: mmap
+
+            Temporary breakpoint 3 at 0x80490fd
+            Starting program: /media/erich/home/thomas/tmp/gcc/t/hurd/go.build/gcc/testsuite/go/array-2.x
+            [New Thread 732.20]
+            
+            Breakpoint 2, backtrace_alloc (state=<optimized out>, state@entry=0x21ffa08, size=size@entry=40, error_callback=<optimized out>, error_callback@entry=0x12c4970 <error_callback>, data=<optimized out>, data@entry=0x0)
+                at ../../../go/libbacktrace/mmap.c:140
+            140           page = mmap (NULL, asksize, PROT_READ | PROT_WRITE,
+            (gdb) info threads
+              Id   Target Id         Frame
+              5    Thread 732.20     0x01dedafc in mach_msg_trap () at /usr/src/eglibc-2.17/build-tree/hurd-i386-libc/mach/mach_msg_trap.S:2
+            * 4    Thread 732.19     backtrace_alloc (state=<optimized out>, state@entry=0x21ffa08, size=size@entry=40, error_callback=<optimized out>, error_callback@entry=0x12c4970 <error_callback>, data=<optimized out>, data@entry=0x0)
+                at ../../../go/libbacktrace/mmap.c:140
+            (gdb) set *(int *)0x21ff930 = 123
+            (gdb) call __vm_allocate(1,0x21ff930,4096,1)
+            $20 = 0
+            (gdb) print/x *(int *)0x21ff930
+            $21 = 0x0
+            (gdb) call __vm_allocate(1,0x21ff930,4096,1)
+            $22 = 0
+            (gdb) print/x *(int *)0x21ff930
+            $23 = 0x7d000
+            (gdb) call __vm_allocate(1,0x21ff930,4096,1)
+            $24 = 0
+            (gdb) print/x *(int *)0x21ff930
+            $25 = 0x7e000
+
+            $ cat < v.c
+            #include <mach.h>
+            #include <stdio.h>
+            
+            int main(void)
+            {
+              int err;
+              vm_address_t addr = 0;
+            
+              int i;
+              for (i = 0; i < 3; ++i)
+                {
+                  err = vm_allocate(mach_task_self(), &addr, 4096, 1);
+                  printf("%u %p\n", err, (void *) addr);
+                }
+            
+              return 0;
+            }
+            $ gcc -Wall v.c -fsplit-stack 
+            $ ./a.out 
+            0 (nil)
+            0 0x102c000
+            0 0x102e000
+
+  * `gcc/ada`, `gcc/testsuite/ada`, `gcc/testsuite/gnat.dg`, `gnattools`,
+    `libada` (not all reviewed)
+
+    See [[Ada (GNAT)|gnat]].
+
+  * `gcc/go`, `gcc/testsuite/go.test`, `libgo` (not reviewed)
+
+      * The [[Google Go's libgo|gccgo]] (introduced in
+        e440a3286bc89368b8d3a8fd6accd47191790bf2 (2010-12-03)) needs
+        OS configuration / support.
+        See [[gccgo]].
+
+  * `--enable-frame-pointer`
+
+    `gcc/configure.ac`: `enable_frame_pointer=no`
+
+  * `--with-dwarf2`?
+
+  * `--enable-werror`
+
+  * `--enable-checking`
+
+  * `--enable-linker-build-id`
+
+  * `--enable-gnu-unique-object`
+
+    On 2016-12-05 noticed that per `gcc -v` output, `gcc version 6.2.1 20161124
+    (Debian 6.2.1-5)` for GNU/Linux is configured with
+    `--enable-gnu-unique-object`, but GNU/Hurd is not.
+
+  * `--enable-lto`
+
+  * `--enable-indirect-function`
+
+    [[IFUNC]]
+
+  * <http://gcc.gnu.org/ml/gcc/2007-11/msg00289.html>,
+    <http://gcc.gnu.org/ml/gcc-patches/2010-12/msg00672.html>
+
+      * `gcc/config/t-linux` should be named `gcc/config/t-gnu-user` or
+        similar.  Likewise for `gcc/config/i386/t-linux`.
+
+  * Debian's GCC package has Hurd-specific patches.  Some have been forwarded
+    upstream (and have been ignored).  [[Thomas_Schwinge|tschwinge]] is working
+    on getting them integrated.
+
+  * [\[meta-bug\] bootstrap bugs for
+    \*-gnu\*](http://gcc.gnu.org/bugzilla/show_bug.cgi?id=21824)
+
+  * [build system: gcc\_cv\_libc\_provides\_ssp and
+    NATIVE\_SYSTEM\_HEADER\_DIR](http://gcc.gnu.org/ml/gcc/2008-10/msg00130.html)
+
+  * [-fstack-protector shouldn't use TLS in freestanding
+    mode](http://gcc.gnu.org/bugzilla/show_bug.cgi?id=29838)
+
+      * See also commit bf1c0af128f33bd342636c4afeaa8f3a8a7cf8ca (reverted in
+        commit a204f0622242865ffea889bd698bc7c7bd236bd1), commit
+        05c1aa95e6c37b3b281d749c76c673392941a031.
+
+  * 34618b3190c110b8926cc2b1db4b4eac95451995 »config-list.mk«
+
+    What's this used for?  (Check ML.)  Ask to include i686-pc-gnu (once it is
+    buildable out of the box)?  See also
+    73905b5de0d9a086f22ded7638bb1c0ae1b91326.
+
+  * [low] [[toolchain/cross-gnu]] toolchain bootstrap vs. `fenv.h` in libgcc's
+    libbid:
+
+        [...]/xgcc [...] -DIN_LIBGCC2 -fbuilding-libgcc [...] -Dinhibit_libc [...] -o bid_decimal_globals.o [...] -c [...]/libgcc/config/libbid/bid_decimal_globals.c
+        [...]/libgcc/config/libbid/bid_decimal_globals.c:47:18: fatal error: fenv.h: No such file or directory
+        compilation terminated.
+        make[1]: *** [bid_decimal_globals.o] Error 1
+        make[1]: Leaving directory `/media/boole-data/thomas/tmp/gnu-0/src/gcc.obj/i686-pc-gnu/libgcc'
+        make: *** [all-target-libgcc] Error 2
+
+    See threads at [[!message-id
+    "AANLkTinY1Cd4_qO_9euYJN8zev4hdr7_ANpjNG+yGRMn@mail.gmail.com"]],
+    [[!message-id "20110328225532.GE5293@synopsys.com"]], [[!message-id
+    "4D52D522.1040804@gmail.com"]].  Can simply configure the first GCC with
+    `--disable-decimal-float`.
+
+    Alternatively, can we use `#ifndef inhibit_libc` for this (these?) file(s)?
+    See `generic-nonstrack.c`, for example.  The latter (and also
+    `generic-morestack-thread.c`) also has a nice explanation of `inhibit_libc`
+    which could be centralized at one place, for example definition of
+    `inhibit_libc`.
+
+  * [low] [[toolchain/cross-gnu]]
+
+        The directory that should contain system headers does not exist:
+          /media/boole-data/thomas/tmp/gnu-0/sys_root/usr/include
+        make[2]: *** [stmp-fixinc] Error 1
+        make[2]: Leaving directory `/media/boole-data/thomas/tmp/gnu-0/src/gcc.obj/gcc'
+        make[1]: *** [all-gcc] Error 2
+        make[1]: Leaving directory `/media/boole-data/thomas/tmp/gnu-0/src/gcc.obj'
+
+    `mkdir` the directory for now, but what is really going on?  GCC has *use
+    `/usr/include` patch*, but glibc still installs into `/include/`?
+
+  * `__GLIBC__`
+
+    IRC, freenode, #hurd, 2012-01-05:
+
+        <civodul> on GNU/kFreeBSD, it's GCC that defines __GLIBC__, funny
+        <youpi> ??
+        <youpi> not from features.h ?
+        <civodul> in gcc/config/kfreebsd-gnu.h
+        <civodul> :-)
+        <pinotree> correct, it's enabled in gcc's config
+        <pinotree> i discovered that after banging my head on the wall trying
+          to find out why some stuff wasn't compiling even after kfreebsd
+          porting patches adding preprocessors checks for __GLIBC__
+
+    GNU/kFreeBSD: commit
+    6396cc37141180db4d2c8f73cab4f5977d8a1e19 (2004-06-24, r83577),
+    GNU/kOpenSolaris: commit 3bef40126fb1633018fce47828df0fa9f65f110c
+    (2009-01-29, r143768).  See also GDB commits
+    fda1b24c62843f81d31de2af57b1ed9c55f1e348 and
+    1acb4f4ff73d20850a7524fc939d2651be75f47b, and binutils commits
+    e3081899be7570eb90ccfd5d767950d3a62871ee,
+    127c4d4a4fe65bd17ea64db1be7f3c93d393afcb,
+    47dbf5b634b955c2db1221715d15751e1281546a, and
+    ad2be7e8b846f4cd67fa1e032f98d5dc1cdb6b8d.
+
+    IRC, freenode, #hurd, 2012-05-25:
+
+        <gnu_srs> Hi, looks like __GLIBC__ is not defined by default for GNU?
+        <gnu_srs> touch foo.h; cpp -dM foo.h|grep LIBC: empty
+        <braunr> gnu_srs: well, this only tells your the compiler defaults
+        <tschwinge> gnu_srs: See the email I just sent.
+
+    [[!message-id "87396od3ej.fsf@schwinge.name"]]
+
+        <braunr> __GLIBC__ would probably be introduced by a glibc header
+        <gnu_srs> tschwinge: I saw your email. I wonder if features.h is
+          included in the kFreeBSD build of webkit.
+        <gnu_srs> It is defined in their build, but not in the Hurd build.
+        <pinotree> gcc on kfreebsd unconditionally defines __GLIBC__
+        <pinotree> (a bit stupid choice imho, but hardly something that could
+          be changed now...)
+        <braunr> :/
+        <braunr> personally i don't consider this only "a bit" stupid, as
+          kfreebsd is one of the various efforts pushing towards portability
+        <braunr> and using such hacks actually hinders portability ...
+        <pinotree> yeah don't tell me, i can remember at least half dozen of
+          occasions when a code wouldn't have been compiling at all on other
+          glibc platforms otherwise
+        <pinotree> sure, i have nothing against kfreebsd's efforts, but making
+          gcc define something which is proper of the libc used is stupid
+        <braunr> it is
+        <pinotree> i spotted changes like:
+        <pinotree> -#ifdef __linux
+        <pinotree> +#if defined(__linux__) || defined(__GLIBC__)
+        <pinotree> and wondered why they wouldn't work at all for us... and
+          then realized there were no #include in that file before that
+          preprocessor check
+        <tschwinge> This is even in upstream GCC gcc/config/kfreebsd-gnu.h:
+        <tschwinge> #define GNU_USER_TARGET_OS_CPP_BUILTINS()               \
+        <tschwinge>   do                                            \
+        <tschwinge>     {                                           \
+        <tschwinge>         builtin_define ("__FreeBSD_kernel__");  \
+        <tschwinge>         builtin_define ("__GLIBC__");           \
+        <tschwinge>         builtin_define_std ("unix");            \
+        <tschwinge>         builtin_assert ("system=unix");         \
+        <tschwinge>         builtin_assert ("system=posix");        \
+        <tschwinge>     }                                           \
+        <tschwinge>   while (0)
+        <tschwinge> I might raise this upstream at some point.
+        <pinotree> tschwinge: i could guess the change was proposed by the
+          kfreebsd people, so asking them before at d-bsd@d.o would be a start
+        <tschwinge> pinotree: Ack.
+        <pinotree> especially that they would need to fix stuff afterwards
+        <pinotree> imho we could propose them the change, and if they agree put
+          that as local patch to debian's gcc4.6/.7 after wheezy, so there is
+          plenty of time for them to fix stuff
+        <pinotree> what should be done first is, however, find out why that
+          define has been added to gcc
+
+    [[!message-id "201211061305.02565.pino@debian.org"]].
+
+    IRC, freenode, #hurd, 2014-01-08:
+
+        <gnu_srs> How come __GLIBC__ is defined in gcc for kFreeBSD and not
+          GNU? They sometimes use that instead of __FreeBSD_kernel__
+        <pochu> it's defined by libc's /usr/include/features.h
+        <gnu_srs> pochu: __GLIBC__ is defined in features.h both for GNU and
+          kFreeBSD, but only in gcc/cpp for kFreeBSD: touch foo.h;gcc -E -dM
+          foo.h|grep GLIBC
+        <pochu> gnu_srs: #include <stdlib.h>
+        <gnu_srs> pochu: they both include <features.h>
+        <pochu> gnu_srs: I get __GLIBC__ defined if I include features.h
+        <pochu> with an empty file (as suggested by your `touch foo.h') I don't
+          get it defined, whether on hurd or linux, but I think that's expected
+        <gnu_srs> pochu: might be so but it is not pre-defined in CPP, as it is
+          for kFreeBSD.
+        <gnu_srs> I think it should not be defined, or it should be defined by
+          all three: GNU,.kFreeBSD and Linux
+        <gnu_srs> an anomaly, something for tschwinge
+        <braunr> https://lists.debian.org/debian-bsd/2012/11/msg00016.html
+        <gnu_srs> braunr: good finding, I assume nothing has happened since
+          then?
+        <braunr> not likely
+
+  * [low] Does `-mcpu=native` etc. work?  (For example,
+    2ae1f0cc764e998bfc684d662aba0497e8723e52.)
+
+  * transactional memory, 4c0315d05fa0f707875686abc4f91f7a979a7c7b
+
+      * `config/mmap.m4`
+
+      * In `libitm/config/`, is the generic stuff (`tls.h`, etc.) enough for
+        us?
+
+      * f29a2041f32773464e226a83f41762c2e9cf658e
+        (e53a96c2136f7cdff4699475fea41afeed9dece3)
+
+    Testresults same as for GNU/Linux.
+
+  * [high] 3efc00f6f17778172d3fa7ac737fa1473b3b4d5a, `Check __GLIBC__ when
+    using __SIGRTMIN`.  GCC PR52390.  Fixed by
+    8d2259c83f94c082ad8a00b5d00bb639ce24efce.
+
+  * 15ac1e637ad0cb92bf7629205c617ea847a4b810 `Build 64-bit libffi multilib for
+    i?86-linux`.
+
+  * `libstdc++`: uses `_GLIBCXX_HAVE_TLS`, but where is this defined?  Supposed
+    to come from `config/tls.m4:GCC_CHECK_TLS`?
+
+  * `libgcc/gthr-posix.h:__gthread_active_p` -- is this suitable for us?  This
+    is used in libgcc for ObjC wrapper stuff and similar in libstdc++.
+    C.f. [[!message-id "x57jobtqx89w.fsf@frobland.mtv.corp.google.com"]],
+    [[!message-id "x57jd359fkx3.fsf@frobland.mtv.corp.google.com"]] as well as
+    [[!debbug 629866]]/[[!message-id
+    "20110609002620.GA16719@const.famille.thibault.fr"]].  commit
+    026e608ecebcb2a6193971006a85276307d79b00.
+
+  * Does this make sense for us?
+
+        diff --git ./libstdc++-v3/include/std/thread ./libstdc++-v3/include/std/thread
+        @@ -269,7 +279,18 @@ _GLIBCXX_END_NAMESPACE_VERSION
+            /// get_id
+            inline thread::id
+            get_id() noexcept
+            {
+        {+#ifdef __GLIBC__+}
+        {+      // For the GNU C library pthread_self() is usable without linking to+}
+        {+      // libpthread.so but returns 0, so we cannot use it in single-threaded+}
+        {+      // programs, because this_thread::get_id() != thread::id{} must be true.+}
+        {+      // We know that pthread_t is an integral type in the GNU C library.+}
+        {+      if (!__gthread_active_p())+}
+        {+      return thread::id(1);+}
+        {+#endif+}
+              return thread::id(__gthread_self());
+            }
+
+  * [[`libsanitizer`|_san]] (not reviewed)
+
+    A lot of Linux-specific things.
+
+  * 30f690e026ecdf99c68e777a48562b58afe37f43 `TARGET_LIBC_HAS_FUNCTION`.  Where
+    is `targetm` set?  All TARGET_C99_FUNCTIONS and TARGET_HAS_SINCOS gone?
+
+  * `libvtv`
+
+      * Disabled in `configure.tgt`.
+
+      * `libvtv/vtv_rts.cc`: `if (strcmp (info->dlpi_name, "linux-vdso.so.1")
+        == 0)` -- not a problem for us, but...
+
+      * `libvtv/vtv_rts.cc`: `/proc/self/exe` usage, `PATH_MAX`.
+
+  * `PIE_SPEC`
+
+        diff --git ./gcc/config/gnu-user.h ./gcc/config/gnu-user.h
+        @@ -42,8 +42,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        
+        #if defined HAVE_LD_PIE
+        #define GNU_USER_TARGET_STARTFILE_SPEC \
+          "%{!shared: [-%{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}}-]{+%{pg|p|profile:gcrt1.o%s;: \+}
+        {+    %{" PIE_SPEC ":Scrt1.o%s} %{" NO_PIE_SPEC ":crt1.o%s}}}+} \
+           crti.o%s [-%{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}-]{+%{static:crtbeginT.o%s;: %{shared:crtbeginS.o%s} \+}
+        {+            %{" PIE_SPEC ":crtbeginS.o%s} \+}
+        {+            %{" NO_PIE_SPEC ":crtbegin.o%s}}+} \
+
+  * `%gs:`
+
+        diff --git ./gcc/config/i386/i386.c ./gcc/config/i386/i386.c
+        @@ -22879,10 +22887,50 @@ ix86_split_long_move (rtx operands[])
+                  if (GET_MODE (base) != Pmode)
+                    base = gen_rtx_REG (Pmode, REGNO (base));
+        
+                  {+addr = XEXP (part[1][0], 0);+}
+        {+        if (TARGET_TLS_DIRECT_SEG_REFS)+}
+        {+          {+}
+        {+            struct ix86_address parts;+}
+        {+            int ok = ix86_decompose_address (addr, &parts);+}
+        {+            gcc_assert (ok);+}
+        {+            if (parts.seg == DEFAULT_TLS_SEG_REG)+}
+        {+              {+}
+        {+                /* It is not valid to use %gs: or %fs: in+}
+        {+                   lea though, so we need to remove it from the+}
+        {+                   address used for lea and add it to each individual+}
+        {+                   memory loads instead.  */+}
+        [...]
+
+  * x86 Named Address Spaces, `i386: Add address spaces for fs/gs segments and
+    tls`, commit 716c563bcef8bb91dee230dbc75abff70ed2f6ae.
+    `__seg_tls` has again be reverted in
+    ee1bfdb0d611ed2e1057071f39589e6ebcd87983 `Remove __seg_tls before first
+    release`.
+
+  * x86 `-mgeneral-regs-only` option, commit
+    f409438030cfed3c6373f0dfa58a4bdf9a65b4ac, [[!GCC_PR 70738]].
+
+    Before being temporarily reverted in commit
+    294528f77a8097ace2986019770cad097a3bbc55, it had originally been added in
+    commit a55668c45867980a07a06690a45edd43b4c82efa `Add -mgeneral-regs-only
+    option`:
+
+        X86 Linux kernel is compiled only with integer instructions.  Currently,
+        
+        -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-80387
+        -mno-fp-ret-in-387  -mskip-rax-setup
+        
+        is used to compile kernel.  If we add another non-integer feature, it
+        has to be turned off.  We can add a -mgeneral-regs-only option, similar
+        to AArch64, to disable all non-integer features so that kernel doesn't
+        need a long list and the same option will work for future compilers.
+        It can also be used to compile interrupt handler.
+
+    Will this be useful for GNU Mach, too?
+
+  * `TARGET_PRINTF_POINTER_FORMAT`
+
+        commit b9833bfd04471afa17cd52aedd911e4671bdd82a
+        Author: msebor <msebor@138bc75d-0d04-0410-961f-82ee72b054a4>
+        Date:   Wed Sep 21 01:39:27 2016 +0000
+        
+            PR middle-end/49905 - Better sanity checking on sprintf src & dest to
+            [...]
+            git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@240298 138bc75d-0d04-0410-961f-82ee72b054a4
+
+    Why is `TARGET_PRINTF_POINTER_FORMAT` `#define`d in `gcc/config/linux.c`?
+    `#define` of `TARGET_PRINTF_POINTER_FORMAT` should move from
+    `gcc/config/linux.h` into `gnu-user.h`, and likewise for definition of
+    `gnu_libc_printf_pointer_format` in `gcc/config/linux.c`?  Then adjust
+    `gcc/testsuite/gcc.dg/tree-ssa/builtin-sprintf-warn-1.c`.
+
+        commit 9ce11577b63e817104a9590b60c5aac49ca4f6e2
+        Author: msebor <msebor@138bc75d-0d04-0410-961f-82ee72b054a4>
+        Date:   Wed Oct 5 15:21:40 2016 +0000
+        
+            PR bootstrap/77819 - undefined reference to gnu_libc_printf_pointer_format with uClibc
+            
+            gcc/ChangeLog:
+            
+                PR bootstrap/77819
+                * config/linux.h (TARGET_PRINTF_POINTER_FORMAT): Define macro.
+                * config/linux.c (gnu_libc_printf_pointer_format): Remove.
+                * targhooks.c [DEFAULT_LIBC == LIBC_UCLIBC) && SINGLE_LIBC]
+                (default_printf_pointer_format): Define function.
+                * targhooks.c (linux_printf_pointer_format): Define new function.
+                * targhooks.h (linux_printf_pointer_format): Declare.
+                (gnu_libc_printf_pointer_format): Remove declaration.
+            
+            git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@240793 138bc75d-0d04-0410-961f-82ee72b054a4
+
+    Some of that stuff has been reverted in commit
+    72d5639d126d3b84a480430b4a4ce7dabd8ebd63.
+
+  * `--enable-default-pie`
+
+    On 2016-12-05 noticed that per `gcc -v` output, `gcc version 6.2.1 20161124
+    (Debian 6.2.1-5)` for GNU/Linux is configured with
+    `--enable-default-pie`, but GNU/Hurd is not.
+
+
+# Build
+
+Here's a log of a GCC build run; this is from Git commit
+17f0f5acdcfb9181203ca9b6d8f8cbc64e5ce843 (2016-11-30),
+plus *GNU Hurd Ada fixes*,
+plus *libstdc++ RLIMIT changes* ([[!message-id
+"8760n66mky.fsf@euler.schwinge.homeip.net"]]), run on kepler.SCHWINGE
+and laplace.SCHWINGE.
+
+    $ export LC_ALL=C
+    $ (cd ../master/ && contrib/gcc_update --touch)
+    $ ../master/configure --prefix="$PWD".install SHELL=/bin/dash CC=gcc-6 CXX=g++-6 --enable-languages=all,ada --disable-libcilkrts --disable-libsanitizer --disable-libvtv --disable-libmpx --with-native-system-header-dir=/usr/include --enable-multiarch 2>&1 | tee log_build
+    [...]
+    $ make 2>&1 | tee log_build_
+    [...]
+
+Different hosts may default to different shells and compiler versions; thus
+harmonized.
+`--disable-libcilkrts` (obsolete, Cilk Plus support removed in trunk r255195,
+2017-11-28),
+`--disable-libmpx` (obsolete, Intel MPX support removed in trunk r261304,
+2018-06-08),
+`--disable-libsanitizer`,
+`--disable-libvtv`,
+until these is auto-detected/fixed/ported for GNU Hurd.
+`--with-native-system-header-dir=/usr/include` because GCC still defaults to
+`/include` for GNU Hurd.  Explicit `--enable-multiarch` because *auto check [is
+disabled if] configured with --native-system-header-dir*.
+
+This takes up around 4.6 GiB, and runs for [[5 h 16 min|performance#measure]]
+on kepler.SCHWINGE and [[5 h 14 min|performance#measure]] on laplace.SCHWINGE.
+
+<!--
+
+    $ (make && touch .go-install) 2>&1 | tee log_build_ && test -f .go-install && (make install && touch .go-test) 2>&1 | tee log_install && test -f .go-test && make -k check 2>&1 | tee log_test
+
+-->
+
+
+## Analysis
+
+    $ toolchain/logs/process gcc build
+
+  * [[`checking if gcc static flag -static
+    works... no`|glibc_madvise_vs_static_linking]]
+
+    Addressed in Debian glibc.
+
+  * `gcc/config/host-linux.c` vs. `host-default.c`
+
+      * `gcc/config/x-linux`
+
+  * *fixincludes* stuff
+
+  * malloc?
+
+        -cat ../../hurd/gcc/config/i386/pmm_malloc.h > mm_malloc.h
+        +cat ../../hurd/gcc/config/i386/gmm_malloc.h > mm_malloc.h
+
+    Comes from `gcc/config.gcc`: `i386/t-pmm_malloc` vs. `i386/t-gmm_malloc`
+    for `i[34567]86-*-linux*` vs. `i[34567]86-*-*`.
+
+    2004-08-03, PR target/16570, id:20040802163509.GA18487@lucon.org
+
+  * `libgomp`
+
+      * `libgomp/config/linux`, `libgomp/config/linux/x86`
+
+    `sed`ed away in `log_build*`.  TODO.
+
+      * `-march=i486 -mtune=i686`
+
+    `sed`ed away in `log_build*`.  This comes from `libgomp/configure.tgt`,
+    where this is added to `XCFLAGS` for `i[456]86-*-linux*` only.  TODO?
+
+  * `RLIMIT_VMEM`.  Usage kosher?
+
+  * `libtool: link: ar rc .libs/libstdc++.a [...]`
+
+    Just different order of object files, or another problem?  TODO
+
+  * `libobjc/encoding.c`:
+
+         libtool: compile:  [...]/hurd/master.build/./gcc/xgcc [...] [...]/hurd/master/libobjc/encoding.c -c [...]
+        +[...]/hurd/master/libobjc/encoding.c:128:1: warning: '_darwin_rs6000_special_round_type_align' defined but not used [-Wunused-function]
+
+  * `libobjc/thr.c`: `gcc/gthr-posix.h`
+
+         libtool: compile:  [...]/hurd/master.build/./gcc/xgcc [...] [...]/hurd/master/libobjc/thr.c -c [...]
+        +In file included from [...]/hurd/master/libobjc/../libgcc/gthr.h:142:0,
+        +                 from [...]/hurd/master/libobjc/thr.c:45:
+        +../libgcc/gthr-default.h: In function '__gthread_objc_thread_set_priority':
+        +../libgcc/gthr-default.h:388:41: warning: unused parameter 'priority' [-Wunused-parameter]
+
+  * `/proc/self/*`
+
+        -checking for /proc/self/exe... yes
+        -checking for /proc/self/maps... yes
+        +checking for /proc/self/exe... no
+        +checking for /proc/self/maps... no
+
+  * *default library search path*
+
+        -checking for the default library search path... /lib /usr/lib /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i486-linux-gnu /usr/lib/i486-linux-gnu /usr/local/lib
+        +checking for the default library search path... /lib /usr/lib
+
+    [[binutils]] issue?  Should be aligned by Samuel's binutils patch.
+
+  * `value-unwind.h`
+
+        -DEFINES='' HEADERS='../../../master/libgcc/config/i386/value-unwind.h' \
+        +DEFINES='' HEADERS='' \
+                        ../../../master/libgcc/mkheader.sh > tmp-libgcc_tm.h
+
+    Comes from `gcc/config.gcc`: for `i[34567]86-*-linux*`
+    vs. `i[34567]86-*-*`, but apparently is important only for *x86_64* anyway.
+
+  * `soft-fp` prototypes
+
+         ../../../master/libgcc/soft-fp/eqtf2.c:34:9: warning: no previous prototype for '__eqtf2' [-Wmissing-prototypes]
+        +../../../master/libgcc/soft-fp/eqtf2.c:50:1: warning: no previous prototype for '__netf2' [-Wmissing-prototypes]
+
+         ../../../master/libgcc/soft-fp/getf2.c:34:9: warning: no previous prototype for '__getf2' [-Wmissing-prototypes]
+        +../../../master/libgcc/soft-fp/getf2.c:50:1: warning: no previous prototype for '__gttf2' [-Wmissing-prototypes]
+
+         ../../../master/libgcc/soft-fp/letf2.c:34:9: warning: no previous prototype for '__letf2' [-Wmissing-prototypes]
+        +../../../master/libgcc/soft-fp/letf2.c:50:1: warning: no previous prototype for '__lttf2' [-Wmissing-prototypes]
+
+  * `libatomic` on GNU/Linux compiles several more files than on GNU/Hurd.  Is
+    that correct?  Probably futex support.
+
+  * `linker -z bndplt option`
+
+        -checking linker -z bndplt option... yes
+        +checking linker -z bndplt option... no
+
+  * `utimensat`
+
+        -checking for utimensat... yes
+        +checking for utimensat... no
+
+
+# Install
+
+    $ make install 2>&1 | tee log_install
+    [...]
+
+This takes up around 1.3 GiB, and runs for [[1 min|performance#measure]] on
+kepler.SCHWINGE and [[5 min|performance#measure]] on laplace.SCHWINGE.
+
+
+## Analysis
+
+    $ toolchain/logs/process gcc install
+
+  * `libtool: finish`: `ldconfig` is not run for the Hurd.
+
+    [[libtool]].
+
+
+# Testsuite
+
+<http://gcc.gnu.org/install/test.html>
+
+    $ make -k check 2>&1 | tee log_test
+    [...]
+
+This runs for [[6 h 12 min|performance#measure]] on kepler.SCHWINGE and [[13 h
+34 min|performance#measure]] on laplace.SCHWINGE.
+
+
+## Analysis
+
+  A lot of the failures are due to gcc's unwind support not knowing about signal trampoline on GNU/Hurd, this is a TODO.
+
+
+    $ toolchain/logs/process gcc test
+
+  * PTYs
+
+    Occasionally tests FAIL due to:
+
+        spawn -open -1 failed, 1 5, The system has no more ptys.  Ask your system administrator to create more.
+
+    TODO.
+
+  * Some are correctly UNSUPPORTED:
+
+      * [[IFUNC]]
+
+        Also multiversioning, `g++.dg/ext/mv*`, for example (several of which
+        started FAILing (ICE) on kepler.SCHWINGE).
+
+      * [[`asan.exp`|_san]]
+
+      * other C libraries
+
+        `gcc.target/i386/long-double-64-2.c`,
+        `gcc.target/i386/long-double-80-3.c`
+
+  * `gcc`
+
+        spawn [open ...]
+        FAIL: gcc.dg/split-2.c execution test
+
+        FAIL: gcc.dg/split-5.c execution test
+
+    TODO.
+
+        xgcc: internal compiler error: Aborted (program cc1)
+        libbacktrace could not find executable to open
+        Please submit a full bug report, [...]
+        FAIL: largefile.c  -O0 -g -I. -Dwith_PCH (internal compiler error)
+        [...]
+
+    TODO.
+
+  * `g++`
+
+        spawn [open ...]
+        terminate called after throwing an instance of 'int'
+        FAIL: g++.dg/eh/sighandle.C -std=gnu++98 execution test
+
+        FAIL: g++.dg/eh/sighandle.C -std=gnu++11 execution test
+
+    TODO.
+
+        spawn [open ...]
+        FAIL: g++.dg/cdce3.C -std=gnu++98 execution test
+
+        FAIL: g++.dg/cdce3.C -std=gnu++11 execution test
+
+    TODO.
+
+  * `gcc`, `g++`
+
+        FAIL: gcc.dg/cleanup-10.c execution test
+        FAIL: gcc.dg/cleanup-11.c execution test
+        FAIL: gcc.dg/cleanup-8.c execution test
+        FAIL: gcc.dg/cleanup-9.c execution test
+        FAIL: g++.dg/ext/cleanup-10.C -std=gnu++98 execution test
+        FAIL: g++.dg/ext/cleanup-10.C -std=gnu++11 execution test
+        FAIL: g++.dg/ext/cleanup-11.C -std=gnu++98 execution test
+        FAIL: g++.dg/ext/cleanup-11.C -std=gnu++11 execution test
+        FAIL: g++.dg/ext/cleanup-8.C -std=gnu++98 execution test
+        FAIL: g++.dg/ext/cleanup-8.C -std=gnu++11 execution test
+        FAIL: g++.dg/ext/cleanup-9.C -std=gnu++98 execution test
+        FAIL: g++.dg/ext/cleanup-9.C -std=gnu++11 execution test
+
+        gcc/testsuite/g++.dg/ext/cleanup-10.C:  s.sa_flags = SA_RESETHAND | SA_ONSTACK;
+        gcc/testsuite/g++.dg/ext/cleanup-11.C:  s.sa_flags = SA_RESETHAND | SA_ONSTACK | SA_SIGINFO;
+        gcc/testsuite/gcc.dg/cleanup-10.c:  s.sa_flags = SA_RESETHAND | SA_ONSTACK;
+        gcc/testsuite/gcc.dg/cleanup-11.c:  s.sa_flags = SA_RESETHAND | SA_ONSTACK | SA_SIGINFO;
+
+    TODO.
+
+  * `gfortran`
+
+        +FAIL: gfortran.dg/read_dir.f90   -O0  execution test
+        +FAIL: gfortran.dg/read_dir.f90   -O1  execution test
+        +FAIL: gfortran.dg/read_dir.f90   -O2  execution test
+        +FAIL: gfortran.dg/read_dir.f90   -O3 -fomit-frame-pointer -funroll-loops -fpeel-loops -ftracer -finline-functions  execution test
+        +FAIL: gfortran.dg/read_dir.f90   -O3 -g  execution test
+        +FAIL: gfortran.dg/read_dir.f90   -Os  execution test
+
+    TODO.
+
+  * `[ARCH]/libgomp`
+
+    As of dcdba5abca23716daa6aeb5c92f367e0978e4539 (2013-05-27;
+    0479dc77cf50ee78769b55563051cf72d39b3d60 (2013-05-27)), plus
+    `id:"87txlnlg0z.fsf@kepler.schwinge.homeip.net"`, about a dozen of them
+    (but different ones per each run) FAIL on laplace.SCHWINGE:
+
+        spawn [open ...]
+        
+        Program aborted. Backtrace:
+        #0  0x1042523
+        #1  0x1043D6F
+        #2  0x10F9BC7
+        FAIL: libgomp.fortran/lib1.f90  -O1  execution test
+
+    All have basically the same backtrace.  TODO.
+
+  * `[ARCH]/libstdc++-v3`
+
+        FAIL: libstdc++-abi/abi_check
+
+    TODO.
+
+        $ readelf --symbols --wide i686-unknown-gnu0.3/./libstdc++-v3/src/.libs/libstdc++.so | grep pthread_mutex
+          1065: 00000000     0 FUNC    WEAK   DEFAULT  UND pthread_mutex_unlock@GLIBC_2.13_DEBIAN_31 (37)
+          2515: 00000000     0 FUNC    WEAK   DEFAULT  UND pthread_mutex_lock@GLIBC_2.13_DEBIAN_31 (37)
+          2978: 00068430    15 FUNC    GLOBAL DEFAULT   11 _ZNSt12__basic_fileIcEC2EP15__pthread_mutex@@GLIBCXX_3.4
+          3790: 00068430    15 FUNC    GLOBAL DEFAULT   11 _ZNSt12__basic_fileIcEC1EP15__pthread_mutex@@GLIBCXX_3.4
+          2085: 00000000     0 FUNC    WEAK   DEFAULT  UND pthread_mutex_unlock@@GLIBC_2.13_DEBIAN_31
+          3535: 00000000     0 FUNC    WEAK   DEFAULT  UND pthread_mutex_lock@@GLIBC_2.13_DEBIAN_31
+          3998: 00068430    15 FUNC    GLOBAL DEFAULT   11 _ZNSt12__basic_fileIcEC2EP15__pthread_mutex
+          4810: 00068430    15 FUNC    GLOBAL DEFAULT   11 _ZNSt12__basic_fileIcEC1EP15__pthread_mutex
+
+    `_ZNSt12__basic_fileIcEC1EP15__pthread_mutex`
+    (`std::__basic_file<char>::__basic_file(__pthread_mutex*)`), but
+    `_ZNSt12__basic_fileIcEC2EP15pthread_mutex_t`
+    (`std::__basic_file<char>::__basic_file(pthread_mutex_t*)`) is expected.
+
+        ./libstdc++-v3/config/abi/pre/gnu.ver:    # std::__basic_file
+        ./libstdc++-v3/config/abi/pre/gnu.ver:    _ZNSt12__basic_fileIcEC*;
+        
+        ./libstdc++-v3/config/io/basic_file_stdio.cc:
+        
+        ./libstdc++-v3/config/io/basic_file_stdio.h:
+              __basic_file(__c_lock* __lock = 0) throw ();
+        
+        ./libstdc++-v3/config/io/c_io_stdio.h:
+          typedef __gthread_mutex_t __c_lock;
+        
+        ./libgcc/gthr-posix.h:
+        typedef pthread_mutex_t __gthread_mutex_t;
+        
+        glibc commit 1bcfb5a5eb1c25b64a329c1edf6bcfb440cdbc93 then commit d804f5df602e6a348edcf7d2a2fe73b185bfbd34
+        
+        coulomb:tmp/glibc/tschwinge/Roger_Whittaker.build $ cat < c++-types-check.out
+        --- sysdeps/mach/hurd/i386/c++-types.data       2013-06-06 13:43:19.000000000 +0200
+        +++ -   2013-06-06 13:56:58.263987000 +0200
+        @@ -8 +8 @@
+        -dev_t:y
+        +dev_t:j
+        @@ -14 +14 @@
+        -fsid_t:8__fsid_t
+        +fsid_t:y
+        @@ -31,11 +31,11 @@
+        -pthread_attr_t:14pthread_attr_t
+        -pthread_barrier_t:17pthread_barrier_t
+        -pthread_barrierattr_t:21pthread_barrierattr_t
+        -pthread_cond_t:14pthread_cond_t
+        -pthread_condattr_t:18pthread_condattr_t
+        -pthread_key_t:j
+        -pthread_mutex_t:15pthread_mutex_t
+        -pthread_mutexattr_t:19pthread_mutexattr_t
+        -pthread_once_t:i
+        -pthread_rwlock_t:16pthread_rwlock_t
+        -pthread_rwlockattr_t:20pthread_rwlockattr_t
+        +pthread_attr_t:14__pthread_attr
+        +pthread_barrier_t:17__pthread_barrier
+        +pthread_barrierattr_t:21__pthread_barrierattr
+        +pthread_cond_t:14__pthread_cond
+        +pthread_condattr_t:18__pthread_condattr
+        +pthread_key_t:i
+        +pthread_mutex_t:15__pthread_mutex
+        +pthread_mutexattr_t:19__pthread_mutexattr
+        +pthread_once_t:14__pthread_once
+        +pthread_rwlock_t:16__pthread_rwlock
+        +pthread_rwlockattr_t:20__pthread_rwlockattr
+        @@ -43 +43 @@
+        -pthread_t:m
+        +pthread_t:i
+        @@ -48 +48 @@
+        -sigset_t:10__sigset_t
+        +sigset_t:m
+
+    [[!wikipedia "Name mangling"]].
+
+        FAIL: 22_locale/time_get/get_date/wchar_t/4.cc execution test
+        FAIL: 27_io/basic_filebuf/close/char/4879.cc execution test
+        FAIL: 27_io/basic_filebuf/close/char/9964.cc execution test
+        FAIL: 27_io/basic_filebuf/imbue/char/13171-2.cc execution test
+        FAIL: 27_io/basic_filebuf/imbue/wchar_t/14975-2.cc execution test
+        FAIL: 27_io/basic_filebuf/seekoff/char/26777.cc execution test
+        WARNING: program timed out.
+        FAIL: 27_io/basic_filebuf/showmanyc/char/9533-1.cc execution test
+        FAIL: 27_io/basic_filebuf/underflow/char/10097.cc execution test
+        FAIL: 27_io/objects/char/7.cc execution test
+        FAIL: 27_io/objects/char/9661-1.cc execution test
+        FAIL: 27_io/objects/wchar_t/7.cc execution test
+        FAIL: 27_io/objects/wchar_t/9661-1.cc execution test
+        FAIL: 30_threads/async/42819.cc execution test
+        FAIL: 30_threads/async/49668.cc execution test
+        FAIL: 30_threads/async/54297.cc execution test
+        FAIL: 30_threads/async/any.cc execution test
+        FAIL: 30_threads/async/async.cc execution test
+        FAIL: 30_threads/async/sync.cc execution test
+        FAIL: 30_threads/call_once/39909.cc execution test
+        FAIL: 30_threads/call_once/49668.cc execution test
+        FAIL: 30_threads/call_once/call_once1.cc execution test
+        FAIL: 30_threads/condition_variable/54185.cc execution test
+        FAIL: 30_threads/condition_variable_any/50862.cc execution test
+        FAIL: 30_threads/condition_variable_any/53830.cc execution test
+        FAIL: 30_threads/future/members/45133.cc execution test
+        FAIL: 30_threads/future/members/get.cc execution test
+        FAIL: 30_threads/future/members/get2.cc execution test
+        FAIL: 30_threads/future/members/share.cc execution test
+        FAIL: 30_threads/future/members/valid.cc execution test
+        FAIL: 30_threads/future/members/wait.cc execution test
+        FAIL: 30_threads/future/members/wait_for.cc execution test
+        FAIL: 30_threads/future/members/wait_until.cc execution test
+        FAIL: 30_threads/lock/2.cc execution test
+        FAIL: 30_threads/lock/4.cc execution test
+        FAIL: 30_threads/mutex/try_lock/2.cc execution test
+        FAIL: 30_threads/packaged_task/49668.cc execution test
+        FAIL: 30_threads/packaged_task/cons/3.cc execution test
+        FAIL: 30_threads/packaged_task/cons/alloc.cc execution test
+        FAIL: 30_threads/packaged_task/members/get_future.cc execution test
+        FAIL: 30_threads/packaged_task/members/invoke.cc execution test
+        FAIL: 30_threads/packaged_task/members/invoke2.cc execution test
+        FAIL: 30_threads/packaged_task/members/invoke3.cc execution test
+        FAIL: 30_threads/packaged_task/members/invoke4.cc execution test
+        FAIL: 30_threads/packaged_task/members/invoke5.cc execution test
+        FAIL: 30_threads/packaged_task/members/reset2.cc execution test
+        FAIL: 30_threads/promise/cons/alloc.cc execution test
+        FAIL: 30_threads/promise/cons/move.cc execution test
+        FAIL: 30_threads/promise/cons/move_assign.cc execution test
+        FAIL: 30_threads/promise/members/get_future.cc execution test
+        FAIL: 30_threads/promise/members/set_exception.cc execution test
+        FAIL: 30_threads/promise/members/set_exception2.cc execution test
+        FAIL: 30_threads/promise/members/set_value.cc execution test
+        FAIL: 30_threads/promise/members/set_value2.cc execution test
+        FAIL: 30_threads/promise/members/set_value3.cc execution test
+        FAIL: 30_threads/promise/members/swap.cc execution test
+        FAIL: 30_threads/shared_future/members/get.cc execution test
+        FAIL: 30_threads/shared_future/members/get2.cc execution test
+        FAIL: 30_threads/shared_future/members/valid.cc execution test
+        FAIL: 30_threads/shared_future/members/wait.cc execution test
+        FAIL: 30_threads/shared_future/members/wait_for.cc execution test
+        FAIL: 30_threads/shared_future/members/wait_until.cc execution test
+        FAIL: 30_threads/this_thread/3.cc execution test
+        FAIL: 30_threads/this_thread/4.cc execution test
+        FAIL: 30_threads/thread/cons/2.cc execution test
+        FAIL: 30_threads/thread/cons/3.cc execution test
+        FAIL: 30_threads/thread/cons/4.cc execution test
+        FAIL: 30_threads/thread/cons/49668.cc execution test
+        FAIL: 30_threads/thread/cons/5.cc execution test
+        FAIL: 30_threads/thread/cons/6.cc execution test
+        FAIL: 30_threads/thread/cons/7.cc execution test
+        FAIL: 30_threads/thread/cons/8.cc execution test
+        FAIL: 30_threads/thread/cons/9.cc execution test
+        FAIL: 30_threads/thread/cons/moveable.cc execution test
+        FAIL: 30_threads/thread/members/1.cc execution test
+        FAIL: 30_threads/thread/members/2.cc execution test
+        FAIL: 30_threads/thread/members/3.cc execution test
+        FAIL: 30_threads/thread/native_handle/cancel.cc execution test
+        FAIL: 30_threads/thread/swap/1.cc execution test
+        FAIL: 30_threads/timed_mutex/try_lock/2.cc execution test
+        FAIL: 30_threads/timed_mutex/try_lock_for/3.cc execution test
+        FAIL: 30_threads/timed_mutex/try_lock_until/2.cc execution test
+        FAIL: 30_threads/try_lock/2.cc execution test
+        FAIL: 30_threads/try_lock/4.cc execution test
+
+    TODO.  Perhaps just timeouts?  [[!message-id
+    "200609052027.NAA09861@hpsje.cup.hp.com"]].  [[!message-id
+    "1227217275.6205.6.camel@janis-laptop"]].  If needed, can re-implement in
+    GCC DejaGnu's `remote.exp:remote_wait` to get rid of (that is, ignore) its
+    `timeout` parameter which, in DejaGnu code, is often invoked with a
+    hard-coded value (that we may want to override) (or is that what
+    `gcc/testsuite/lib/timeout.exp:standard_wait` is for?).
+
+  * What is `gcc/testsuite/gcc.test-framework/test-framework.exp` and should we
+    define `CHECK_TEST_FRAMEWORK` to run these tests?
+
+  * Timeout problems
+
+    2015-11-03
+
+        splitting /home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/tests/cb/cb1010a.ada into:
+           cb1010a.adb
+        BUILD cb1010a.adb
+        gnatmake --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/" -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010a.adb -largs --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/"
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -c -B/home/thomas/tmp/gcc/hurd/master.build/gcc/ -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010a.adb
+        gnatbind -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support -x cb1010a.ali
+        gnatlink cb1010a.ali -O2 -fstack-check --GCC=/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.o: In function `system__task_primitives__operations__initialize_lock':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:383: warning: pthread_mutexattr_setprioceiling is not implemented and will always fail
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.o: In function `system__task_primitives__operations__set_priority':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:776: warning: pthread_setschedparam is not implemented and will always fail
+        RUN cb1010a
+        
+        ,.,. CB1010A ACATS 2.5 15-11-03 05:32:58
+        ---- CB1010A CHECK THAT STORAGE_ERROR IS RAISED WHEN STORAGE ALLOCATED
+                        TO A TASK IS EXCEEDED.
+           - CB1010A CHECK TASKS THAT DO NOT HANDLE STORAGE_ERROR PRIOR TO
+                        RENDEZVOUS.
+        Program timed out.
+        FAIL:   cb1010a
+        splitting /home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/tests/cb/cb1010c.ada into:
+           cb1010c.adb
+        BUILD cb1010c.adb
+        gnatmake --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/" -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010c.adb -largs --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/"
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -c -B/home/thomas/tmp/gcc/hurd/master.build/gcc/ -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010c.adb
+        gnatbind -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support -x cb1010c.ali
+        gnatlink cb1010c.ali -O2 -fstack-check --GCC=/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/
+        RUN cb1010c
+        
+        ,.,. CB1010C ACATS 2.5 15-11-03 05:38:00
+        ---- CB1010C CHECK THAT STORAGE_ERROR IS RAISED WHEN STORAGE FOR A
+                        DECLARATIVE ITEM IS INSUFFICIENT.
+        Program timed out.
+        FAIL:   cb1010c
+        splitting /home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/tests/cb/cb1010d.ada into:
+           cb1010d.adb
+        BUILD cb1010d.adb
+        gnatmake --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/" -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010d.adb -largs --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/"
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -c -B/home/thomas/tmp/gcc/hurd/master.build/gcc/ -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010d.adb
+        gnatbind -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support -x cb1010d.ali
+        gnatlink cb1010d.ali -O2 -fstack-check --GCC=/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/
+        RUN cb1010d
+        
+        ,.,. CB1010D ACATS 2.5 15-11-03 05:43:01
+        ---- CB1010D CHECK THAT STORAGE_ERROR IS RAISED WHEN STORAGE FOR THE
+                        EXECUTION OF A SUBPROGRAM IS INSUFFICIENT.
+        Program timed out.
+        FAIL:   cb1010d
+
+    All (\?) following tests time out.  But not when run manually.  `cb1010a`
+    already used to FAIL but it (as well as the following tests) didn't use to
+    time out.
+
+    (Without reboot in between) for `make check-gcc-c++`, there are also
+    unexpected timeouts:
+
+        Testing debug/const3.C, -gstabs+1 -O3
+        Executing on host: /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C    -fno-diagnostics-show-caret -fdiagnostics-color=never  -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+1 -O3   -S -o const3.s    (timeout = 300)
+        spawn -ignore SIGHUP /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C -fno-diagnostics-show-caret -fdiagnostics-color=never -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+1 -O3 -S -o const3.s
+        PASS: g++.dg/debug/const3.C -gstabs+1 -O3 (test for excess errors)
+        Testing debug/const3.C, -gstabs+
+        Executing on host: /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C    -fno-diagnostics-show-caret -fdiagnostics-color=never  -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+   -S -o const3.s    (timeout = 300)
+        spawn -ignore SIGHUP /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C -fno-diagnostics-show-caret -fdiagnostics-color=never -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+ -S -o const3.s
+        WARNING: program timed out.
+        compiler exited with status 1
+        FAIL: g++.dg/debug/const3.C -gstabs+ (test for excess errors)
+        Excess errors:
+        exit status is 1
+        Testing debug/const3.C, -gstabs+ -O2
+        Executing on host: /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C    -fno-diagnostics-show-caret -fdiagnostics-color=never  -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+ -O2   -S -o const3.s    (timeout = 300)
+        spawn -ignore SIGHUP /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../xg++ -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/g++/../../ /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/g++.dg/debug/const3.C -fno-diagnostics-show-caret -fdiagnostics-color=never -nostdinc++ -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include/i686-unknown-gnu0.6 -I/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/libstdc++-v3/include -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/libsupc++ -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/include/backward -I/home/thomas/tmp/gcc/hurd/master/libstdc++-v3/testsuite/util -fmessage-length=0 -gstabs+ -O2 -S -o const3.s
+        WARNING: program timed out.
+        compiler exited with status 1
+        FAIL: g++.dg/debug/const3.C -gstabs+ -O2 (test for excess errors)
+        Excess errors:
+        exit status is 1
+
+    ... and all (\?) following.
+
+    When preparing to reboot, noticed:
+
+         3531 1000 23263  5034   986  3  149M 2.82M  0.0  0:00.00  0:00.00 ./stack_check1.exe
+         3532 1000 23263  5034   986  2  146M  732K  0.0  0:00.00  0:00.00 cat
+         3545 1000     1  5034   986  2  147M  892K  0.0  0:00.00  0:00.00 sh -c exec > /dev/null 2>&1 && (kill -2 -3531 -3532 || kill -2 3531 3532) && sleep 5 && (kill -3531 -3532 || kill 3531 3532) && sleep 5 && (kill -9 -3531 -3532 || kill -9 3531 3532) &
+         3546 1000  3545  5034   986  2  147M  900K  0.0  0:00.00  0:00.00 sh -c exec > /dev/null 2>&1 && (kill -2 -3531 -3532 || kill -2 3531 3532) && sleep 5 && (kill -3531 -3532 || kill 3531 3532) && sleep 5 && (kill -9 -3531 -3532 || kill -9 3531 3532) &
+
+    (These are stuck.)
+
+        $ find tmp/gcc/hurd/master.build/ -name stack_check1.exe
+        tmp/gcc/hurd/master.build/gcc/testsuite/gnat/stack_check1.exe
+
+    *Not* confirmed the g++.log timeouts after reboot.  Working hypothesis is
+    that the failing Ada test disturbs the PTY, and that affect later
+    runtest/expect runs, as also seen in GDB testing.
+
+        $ /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/gnatmake --GCC=/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc --GNATBIND=/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/gnatbind --GNATLINK=/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/gnatlink -cargs -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc -largs --GCC=/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc  -margs --RTS=/media/erich/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/./libada -q -f /home/thomas/tmp/gcc/hurd/master/gcc/testsuite/gnat.dg/stack_check1.adb -fno-diagnostics-show-caret -fdiagnostics-color=never -fstack-check -lm -o ./stack_check1.exe
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/./libada/adalib/s-taprop.o: In function `system__task_primitives__operations__initialize_lock':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:383: warning: pthread_mutexattr_setprioceiling is not implemented and will always fail
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/i686-unknown-gnu0.6/./libada/adalib/s-taprop.o: In function `system__task_primitives__operations__set_priority':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:776: warning: pthread_setschedparam is not implemented and will always fail
+
+    Comparing gnat.sum to the previous version, this is the only change:
+
+        PASS: gnat.dg/stack_check1.adb (test for excess errors)
+        {+WARNING: program timed out.+}
+        FAIL: gnat.dg/stack_check1.adb execution test
+        PASS: gnat.dg/stack_check2.adb (test for excess errors)
+        FAIL: gnat.dg/stack_check2.adb execution test
+
+    Nothing to note in gnat.log either.
+
+    `gcc/testsuite/gnat.dg/stack_check1.adb` and
+    `gcc/testsuite/ada/acats/tests/cb/cb1010a.ada` both *check that
+    STORAGE_ERROR is raised when storage allocated to a task is exceeded*, and
+    *this test requires architecture- and OS-specific support code for
+    unwinding through signal frames (typically located in *-unwind.h) to pass*.
+
+        $ cd gcc/testsuite/ada/acats/tests/cb/cb1010a/
+        $ ../../../../../../gnatmake --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/" -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010a.adb -largs --GCC="/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/"
+        /home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -c -B/home/thomas/tmp/gcc/hurd/master.build/gcc/ -gnatws -O2 -gnat95 -fstack-check -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support cb1010a.adb
+        gnatbind -I/home/thomas/tmp/gcc/hurd/master.build/gcc/testsuite/ada/acats/support -x cb1010a.ali
+        gnatlink cb1010a.ali -O2 -fstack-check --GCC=/home/thomas/tmp/gcc/hurd/master.build/gcc/xgcc -B/home/thomas/tmp/gcc/hurd/master.build/gcc/
+        /home/thomas/tmp/gcc/hurd/master.build.install/lib/gcc/i686-unknown-gnu0.6/5.0.0/adalib/libgnarl.a(s-taprop.o): In function `system__task_primitives__operations__initialize_lock':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:383: warning: pthread_mutexattr_setprioceiling is not implemented and will always fail
+        /home/thomas/tmp/gcc/hurd/master.build.install/lib/gcc/i686-unknown-gnu0.6/5.0.0/adalib/libgnarl.a(s-taprop.o): In function `system__task_primitives__operations__set_priority':
+        /media/erich/home/thomas/tmp/gcc/hurd/master.build/gcc/ada/rts/s-taprop.adb:776: warning: pthread_setschedparam is not implemented and will always fail
+        $ ./cb1010a
+        
+        ,.,. CB1010A ACATS 2.5 15-11-03 20:18:27
+        ---- CB1010A CHECK THAT STORAGE_ERROR IS RAISED WHEN STORAGE ALLOCATED
+                        TO A TASK IS EXCEEDED.
+           - CB1010A CHECK TASKS THAT DO NOT HANDLE STORAGE_ERROR PRIOR TO
+                        RENDEZVOUS.
+        [hangs]
+
+    `kill -KILL` it.  `rm cb1010a.o cb1010a.ali cb1010a`.  Rebuild with
+    `-fstack-check` removed.
+        
+        $ ./cb1010a
+        
+        ,.,. CB1010A ACATS 2.5 15-11-03 20:31:45
+        ---- CB1010A CHECK THAT STORAGE_ERROR IS RAISED WHEN STORAGE ALLOCATED
+                        TO A TASK IS EXCEEDED.
+           - CB1010A CHECK TASKS THAT DO NOT HANDLE STORAGE_ERROR PRIOR TO
+                        RENDEZVOUS.
+        
+        raised STORAGE_ERROR : s-intman.adb:139 explicit raise
+        [doesn't hang]
+
+    That's the expected error, I think.  However, the previous test run has
+    also been using `-fstack-check`, without running into timeouts.
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd-libs0.3 gnumach-image-1-486
+        dejagnu:
+          Installiert:           1.5.3-2
+          Installationskandidat: 1.5.3-2
+          Versionstabelle:
+         *** 1.5.3-2 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installiert:           8.6.4+dfsg-2
+          Installationskandidat: 8.6.4+dfsg-2
+          Versionstabelle:
+         *** 8.6.4+dfsg-2 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installiert:           2.19-22
+          Installationskandidat: 2.19-22
+          Versionstabelle:
+         *** 2.19-22 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+             2.19-16~3 0
+                500 http://ftp.ports.debian.org/debian-ports/ unreleased/main hurd-i386 Packages
+        hurd-libs0.3:
+          Installiert:           1:0.6.git20151012-1
+          Installationskandidat: 1:0.6.git20151012-1
+          Versionstabelle:
+         *** 1:0.6.git20151012-1 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installiert:           2:1.5+git20150922-1
+          Installationskandidat: 2:1.5+git20150922-1
+          Versionstabelle:
+         *** 2:1.5+git20150922-1 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+
+    Last successful run of the testsuite was on 2015-01-20.
+
+        $ gunzip < /var/log/dpkg.log.2.gz | grep 'dejagnu\|expect\|tcl\|libc0\.3\|hurd-libs\|mach'
+        [ASSUMED OK] 2014-05-29 16:38:53 install libc0.3:hurd-i386 <none> 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:53 status half-installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:56 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 configure libc0.3:hurd-i386 2.18-7 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 status half-configured libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:38:57 status installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:22 install hurd-libs0.3:hurd-i386 <none> 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:39:22 status half-installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:39:22 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:39:22 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:39:23 upgrade libc0.3:hurd-i386 2.18-7 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:23 status half-configured libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:23 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:23 status half-installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:26 status half-installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:26 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:39:27 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:40:06 configure libc0.3:hurd-i386 2.18-7 <none>
+        [ASSUMED OK] 2014-05-29 16:40:06 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:40:06 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:40:06 status half-configured libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:40:07 status installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 16:40:16 configure hurd-libs0.3:hurd-i386 1:0.5.git20140526-2 <none>
+        [ASSUMED OK] 2014-05-29 16:40:16 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:40:16 status half-configured hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 16:40:16 status installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-05-29 12:43:03 install gnumach-common:all <none> 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status half-installed gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 install gnumach-image-1.4-486:hurd-i386 <none> 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status half-installed gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 install gnumach-image-1-486:hurd-i386 <none> 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status half-installed gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:03 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 configure gnumach-common:all 2:1.4-10 <none>
+        [ASSUMED OK] 2014-05-29 12:43:04 status unpacked gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status half-configured gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status installed gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 configure gnumach-image-1.4-486:hurd-i386 2:1.4-10 <none>
+        [ASSUMED OK] 2014-05-29 12:43:04 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status installed gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 configure gnumach-image-1-486:hurd-i386 2:1.4-10 <none>
+        [ASSUMED OK] 2014-05-29 12:43:04 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status half-configured gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:43:04 status installed gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:58:40 install gnumach-dev:hurd-i386 <none> 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:58:40 status half-installed gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:58:41 status unpacked gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:58:41 status unpacked gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 12:58:41 install libc0.3-dev:hurd-i386 <none> 2.18-7
+        [ASSUMED OK] 2014-05-29 12:58:41 status half-installed libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 12:58:45 status unpacked libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 12:58:46 status unpacked libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 13:00:52 configure gnumach-dev:hurd-i386 2:1.4-10 <none>
+        [ASSUMED OK] 2014-05-29 13:00:52 status unpacked gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 13:00:52 status half-configured gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 13:00:52 status installed gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-05-29 13:01:17 configure libc0.3-dev:hurd-i386 2.18-7 <none>
+        [ASSUMED OK] 2014-05-29 13:01:17 status unpacked libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 13:01:17 status half-configured libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-05-29 13:01:17 status installed libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:11:38 upgrade libc0.3-dev:hurd-i386 2.18-7 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:11:38 status half-configured libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:11:38 status unpacked libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:11:38 status half-installed libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:11:42 status half-installed libc0.3-dev:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:11:43 status unpacked libc0.3-dev:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:11:44 status unpacked libc0.3-dev:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:00 upgrade hurd-libs0.3:hurd-i386 1:0.5.git20140526-2 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:00 status half-configured hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-09-11 07:12:00 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-09-11 07:12:00 status half-installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-09-11 07:12:00 status half-installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2
+        [ASSUMED OK] 2014-09-11 07:12:00 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:00 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:00 upgrade libc0.3:hurd-i386 2.18-7 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:00 status half-configured libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:12:00 status unpacked libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:12:00 status half-installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:12:03 status half-installed libc0.3:hurd-i386 2.18-7
+        [ASSUMED OK] 2014-09-11 07:12:03 status unpacked libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:04 status unpacked libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:06 configure libc0.3:hurd-i386 2.19-11~ <none>
+        [ASSUMED OK] 2014-09-11 07:12:06 status unpacked libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:06 status unpacked libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:06 status half-configured libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:15 status installed libc0.3:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:15 configure hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7 <none>
+        [ASSUMED OK] 2014-09-11 07:12:15 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:15 status half-configured hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:15 status installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [ASSUMED OK] 2014-09-11 07:12:27 install gnumach-image-1.4-486-dbg:hurd-i386 <none> 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:27 status half-installed gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 install gnumach-dbg:hurd-i386 <none> 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 status half-installed gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 status unpacked gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:28 status unpacked gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:30 install libc0.3-dbg:hurd-i386 <none> 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:30 status half-installed libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:37 status unpacked libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:37 status unpacked libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:37 configure gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:12:37 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:37 status half-configured gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:43 status installed gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:43 configure gnumach-dbg:hurd-i386 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:12:43 status unpacked gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:43 status half-configured gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:43 status installed gnumach-dbg:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:12:43 configure libc0.3-dbg:hurd-i386 2.19-11~ <none>
+        [ASSUMED OK] 2014-09-11 07:12:43 status unpacked libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:43 status half-configured libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:43 status installed libc0.3-dbg:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:43 configure libc0.3-dev:hurd-i386 2.19-11~ <none>
+        [ASSUMED OK] 2014-09-11 07:12:43 status unpacked libc0.3-dev:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:43 status half-configured libc0.3-dev:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:12:43 status installed libc0.3-dev:hurd-i386 2.19-11~
+        [ASSUMED OK] 2014-09-11 07:24:22 upgrade gnumach-common:all 2:1.4-10 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-configured gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-installed gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-installed gnumach-common:all 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-common:all 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-common:all 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:24:22 upgrade gnumach-image-1.4-486:hurd-i386 2:1.4-10 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-installed gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status half-installed gnumach-image-1.4-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:24:22 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:43 upgrade gnumach-dev:hurd-i386 2:1.4-10 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:43 status half-configured gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status unpacked gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status half-installed gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status half-installed gnumach-dev:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status unpacked gnumach-dev:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:43 status unpacked gnumach-dev:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:43 upgrade gnumach-image-1-486:hurd-i386 2:1.4-10 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:43 status half-configured gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:43 status half-installed gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:44 status half-installed gnumach-image-1-486:hurd-i386 2:1.4-10
+        [ASSUMED OK] 2014-09-11 07:27:44 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:27:44 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:16 configure gnumach-common:all 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:29:16 status unpacked gnumach-common:all 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:16 status half-configured gnumach-common:all 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:16 status installed gnumach-common:all 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:16 configure gnumach-image-1.4-486:hurd-i386 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:29:16 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:16 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:22 status installed gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 configure gnumach-dev:hurd-i386 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:29:45 status unpacked gnumach-dev:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 status half-configured gnumach-dev:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 status installed gnumach-dev:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 configure gnumach-image-1-486:hurd-i386 2:1.4-12 <none>
+        [ASSUMED OK] 2014-09-11 07:29:45 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 status half-configured gnumach-image-1-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 07:29:45 status installed gnumach-image-1-486:hurd-i386 2:1.4-12
+        [ASSUMED OK] 2014-09-11 13:39:21 install libtcl8.6:hurd-i386 <none> 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:39:21 status half-installed libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:39:23 status unpacked libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:39:23 status unpacked libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:39:51 install tcl-expect:hurd-i386 <none> 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:51 status half-installed tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:51 status unpacked tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:51 status unpacked tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:51 install expect:hurd-i386 <none> 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:51 status half-installed expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:52 status unpacked expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:39:52 status unpacked expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:40:08 install tcl8.6:hurd-i386 <none> 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:40:08 status half-installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:40:08 status half-installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:40:08 status unpacked tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:40:09 status unpacked tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:40:09 install tcl:hurd-i386 <none> 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:40:09 status half-installed tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:40:09 status unpacked tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:40:09 status unpacked tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:42:31 configure libtcl8.6:hurd-i386 8.6.2+dfsg-1 <none>
+        [ASSUMED OK] 2014-09-11 13:42:31 status unpacked libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:31 status half-configured libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:31 status installed libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:54 configure tcl-expect:hurd-i386 5.45-6 <none>
+        [ASSUMED OK] 2014-09-11 13:42:54 status unpacked tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:54 status half-configured tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:54 status installed tcl-expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:54 configure expect:hurd-i386 5.45-6 <none>
+        [ASSUMED OK] 2014-09-11 13:42:54 status unpacked expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:54 status half-configured expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:54 status installed expect:hurd-i386 5.45-6
+        [ASSUMED OK] 2014-09-11 13:42:57 configure tcl8.6:hurd-i386 8.6.2+dfsg-1 <none>
+        [ASSUMED OK] 2014-09-11 13:42:57 status unpacked tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:57 status half-configured tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:57 status installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [ASSUMED OK] 2014-09-11 13:42:57 configure tcl:hurd-i386 8.6.0+8 <none>
+        [ASSUMED OK] 2014-09-11 13:42:57 status unpacked tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:42:57 status half-configured tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:42:57 status installed tcl:hurd-i386 8.6.0+8
+        [ASSUMED OK] 2014-09-11 13:47:34 install dejagnu:all <none> 1.5-3
+        [ASSUMED OK] 2014-09-11 13:47:34 status half-installed dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:47:35 status unpacked dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:47:35 status unpacked dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:48:57 configure dejagnu:all 1.5-3 <none>
+        [ASSUMED OK] 2014-09-11 13:48:57 status unpacked dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:48:57 status unpacked dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:48:57 status half-configured dejagnu:all 1.5-3
+        [ASSUMED OK] 2014-09-11 13:48:57 status installed dejagnu:all 1.5-3
+        [TODO] 2015-05-09 17:10:32 upgrade libc0.3-dbg:hurd-i386 2.19-11~ 2.19-18+b1
+        [TODO] 2015-05-09 17:10:32 status half-configured libc0.3-dbg:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:32 status unpacked libc0.3-dbg:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:32 status half-installed libc0.3-dbg:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:40 status half-installed libc0.3-dbg:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:40 status unpacked libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:10:40 status unpacked libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:10:40 upgrade libc0.3-dev:hurd-i386 2.19-11~ 2.19-18+b1
+        [TODO] 2015-05-09 17:10:40 status half-configured libc0.3-dev:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:40 status unpacked libc0.3-dev:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:40 status half-installed libc0.3-dev:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:48 status half-installed libc0.3-dev:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:10:48 status unpacked libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:10:49 status unpacked libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:04 upgrade libc0.3:hurd-i386 2.19-11~ 2.19-18+b1
+        [TODO] 2015-05-09 17:11:04 status half-configured libc0.3:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:11:04 status unpacked libc0.3:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:11:04 status half-installed libc0.3:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:11:07 status half-installed libc0.3:hurd-i386 2.19-11~
+        [TODO] 2015-05-09 17:11:07 status unpacked libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:09 status unpacked libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:13 configure libc0.3:hurd-i386 2.19-18+b1 <keine>
+        [TODO] 2015-05-09 17:11:13 status unpacked libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:13 status unpacked libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:13 status half-configured libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:13 status installed libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:11:15 upgrade hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7 1:0.6-4
+        [TODO] 2015-05-09 17:11:15 status half-configured hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [TODO] 2015-05-09 17:11:15 status unpacked hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [TODO] 2015-05-09 17:11:15 status half-installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [TODO] 2015-05-09 17:11:16 status half-installed hurd-libs0.3:hurd-i386 1:0.5.git20140526-2+b7
+        [TODO] 2015-05-09 17:11:16 status unpacked hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-05-09 17:11:16 status unpacked hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-05-09 17:11:17 configure hurd-libs0.3:hurd-i386 1:0.6-4 <keine>
+        [TODO] 2015-05-09 17:11:17 status unpacked hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-05-09 17:11:17 status half-configured hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-05-09 17:11:17 status installed hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-05-09 17:12:22 upgrade gnumach-dbg:hurd-i386 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 status half-configured gnumach-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:12:22 status unpacked gnumach-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:12:22 status half-installed gnumach-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:12:22 status half-installed gnumach-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:12:22 status unpacked gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 status unpacked gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 configure libc0.3-dbg:hurd-i386 2.19-18+b1 <keine>
+        [TODO] 2015-05-09 17:12:22 status unpacked libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:12:22 status half-configured libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:12:22 status installed libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:12:22 configure gnumach-dbg:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-09 17:12:22 status unpacked gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 status half-configured gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 status installed gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:12:22 configure libc0.3-dev:hurd-i386 2.19-18+b1 <keine>
+        [TODO] 2015-05-09 17:12:22 status unpacked libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:12:22 status half-configured libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:12:22 status installed libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-05-09 17:14:28 upgrade gnumach-dev:hurd-i386 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:14:28 status half-configured gnumach-dev:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:14:28 status unpacked gnumach-dev:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:14:28 status half-installed gnumach-dev:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:14:29 status half-installed gnumach-dev:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:14:29 status unpacked gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:14:29 status unpacked gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:14:45 configure gnumach-dev:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-09 17:14:45 status unpacked gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:14:45 status half-configured gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:14:45 status installed gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:40:47 upgrade dejagnu:all 1.5-3 1.5.3-1
+        [TODO] 2015-05-09 17:40:47 status half-configured dejagnu:all 1.5-3
+        [TODO] 2015-05-09 17:40:47 status unpacked dejagnu:all 1.5-3
+        [TODO] 2015-05-09 17:40:47 status half-installed dejagnu:all 1.5-3
+        [TODO] 2015-05-09 17:40:48 status half-installed dejagnu:all 1.5-3
+        [TODO] 2015-05-09 17:40:48 status unpacked dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:40:48 status unpacked dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:41:37 upgrade gnumach-common:all 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:37 status half-configured gnumach-common:all 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status unpacked gnumach-common:all 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status half-installed gnumach-common:all 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status half-installed gnumach-common:all 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status unpacked gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:37 status unpacked gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:37 upgrade gnumach-image-1.4-486:hurd-i386 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:37 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:37 status half-installed gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status half-installed gnumach-image-1.4-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:38 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:38 upgrade gnumach-image-1-486:hurd-i386 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:38 status half-configured gnumach-image-1-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status unpacked gnumach-image-1-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status half-installed gnumach-image-1-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status half-installed gnumach-image-1-486:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:41:38 status unpacked gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:41:38 status unpacked gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:42:17 upgrade libtcl8.6:hurd-i386 8.6.2+dfsg-1 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:42:17 status half-configured libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:17 status unpacked libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:17 status half-installed libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:19 status half-installed libtcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:19 status unpacked libtcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:42:20 status unpacked libtcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:42:36 upgrade tcl8.6:hurd-i386 8.6.2+dfsg-1 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:42:36 status half-configured tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:36 status unpacked tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:36 status half-installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:36 status half-installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:36 status half-installed tcl8.6:hurd-i386 8.6.2+dfsg-1
+        [TODO] 2015-05-09 17:42:36 status unpacked tcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:42:36 status unpacked tcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-09 17:43:34 upgrade gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:43:34 status half-configured gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:43:34 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:43:34 status half-installed gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:43:34 status half-installed gnumach-image-1.4-486-dbg:hurd-i386 2:1.4-12
+        [TODO] 2015-05-09 17:43:34 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:43:34 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:46:28 configure dejagnu:all 1.5.3-1 <keine>
+        [TODO] 2015-05-09 17:46:28 status unpacked dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:46:28 status unpacked dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:46:28 status half-configured dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:46:28 status installed dejagnu:all 1.5.3-1
+        [TODO] 2015-05-09 17:46:52 configure gnumach-common:all 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-09 17:46:52 status unpacked gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:46:52 status half-configured gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:46:52 status installed gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:46:52 configure gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-09 17:46:52 status unpacked gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-09 17:46:52 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:11:20 configure libtcl8.6:hurd-i386 8.6.4+dfsg-2 <keine>
+        [TODO] 2015-05-10 10:11:20 status unpacked libtcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:20 status half-configured libtcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:20 status installed libtcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:27 configure tcl8.6:hurd-i386 8.6.4+dfsg-2 <keine>
+        [TODO] 2015-05-10 10:11:27 status unpacked tcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:27 status half-configured tcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:28 status installed tcl8.6:hurd-i386 8.6.4+dfsg-2
+        [TODO] 2015-05-10 10:11:34 configure gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:11:34 status unpacked gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:11:34 status half-configured gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:19:31 configure gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:19:31 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:20:02 configure gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:20:02 status half-configured gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:10 configure gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:49:10 status half-configured gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:12 status installed gnumach-image-1.4-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:12 configure gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:49:12 status unpacked gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:12 status half-configured gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:12 status installed gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:15 configure gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2 <keine>
+        [TODO] 2015-05-10 10:49:15 status half-configured gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-05-10 10:49:17 status installed gnumach-image-1.4-486-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 00:45:35 upgrade expect:hurd-i386 5.45-6 5.45-7
+        [TODO] 2015-10-25 00:45:35 status half-configured expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 00:45:35 status unpacked expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 00:45:35 status half-installed expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 00:45:35 status half-installed expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 00:45:35 status unpacked expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 00:45:35 status unpacked expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 00:45:58 configure expect:hurd-i386 5.45-7 <keine>
+        [TODO] 2015-10-25 00:45:58 status unpacked expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 00:45:58 status half-configured expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 00:45:58 status installed expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 00:51:30 upgrade libc0.3-dbg:hurd-i386 2.19-18+b1 2.19-22
+        [TODO] 2015-10-25 00:51:30 status half-configured libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:30 status unpacked libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:30 status half-installed libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:36 status half-installed libc0.3-dbg:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:36 status unpacked libc0.3-dbg:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:36 status unpacked libc0.3-dbg:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:36 upgrade libc0.3-dev:hurd-i386 2.19-18+b1 2.19-22
+        [TODO] 2015-10-25 00:51:36 status half-configured libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:36 status unpacked libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:36 status half-installed libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:43 status half-installed libc0.3-dev:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:43 status unpacked libc0.3-dev:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:44 status unpacked libc0.3-dev:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:44 upgrade libc0.3:hurd-i386 2.19-18+b1 2.19-22
+        [TODO] 2015-10-25 00:51:44 status half-configured libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:44 status unpacked libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:44 status half-installed libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:46 status half-installed libc0.3:hurd-i386 2.19-18+b1
+        [TODO] 2015-10-25 00:51:46 status unpacked libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:47 status unpacked libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:47 configure libc0.3:hurd-i386 2.19-22 <keine>
+        [TODO] 2015-10-25 00:51:47 status unpacked libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:47 status unpacked libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:47 status half-configured libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:51:47 status installed libc0.3:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 configure libc0.3-dbg:hurd-i386 2.19-22 <keine>
+        [TODO] 2015-10-25 00:52:21 status unpacked libc0.3-dbg:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 status half-configured libc0.3-dbg:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 status installed libc0.3-dbg:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 configure libc0.3-dev:hurd-i386 2.19-22 <keine>
+        [TODO] 2015-10-25 00:52:21 status unpacked libc0.3-dev:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 status half-configured libc0.3-dev:hurd-i386 2.19-22
+        [TODO] 2015-10-25 00:52:21 status installed libc0.3-dev:hurd-i386 2.19-22
+        [TODO] 2015-10-25 01:04:57 upgrade hurd-libs0.3:hurd-i386 1:0.6-4 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:04:57 status half-configured hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-10-25 01:04:57 status unpacked hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-10-25 01:04:57 status half-installed hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-10-25 01:04:57 status half-installed hurd-libs0.3:hurd-i386 1:0.6-4
+        [TODO] 2015-10-25 01:04:57 status unpacked hurd-libs0.3:hurd-i386 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:04:57 status unpacked hurd-libs0.3:hurd-i386 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:04:58 configure hurd-libs0.3:hurd-i386 1:0.6.git20151012-1 <keine>
+        [TODO] 2015-10-25 01:04:58 status unpacked hurd-libs0.3:hurd-i386 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:04:58 status half-configured hurd-libs0.3:hurd-i386 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:04:58 status installed hurd-libs0.3:hurd-i386 1:0.6.git20151012-1
+        [TODO] 2015-10-25 01:08:03 upgrade dejagnu:all 1.5.3-1 1.5.3-2
+        [TODO] 2015-10-25 01:08:03 status half-configured dejagnu:all 1.5.3-1
+        [TODO] 2015-10-25 01:08:03 status unpacked dejagnu:all 1.5.3-1
+        [TODO] 2015-10-25 01:08:03 status half-installed dejagnu:all 1.5.3-1
+        [TODO] 2015-10-25 01:08:05 status half-installed dejagnu:all 1.5.3-1
+        [TODO] 2015-10-25 01:08:05 status unpacked dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:08:05 status unpacked dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:08:49 upgrade gnumach-common:all 2:1.4+git20150409-2 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:08:49 status half-configured gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:49 status unpacked gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:49 status half-installed gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:50 status half-installed gnumach-common:all 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:50 status unpacked gnumach-common:all 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:08:50 status unpacked gnumach-common:all 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:08:50 upgrade gnumach-dev:hurd-i386 2:1.4+git20150409-2 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:08:50 status half-configured gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:50 status unpacked gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:50 status half-installed gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:51 status half-installed gnumach-dev:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:08:51 status unpacked gnumach-dev:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:08:51 status unpacked gnumach-dev:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:10:09 upgrade tcl-expect:hurd-i386 5.45-6 5.45-7
+        [TODO] 2015-10-25 01:10:09 status half-configured tcl-expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 01:10:09 status unpacked tcl-expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 01:10:09 status half-installed tcl-expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 01:10:09 status half-installed tcl-expect:hurd-i386 5.45-6
+        [TODO] 2015-10-25 01:10:09 status unpacked tcl-expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 01:10:09 status unpacked tcl-expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 01:11:27 configure dejagnu:all 1.5.3-2 <keine>
+        [TODO] 2015-10-25 01:11:27 status unpacked dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:11:27 status unpacked dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:11:27 status half-configured dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:11:27 status installed dejagnu:all 1.5.3-2
+        [TODO] 2015-10-25 01:11:42 configure gnumach-common:all 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:11:42 status unpacked gnumach-common:all 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:11:42 status half-configured gnumach-common:all 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:11:42 status installed gnumach-common:all 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:11:42 configure gnumach-dev:hurd-i386 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:11:42 status unpacked gnumach-dev:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:11:42 status half-configured gnumach-dev:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:11:42 status installed gnumach-dev:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:13:52 configure tcl-expect:hurd-i386 5.45-7 <keine>
+        [TODO] 2015-10-25 01:13:52 status unpacked tcl-expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 01:13:52 status half-configured tcl-expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 01:13:52 status installed tcl-expect:hurd-i386 5.45-7
+        [TODO] 2015-10-25 01:24:38 install gnumach-image-1.5-486-dbg:hurd-i386 <keine> 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status half-installed gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 upgrade gnumach-dbg:hurd-i386 2:1.4+git20150409-2 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status half-configured gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:24:38 status half-installed gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:24:38 status half-installed gnumach-dbg:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 configure gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:24:38 status unpacked gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:38 status half-configured gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:43 status installed gnumach-image-1.5-486-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:43 configure gnumach-dbg:hurd-i386 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:24:43 status unpacked gnumach-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:43 status half-configured gnumach-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:24:43 status installed gnumach-dbg:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 install gnumach-image-1.5-486:hurd-i386 <keine> 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status half-installed gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 upgrade gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status half-configured gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:26:06 status half-installed gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:26:06 status half-installed gnumach-image-1-486:hurd-i386 2:1.4+git20150409-2
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 configure gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:26:06 status unpacked gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:06 status half-configured gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:12 status installed gnumach-image-1.5-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:12 configure gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1 <keine>
+        [TODO] 2015-10-25 01:26:12 status unpacked gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:12 status half-configured gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1
+        [TODO] 2015-10-25 01:26:12 status installed gnumach-image-1-486:hurd-i386 2:1.5+git20150922-1
+
+        dejagnu: 1.5.3-2
+        expect: 5.45-7
+        tcl-expect: 5.45-7
+        libtcl8.6: 8.6.4+dfsg-2
+        libc0.3: 2.19-22
+        hurd: 1:0.6.git20151012-1
+        gnumach-image-1-486: 2:1.5+git20150922-1
+
+        libc0.3: 2.19-11~
+            dpkg: dependency problems prevent configuration of libc0.3:hurd-i386:
+             hurd (1:0.6.git20151012-1) breaks libc0.3 (<< 2.19-15~) and is installed.
+              Version of libc0.3:hurd-i386 to be configured is 2.19-11~.
+        hurd: 1:0.5.git20140526-2+b7
+        gnumach-image-1-486: 2:1.4-12
+
+    With these packages installed, and rebooted, the two tests fail with a
+    segmentation fault, which -- given that we presumable have not implemented
+    the *support code for unwinding through signal frames* -- probably is the
+    result to be expected.
+
+    Restoring a root filesystem image last upgraded on 2015-05-10.
+
+        dejagnu: 1.5.3-1
+        expect: 5.45-6
+        tcl-expect: 5.45-6
+        libtcl8.6: 8.6.4+dfsg-2
+        libc0.3: 2.19-18+b1
+        hurd: 1:0.6-4
+        gnumach-image-1-486: 2:1.4+git20150409-2
+
+    Both tests hang.
+
+    Good:
+
+        libc0.3: 2.19-11~
+        hurd: 1:0.5.git20140526-2+b7
+        gnumach-image-1-486: 2:1.4-12
+
+    Bad:
+
+        libc0.3: 2.19-18+b1
+        hurd: 1:0.6-4
+        gnumach-image-1-486: 2:1.4+git20150409-2
+
+    Bad (up-to-date):
+
+        libc0.3: 2.19-22
+        hurd: 1:0.6.git20151012-1
+        gnumach-image-1-486: 2:1.5+git20150922-1
+
+    Testing:
+
+        gnumach-image-1-486: 2:1.4+git20150409-2
+          -> 2:1.5+git20150922-1: still GOOD!
+        libc0.3: 2.19-11~
+          -> 2.19-22: still GOOD!
+        hurd: 1:0.5.git20140526-2+b7
+          -> 0.6-2: still GOOD!
+          -> 0.6.git20151012-1: HANGS
+
+        B 1:0.6.git20151012-1
+        B 1:0.6.git20150922-1
+        B 1:0.6.git20150704-3
+        G 1:0.6.git20150704-2
+        B 1:0.6.git20150704-1
+        B 1:0.6.git20150523-1
+        B 1:0.6-4
+        B 1:0.6-3
+        G 1:0.6-2
+        B 1:0.6-1
+        G 1:0.5.git20150208-3
+        ? 1:0.5.git20150208-2
+        ? 1:0.5.git20150208-1
+        ? 1:0.5.git20141210-6
+        ? 1:0.5.git20141210-5
+        ? 1:0.5.git20141210-4
+        ? 1:0.5.git20141210-3
+        ? 1:0.5.git20141210-2
+        ? 1:0.5.git20141210-1
+        ? 1:0.5.git20141108-5
+        ? 1:0.5.git20141108-4
+        ? 1:0.5.git20141108-3
+        ? 1:0.5.git20141108-2
+        ? 1:0.5.git20141108-1
+        G 1:0.5.git20140526-2+b7
+
+    Generally, it's always either none or both tests that hang.  If they hang,
+    and you try to C-c them, that doesn't work.  If you kill -KILL them from
+    another terminal, they do get killed.  In this case, then there's strange
+    things going on if the (pseudo) terminals are re-used later on: hangs,
+    dropped characters.  (This sounds familiar from GDB testsuite runs.)
+
+    2016-02-17
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd gnumach-image-1-486
+        dejagnu:
+          Installiert:           1.5.3-2
+          Installationskandidat: 1.5.3-2
+          Versionstabelle:
+         *** 1.5.3-2 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installiert:           8.6.4+dfsg-2
+          Installationskandidat: 8.6.4+dfsg-3
+          Versionstabelle:
+             8.6.4+dfsg-3 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+         *** 8.6.4+dfsg-2 0
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installiert:           2.19-22
+          Installationskandidat: 2.21-8
+          Versionstabelle:
+             2.21-8 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+         *** 2.19-22 0
+                100 /var/lib/dpkg/status
+             2.19-16~3 0
+                500 http://ftp.ports.debian.org/debian-ports/ unreleased/main hurd-i386 Packages
+        hurd:
+          Installiert:           1:0.6.git20150704-2
+          Installationskandidat: 1:0.7.git20160214-2
+          Versionstabelle:
+             1:0.7.git20160214-2 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+         *** 1:0.6.git20150704-2 0
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installiert:           2:1.5+git20150922-1
+          Installationskandidat: 2:1.6+git20160114-1
+          Versionstabelle:
+             2:1.6+git20160114-1 0
+                500 http://ftp.de.debian.org/debian/ unstable/main hurd-i386 Packages
+         *** 2:1.5+git20150922-1 0
+                100 /var/lib/dpkg/status
+        $ ./stack_check1.exe 
+        Segmentation fault
+
+    2016-02-18
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd gnumach-image-1-486
+        dejagnu:
+          Installiert:           1.5.3-2
+          Installationskandidat: 1.5.3-2
+          Versionstabelle:
+         *** 1.5.3-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installiert:           8.6.4+dfsg-3
+          Installationskandidat: 8.6.4+dfsg-3
+          Versionstabelle:
+         *** 8.6.4+dfsg-3 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installiert:           2.21-9
+          Installationskandidat: 2.21-9
+          Versionstabelle:
+         *** 2.21-9 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+             2.19-16~3 500
+                500 http://ftp.ports.debian.org/debian-ports unreleased/main hurd-i386 Packages
+        hurd:
+          Installiert:           1:0.6.git20150704-2
+          Installationskandidat: 1:0.7.git20160214-2
+          Versionstabelle:
+             1:0.7.git20160214-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+         *** 1:0.6.git20150704-2 100
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installiert:           2:1.5+git20150922-1
+          Installationskandidat: 2:1.6+git20160114-1
+          Versionstabelle:
+             2:1.6+git20160114-1 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+         *** 2:1.5+git20150922-1 100
+                100 /var/lib/dpkg/status
+        $ ./stack_check1.exe 
+        Segmentation fault
+
+    Upgrade GNU Mach
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd gnumach-image-1-486
+        dejagnu:
+          Installed: 1.5.3-2
+          Candidate: 1.5.3-2
+          Version table:
+         *** 1.5.3-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installed: 5.45-7
+          Candidate: 5.45-7
+          Version table:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installed: 5.45-7
+          Candidate: 5.45-7
+          Version table:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installed: 8.6.4+dfsg-3
+          Candidate: 8.6.4+dfsg-3
+          Version table:
+         *** 8.6.4+dfsg-3 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installed: 2.21-9
+          Candidate: 2.21-9
+          Version table:
+         *** 2.21-9 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+             2.19-16~3 500
+                500 http://ftp.ports.debian.org/debian-ports unreleased/main hurd-i386 Packages
+        hurd:
+          Installed: 1:0.6.git20150704-2
+          Candidate: 1:0.7.git20160214-2
+          Version table:
+             1:0.7.git20160214-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+         *** 1:0.6.git20150704-2 100
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installed: 2:1.6+git20160114-1
+          Candidate: 2:1.6+git20160114-1
+          Version table:
+         *** 2:1.6+git20160114-1 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        $ ./stack_check1.exe 
+        Segmentation fault
+
+    Upgrade Hurd.
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd gnumach-image-1-486
+        dejagnu:
+          Installiert:           1.5.3-2
+          Installationskandidat: 1.5.3-2
+          Versionstabelle:
+         *** 1.5.3-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installiert:           5.45-7
+          Installationskandidat: 5.45-7
+          Versionstabelle:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installiert:           8.6.4+dfsg-3
+          Installationskandidat: 8.6.4+dfsg-3
+          Versionstabelle:
+         *** 8.6.4+dfsg-3 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installiert:           2.21-9
+          Installationskandidat: 2.21-9
+          Versionstabelle:
+         *** 2.21-9 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+             2.19-16~3 500
+                500 http://ftp.ports.debian.org/debian-ports unreleased/main hurd-i386 Packages
+        hurd:
+          Installiert:           1:0.7.git20160214-2
+          Installationskandidat: 1:0.7.git20160214-2
+          Versionstabelle:
+         *** 1:0.7.git20160214-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installiert:           2:1.6+git20160114-1
+          Installationskandidat: 2:1.6+git20160114-1
+          Versionstabelle:
+         *** 2:1.6+git20160114-1 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        $ ./stack_check1.exe
+        [hangs]
+
+    System shutdown/reboot hangs when trying to terminate all running
+    processes; luckily, I still had a shell open, and after `kill -KILL`ing the
+    `stack_check1.exe` process, the shutdown/reboot proceeds.
+
+    Restore previous 1:0.6.git20150704-2 packages.
+
+        $ apt-cache policy dejagnu expect tcl-expect libtcl8.6 libc0.3 hurd gnumach-image-1-486
+        dejagnu:
+          Installed: 1.5.3-2
+          Candidate: 1.5.3-2
+          Version table:
+         *** 1.5.3-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        expect:
+          Installed: 5.45-7
+          Candidate: 5.45-7
+          Version table:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        tcl-expect:
+          Installed: 5.45-7
+          Candidate: 5.45-7
+          Version table:
+         *** 5.45-7 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libtcl8.6:
+          Installed: 8.6.4+dfsg-3
+          Candidate: 8.6.4+dfsg-3
+          Version table:
+         *** 8.6.4+dfsg-3 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        libc0.3:
+          Installed: 2.21-9
+          Candidate: 2.21-9
+          Version table:
+         *** 2.21-9 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+             2.19-16~3 500
+                500 http://ftp.ports.debian.org/debian-ports unreleased/main hurd-i386 Packages
+        hurd:
+          Installed: 1:0.6.git20150704-2
+          Candidate: 1:0.7.git20160214-2
+          Version table:
+             1:0.7.git20160214-2 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+         *** 1:0.6.git20150704-2 100
+                100 /var/lib/dpkg/status
+        gnumach-image-1-486:
+          Installed: 2:1.6+git20160114-1
+          Candidate: 2:1.6+git20160114-1
+          Version table:
+         *** 2:1.6+git20160114-1 500
+                500 http://ftp.de.debian.org/debian unstable/main hurd-i386 Packages
+                100 /var/lib/dpkg/status
+        $ ./stack_check1.exe 
+        Segmentation fault
+
+    2016-02-23
+
+    <http://snapshot.debian.org/binary/hurd/>:
+
+        B 1:0.7.git20160214-2
+        B 1:0.7.git20160214-1
+        B 1:0.7.git20160114-1
+        B 1:0.7-1
+        (B) 1:0.6.git20151012-1
+        (B) 1:0.6.git20150922-1
+        (B) 1:0.6.git20150704-3
+        G 1:0.6.git20150704-2
+
+    [[!message-id "8737sjzp89.fsf@kepler.schwinge.homeip.net"]].
+
+
+## Enhancements
+
+
+### `contrib/testsuite-management/`, `contrib/regression/`
+
+  * 35a27ee8c4b349fea44fd1fadc9614ab3cc9d578 `Add an xfail manifest for
+    x86_64-unknown-linux-gnu to trunk.`
+
+
+### Parallel Testing
+
+[[!message-id "20110331070322.GI11563@sunsite.ms.mff.cuni.cz"]].
+
+
+### Distributed Testing
+
+
+#### IRC, OFTC, #gcc, 2012-05-31
+
+    <dnovillo> jsm28: in your mentor testing, you have the source and build
+      tree available for make check?  or it's a pure installed-tree test?
+    <jsm28> dnovillo: Source tree, install tree, no build tree.
+    <dnovillo> jsm28: so, you run make check on top of the source tree or copy
+      the */testsuite trees to a testing area?
+    <jsm28> Create a site.exp and do runtest in a temporary directory.  runtest
+      is pointed to the source tree to find sources.
+    <jsm28> For cross testing for GNU/Linux targets, the temporary directory is
+      mounted at the same path on host and target.
+    <dnovillo> jsm28: thanks.  i guess i'll have to find the slice of the
+      source tree i need to copy.
+    <dnovillo> jsm28: for libstdc++ do you write a different site.exp? 
+    <dnovillo> i noticed that it generates a different site,exp there.
+    <jsm28> The site.exp is mostly the same for all testsuites (so includes
+      settings that only some testsuites use).
+    <dnovillo> ok, thanks.
+    <dnovillo> and when you say "pointed to the source tree" you mean "set
+      srcdir /path/to/top/of/gcc" ?
+    <dnovillo> (in site.exp)
+    <jsm28> The GDB testsuite requires that you run the GDB testsuite's
+      configure script in the temporary directory where you will run runtest.
+      I don't think any GCC testsuites we use have requirements like that.
+    <jsm28> dnovillo: --srcdir option to runtest.
+    <dnovillo> ah, yes.
+    <jsm28> (and --tool, --target_board etc.)
+    <dnovillo> right
+    <dnovillo> since i'm distributing the tests. i want each node to only do a
+      bunch of files.  this means that i either use 'tool.exp=file-pattern' or
+      simply copy the subset of files i want tool.exp to find.
+    <dnovillo> i chose the second approach, but that breaks in a handful of
+      cases that need files from other sub-directories.
+    <dnovillo> like g++.dg gcc.dg using stuff from c-c++-common.
+    <dnovillo> for libstdc++, the possibilities for splitting are enormous as
+      it has many directories.
+    <dnovillo> but i'm not setting it right.  runtest runs without even trying
+      to test anything.
+    <dnovillo> i'm not having it pick up the right driver.
+    <jsm28> Probably all .exp files should be copied to anywhere running
+      testsuites, since some read .exp files from other directories.
+    <dnovillo> jsm28: that could be it too.  it's irritating that libstdc++
+      does not even error out.  runtest just does nothing and returns 0.
+
+##### IRC, OFTC, #gcc, 2012-06-06
+
+    <dnovillo> any libstdc++ maintainer around?
+    <dnovillo> or, does anyone know when the testsuite/data files are copied
+      into the running testsuite/ dir?
+    <dnovillo> seems to be done in advance by make.
+
+##### [[!message-id "4FC7791E.6040407@gmail.com"]]

@@ -1,0 +1,23 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+<!-- http://richtlijn.be/~larstiq/hurd/hurd-2010-08-25 -->
+<!-- http://richtlijn.be/~larstiq/hurd/hurd-2009-01-16 -->
+
+`streamio` is a translator for kernel stream devices,
+e.g. the kernel log messages or the parallel port.
+It is mainly used for kernel devices, so you will need root
+privileges to use it.  It provides a basic interface for character
+devices.  It is low-level and cannot provide device-specific `ioctl`s.
+It cannot provide buffering, data format conversions, etc.
+

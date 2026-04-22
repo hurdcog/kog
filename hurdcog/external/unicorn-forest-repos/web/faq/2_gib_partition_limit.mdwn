@@ -1,0 +1,22 @@
+[[!meta copyright="Copyright © 2007, 2008, 2013 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag faq/support]]
+
+[[!meta title="Is there still a 2 GiB ext2fs disk partition limit?"]]
+
+The 2 GiB ext2fs limit has been removed.
+
+IDE disk drivers (`hd*`) however currently do not support more than 2^28 sectors, i.e. 128GiB.
+
+The gnumach AHCI disk driver (`sd*`) and rumpkernel drivers (`wd*`) support up to 2^48 sectors, i.e. 128PiB, but the device interface supports only 2^32 sectors, i.e. 2TiB.
+
+You can have a bigger disk, you just should not put disk partitions beyond these limits for the drivers to be able to read from them.

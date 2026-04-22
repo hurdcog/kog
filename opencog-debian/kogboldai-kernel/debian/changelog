@@ -1,0 +1,11 @@
+kogboldai-kernel (1.0.0-1) unstable; urgency=medium
+
+  * Initial release of KogboldAI Kernel integration
+  * High-performance C/C++ narrative generation library
+  * Story management and chunk allocation
+  * Token sampling primitives
+  * World info system
+  * Python FFI bindings
+  * Integration with AGI-OS architecture
+
+ -- AGI-OS Team <agi-os@opencog.org>  Fri, 06 Dec 2025 14:00:00 +0000

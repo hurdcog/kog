@@ -1,0 +1,53 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+Damien Zammit authored libirqhelp, which lets userspace attach and
+handle interupts.  Suppose, a user presses a key on his keyboard, then
+the keyboard can send an interrupt request (an IRQ), to the
+processor.  The CPU will try to interrupt the program, so that a
+callback handler can run instead.  A brief overview of `x86` interrupt
+information can be found on
+[[wikipedia|https://en.wikipedia.org/wiki/Interrupt_request]].  The
+[[osdev wiki|https://wiki.osdev.org/IOAPIC]] has more technical
+information. In `libirqhelp` the delivery of the interrupt is through an RPC
+message that triggers a handler.
+The source for `libirqhelp` can be found in `$hurd-src/libirqhelp/`.
+
+First you must call `irqhelp_init ();`  Then you can install an
+interrupt handler with this function:
+
+	struct irq *
+	irqhelp_install_interrupt_handler (int gsi, int bus, int dev,
+	                                   int fun, void (*handler)(void*),
+									   void *context);
+
+If `gsi` is `-1`, then ACPI will look up the global system interrupt from the PCI `bus`, `dev`, and `fun`.
+If `bus`, `dev`, and `fun` are `-1`, then you must define `gsi`
+(global system interrupt).  You then use the returned `struct irq *`
+to call the other functions.
+
+You can enable an irq via:
+
+	void irqhelp_enable_irq (struct irq *irq);
+
+You can disable an irq via:
+
+	void irqhelp_disable_irq (struct irq *irq);
+
+You can deregister a handler via:
+
+	error_t irqhelp_remove_interrupt_handler (struct irq *irq);
+
+To receive irq notifications, you have to call this next function in a separate thread, giving the `struct irq *` as `arg`.
+
+	void * irqhelp_server_loop (void *arg);

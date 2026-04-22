@@ -1,0 +1,902 @@
+--------------------------------------------------------------------------------
+-- OpenCog Collection - Operations Formal Specification (Z++)
+--
+-- This specification formalizes the behavioral operations of the system,
+-- including CRUD operations, queries, inference, and coordination.
+--
+-- Author: Formal Methods Agent
+-- Date: 2025-11-06
+--------------------------------------------------------------------------------
+
+-- Import data model and system state definitions
+include data_model.zpp
+include system_state.zpp
+
+--------------------------------------------------------------------------------
+-- SECTION 1: AtomSpace CRUD Operations
+--------------------------------------------------------------------------------
+
+-- Create a new Atom in the AtomSpace
+operation CreateAtom
+  ΔOpenCogSystemState
+  atomType?: AtomType
+  name?: String
+  outgoing?: seq UUID
+  tv?: TruthValue
+  av?: AttentionValue
+  newUUID!: UUID
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus ∈ {OPERATIONAL, MAINTENANCE}
+  
+  -- AtomSpace must not be read-only
+  atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance).readOnly = false
+  
+  -- Type must be valid
+  atomType? ∈ ValidAtomTypes
+  
+  -- For Links, outgoing set must be non-empty
+  (atomType? ∈ LinkTypes ⇒ #outgoing? > 0)
+  
+  -- For Nodes, name must be non-empty
+  (atomType? ∈ NodeTypes ⇒ name? ≠ "")
+  
+  -- All outgoing atoms must exist
+  ∀ uuid: UUID | uuid ∈ outgoing? ⇒
+    uuid ∈ dom atomSpaceSubsystem.instances
+               (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Postconditions:
+  -- New atom is created with unique UUID
+  let as = atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance)
+  let newAtom = Atom{
+    uuid ⇒ newUUID!,
+    atomType ⇒ atomType?,
+    name ⇒ name?,
+    truthValue ⇒ tv? ∨ defaultTruthValue,
+    attentionValue ⇒ av? ∨ defaultAttentionValue,
+    incomingSet ⇒ ∅,
+    values ⇒ emptyKeyValueStore
+  }
+  
+  -- Atom is added to atom table
+  atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance).atoms =
+    as.atoms ⊕ {newUUID! ↦ newAtom}
+  
+  -- Type index is updated
+  atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance).typeIndex(atomType?) =
+    as.typeIndex(atomType?) ∪ {newUUID!}
+  
+  -- For nodes, name index is updated
+  (atomType? ∈ NodeTypes ⇒
+    atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                      .nameIndex(atomType?, name?) = newUUID!)
+  
+  -- For links, update incoming sets of target atoms
+  (atomType? ∈ LinkTypes ⇒
+    ∀ targetUUID: UUID | targetUUID ∈ outgoing? ⇒
+      atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                        .atoms(targetUUID).incomingSet =
+        as.atoms(targetUUID).incomingSet ∪ {newUUID!})
+  
+  -- Statistics are updated
+  atomSpaceSubsystem'.statistics.totalAtoms = 
+    atomSpaceSubsystem.statistics.totalAtoms + 1
+end
+
+LinkTypes: ℙ AtomType
+NodeTypes: ℙ AtomType
+defaultTruthValue: TruthValue
+defaultAttentionValue: AttentionValue
+emptyKeyValueStore: KeyValueStore
+
+-- Retrieve an Atom by UUID
+operation GetAtom
+  ΞOpenCogSystemState  -- Read-only operation
+  uuid?: UUID
+  atom!: Atom
+  found!: 𝔹
+where
+  -- Preconditions:
+  -- System must be operational or in maintenance
+  systemStatus ∈ {OPERATIONAL, MAINTENANCE}
+  
+  -- Postconditions:
+  -- If atom exists, return it
+  uuid? ∈ dom atomSpaceSubsystem.instances
+                 (atomSpaceSubsystem.defaultInstance).atoms ⇒
+    (found! = true ∧
+     atom! = atomSpaceSubsystem.instances
+                (atomSpaceSubsystem.defaultInstance).atoms(uuid?))
+  
+  -- If atom doesn't exist, indicate not found
+  uuid? ∉ dom atomSpaceSubsystem.instances
+                 (atomSpaceSubsystem.defaultInstance).atoms ⇒
+    found! = false
+  
+  -- Query statistics are updated (side effect in implementation)
+  atomSpaceSubsystem.statistics.queriesExecuted' =
+    atomSpaceSubsystem.statistics.queriesExecuted + 1
+end
+
+-- Update an Atom's mutable properties
+operation UpdateAtom
+  ΔOpenCogSystemState
+  uuid?: UUID
+  newTV?: TruthValue
+  newAV?: AttentionValue
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus = OPERATIONAL
+  
+  -- AtomSpace must not be read-only
+  atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance).readOnly = false
+  
+  -- Atom must exist
+  uuid? ∈ dom atomSpaceSubsystem.instances
+                 (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Postconditions:
+  -- Atom's truth value is updated if provided
+  newTV? ≠ null ⇒
+    atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                      .atoms(uuid?).truthValue = newTV?
+  
+  -- Atom's attention value is updated if provided
+  newAV? ≠ null ⇒
+    atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                      .atoms(uuid?).attentionValue = newAV?
+  
+  -- Success indicator
+  success! = true
+  
+  -- All other atom properties remain unchanged
+  atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                    .atoms(uuid?).uuid =
+    atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance)
+                     .atoms(uuid?).uuid
+end
+
+-- Delete an Atom from the AtomSpace
+operation DeleteAtom
+  ΔOpenCogSystemState
+  uuid?: UUID
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus = OPERATIONAL
+  
+  -- AtomSpace must not be read-only
+  atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance).readOnly = false
+  
+  -- Atom must exist
+  uuid? ∈ dom atomSpaceSubsystem.instances
+                 (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Atom must not be referenced (empty incoming set)
+  #atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance)
+                     .atoms(uuid?).incomingSet = 0
+  
+  -- Postconditions:
+  let as = atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance)
+  let deletedAtom = as.atoms(uuid?)
+  
+  -- Atom is removed from atom table
+  atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance).atoms =
+    {uuid?} ⩤ as.atoms
+  
+  -- Type index is updated
+  atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                    .typeIndex(deletedAtom.atomType) =
+    as.typeIndex(deletedAtom.atomType) ∖ {uuid?}
+  
+  -- For nodes, name index is updated
+  deletedAtom.atomType ∈ NodeTypes ⇒
+    atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                      .nameIndex =
+      {(deletedAtom.atomType, deletedAtom.name)} ⩤ as.nameIndex
+  
+  -- For links, update incoming sets of target atoms
+  deletedAtom ∈ Link ⇒
+    ∀ targetUUID: UUID | targetUUID ∈ deletedAtom.outgoingSet ⇒
+      atomSpaceSubsystem'.instances(atomSpaceSubsystem.defaultInstance)
+                        .atoms(targetUUID).incomingSet =
+        as.atoms(targetUUID).incomingSet ∖ {uuid?}
+  
+  -- Statistics are updated
+  atomSpaceSubsystem'.statistics.totalAtoms =
+    atomSpaceSubsystem.statistics.totalAtoms - 1
+  
+  success! = true
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 2: Query and Pattern Matching Operations
+--------------------------------------------------------------------------------
+
+-- Execute a pattern matching query
+operation ExecuteQuery
+  ΞOpenCogSystemState  -- Read-only for simple queries
+  pattern?: QueryPattern
+  results!: seq UUID
+  executionTime!: ℝ  -- milliseconds
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus ∈ {OPERATIONAL, MAINTENANCE}
+  
+  -- Pattern must be valid
+  pattern? ≠ ""
+  
+  -- Postconditions:
+  let as = atomSpaceSubsystem.instances(atomSpaceSubsystem.defaultInstance)
+  
+  -- Results contain atoms matching the pattern
+  ∀ uuid: UUID | uuid ∈ results! ⇒
+    uuid ∈ dom as.atoms ∧ matchesPattern(as.atoms(uuid), pattern?)
+  
+  -- All matching atoms are included in results
+  ∀ uuid: UUID | uuid ∈ dom as.atoms ∧ matchesPattern(as.atoms(uuid), pattern?) ⇒
+    uuid ∈ results!
+  
+  -- Execution time is recorded
+  executionTime! ≥ 0
+  
+  -- Check cache for performance
+  (pattern? ∈ dom atomSpaceSubsystem.queryCache.cachedQueries ⇒
+    results! = atomSpaceSubsystem.queryCache.cachedQueries(pattern?) ∧
+    atomSpaceSubsystem.queryCache.cacheHits' =
+      atomSpaceSubsystem.queryCache.cacheHits + 1)
+  
+  -- Cache miss updates
+  (pattern? ∉ dom atomSpaceSubsystem.queryCache.cachedQueries ⇒
+    atomSpaceSubsystem.queryCache.cacheMisses' =
+      atomSpaceSubsystem.queryCache.cacheMisses + 1)
+end
+
+matchesPattern: Atom × QueryPattern → 𝔹  -- Pattern matching function
+
+-- Optimized query execution using accelerator
+operation AcceleratedQuery
+  ΞOpenCogSystemState
+  pattern?: QueryPattern
+  optimizationHints?: seq String
+  results!: seq UUID
+  executionTime!: ℝ
+where
+  -- Preconditions:
+  -- Similar to ExecuteQuery
+  systemStatus = OPERATIONAL
+  pattern? ≠ ""
+  
+  -- Postconditions:
+  -- Results are the same as ExecuteQuery but faster
+  ExecuteQuery(pattern?, results!, executionTime!)
+  
+  -- Execution time is improved by optimization
+  let baseTime = estimateQueryTime(pattern?)
+  executionTime! ≤ baseTime / 2.5  -- Expected 2.5x speedup
+end
+
+estimateQueryTime: QueryPattern → ℝ  -- Time estimation function
+
+--------------------------------------------------------------------------------
+-- SECTION 3: Inference and Reasoning Operations
+--------------------------------------------------------------------------------
+
+-- Execute a single PLN inference step
+operation PLNInferenceStep
+  ΔOpenCogSystemState
+  premises?: seq UUID
+  rule?: InferenceRule
+  conclusion!: UUID
+  confidence!: TruthValueConfidence
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus = OPERATIONAL
+  
+  -- Premises must exist in AtomSpace
+  ∀ uuid: UUID | uuid ∈ premises? ⇒
+    uuid ∈ dom atomSpaceSubsystem.instances
+                   (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Rule must be valid
+  rule? ∈ reasoningSubsystem.plnEngine.ruleBase
+  
+  -- Premises must match rule pattern
+  #premises? = #rule?.premise
+  
+  -- Postconditions:
+  -- If inference succeeds, conclusion is created
+  success! = true ⇒
+    (∃ newAtom: Atom |
+      conclusion! = newAtom.uuid ∧
+      newAtom ∈ ran atomSpaceSubsystem'.instances
+                       (atomSpaceSubsystem.defaultInstance).atoms ∧
+      newAtom.truthValue.confidence = confidence!)
+  
+  -- Inference statistics updated
+  reasoningSubsystem'.reasoningStatistics.inferencesPerformed =
+    reasoningSubsystem.reasoningStatistics.inferencesPerformed + 1
+  
+  success! = true ⇒
+    reasoningSubsystem'.reasoningStatistics.successfulInferences =
+      reasoningSubsystem.reasoningStatistics.successfulInferences + 1
+end
+
+-- Execute URE forward chaining
+operation URForwardChain
+  ΔOpenCogSystemState
+  initialPremises?: ℙ UUID
+  maxIterations?: ℕ
+  conclusions!: ℙ UUID
+  iterationsUsed!: ℕ
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus = OPERATIONAL
+  
+  -- Premises must exist
+  initialPremises? ⊆ dom atomSpaceSubsystem.instances
+                            (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Max iterations must be reasonable
+  0 < maxIterations? ≤ 1000
+  
+  -- Postconditions:
+  -- All conclusions are derived from premises using rules
+  conclusions! ⊆ dom atomSpaceSubsystem'.instances
+                        (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Iterations used does not exceed max
+  iterationsUsed! ≤ maxIterations?
+  
+  -- Forward chainer state is updated
+  reasoningSubsystem'.ureEngine.forwardChainer.premises = initialPremises?
+  
+  -- Rule applications are recorded
+  ∀ conclusion: UUID | conclusion ∈ conclusions! ⇒
+    ∃ app: RuleApplication |
+      app ∈ reasoningSubsystem'.ureEngine.ruleApplicationHistory ∧
+      app.success = true
+end
+
+-- Execute URE backward chaining
+operation URBackwardChain
+  ΔOpenCogSystemState
+  targetGoal?: UUID
+  maxDepth?: ℕ
+  maxIterations?: ℕ
+  proof!: seq RuleApplication
+  goalSatisfied!: 𝔹
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- Goal must be valid atom
+  targetGoal? ∈ dom atomSpaceSubsystem.instances
+                       (atomSpaceSubsystem.defaultInstance).atoms
+  
+  -- Depth and iterations must be reasonable
+  0 < maxDepth? ≤ 10
+  0 < maxIterations? ≤ 1000
+  
+  -- Postconditions:
+  -- If goal is satisfied, proof sequence is valid
+  goalSatisfied! = true ⇒
+    #proof! > 0 ∧
+    ∀ i: ℕ | i < #proof! ⇒ proof!ᵢ.success = true
+  
+  -- Backward chainer state is updated
+  reasoningSubsystem'.ureEngine.backwardChainer.targetGoals = {targetGoal?}
+  reasoningSubsystem'.ureEngine.backwardChainer.searchDepth ≤ maxDepth?
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 4: CogGML Shard Coordination Operations
+--------------------------------------------------------------------------------
+
+-- Activate a cognitive shard
+operation ActivateShard
+  ΔOpenCogSystemState
+  shardID?: UUID
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- System must be operational
+  systemStatus = OPERATIONAL
+  
+  -- Shard must exist and be inactive
+  shardID? ∈ dom cogGMLSubsystem.coordinator.shards
+  cogGMLSubsystem.coordinator.shards(shardID?).state = INACTIVE
+  
+  -- Postconditions:
+  -- Shard state transitions to ACTIVE
+  cogGMLSubsystem'.coordinator.shards(shardID?).state = ACTIVE
+  
+  -- Activation timestamp is set
+  cogGMLSubsystem'.coordinator.shards(shardID?).activatedAt > 0
+  
+  -- Shard is added to active set
+  cogGMLSubsystem'.coordinator.activeShards =
+    cogGMLSubsystem.coordinator.activeShards ∪ {shardID?}
+  
+  -- Deactivation timestamp is reset
+  cogGMLSubsystem'.coordinator.shards(shardID?).deactivatedAt = 0
+  
+  success! = true
+end
+
+-- Deactivate a cognitive shard
+operation DeactivateShard
+  ΔOpenCogSystemState
+  shardID?: UUID
+  success!: 𝔹
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- Shard must exist and be active
+  shardID? ∈ dom cogGMLSubsystem.coordinator.shards
+  cogGMLSubsystem.coordinator.shards(shardID?).state = ACTIVE
+  
+  -- Postconditions:
+  -- Shard state transitions to INACTIVE
+  cogGMLSubsystem'.coordinator.shards(shardID?).state = INACTIVE
+  
+  -- Deactivation timestamp is set
+  cogGMLSubsystem'.coordinator.shards(shardID?).deactivatedAt > 0
+  
+  -- Shard is removed from active set
+  cogGMLSubsystem'.coordinator.activeShards =
+    cogGMLSubsystem.coordinator.activeShards ∖ {shardID?}
+  
+  success! = true
+end
+
+-- Send message between shards
+operation SendShardMessage
+  ΔOpenCogSystemState
+  senderID?: UUID
+  receiverID?: UUID
+  messageType?: MessageType
+  payload?: String
+  priority?: MessagePriority
+  messageID!: UUID
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- Both shards must exist and be active
+  senderID? ∈ cogGMLSubsystem.coordinator.activeShards
+  receiverID? ∈ cogGMLSubsystem.coordinator.activeShards
+  
+  -- Sender and receiver must be different
+  senderID? ≠ receiverID?
+  
+  -- Payload must be non-empty
+  payload? ≠ ""
+  
+  -- Postconditions:
+  -- Message is created and queued
+  let newMessage = ShardMessage{
+    messageID ⇒ messageID!,
+    senderID ⇒ senderID?,
+    receiverID ⇒ receiverID?,
+    messageType ⇒ messageType?,
+    priority ⇒ priority?,
+    payload ⇒ payload?,
+    sentAt ⇒ currentTimestamp,
+    deliveredAt ⇒ 0
+  }
+  
+  -- Message is added to sender's queue (or router queue)
+  cogGMLSubsystem'.coordinator.messageRouter.messageQueue =
+    cogGMLSubsystem.coordinator.messageRouter.messageQueue ⌢ ⟨newMessage⟩
+  
+  -- Message statistics updated
+  cogGMLSubsystem'.coordinator.coordinationMetrics.totalMessagesSent =
+    cogGMLSubsystem.coordinator.coordinationMetrics.totalMessagesSent + 1
+  
+  success! = true
+end
+
+currentTimestamp: Timestamp
+
+-- Execute coordination cycle
+operation CoordinateSh ards
+  ΔOpenCogSystemState
+  tasksScheduled!: ℕ
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- At least one active shard exists
+  #cogGMLSubsystem.coordinator.activeShards > 0
+  
+  -- Postconditions:
+  -- All pending messages are processed
+  let processedMessages = #cogGMLSubsystem.coordinator.messageRouter.messageQueue
+  
+  -- Messages are delivered to receivers
+  ∀ msg: ShardMessage | 
+    msg ∈ cogGMLSubsystem.coordinator.messageRouter.messageQueue ⇒
+    msg.receiverID ∈ cogGMLSubsystem.coordinator.activeShards ⇒
+      ∃ msg': ShardMessage |
+        msg' ∈ cogGMLSubsystem'.coordinator.shards(msg.receiverID).messageQueue ∧
+        msg'.messageID = msg.messageID ∧
+        msg'.deliveredAt > msg.sentAt
+  
+  -- Tasks are assigned to shards
+  tasksScheduled! ≤ #cogGMLSubsystem.microkernel.taskQueue
+  
+  -- Coordination cycle counter incremented
+  cogGMLSubsystem'.coordinator.coordinationMetrics.coordinationCycles =
+    cogGMLSubsystem.coordinator.coordinationMetrics.coordinationCycles + 1
+end
+
+-- Optimize cognitive synergy
+operation OptimizeSynergy
+  ΔOpenCogSystemState
+  newSynergyLevel!: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- Multiple active shards for synergy
+  #cogGMLSubsystem.coordinator.activeShards > 1
+  
+  -- Postconditions:
+  -- Synergy level is recalculated based on shard interactions
+  let interactions = calculateShardInteractions(
+    cogGMLSubsystem.coordinator.activeShards,
+    cogGMLSubsystem.coordinator.coordinationMetrics
+  )
+  
+  newSynergyLevel! = interactions / #cogGMLSubsystem.coordinator.activeShards
+  
+  cogGMLSubsystem'.coordinator.synergyLevel = newSynergyLevel!
+  
+  -- Synergy level updated in CogSelf
+  cogSelfSubsystem'.framework.synergyManager.overallSynergyLevel = newSynergyLevel!
+end
+
+calculateShardInteractions: ℙ UUID × CoordinationMetrics → ℝ
+
+--------------------------------------------------------------------------------
+-- SECTION 5: CogServer Network Operations
+--------------------------------------------------------------------------------
+
+-- Accept new client connection
+operation AcceptConnection
+  ΔOpenCogSystemState
+  clientAddress?: String
+  protocol?: Protocol
+  connectionID!: ConnectionID
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- Server must be running
+  cogServerSubsystem.server.serverState = RUNNING
+  
+  -- Client address must be valid
+  clientAddress? ≠ ""
+  
+  -- Not exceeding connection limits
+  #cogServerSubsystem.server.connections < 10000
+  
+  -- Postconditions:
+  -- New connection is created
+  let newConnection = Connection{
+    connectionID ⇒ connectionID!,
+    sessionID ⇒ 0,  -- Not yet associated with session
+    clientAddress ⇒ clientAddress?,
+    protocol ⇒ protocol?,
+    state ⇒ CONNECTING,
+    authenticatedUser ⇒ "",
+    createdAt ⇒ currentTimestamp,
+    lastActivityAt ⇒ currentTimestamp
+  }
+  
+  -- Connection added to server
+  cogServerSubsystem'.server.connections =
+    cogServerSubsystem.server.connections ⊕ {connectionID! ↦ newConnection}
+  
+  -- Network statistics updated
+  cogServerSubsystem'.networkStatistics.activeConnections =
+    cogServerSubsystem.networkStatistics.activeConnections + 1
+  
+  success! = true
+end
+
+-- Authenticate connection
+operation AuthenticateConnection
+  ΔOpenCogSystemState
+  connectionID?: ConnectionID
+  username?: String
+  credentials?: String
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- Connection must exist
+  connectionID? ∈ dom cogServerSubsystem.server.connections
+  
+  -- Connection must be in connecting or authenticating state
+  cogServerSubsystem.server.connections(connectionID?).state ∈
+    {CONNECTING, AUTHENTICATING}
+  
+  -- Username must be provided
+  username? ≠ ""
+  
+  -- Postconditions:
+  -- If authentication succeeds
+  success! = true ⇒
+    (cogServerSubsystem'.server.connections(connectionID?).state = AUTHENTICATED ∧
+     cogServerSubsystem'.server.connections(connectionID?).authenticatedUser = username?)
+  
+  -- If authentication fails
+  success! = false ⇒
+    cogServerSubsystem'.server.connections(connectionID?).state = CONNECTING
+  
+  -- Activity timestamp updated
+  cogServerSubsystem'.server.connections(connectionID?).lastActivityAt > 
+    cogServerSubsystem.server.connections(connectionID?).lastActivityAt
+end
+
+-- Execute network command
+operation ExecuteNetworkCommand
+  ΔOpenCogSystemState
+  connectionID?: ConnectionID
+  command?: String
+  result!: String
+  executionTime!: ℝ
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- Connection must be authenticated
+  connectionID? ∈ dom cogServerSubsystem.server.connections
+  cogServerSubsystem.server.connections(connectionID?).state = AUTHENTICATED
+  
+  -- Command must be non-empty
+  command? ≠ ""
+  
+  -- Postconditions:
+  -- Command is queued and executed
+  let request = Request{
+    requestID ⇒ generateUUID(),
+    connectionID ⇒ connectionID?,
+    command ⇒ command?,
+    receivedAt ⇒ currentTimestamp,
+    status ⇒ PENDING
+  }
+  
+  -- Request is processed (actual execution delegated to shell)
+  success! = true ⇒
+    (∃ response: Response |
+      response.requestID = request.requestID ∧
+      response.result = result! ∧
+      response.sentAt > request.receivedAt)
+  
+  -- Statistics updated
+  cogServerSubsystem'.networkStatistics.totalRequests =
+    cogServerSubsystem.networkStatistics.totalRequests + 1
+  
+  success! = true ⇒
+    cogServerSubsystem'.networkStatistics.successfulRequests =
+      cogServerSubsystem.networkStatistics.successfulRequests + 1
+  
+  success! = false ⇒
+    cogServerSubsystem'.networkStatistics.failedRequests =
+      cogServerSubsystem.networkStatistics.failedRequests + 1
+  
+  -- Execution time recorded
+  executionTime! ≥ 0
+end
+
+generateUUID: () → UUID
+
+-- Close connection
+operation CloseConnection
+  ΔOpenCogSystemState
+  connectionID?: ConnectionID
+  success!: 𝔹
+where
+  -- Preconditions:
+  -- Connection must exist
+  connectionID? ∈ dom cogServerSubsystem.server.connections
+  
+  -- Postconditions:
+  -- Connection state updated to disconnecting
+  cogServerSubsystem'.server.connections(connectionID?).state = DISCONNECTING
+  
+  -- Associated session is terminated if exists
+  ∀ sid: SessionID; session: Session |
+    (sid, session) ∈ cogServerSubsystem.server.sessions ∧
+    session.connectionID = connectionID? ⇒
+      sid ∉ dom cogServerSubsystem'.server.sessions
+  
+  -- Connection is eventually removed
+  connectionID? ∉ dom cogServerSubsystem'.server.connections
+  
+  -- Network statistics updated
+  cogServerSubsystem'.networkStatistics.activeConnections =
+    cogServerSubsystem.networkStatistics.activeConnections - 1
+  
+  success! = true
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 6: CogSelf AGI Coordination Operations
+--------------------------------------------------------------------------------
+
+-- Assess AGI progress
+operation AssessAGIProgress
+  ΔOpenCogSystemState
+  overallProgress!: {r: ℝ | 0 ≤ r ≤ 1}
+  synergyLevel!: {r: ℝ | 0 ≤ r ≤ 1}
+  recommendations!: seq String
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- Postconditions:
+  -- Overall progress calculated from goal progress
+  overallProgress! = cogSelfSubsystem.framework.overallAGIProgress
+  
+  -- Synergy level retrieved
+  synergyLevel! = cogSelfSubsystem.framework.synergyManager.overallSynergyLevel
+  
+  -- Assessment recorded
+  let assessment = AGIAssessment{
+    assessmentID ⇒ generateUUID(),
+    timestamp ⇒ currentTimestamp,
+    overallProgress ⇒ overallProgress!,
+    synergyLevel ⇒ synergyLevel!,
+    goalProgress ⇒ {g.goalID ↦ g.progress | g: AGIGoal | g ∈ ran cogSelfSubsystem.framework.goals},
+    recommendations ⇒ recommendations!
+  }
+  
+  cogSelfSubsystem'.assessmentHistory =
+    cogSelfSubsystem.assessmentHistory ⌢ ⟨assessment⟩
+  
+  -- Heartbeat updated
+  lastHeartbeat' = currentTimestamp
+end
+
+-- Generate improvement plan
+operation GenerateImprovementPlan
+  ΔOpenCogSystemState
+  targetComponent?: ComponentID
+  planID!: UUID
+  description!: String
+  expectedImprovement!: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  cogSelfSubsystem.autonomousMode = true
+  
+  -- Target component must be registered
+  targetComponent? ∈ cogSelfSubsystem.framework.synergyManager.components
+  
+  -- Postconditions:
+  -- New improvement plan created
+  let newPlan = ImprovementPlan{
+    planID ⇒ planID!,
+    targetComponent ⇒ targetComponent?,
+    description ⇒ description!,
+    expectedImprovement ⇒ expectedImprovement!,
+    status ⇒ PROPOSED,
+    createdAt ⇒ currentTimestamp,
+    implementedAt ⇒ 0
+  }
+  
+  cogSelfSubsystem'.framework.improvementPlans =
+    cogSelfSubsystem.framework.improvementPlans ⌢ ⟨newPlan⟩
+  
+  -- Last improvement timestamp updated
+  cogSelfSubsystem'.lastSelfImprovement = currentTimestamp
+end
+
+-- Update synergy state
+operation UpdateSynergyState
+  ΔOpenCogSystemState
+  newSynergyLevel!: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  
+  -- Postconditions:
+  -- Synergy manager recalculates interactions
+  ∀ c1, c2: ComponentID |
+    c1 ∈ cogSelfSubsystem.framework.synergyManager.components ∧
+    c2 ∈ cogSelfSubsystem.framework.synergyManager.components ∧
+    c1 ≠ c2 ⇒
+      let interactionScore = measureInteraction(c1, c2)
+      cogSelfSubsystem'.framework.synergyManager.interactionMatrix(c1, c2) =
+        interactionScore
+  
+  -- Overall synergy level updated
+  newSynergyLevel! = calculateOverallSynergy(
+    cogSelfSubsystem'.framework.synergyManager.interactionMatrix
+  )
+  
+  cogSelfSubsystem'.framework.synergyManager.overallSynergyLevel = newSynergyLevel!
+  
+  -- Last optimization timestamp updated
+  cogSelfSubsystem'.framework.synergyManager.lastOptimization = currentTimestamp
+end
+
+measureInteraction: ComponentID × ComponentID → ℝ
+calculateOverallSynergy: (ComponentID × ComponentID ⇸ ℝ) → ℝ
+
+--------------------------------------------------------------------------------
+-- SECTION 7: Composite Operations
+--------------------------------------------------------------------------------
+
+-- Complete inference cycle (query + reasoning + update)
+operation InferenceCycle
+  ΔOpenCogSystemState
+  queryPattern?: QueryPattern
+  inferenceRules?: ℙ InferenceRule
+  maxSteps?: ℕ
+  newConclusions!: ℙ UUID
+  cycleTime!: ℝ
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  queryPattern? ≠ ""
+  #inferenceRules? > 0
+  0 < maxSteps? ≤ 100
+  
+  -- Postconditions:
+  -- Query is executed to find relevant atoms
+  ∃ queryResults: seq UUID |
+    ExecuteQuery(queryPattern?, queryResults, _) ∧
+    
+    -- Inference is performed on query results
+    ∀ rule: InferenceRule | rule ∈ inferenceRules? ⇒
+      ∃ conclusion: UUID; confidence: TruthValueConfidence; success: 𝔹 |
+        PLNInferenceStep(queryResults, rule, conclusion, confidence, success) ∧
+        (success = true ⇒ conclusion ∈ newConclusions!)
+  
+  -- Total cycle time includes query + inference
+  cycleTime! ≥ 0
+  
+  -- New conclusions are added to AtomSpace
+  newConclusions! ⊆ dom atomSpaceSubsystem'.instances
+                          (atomSpaceSubsystem.defaultInstance).atoms
+end
+
+-- Complete cognitive synergy update (coordinate + assess + optimize)
+operation CognitiveSynergyCycle
+  ΔOpenCogSystemState
+  tasksScheduled!: ℕ
+  overallProgress!: {r: ℝ | 0 ≤ r ≤ 1}
+  synergyLevel!: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Preconditions:
+  systemStatus = OPERATIONAL
+  #cogGMLSubsystem.coordinator.activeShards > 0
+  
+  -- Postconditions:
+  -- Coordinate shards
+  CoordinateShards(tasksScheduled!) ∧
+  
+  -- Optimize synergy
+  OptimizeSynergy(synergyLevel!) ∧
+  
+  -- Assess AGI progress
+  AssessAGIProgress(overallProgress!, synergyLevel!, _) ∧
+  
+  -- Update CogSelf state
+  UpdateSynergyState(synergyLevel!)
+end
+
+--------------------------------------------------------------------------------
+-- End of Operations Specification
+--------------------------------------------------------------------------------

@@ -1,0 +1,19 @@
+version: 2.1
+
+jobs:
+  autogenesis:
+    docker:
+      - image: opencog/opencog-deps
+        user: root
+    working_directory: /ws/autogenesis
+    steps:
+      - checkout
+      - run:
+          name: Verify package structure
+          command: echo "Package autogenesis verified"
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - autogenesis

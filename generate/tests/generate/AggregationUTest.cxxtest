@@ -1,0 +1,482 @@
+/*
+ * AggregationUTest.cxxtest
+ *
+ * Basic does-it-work? unit test. Explores some very very simple
+ * natural-language grammars that generate a handful (less than a dozen)
+ * different sentences. No combinatoric explosions, no stochastic
+ * elements.  Uses only the SimpleCallback for everything.
+ *
+ * Copyright (C) 2020 Linas Vepstas <linasvepstas@gmail.com>
+ * All Rights Reserved
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <opencog/atoms/atom_types/atom_types.h>
+#include <opencog/atomspace/AtomSpace.h>
+#include <opencog/guile/SchemeEval.h>
+#include <opencog/generate/Aggregate.h>
+#include <opencog/generate/SimpleCallback.h>
+
+#include <cxxtest/TestSuite.h>
+
+using namespace opencog;
+
+#define al as->add_link
+#define an as->add_node
+
+class AggregationUTest: public CxxTest::TestSuite
+{
+private:
+	AtomSpacePtr asp;
+	AtomSpace* as;
+	SchemeEval* eval;
+	Aggregate* ag;
+	Dictionary* dict;
+
+public:
+	AggregationUTest();
+	~AggregationUTest();
+
+	void setUp();
+	void tearDown();
+
+	void setup_dict();
+
+	void test_hello();
+	void test_tree();
+	void test_loop();
+	void test_biloop();
+	void test_quad();
+	void test_biquad();
+	void test_triquad();
+	void test_mixed();
+	void test_multi_root();
+};
+
+AggregationUTest::AggregationUTest()
+{
+	logger().set_level(Logger::DEBUG);
+	logger().set_print_to_stdout_flag(true);
+	logger().set_timestamp_flag(false);
+}
+
+AggregationUTest::~AggregationUTest()
+{
+	logger().info("Completed running AggregationUTest");
+
+	// erase the log file if no assertions failed
+	if (!CxxTest::TestTracker::tracker().suiteFailed())
+		std::remove(logger().get_filename().c_str());
+	else
+	{
+		logger().info("AggregationUTest failed!");
+		logger().flush();
+	}
+}
+
+void AggregationUTest::setUp()
+{
+	asp = createAtomSpace();
+	as = asp.get();
+	eval = new SchemeEval(as);
+	eval->eval("(add-to-load-path \"" PROJECT_SOURCE_DIR "\")");
+	ag = new Aggregate(as);
+}
+
+void AggregationUTest::tearDown()
+{
+	delete ag;
+	delete eval;
+}
+
+void AggregationUTest::setup_dict()
+{
+	dict = new Dictionary(as);
+
+	// The directions to connect.
+	Handle plus = an(CONNECTOR_DIR_NODE, "+");
+	Handle minus = an(CONNECTOR_DIR_NODE, "-");
+	dict->add_pole_pair(plus, minus);
+	dict->add_pole_pair(minus, plus);
+
+	// The lexis to use
+	HandleSet lex;
+	as->get_handles_by_type(lex, SECTION);
+	dict->add_to_lexis(lex);
+}
+
+// Single generation: "Hello world"
+void AggregationUTest::test_hello()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-helloworld.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to be LEFT_WALL --W--> Hello --OH--> world
+	// printf("Hello-world result is  %s\n", result->to_string().c_str());
+	logger().debug("Expecting 1 solution, got %d", result->get_arity());
+	TSM_ASSERT("Bad result set!", result->get_arity() == 1);
+	Handle soln = result->getOutgoingAtom(0);
+
+	TSM_ASSERT("Bad section!", soln->get_arity() == 3);
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Four generations: "John/Mary saw a dog/cat", as an acyclic tree.
+void AggregationUTest::test_tree()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-tree.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to be loop-free (acyclic)
+	//                    +----O-----+
+	//    +--->W---+---S--+    +--D--+
+	//    |        |      |    |     |
+	// LEFT-WALL John    saw   a    cat
+	//
+	// printf("Tree result is  %s\n", result->to_string().c_str());
+
+	logger().debug("Expecting 4 solutions, got %d", result->get_arity());
+	TSM_ASSERT("Bad result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only John/Mary and dog/cat in the parse tree.
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 5 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 5);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Four generations: "John/Mary saw a dog/cat", as graph w/ one cycle.
+void AggregationUTest::test_loop()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-loop.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to have a loop
+	//    +-------WV------+----O-----+
+	//    +--->W---+---S--+    +--D--+
+	//    |        |      |    |     |
+	// LEFT-WALL John    saw   a    cat
+	//
+	// printf("Loop result is %s\n", result->to_string().c_str());
+	printf("Loop result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only John/Mary and dog/cat in the parse.
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 5 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 5);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Four generations: "John thinks Mary saw a bird", and v.v. as graph
+// w/ two cycles.
+void AggregationUTest::test_biloop()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-biloop.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to have two loops
+	//
+	//     +------WV-----+------CV----+--O---+
+	//     +---W---+--S--+--Ce--+--S--+  +-D-+
+	//     |       |     |      |     |  |   |
+	// LEFT-WALL Mary thinks  John   saw a  bird
+	//
+	// printf("Loop result is %s\n", result->to_string().c_str());
+	printf("Loop result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only John/Mary being swapped in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 7 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 7);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Four generations: "Mary could see the dog", and v.v. as graph
+// w/ one quadrilateral cycle.
+void AggregationUTest::test_quad()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-quad.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to have one quad
+	//
+	//    +----------WV--------+----O-----+
+	//    +----W---+--S--+--I--+    +--D--+
+	//    |        |     |     |    |     |
+	// LEFT-WALL Mary  could  see  the   cat
+	//
+	// printf("Loop result is %s\n", result->to_string().c_str());
+	printf("Loop result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only John/Mary and see/hear being swapped in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 6 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 6);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Four generations: "Mary might think that John could fall", and v.v.
+// as graph w/ two quadrilateral cycles.
+void AggregationUTest::test_biquad()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-biquad.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to have two quads
+	//
+	// printf("Loop result is %s\n", result->to_string().c_str());
+	printf("Loop result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 7 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 7);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Three coupled cycles.
+void AggregationUTest::test_triquad()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-triquad.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// We expect the solution to have three quads
+	//
+	// printf("Loop result is %s\n", result->to_string().c_str());
+	printf("Loop result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 8 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 8);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Mixture of trees and cycles.
+void AggregationUTest::test_mixed()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-mixed.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	ag->aggregate({wall}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// printf("Mixed result is %s\n", result->to_string().c_str());
+	printf("Mixed result size is %lu expecting 8\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 8);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 10 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 10);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}
+
+// Multiple nucleation points
+void AggregationUTest::test_multi_root()
+{
+	logger().debug("BEGIN TEST: %s", __FUNCTION__);
+
+	eval->eval("(load-from-path \"tests/generate/dict-mixed.scm\")");
+	Handle wall = eval->eval_h("left-wall");
+	Handle black = eval->eval_h("black");
+	Handle dog = eval->eval_h("dog");
+	Handle bark = eval->eval_h("bark");
+
+	setup_dict();
+	SimpleCallback cb(as, *dict);
+
+	// ----------------------------------------------------
+	ag->aggregate({wall, black}, cb);
+	Handle result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// printf("wall,black result is %s\n", result->to_string().c_str());
+	printf("wall,black result size is %lu expecting 4\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 4);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	int cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 10 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 10);
+	}
+
+	// ----------------------------------------------------
+	ag->aggregate({wall, black, dog}, cb);
+	result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// printf("wall,black result is %s\n", result->to_string().c_str());
+	printf("wall,black,dog result size is %lu expecting 2\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 2);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 10 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 10);
+	}
+
+	// ----------------------------------------------------
+	ag->aggregate({wall, black, dog, bark}, cb);
+	result = cb.get_solutions();
+
+	TSM_ASSERT("Bad result!", result != Handle::UNDEFINED);
+
+	// printf("wall,black result is %s\n", result->to_string().c_str());
+	printf("wall,black,dog,bark result size is %lu expecting 1\n", result->get_arity());
+	TSM_ASSERT("Bad loop result set!", result->get_arity() == 1);
+
+	// All of the solutions should be the same size, substituting
+	// only might/could in the parse.
+	// printf("Parse is %s\n", result->getOutgoingAtom(0)->to_string().c_str());
+	cnt = 0;
+	for (const Handle& soln: result->getOutgoingSet())
+	{
+		logger().debug("   Soln %d expecting 10 words, got %d",
+			++cnt, soln->get_arity());
+		TSM_ASSERT("Bad section!", soln->get_arity() == 10);
+	}
+
+	logger().debug("END TEST: %s", __FUNCTION__);
+}

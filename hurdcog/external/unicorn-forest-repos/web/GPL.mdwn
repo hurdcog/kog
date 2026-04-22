@@ -1,0 +1,27 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="GNU General Public License"]]
+
+The GNU General Public License (GPL) is a [Free Software](https://www.gnu.org/philosophy/free-sw.html) license created by Richard Stallman in 1989 for Free Software creators. The GPL grants users the Four Freedoms:
+
+
+* The freedom to run the program as you wish, for any purpose (freedom 0).
+* The freedom to study how the program works, and change it so it does your computing as you wish (freedom 1). Access to the source code is a precondition for this.
+* The freedom to redistribute copies so you can help others (freedom 2).
+* The freedom to distribute copies of your modified versions to others (freedom 3). By doing this you can give the whole community a chance to benefit from your changes. Access to the source code is a precondition for this.
+
+
+Since it's debut, the license has become extremely popular & wide-spread. The GPL has gone through 3 revisions, with GPLv3 being the latest.
+
+GPLv3 allows any user to access, modify, and redistribute the source code, given that the redistributed version of the software is also released as GPLv3. For example, if you create a pice of software named "FreedomJuice" under the GPLv3, and I download & moify it and name it "xFreedomJuicex", I cannot release xFreedomJuicex under the MIT license, it has to be GPLv3 as well.
+
+---
+# External Links
+* [The GPL's Homepage](https://www.gnu.org/licenses/gpl.html)
+* [[!wikipedia GPL]] on Wikipedia

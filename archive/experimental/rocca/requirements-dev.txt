@@ -1,0 +1,6 @@
+nbdev
+jupyter
+black
+isort
+pytest
+mypy

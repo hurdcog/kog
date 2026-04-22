@@ -1,0 +1,11 @@
+GROUP(
+  -lcrt
+  -lm
+  -lhurd-mm
+  -lpthread
+  -lhurd-slab
+  -lhurd-ihash
+  -lhurd-btree
+  -lc-parts
+  -lgcc
+)

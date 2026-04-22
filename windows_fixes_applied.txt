@@ -1,0 +1,62 @@
+================================================================================
+Windows Compatibility Fixes Applied
+================================================================================
+
+Files modified: 35
+
+Fixes by type:
+  POSIX headers: 44
+  Alternative operators: 6
+  Total: 50
+
+================================================================================
+
+Fixes by component:
+
+  asmoses:
+    Files: 1
+    POSIX headers: 1
+    Alternative operators: 0
+    Total: 1
+
+  atomspace:
+    Files: 8
+    POSIX headers: 10
+    Alternative operators: 0
+    Total: 10
+
+  atomspace-cog:
+    Files: 4
+    POSIX headers: 9
+    Alternative operators: 0
+    Total: 9
+
+  atomspace-storage:
+    Files: 4
+    POSIX headers: 4
+    Alternative operators: 0
+    Total: 4
+
+  cogserver:
+    Files: 5
+    POSIX headers: 9
+    Alternative operators: 0
+    Total: 9
+
+  cogutil:
+    Files: 6
+    POSIX headers: 9
+    Alternative operators: 0
+    Total: 9
+
+  learn:
+    Files: 1
+    POSIX headers: 1
+    Alternative operators: 0
+    Total: 1
+
+  moses:
+    Files: 6
+    POSIX headers: 1
+    Alternative operators: 6
+    Total: 7

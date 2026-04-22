@@ -1,0 +1,41 @@
+Source: atomspace-machspace
+Section: science
+Priority: optional
+Maintainer: OpenCog Developers <opencog@googlegroups.com>
+Build-Depends: debhelper (>= 13),
+               cmake (>= 3.16),
+               g++ (>= 9),
+               libatomspace-dev (>= 5.0.3),
+               libcogutil-dev (>= 2.0.3),
+               libboost-dev (>= 1.71),
+               libboost-system-dev (>= 1.71),
+               libboost-thread-dev (>= 1.71)
+Standards-Version: 4.6.0
+Homepage: https://github.com/cogpy/occ
+Vcs-Git: https://github.com/cogpy/occ.git
+Vcs-Browser: https://github.com/cogpy/occ
+
+Package: libatomspace-machspace
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         libatomspace (>= 5.0.3),
+         libcogutil (>= 2.0.3)
+Description: MachSpace storage backend for OpenCog AtomSpace
+ This package provides a distributed hypergraph storage backend
+ that integrates OpenCog's AtomSpace with the HurdCog microkernel.
+ .
+ MachSpace enables kernel-level cognitive graph storage and
+ provides IPC-based communication for AGI-OS integration.
+
+Package: libatomspace-machspace-dev
+Architecture: any
+Section: libdevel
+Depends: ${misc:Depends},
+         libatomspace-machspace (= ${binary:Version}),
+         libatomspace-dev (>= 5.0.3),
+         libcogutil-dev (>= 2.0.3)
+Description: MachSpace storage backend development files
+ Development files for the MachSpace storage backend.
+ .
+ This package contains headers and CMake configuration files
+ needed to develop applications using MachSpace.

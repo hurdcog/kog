@@ -1,0 +1,120 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+The remap translator lets you remap directories. This translator is to
+be used as a chroot, within which paths point to the same files as the
+original root, except a given set of paths, which are remapped to given
+paths.
+
+This translator completes the [[server
+overriding|community/gsoc/project_ideas/server_overriding]] google
+summer of code project.
+
+It is often desirable to execute a command in a transitory environment
+with remapped files.  The `remap` script lets you do this.
+
+# Example Uses
+
+## remapping /bin/sh
+
+On Debian, `/bin/sh` points to `dash`.  Maybe you would rather it
+point to `bash`.
+
+	$ ls -lha /bin/sh
+	lrwxr-xr-x 1 root root 4 Jun  5 04:08 /bin/sh -> dash
+	$ remap /bin/sh /bin/bash -- ls -lha /bin/sh
+    -rwxr-xr-x 1 root root 1,2M 20 oct.  12:53 /bin/sh
+    /bin/settrans: fsys_goaway: (ipc/mig) server died
+
+(the warning is expected, it just tells that the exected command has finished)
+
+## remapping python3
+
+Perhaps you've want to use a python package that requires a python
+feature that your distro does not yet support.  Compiling this custom
+python3 can be a little annoying, because `./configure` makes you
+specify where all the various libraries are.  It's much easier to just
+remap.
+
+	$ remap /usr/bin/python3 $HOME/bin/python3-custom -- ./configure
+	$ remap /usr/bin/python3 $HOME/bin/python3-custom -- cool-package
+
+## Run a command through a custom pflocal
+<!-- https://lists.debian.org/debian-hurd/2016/08/msg00016.html -->
+
+	$ cd /tmp
+	$ settrans -ac 1 ~/HURD-SRC/pflocal/pflocal
+	$ remap /servers/socket/1 /tmp/1 -- /bin/bash -c 'echo huhu world | wc'
+	  1       2      11
+
+## Remapping `/servers/socket/2` and `26` for vpn/firewall
+
+TODO add an example here.
+
+## Use remap to debug lwip
+
+Suppose, you want to debug [[lwip|hurd/lwip]].  You could set `lwip`
+on `/servers/socket/2`, but it's hard to use an OS, if your network is
+buggy.  It would be nice to use the stable `pfinet` and test `lwip` as
+needed.  You can use the `eth-multiplexer` combined with `remap` to
+have such a configuration.  First, use the `eth-multiplexer` to change
+`pfinet`'s interface from `/dev/eth0` to `/dev/eth0m/0`
+
+    # settrans -c /dev/eth0m /hurd/eth-multiplexer --interface=/dev/eth0
+
+Now we configure own main Hurd system to use a virtual network
+interface (e.g. `/dev/eth0m/0`) instead.  On Debian/Hurd, this can be
+accomplished using
+
+    # ifdown /dev/eth0
+    # sed -i -e s_/dev/eth0_/dev/eth0m/0_ /etc/network/interfaces
+    # ifup /dev/eth0m/0
+
+Then you can do set up `lwip` on `~/lwip/servers/socket{2,26}`
+<!-- $ settrans -ac my2 path/to/my-ipstack -what -ever; -->
+
+	$ settrans -c ~/lwip/servers/socket/2 /hurd/lwip -i \
+	  /dev/eth0m/1 -4 ~/lwip/servers/socket/2 \
+	  -6 ~/lwip/servers/socket/26
+	$ settrans -c ~/lwip/servers/socket/26 /hurd/lwip -i \
+      /dev/eth0m/1 -4 ~/lwip/servers/socket/2 \
+	  -6 ~/lwip/servers/socket/26
+	$ remap /servers/socket/2 ~/lwip/servers/socket/2 -- \
+	  ping -c 3 gnu.org
+
+If you are running the Hurd in qemu, then you can skip setting up the
+`eth-multiplexer` and just configure another virtual ethernet
+interface: `eth1`.  Then using `lwip` is as simple as:
+
+	$ settrans -c ~/lwip/servers/socket/2 -i /dev/eth1 \
+	  -4 ~/lwip/servers/socket/2 -6 ~/lwip/servers/socket/26
+	$ settrans -c ~/lwip/servers/socket/26 -i /dev/eth1 \
+	  -4 ~/lwip/servers/socket/2 -6 ~/lwip/servers/socket/26
+	$ remap /servers/socket/2 $HOME/lwip/servers/socket/2 \
+	  -- ping -c 3 gnu.org
+
+Alternatively, you could also launch a subhurd whose's networking uses
+lwip.  The [[subhurd]] page should give you an idea of how to do this.
+
+## remap example bugs
+
+Remap is written in a rather simplistic way.  It should layer over the
+filesystem in a better.  These examples demonstrate some problems.
+
+	$ remap /etc/motd /dev/null -- sh -c 'wc /etc/motd; cd /etc; wc	motd;'
+	  0       0       0 /etc/motd
+	  7  40 284 motd
+
+    $ settrans $HOME/foo /hurd/remap /bin/sh /bin/bash
+    $ ls $HOME/foo/
+    ls: cannot open directory 'foo/': Permission denied

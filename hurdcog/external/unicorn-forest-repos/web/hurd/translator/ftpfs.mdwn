@@ -1,0 +1,40 @@
+[[!meta copyright="Copyright © 2024 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag stable_URL]]
+
+[[!toc]]
+
+The File Transfer Protocol is a old, simple, and insecure method of
+sharing files between computers.  The Hurd supports it via `ftpfs`.
+
+	$ settrans gnu.org /hurd/ftpfs ftp://ftp.gnu.org
+	$ cat ftp\:/ftp.gnu.org/README | grep GNU | head -n 2
+	This is ftp.gnu.org, the FTP server of the the GNU project.
+    gnu/ Contains GNU programs and documents that we develop for the GNU
+
+So it's actually pretty cool to use standard command line utilities to
+search through a remote file.  But it is slightly a hassle to set up
+`ftpfs` by hand for each server like this.
+With the Hurd's [[hostmux]] you can actually skip that first
+settrans command, and type in any FTP server and automatically connect
+to it.  On my box, this just works:
+
+	$ ls ~/ftp://ftp.gnu.org/
+
+`~/ftp:` is already set up to re-route any path lookup to the correct
+FTP server.  You can set up `~/ftp:` on your Hurd OS via the
+[[hostmux]] translator:
+
+	$ settrans -c $HOME/ftp: /hurd/hostmux /hurd/ftpfs /
+
+The [[translator primer|hurd/documentation/translator_primer]] shows
+you how you can use ftpfs to mount a remote iso file and examine its
+contents.

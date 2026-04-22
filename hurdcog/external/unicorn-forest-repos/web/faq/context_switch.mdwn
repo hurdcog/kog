@@ -1,0 +1,84 @@
+[[!meta copyright="Copyright © 2013, 2016, 2017, 2018 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag faq/support]]
+
+[[!meta title="I heard that context-switch on Mach is really slow?"]]
+
+It is not, there is no real reason why it would be particularly slow, it is just
+about switching virtual addresses and registers, which all OS have to perform
+anyway.
+
+A quick-and-dirty benchmark.
+
+You can build this file with:
+
+        gcc -pthread -rt -o context-switch context-switch.c
+
+In `context-switch.c` write:
+
+        #include <fcntl.h>
+        #include <semaphore.h>
+        #include <stdio.h>
+        #include <time.h>
+        #include <unistd.h>
+        #include <sys/mman.h>
+        
+        sem_t *sem1, *sem2;
+        
+        void worker1(void) {
+        	time_t last;
+        	int n = 0;
+        	last = time(NULL);
+        	while(1) {
+        		time_t new = time(NULL);
+        		if (new != last) {
+        			printf("%d\n", n);
+        			n = 0;
+        			last = new;
+        		}
+        		n++;
+        		sem_wait(sem1);
+        		sem_post(sem2);
+        	}
+        }
+        
+        void worker2(void) {
+        	while(1) {
+        		sem_post(sem1);
+        		sem_wait(sem2);
+        	}
+        }
+        
+        int fd;
+        void get_sems(void) {
+        	void *ptr = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        	sem1 = ptr;
+        	sem2 = sem1+1;
+        }
+        
+        int main(void) {
+        	fd = open("/tmp/foo", O_CREAT|O_TRUNC|O_RDWR, 0666);
+        	ftruncate(fd, 4096);
+        
+        	get_sems();
+        	sem_init(sem1, 1, 0);
+        	sem_init(sem2, 1, 0);
+        
+        	if (fork())
+        		worker1();
+        	else {
+        		get_sems();
+        		worker2();
+        	}
+        }
+
+run on my current Linux system (a Core i5-10210U), gets about 300k switches per second on Linux. Running it on Hurd-in-kvm (which would supposedly be slower) gets about 400k switches per second.

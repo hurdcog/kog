@@ -1,0 +1,91 @@
+[[!meta copyright="Copyright © 2008, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+`xmlfs` is a translator that provides access to XML documents through the
+filesystem.
+
+# How to Use xmlfs
+
+	xmlfs - a translator for accessing XML documents
+
+This is  only an alpha version.   It works in read  only.  It supports
+text  nodes and  attributes. It  doesn't do  anything fancy  like size
+computing, though. Here is an example of how to use it:
+
+    $ wget http://cvs.savannah.nongnu.org/viewvc/*checkout*/hurdextras/xmlfs/example.xml?content-type=text%2Fplain;
+    $ settrans -ca xml /hurd/xmlfs example.xml  #the website says to use ./xmlfs
+    $ cd xml; ls
+      library0 library1
+    $ cd library0; ls -A
+      .text1  .text2  @name  book0  book1  book2  sub-library0  sub-library1
+    $ cat .text2
+
+CDATA, again !
+
+    $ cat book0
+      <book>
+      <author>Mark Twain</author>
+      <title>La case de l'oncle Tom</title>
+      <isbn>4242</isbn>
+      </book>
+    $ cat book0/author/.text
+      Mark Twain
+
+As  you can  see,  text nodes  are  named .textN,  with  N an  integer
+starting from 0. Sorting is supposed to be stable, so you get the same
+N every time you access the same  file. If there is only one text node
+at this level, N is ommitted. Attributes are prefixed with @.
+
+An  example file,  example.xml, is  provided. Of  course, it  does not
+contain anything  useful. xmlfs  has been tested  on several-megabytes
+XML documents, though.
+
+Comments are welcome.
+
+	-- Manuel Menal <mmenal@hurdfr.org>
+
+# TODO
+- Handle memory usage in a clever way:
+     - do not dump the nodes at each read, try to guess if read()
+       is called in a sequence of read() operations (e.g. cat reads
+       8192 bytes by 8192 bytes) and if it is, cache the node
+       contents. That'd need a very small ftpfs-like GC.
+     - perhaps we shouldn't store the node informations from
+       first access to end and have a pool of them. That might come
+       with next entries though.
+- Handle changes of the backing store (XML document) while running.
+    (Idea: we should probably attach to the XML node and handle
+     read()/write() operations ourselves, with libxml primitives.)
+- Write support. Making things like echo >, sed and so on work is
+   quite obvious. Editing is not -that- simple, 'cause we could
+   want to save a not XML well-formed, and libxml will just return
+   an error. Perhaps we should use something like 'sync'.
+- Handle error cases in a more clever way ; there are many error
+   conditions that will just cause xmlfs to crash or do strange
+   things. We should review them.
+- Make sorting *really* stable.
+
+# TODO WISHLIST
+--------
+
+- Kilobug suggested a --xslt option that would make xmlfs provide
+   a tree matching the XSLT-modified document.
+   (Problem: In this case we cannot attach easily to the .xml 'cause
+    the user would loose access to theirs original document. Perhaps
+    we should allow an optional "file.xml" argument and check if it
+    is not the same as the file we are attaching to when --xslt is
+    specified.)
+- DTD support ; perhaps XML schema/RelaxNG when I'm sure I understand
+   them ;-)
+
+
+# Source
+
+<http://www.nongnu.org/hurdextras/#xmlfs>

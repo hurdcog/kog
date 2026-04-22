@@ -1,0 +1,61 @@
+name: OCC AGI-OS Integration Bot
+description: Automates CI/CD, integration testing, and dependency management for the AGI-OS repository.
+url: https://github.com/apps/occ-agi-os-integration-bot
+
+# Set to true to request the bot to be public
+public: false
+
+# Webhook settings
+webhook_active: true
+webhook_url: https://your-app-domain.com/webhooks/github
+
+# Permissions
+# These are the permissions the GitHub App will request
+default_permissions:
+  # Read access to repository metadata
+  metadata: read
+  
+  # Read and write access to repository contents
+  # Required for: updating workflows, creating files, updating README
+  contents: write
+  
+  # Read and write access to issues
+  # Required for: creating issues, adding labels, commenting
+  issues: write
+  
+  # Read and write access to pull requests
+  # Required for: creating PRs, adding comments, requesting reviews
+  pull_requests: write
+  
+  # Read and write access to workflows
+  # Required for: triggering workflows, managing workflow files
+  workflows: write
+  
+  # Read and write access to checks
+  # Required for: creating check runs, updating check status
+  checks: write
+
+# Events
+# These are the events the GitHub App will subscribe to
+default_events:
+  - push
+  - pull_request
+  - workflow_run
+  - issues
+  - check_run
+  - release
+  - create
+  - delete
+
+# Redirect URL after installation
+redirect_url: https://your-app-domain.com/setup
+
+# Setup URL for first-time installation
+setup_url: https://your-app-domain.com/setup
+
+# Callback URLs for OAuth flow
+callback_urls:
+  - https://your-app-domain.com/oauth/callback
+
+# Post-installation setup
+setup_on_update: true

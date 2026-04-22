@@ -1,0 +1,40 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Public Hurd Boxen"]]
+
+[[!tag stable_URL]]
+
+The GNU/Hurd boxes are only available for people who have
+already shown some level of involvement in the project. If you simply want to
+try the Hurd, the easiest way is running it in a virtual machine.
+
+An alternative to online shell access may be using a [[QEMU
+image|hurd/running/qemu]].
+
+[[!table class="table_style_1" data="""
+"Hoster","Name","Distribution","Machine Specs","Comments"
+[//]: # ("[[bddebian]]","blubber","Debian GNU/Hurd","Celeron 2.2 GHz; 222 MiB","Xen domU on [[zenhost]]; for experimental stuff; deactivated until needed again (apart from [[tschwinge]], only [[scolobb]] has an account, but is not active at the moment)")
+[//]: # ("[[bddebian]]","clubber","Debian GNU/Hurd","PIII 1 GHz; 384 MiB")
+[//]: # ("[[bddebian]]","flubber","Debian GNU/Hurd","Celeron 2.2 GHz; 666 MiB","Xen domU on [[zenhost]]")
+[//]: # ("[[bddebian]]","snubber","Debian GNU/Hurd","Celeron 2.2 GHz; 243 MiB","Xen domU on [[zenhost]]")
+[//]: # ("[[bddebian]]","gnubber","Debian GNU/Hurd","PII 733 MHz; 384 MiB")
+[//]: # ("[[bddebian]]","goober","Debian GNU/Hurd","?")
+[//]: # ("[[bddebian]]","grubber","Debian GNU/Hurd","Celeron 2.2 GHz; 554 MiB","Xen domU on [[zenhost]]; for experimental stuff")
+[//]: # ("[[bddebian]]","[[zenhost]]","Debian GNU/Linux","Celeron 2.2 GHz","Xen dom0 for several hosts")
+"[[sceen]]","darnassus","Debian GNU/Hurd","Xeon E5-1620 3.6 GHz, 1.8 GiB","KVM guest on dalaran; public Hurd box; [web server](http://darnassus.sceen.net/)"
+"[[sceen]]","ironforge","Debian GNU/Hurd","Xeon E5-1620 3.6 GHz, 1.8 GiB","KVM guest on dalaran; Debian buildd only, no public access"
+"[[sceen]]","exodar","Debian GNU/Hurd","Xeon E5-1620 3.6 GHz, 1.8 GiB","KVM guest on dalaran; Debian porterbox, all Debian Developers have access"
+"[[sceen]]","dalaran","Debian GNU/Linux","Xeon E5-1620 3.6 GHz, 64 GiB ECC","KVM host"
+[//]: # ("Debian","strauss","Debian GNU/Hurd","Sempron 2800+","all Debian Developers have access")
+"[libav](http://www.libav.org/)","[x86_32-hurd-gcc-4.7](http://fate.libav.org/x86_32-hurd-gcc-4.7)","Debian GNU/Hurd","","libav instance of the [FATE Automated Test Environment](http://www.libav.org/fate.html)"
+"""]]
+
+If you are a Debian Developer, you can log into the exodar.debian.net machine
+with your DD account, your public ssh keys are already there. Debian maintainers
+can also request an account.

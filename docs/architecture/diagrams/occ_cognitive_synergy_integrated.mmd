@@ -1,0 +1,156 @@
+graph TB
+    subgraph SYSTEM["OpenCog Collection - Integrated Cognitive Synergy Architecture"]
+        direction TB
+        
+        subgraph AAR_LAYER["🔷 AAR Framework Layer"]
+            direction LR
+            
+            subgraph AGENTS["🎯 AGENTS<br/>(Urge-to-Act)"]
+                direction TB
+                ATOMSPACE["AtomSpace<br/>Knowledge Base"]
+                HYPERON["Hyperon<br/>Reasoning Engine"]
+                COGSERVER["CogServer<br/>Communication"]
+                LEARN["Learn<br/>Symbolic Learning"]
+                MATRIX["Matrix<br/>Graph Processing"]
+                AGENTS_MORE["Sensory, Agents,<br/>Motor Systems..."]
+            end
+            
+            subgraph ARENA["🌐 ARENA<br/>(Need-to-Be)"]
+                direction TB
+                HYPERGRAPH["Hypergraph<br/>Memory Space"]
+                EVENT_BUS["Event Bus<br/>(Pub-Sub)"]
+                INTERACTION_GRAPH["Interaction<br/>Graph"]
+                RESOURCE_POOL["Resource<br/>Pool"]
+            end
+            
+            subgraph RELATION["🔄 RELATION<br/>(Self-Awareness)"]
+                direction TB
+                ORCHESTRATOR["Synergy<br/>Orchestrator"]
+                MONITOR["Cognitive<br/>Monitor"]
+                BRIDGE["Hypergraph<br/>Bridge"]
+                SYNERGY_CALC["Synergy Score<br/>Calculator"]
+            end
+        end
+        
+        subgraph DTE_LAYER["🔶 Deep Tree Echo Layer"]
+            direction TB
+            
+            subgraph COGNITIVE_MEM["🧠 Cognitive Membrane"]
+                direction LR
+                MEMORY_MEM["💭 Memory<br/>Membrane"]
+                REASONING_MEM["⚡ Reasoning<br/>Membrane"]
+                GRAMMAR_MEM["🎭 Grammar<br/>Membrane"]
+            end
+            
+            subgraph CORE_ENGINE["🧠 Core Engine"]
+                direction LR
+                HG_SPACE["🌐 Hypergraph<br/>Memory Space"]
+                ECHO_ENGINE["⚡ Echo<br/>Propagation"]
+                CG_KERNEL["🎭 Cognitive<br/>Grammar Kernel"]
+            end
+            
+            subgraph EXTENSION_MEM["🔌 Extension Membrane"]
+                direction LR
+                BROWSER_MEM["🌍 Browser"]
+                ML_MEM["📊 ML"]
+                INTROSPECT_MEM["🪞 Introspection"]
+            end
+            
+            subgraph INFRA_LAYER["⚙️ Infrastructure"]
+                direction LR
+                PSYSTEM["🔒 P-System<br/>Manager"]
+                COMM["📡 Communication"]
+                SECURITY["🛡️ Security"]
+                PERF["📊 Performance"]
+            end
+        end
+        
+        subgraph SYNERGY_METRICS["📊 Synergy Metrics & Feedback"]
+            direction LR
+            
+            INTERACTION_SCORE["Interaction Density<br/>(40% weight)<br/>actual / possible"]
+            LOAD_BALANCE["Load Balance<br/>(30% weight)<br/>1 - variance"]
+            ACTIVITY_SCORE["Activity Score<br/>(30% weight)<br/>active / total"]
+            
+            SYNERGY_SCORE_FINAL["🎯 Synergy Score<br/>(0.0 - 1.0)"]
+            
+            INTERACTION_SCORE --> SYNERGY_SCORE_FINAL
+            LOAD_BALANCE --> SYNERGY_SCORE_FINAL
+            ACTIVITY_SCORE --> SYNERGY_SCORE_FINAL
+        end
+    end
+    
+    %% AAR Internal Dynamics
+    AGENTS -->|"Act Upon"| ARENA
+    ARENA -->|"Provides Context"| AGENTS
+    AGENTS -->|"Self-Observation"| RELATION
+    ARENA -->|"State Information"| RELATION
+    RELATION -->|"Coordinates"| AGENTS
+    RELATION -->|"Optimizes"| ARENA
+    
+    %% AAR to DTE Mapping
+    AGENTS -.->|"Implements"| COGNITIVE_MEM
+    ARENA -.->|"Realizes"| CORE_ENGINE
+    RELATION -.->|"Enables"| EXTENSION_MEM
+    
+    %% Component to Infrastructure
+    ATOMSPACE --> HYPERGRAPH
+    HYPERON --> HYPERGRAPH
+    COGSERVER --> EVENT_BUS
+    LEARN --> INTERACTION_GRAPH
+    MATRIX --> INTERACTION_GRAPH
+    
+    ORCHESTRATOR --> EVENT_BUS
+    MONITOR --> RESOURCE_POOL
+    BRIDGE --> HYPERGRAPH
+    
+    %% DTE Layer Connections
+    COGNITIVE_MEM --> CORE_ENGINE
+    CORE_ENGINE --> EXTENSION_MEM
+    EXTENSION_MEM --> INFRA_LAYER
+    INFRA_LAYER --> CORE_ENGINE
+    
+    MEMORY_MEM --> HG_SPACE
+    REASONING_MEM --> ECHO_ENGINE
+    GRAMMAR_MEM --> CG_KERNEL
+    
+    HG_SPACE --> ECHO_ENGINE
+    ECHO_ENGINE --> CG_KERNEL
+    CG_KERNEL --> HG_SPACE
+    
+    INTROSPECT_MEM --> MONITOR
+    ML_MEM --> LEARN
+    BROWSER_MEM --> COGSERVER
+    
+    %% Synergy Metrics Feedback
+    INTERACTION_GRAPH --> INTERACTION_SCORE
+    RESOURCE_POOL --> LOAD_BALANCE
+    AGENTS --> ACTIVITY_SCORE
+    
+    SYNERGY_SCORE_FINAL -->|"Feedback Loop"| ORCHESTRATOR
+    SYNERGY_SCORE_FINAL -->|"Optimization"| RELATION
+    
+    %% Cross-Layer Integration
+    BRIDGE -->|"Cross-Language<br/>Data Flow"| HG_SPACE
+    ORCHESTRATOR -->|"Coordination"| COGNITIVE_MEM
+    MONITOR -->|"Introspection"| INTROSPECT_MEM
+    
+    %% Emergent Properties
+    SYNERGY_SCORE_FINAL -.->|"Enables"| EMERGENCE["✨ Emergent<br/>Intelligence"]
+    RELATION -.->|"Produces"| EMERGENCE
+    CORE_ENGINE -.->|"Supports"| EMERGENCE
+    
+    %% Styling
+    classDef agentStyle fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#b71c1c
+    classDef arenaStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:3px,color:#0d47a1
+    classDef relationStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:3px,color:#4a148c
+    classDef dteStyle fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#e65100
+    classDef metricsStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px,color:#1b5e20
+    classDef emergenceStyle fill:#fff9c4,stroke:#f9a825,stroke-width:4px,color:#f57f00
+    
+    class AGENTS,AGENTS_MORE agentStyle
+    class ARENA,HYPERGRAPH,EVENT_BUS,INTERACTION_GRAPH,RESOURCE_POOL arenaStyle
+    class RELATION,ORCHESTRATOR,MONITOR,BRIDGE,SYNERGY_CALC relationStyle
+    class DTE_LAYER,COGNITIVE_MEM,CORE_ENGINE,EXTENSION_MEM,INFRA_LAYER dteStyle
+    class SYNERGY_METRICS,INTERACTION_SCORE,LOAD_BALANCE,ACTIVITY_SCORE,SYNERGY_SCORE_FINAL metricsStyle
+    class EMERGENCE emergenceStyle

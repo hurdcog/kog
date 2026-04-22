@@ -1,0 +1,261 @@
+motors:
+  - name: Neck 0
+    topic: rotate
+    labelleft: "Yaw"
+    labelright: ""
+    default: 0
+    min: -1.7
+    max: 1.7
+
+  - name: Neck 1
+    topic: hinge_right
+    labelleft: "Right Hinge"
+    labelright: ""
+    default: 0
+    min: -1
+    max: 1
+
+  - name: Neck 2
+    topic: hinge_left
+    labelleft: "Left Base Hinge"
+    labelright: ""
+    default: 0
+    min: -1
+    max: 1
+
+  - name: Jaw_Open
+    topic: jaw
+    labelleft: "Jaw Open"
+    labelright: ""
+    default: 0
+    min: -0.2
+    max: 0.65
+
+
+  # Pololu motors
+  - name: Cheek-Squint_L
+    topic: face
+    labelleft: Cheek-Squint_L
+    labelright: ""
+    default: -0.784
+    min: -0.786
+    max: 0.296
+    motor_id: 0
+
+  - name: Cheek-Squint_R
+    topic: face
+    labelleft: Cheek-Squint_R
+    labelright: ""
+    default: -0.783
+    min: -0.785
+    max: 0.385
+    motor_id: 1
+
+  - name: Eyelid-Lower_R
+    topic: face
+    labelleft: Eyelid-Lower_R
+    labelright: ""
+    default: -0.069
+    min: -0.785
+    max: 0.384
+    motor_id: 2
+
+  - name: Eyelid-Lower_L
+    topic: face
+    labelleft: Eyelid-Lower_L
+    labelright: ""
+    default: -0.153
+    min: -0.788
+    max: 0.783
+    motor_id: 3
+
+  - name: Eyelid-Upper_R
+    topic: face
+    labelleft: Eyelid-Upper_R
+    labelright: ""
+    default: 0.109
+    min: -0.785
+    max: 0.785
+    motor_id: 4
+
+  - name: Eyelid-Upper_L
+    topic: face
+    labelleft: Eyelid-Upper_L
+    labelright: ""
+    default: -0.298
+    min: -0.785
+    max: 0.785
+    motor_id: 5
+
+  - name: Frown_R
+    topic: face
+    labelleft: Frown_R
+    labelright: ""
+    default: 0.778
+    min: -0.785
+    max: 0.785
+    motor_id: 6
+
+  - name: Brow-Outer_L
+    topic: face
+    labelleft: Brow-Outer_L
+    labelright: ""
+    default: -0.145
+    min: -0.786
+    max: 0.785
+    motor_id: 7
+
+  - name: Smile_R
+    topic: face
+    labelleft: Smile_R
+    labelright: "" 
+    default: -0.785
+    min: -0.785
+    max: 0.785
+    motor_id: 8
+
+  - name: Smile_L
+    topic: face
+    labelleft: Smile_L
+    labelright: ""
+    default: 0.785
+    min: -0.785
+    max: 0.785
+    motor_id: 9
+
+  - name: Lip-Lower_L
+    topic: face
+    labelleft: Lip-Lower_L
+    labelright: ""
+    default: -0.408
+    min: -0.785
+    max: 0.785
+    motor_id: 10
+
+  - name: Lip-Upper_C
+    topic: face
+    labelleft: Lip-Upper_C
+    labelright: ""
+    default: -0.059
+    min: -0.787
+    max: 0.784
+    motor_id: 11
+
+  - name: Sneer_R
+    topic: face
+    labelleft: Sneer_R
+    labelright: ""
+    default: 0.785
+    min: -0.785
+    max: 0.785
+    motor_id: 12
+
+  - name: Lip-Upper_L
+    topic: face
+    labelleft: Lip-Upper_L
+    labelright: ""
+    default: 0.159
+    min: -0.785
+    max: 0.785
+    motor_id: 13
+
+  - name: Lip-Lower_R
+    topic: face
+    labelleft: Lip-Lower_R
+    labelright: "" 
+    default: 0.395
+    min: -0.786
+    max: 0.785
+    motor_id: 14
+
+  - name: Lip-Lower_C
+    topic: face
+    labelleft: Lip-Lower_C
+    labelright: ""
+    default: 0.344
+    min: -0.787
+    max: 0.784
+    motor_id: 15
+
+  - name: Brow-Inner_L
+    topic: face
+    labelleft: Brow-Inner_L
+    labelright: ""
+    default: 0.06
+    min: -0.786
+    max: 0.785
+    motor_id: 16
+
+  - name: Frown_L
+    topic: face
+    labelleft: Frown_L
+    labelright: ""
+    default: -0.773
+    min: -0.785
+    max: 0.785
+    motor_id: 17
+
+  - name: Lip-Upper_R
+    topic: face
+    labelleft: Lip-Upper_R
+    labelright: ""
+    default: -0.179
+    min: -0.785
+    max: 0.785
+    motor_id: 19
+
+  - name: Brow_Outer_R
+    topic: face
+    labelleft: Brow_Outer_R
+    labelright: ""
+    default: 0.408
+    min: -0.786
+    max: 0.785
+    motor_id: 20
+
+  - name: Brow-Inner_R
+    topic: eyes
+    labelleft: Brow-Inner_R
+    labelright: ""
+    default: 0.785
+    min: -0.785
+    max: 0.785
+    motor_id: 4
+
+  - name: Eye_R
+    topic: eyes
+    labelleft: Eye_R
+    labelright: ""
+    default: 0
+    min: -0.436
+    max: 0.436
+    motor_id: 0
+
+  - name: Eye_L
+    topic: eyes
+    labelleft: Eye_L
+    labelright: ""
+    default: 0.015
+    min: -0.437
+    max: 0.435
+    motor_id: 1
+
+  - name: Eyes_Pitch
+    topic: eyes
+    labelleft: Eyes_Pitch
+    labelright: ""
+    default: 0
+    min: -0.349
+    max: 0.349
+    motor_id: 2
+
+  - name: Sneer_L
+    topic: eyes
+    labelleft: Sneer_L
+    labelright: ""
+    default: 0.772
+    min: -0.787
+    max: 0.784
+    motor_id: 5
+
+

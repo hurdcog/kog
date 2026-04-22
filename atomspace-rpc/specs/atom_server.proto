@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+message PatternMsg {
+  string atomspace = 1;
+  string query = 2;
+}
+
+message NodeMsg {
+  string type = 1;
+  string name = 2;
+}
+
+message LinkMsg {
+  string type = 1;
+  repeated AtomMsg outgoing = 2;
+}
+
+message AtomMsg {
+  oneof atom {
+    LinkMsg link = 1;
+    NodeMsg node = 2;
+  }
+}
+
+message AtomRequest {
+  string atomspace = 1;
+  AtomMsg atom = 2;
+}
+
+service AtomServer {
+
+  //Returns pattern matcher execution result
+  rpc ExecutePattern(PatternMsg) returns (stream AtomMsg);
+
+  //Check if a node exists on a remote atomspace. Return the done if it does
+  //Return NOT_FOUND status if it is not found
+  rpc CheckNode(AtomRequest) returns (NodeMsg);
+
+  //Find nodes with similar names to a given node. Currently it uses a simple regex and limits the result to 10
+  rpc FindSimilar(AtomRequest) returns (stream NodeMsg);
+
+  //Given an atom name, return the atom type if it exists
+  rpc FindType(PatternMsg) returns (NodeMsg);
+}

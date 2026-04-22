@@ -1,0 +1,4034 @@
+;
+; relex-semantic.algs
+;
+; Rules to extract semantic relationships, based on link-grammar
+; linkages. The POS, gender, tense, noun-number tagging stage should be 
+; performed prior to running these rules.
+;
+; Copyright (c) 2005 Novamente LLC
+; Copyright (c) 2009,2014 Linas Vepstas
+; Copyright (c) 2014 Rodas Solomon
+; Copyright (c) 2014 Kasun Perera
+; Copyright (c) 2014, 2015 Aaron Nitzkin
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; NB: this issue list is quite outdated; I think I've resolved some of these
+; and identified many more -- will update after current revision-fest.
+; (AN Jan 2015)
+;
+;  Known issues:
+;  1.   Passive is not handled correctly.  "This is the cup that John gave me."
+;       We need a non-template alg to handle passive ditransitive verbs.
+;       Also "This is the cup that John was given."
+;  2. Special O*i construction: It is Jane who wants to do it.
+;  3. VERB_INF / PAST PART alg?
+;  4. R exception for "even" and "only"
+;  5. NP subjects with predeterminers are not handled correctly.
+;     Specifically, "All the boys are here" needs to identify "boys"
+;     as subject, not "all". Instead, link-grammar treats "all" as the 
+;     subject, and "boys" as the prepositional object. Which is .. curious.
+;     Anyway, this is not how the stanford parser does it ... 
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; Locate conjunctions
+;
+; First pull the left-hand side over.
+#TemplateActionAlg
+CONJ_AND_LEFT_SIDE
+<LAB> = \AJl\.*|\MJl\.*|\QJl\.*|\RJl\.*|\SJl\.*|\VJl\.*
+=
+<F_R conj> += <F_L>
+;
+; Next, deal with multiple conjunctions.
+; Example: "I visited London, Rome and Paris."
+; "I need to find a Hong Kong engineer, who knows Java and Python and
+;    worked at Oracle and went to Stanford and is a VP."
+;
+#TemplateActionAlg
+CONJ_AND_LEFT_MULTI
+<LAB> = \AJl\.*|\MJl\.*|\QJl\.*|\RJl\.*|\SJl\.*|\VJl\.*
+<F_L str> = and|or|but|,
+=
+<F_R conj> += <F_L linkR1 F_R>
+
+#TemplateActionAlg
+CONJ_AND_RIGHT_MULTI
+<LAB> = \AJr\.*|\MJr\.*|\QJr\.*|\RJr\.*|\SJr\.*|\VJr\.*
+<F_R str> = and|or|but|,
+=
+<F_L conj> += <F_R linkL1 F_L>
+;
+; Finally, pick upt the remaining right side of the conjunction.
+#TemplateActionAlg
+CONJ_AND_SINGLE_RIGHT_SIDE
+<LAB> = \AJr\.*|\MJr\.*|\QJr\.*|\RJr\.*|\SJr\.*|\VJr\.*
+=
+<F_L conj> += <F_R>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; Locate predeterminers. These will become subjects, objects, etc.
+; in later rules.
+;
+#TemplateActionAlg
+FIND_PREDET
+<LAB> = \AL\.*
+<F_L linkR1 LAB> = \J\.*
+=
+<F_L quantity> = <F_L linkR1 F_R ref>
+;
+; The below is is needed to get propositions correct.
+; We have to stick the predet ref into the reference so it can be found.
+; This is kind-of wrong and ugly, but I see no other way...
+#TemplateActionAlg
+FIND_PREDET_FOR_PREPS
+<LAB> = \AL\.*
+<F_L linkR0 LAB> = \J\.*
+=
+<F_L ref xpredet> = <F_L linkR0 F_R ref>
+
+;/////////////////////////////////////////////////////////
+;
+;IMPLICIT COINSTITUENTS
+; a common problem for relex is that of an un-voiced sentence constituent,
+; such as the subject of an imperative or the objects of the psessives
+; in "Yours is similar to mine." I've already hacked a lot of these throughout
+; the alg before I realized what a big issue it was, so now I'm creating this
+; section to collect algs that deal with the problem in one way or another.
+; In general, it should be up to PLN anaphora resolution to fill in many of
+; these, but for one reason or another, it is often also necessary for relex
+; to deal with them in some way they gum things up. Specific notes below. . .
+; (AN Feb 2015)
+;
+;/////////////////////////////////////////////////////////
+
+; 'Jack's hair color is similar to Ben's.'
+; Here, I want to make Ben possess a qvar so that relex can encode that
+; Jack's color is similar to the qVar, not similar to Ben, or something
+; else nonsensical. Using the qVar seems more principled because in the 
+; the most general context, the object of Ben's could be something other
+; than his hair color.   "Some people's hair is similar to the color of
+; their eyes, but Jack's hair color is similar to Ben's (eyes)."
+
+; As usual, this alg doesn't seem to accomplish all it wants to -- I knew 
+; that second imlication wouldn't fly --, but I know it's assigning the
+; head-word because it prevents the head-word from being assigned to 'be'
+; as it was before. 
+
+#TemplateActionAlg
+IMPLICIT_POSESSEE
+<LAB> = \YS
+<F_R linkR0 LAB> = %
+=
+<F_R ref> = _$qVar
+<F_R ref links _poss> += <F_L ref>
+
+;/////////////////////////////////////////////////////////////////////////////
+;
+; Identifying subjects
+;
+;/////////////////////////////////////////////////////////////////////////////
+; 
+; Standard subject, 
+; No subject for SF (filler subject) aka "expletive"
+; Also exclude some relative constructions
+; no conjunctions
+
+#TemplateActionAlg
+STANDARD_SUBJ
+<LAB> = \S\.*|\SX\.*|\MX\.*
+<LAB> != \MX.[rj]\.*
+<LAB> != MX|MXs|MXp
+=
+<IS_SUBJ_LINK> = T
+;
+; If we found the subject link, then create the subj dependency.
+#TemplateActionAlg
+MAKE_STANDARD_SUBJ
+<IS_SUBJ_LINK> = T
+<F_L conj> = %
+=
+<F_R subj> += <F_L ref>
+;
+; predeterminer overrides standard subjects
+; "All the boys knew it." should have _subj(know, boys)
+; If the predeterminer is present, then the subject is erased and
+; replaced by the predeterminer.
+;
+#TemplateActionAlg
+SUBJ_PREDET
+<F_L quantity> != %
+<F_R subj> != %
+=
+<F_R subj> = %
+<F_R subj> = <F_L quantity>
+
+;
+; Same as above, but the subject link pointed to a conjunction.
+; Create a _subj for each conjoined subject.
+; Example: "Apples and bananas are delicious."
+
+#TemplateActionAlg
+CONJUNCTION_MEMBER0
+<LAB> = \SJl\.*|\AJl\.*|\RJl\.*
+=
+<F_R conj-member0> += <F_L ref>
+
+#TemplateActionAlg
+CONJUNCTION_MEMBER1
+<LAB> = \SJrs|\AJr\.*|\RJr\.*
+=
+<F_L conj-member1> += <F_R ref>
+
+#TemplateActionAlg
+CONJ_STANDARD_SUBJ
+<IS_SUBJ_LINK> = T
+<F_L conj> != %
+=
+<F_R CONJ_SUBJ> = T
+<F_R subj> += <F_L conj-member0>
+<F_R subj> += <F_L conj-member1>
+
+;
+; Same as above, but the subject link pointed to a conjunction.
+; Create a _subj for each conjoined subject.
+; Example: "Apples, bananas and oranges are delicious."
+#TemplateActionAlg
+COMPLEX_CONJ_STANDARD_SUBJ
+<IS_SUBJ_LINK> = T
+<F_L conj> != %
+<F_L linkL1 LAB> = \SJl\.*
+<F_L linkL1 F_L conj> != %
+=
+<F_R subj> += <F_L linkL1 F_L conj-member0>
+;
+; Inverted version of standard subject.
+#TemplateActionAlg
+INVERTED_SUBJ
+<LAB> = \SI\.*|\SXI\.*
+=
+<F_L subj> += <F_R ref>
+;
+;  If a node has both B and RS, then get the subject from the B-link.
+;  "This is the dog and cat that chased me."
+#TemplateActionAlg
+REL_SUBJ
+<LAB> = \B\.*|\BW\.*
+<F_R RS-FLAG> = T
+=
+<F_R REL-SUBJ-FLAG> = T
+<F_R subj> += <F_L ref>
+
+; For subj linking to conjoined verbs, 
+; Move subject off of the "and" and onto the actual verb
+#TemplateActionAlg
+CONJ_MOVE_VERB_L
+<LAB> = \VJl\.*
+=
+<F_L subj> = <F_R subj>
+
+#TemplateActionAlg
+CONJ_MOVE_VERB_R
+<LAB> = \VJr\.*
+=
+<F_R subj> = <F_L subj>
+<F_L subj> = %
+
+; ------------------------------------------------------------------
+; SF == filler subject aka expletive
+;
+#TemplateActionAlg
+EXPLETIVE_SUBJ
+<LAB> = \SF\.*
+=
+<F_R expl> += <F_L ref>
+;
+#TemplateActionAlg
+EXPLETIVE_SUBJ2
+<LAB> = \SFI\.*
+=
+<F_L expl> += <F_R ref>
+;
+;/////////////////////////////////////////////////////////////////////////////
+; Identifying objects
+;
+#TemplateActionAlg
+OBJ-LINK-TAG-INIT1
+<LAB> = \Mv\.*|\Pv\.*|\B\.*|\BW\.*
+<F_R RS-FLAG> != T
+=
+<F_R OBJ-LINK-TAG> = UNSET
+;
+#TemplateActionAlg
+OBJ-LINK-TAG-INIT2
+<LAB> = \O\.*|\OD\.*|\OT\.*
+=
+<F_L OBJ-LINK-TAG> = UNSET
+;
+; bugfix (10-9-2014 AN):
+; Sets a flag for "to" introducing a questioned obj, so the flag can be used later 
+; (around line 2000) to prevent this "to" from being interpreted as an advmod. You
+; don't want to prevent other "to"'s in this position from being advmod's, only
+; ones following a B-link
+;
+#TemplateActionAlg
+SET-Q-TO-IOBJ-FLAG
+<LAB> = \B\.*
+<F_R str> = to
+=
+<F_R Q_TO_IOBJ_FLAG> = T
+;
+; Sentences with two O links will have O*n pointing at direct object.
+;
+#TemplateActionAlg
+DIR_OBJ_N
+<LAB> = \O\.n\.*
+<LAB> != \O\.i\.*
+<F_L OBJ-LINK-TAG> = O-n|UNSET
+=
+<F_L OBJ-LINK-TAG> = O-n
+<F_L obj> += <F_R ref>
+
+;#TemplateActionAlg
+;DIR_OBJ2
+;<LAB> = \O\.n\.*
+;<LAB> != \O\.i\.*
+;<F_L OBJ-LINK-TAG> != O-n|UNSET
+;=
+;<F_L obj> += <F_R ref>
+
+;
+#TemplateActionAlg
+GER_OBJ
+; Pv and Mv GET FIRST CHANCE TO IDENTIFY DIRECT OBJECT
+; Identifies a modifying gerund fills the argument
+; "This is the man given a dog by me."
+<LAB> = \Mv\.*
+=
+<F_R OBJ-LINK-TAG> = Mv
+<F_R obj> += <F_L ref>
+;
+#TemplateActionAlg
+PASS_OBJ
+; Pv and Mh GET FIRST CHANCE TO IDENTIFY DIRECT OBJECT
+; We don't do linking until the arguments are filled (to be AND safe)
+;  "He was chased."
+<LAB> = \Pv\.*
+=
+<F_R OBJ-LINK-TAG> = Pv
+;
+#TemplateActionAlg
+WHATQ_OBJ
+; Bug-fix (10-9-2014 AN): BW GETS CHANCE TO IDENTIFY DIRECT OBJECT
+; Without this, questions where 'what' is the direct object and there is an indirect object
+; get their roles reversed, so that 'what' gets classified as IO and the IO as the direct object.
+; this works in conjunction with a condition added to REL_INDIR_OBJ below around line 397 to
+; prevent iobj from being assigned twice.
+<LAB> = BW|Bsw
+=
+<F_R OBJ-LINK-TAG> = BW
+<F_R obj> += <F_L ref>
+;
+; O GETS SECOND CHANCE TO IDENTIFY DIRECT OBJECT
+; If there no object, then O-link defines object
+; Must check for own tag value to be AND-SAFE
+; "I gave him the car." 
+; "This is the car I gave the man." (B has not had a chance to identify object)
+; Case- <LAB> != \Omm | \Om ---> "Om" is used to construct "more\less"
+;       phrases rather than connecting direct or indirect objects.
+;       e.g. "He runs more quickly than John does."
+;
+; Case- <F_R linkL1 LAB> != \Dmum --> e.g. avoid relationship of 
+;       _obj(earn, money), sentence "He earns much more money than I do."  
+; O*c+ connects comparatives
+
+#TemplateActionAlg
+DIR_OBJ1
+<LAB> = \O\.*|\OD\.*|\OT\.*
+<LAB> != \O\.c\.*
+<LAB> != \O\.n\.*
+<LAB> != \O\.i\.*
+<LAB> != Omm | Om
+<F_L linkL0 LAB> != \B\.*
+<F_R linkL1 LAB> != \DT\.*
+<F_L OBJ-LINK-TAG> = O|UNSET
+<F_L linkR0 LAB> != \IV|\TO\.*
+=
+<F_L OBJ-LINK-TAG> = O
+<F_L obj> += <F_R ref>
+
+; I run more races than Ben wins contests.
+#TemplateActionAlg
+SECOND_DIR_OBJ_IN_COMPARISON
+<LAB> = \Op
+<F_L linkL0 LAB> = \Bc\.*
+<F_L OBJ-LINK-TAG> = O|UNSET
+=
+<F_L OBJ-LINK-TAG> = O
+<F_L obj> += <F_R ref>
+
+;
+; Fix up all/some/many determiners.  e.g
+; "We told all the students about the meeting"
+; the object should be _obj(told, student) and not _obj(told, all)
+;
+#TemplateActionAlg
+DIR_OBJ1_1
+<LAB> = O
+<F_R linkR0 LAB> = \J\.*
+<F_R linkR1 LAB> = \AL\.*
+=
+<F_L obj> = %
+<F_L obj> = <F_R linkR0 F_R ref>
+
+#TemplateActionAlg
+DIROBJ_Osm
+<LAB> = \O\.*\.m
+=
+<F_L ref links _obj> += <F_R ref>
+
+;
+;START BUG 3 Solution #################################
+;   "I want you to eat cake."
+; should generate _subj(eat, you) not _obj(eat, you)
+; Arguably, the link-grammar parse is wrong. The below works around this.
+;
+; Below is what we added to solve the problem.
+; We created the temp1 for temporary storage. If there is another means please suggest.
+; 
+#TemplateActionAlg
+ALG1
+<LAB> = Ox
+=
+<F_L temp1> += <F_R ref>
+
+#TemplateActionAlg
+ALG2
+<LAB> = \TO\.*
+=
+<F_R temp1> = <F_L temp1>
+<F_L obj> = %
+
+#TemplateActionAlg
+ALG3
+<LAB> = \I\.*
+=
+<F_R subj> = <F_L temp1>
+<F_L temp1 > = %
+
+;END BUG 3 Solution #################################
+;
+; If there is already an object, then O-link defines indirect object
+;   "He was given the car."
+;   "This is the man given the car."
+; Case- <LAB> != \Omm | \Om ---> "Om" is used to Construct of "more\less" Phrases rather than 
+; connecting direct or indirect objects. e.g. He runs more quickly than John does.
+#TemplateActionAlg
+INDIR_OBJ1
+<LAB> = \O\.*|\OD\.*|\OT\.*
+<LAB> != \O\.n\.*
+<LAB> != \O\.i\.*
+<LAB> != Omm |Om
+<F_L OBJ-LINK-TAG> != O|UNSET
+=
+<F_L iobj> += <F_R ref>
+;
+#TemplateActionAlg
+REL_OBJ
+; B (without RS) GETS THIRD CHANCE TO IDENTIFY DIRECT OBJECT
+; Checks to make sure Mv/Pv or O have not already filled the object
+; Identifies a relative object and fills the argument
+; "This is the dog and cat Pat and I chased and ate."
+; Case <LAB> != \Bcd ---> "Bc" special subscript only occurs with "MVto" to form 
+; than relationship but not to link direct and indirect objects
+;<LAB> != \Bcd e.g. He runs more quickly than John does.
+;
+; bugfix added 10-9-2014 (AN): last condition prevents output of questioned
+; indirect object as obj(to, qVar) which is inconsistent with the to(verb, obj)
+; dependency used for declarative versions of to-indirect-objects.
+;
+<LAB> = \B\.*|\BW\.*
+<LAB> != Bcd
+<F_R RS-FLAG> != T
+<F_R OBJ-LINK-TAG> = B|UNSET
+<F_R Q_TO_IOBJ_FLAG> != T
+=
+<F_R OBJ-LINK-TAG> = B
+<F_R obj> += <F_L ref>
+
+#TemplateActionAlg
+DIROBJ_Ox
+<LAB> = Ox
+<F_L obj> = %
+<F_L linkR0 LAB> != IV|\TO\.*
+=
+<F_L obj> += <F_R ref>
+
+;
+#TemplateActionAlg
+REL_INDIR_OBJ
+; If O or Mv/Pv have already filled the object, B identifies indirect
+; "This is the car I gave the man." (O fills before B)
+; "This is the car the man was given." (Pv fills before B)
+; Case <LAB> != \Bcd ---> "Bc" special subscript only occurs with "MVto" to form 
+; than relationship but not to link direct and indirect objects
+;<LAB> != \Bcd e.g. He runs more quickly than John does.
+<LAB> = \B\.*|\BW\.*
+<LAB> != Bcd
+<F_R RS-FLAG> != T
+<F_R OBJ-LINK-TAG> != B|UNSET
+; The line below is a late-added bug-fix that works in conjunction with WHATQ_OBJ
+; around line 255 to ensure correct assignment of obj and iobj in questions. Without
+; condition iobj is assigned to both objects in addition to the obj being assigned correctly.
+<F_R OBJ-LINK-TAG> != BW
+=
+<F_R iobj> += <F_L ref>
+
+#TemplateActionAlg
+REL_INDIR_OBJ2
+<LAB> = \O\.*
+<F_L obj> != %
+<F_L obj> != <F_R ref>
+=
+<F_L iobj> = <F_R ref>
+
+;
+; Conjunction fixups for object. Basically, we don't want obj
+; pointing at the conjunction, we want it pointing at the actual things.
+#TemplateActionAlg
+CONJ_OBJ
+<F_L obj> != %
+<F_R conj> != %
+<F_R POS> = conjunction
+<LAB> != \VJ\.*
+<F_L POS> != prep
+=
+<F_L obj> = %
+<F_L obj> += <F_R conj-member0>
+<F_L obj> += <F_R conj-member1>
+
+#TemplateActionAlg
+PREP_CONJ_OBJ
+<LAB> = \Ju
+=
+<F_L ref links _obj> = %
+<F_L ref links _pobj> += <F_R conj-member0>
+<F_L ref links _pobj> += <F_R conj-member1>
+
+;
+;Example: Scientists make observations and ask questions.
+#TemplateActionAlg
+CONJ_OBJ2
+<F_L obj> != %
+<F_L conj> != %
+<F_L POS> = conjunction
+<LAB> = \VJ\.*
+=
+<F_R obj> += <F_L obj>
+;/////////////////////////////////////////////////////////////////////////////
+;
+;  SYNTACTIC ARGUMENT LINKING
+;
+;
+#TemplateActionAlg
+PASSIVE_OBJ_LINK
+;
+; Hmm, shouldn't this be identified as "nsubjpass", passive nominal
+; subject? I guess, for now, its ok to confuse passive subjects with
+; objects...
+; "He was eaten."
+; "Rocks were thrown at the windows" -- rocks is nsubjpass
+; "I was told many lies." -- "I" is object, "lies" is indirect object.
+<LAB> = \Pv\.*
+=
+<F_R obj> = <F_L subj>
+;
+;#TemplateActionAlg
+;;  "Tom made it unlikely that she will come."
+;MARK_FILLER_OBJ
+;<LAB> = \OX\.*
+;=
+;<F_L FILLER-OBJ-FLAG> = T
+;
+#TemplateActionAlg
+SUBJECT_LINKING
+; Works for gerund, verb-adj, verb-prep, progressive, TO-INF
+;  "Jim wants to eat a cat"
+;Pg connects verbs that take present participles with present participles.
+;e.g. The snail is running
+;
+;(On October 9 2014) I un-commented out the version of the line below with the \Pg\ and
+;commented out the version of the line without \Pg\ because relex was outputting progressives
+;as predadj's and it was effing up r2l, but I'm leaving this note about it because someone
+;had left the following cryptic comment to explain why they commented out \Pg\ to begin with:
+;
+;"So \Pg can be removed here? "
+;
+<LAB> = \Pg\.*|\PP\.*|\I\.*
+;<LAB> = \Pp\.*|\PP\.*|\I\.*
+<F_L obj> = %
+<F_L FILLER-OBJ-FLAG> != T
+=
+<F_R subj> += <F_L subj>
+<F_L subj> = %
+;
+#TemplateActionAlg
+INV-SUBJECT_LINKING
+; Look how green Jim is.
+<LAB> = \AF\.*
+<F_R obj> = %
+<F_R FILLER-OBJ-FLAG> != T
+<F_L str> != than
+=
+<F_L subj> = <F_R subj>
+#TemplateActionAlg
+IMP-SUBJECT-ASSIGNMENT
+; Assigning the imperative subject
+<LAB> = \Wi\.*
+<F_R subj> = %
+=
+<F_R subj> = <F_L ref>
+;
+;  "Mr. Smith is late."  (as opposed to "The late Mr. Smith")
+; But Pa must connect to copula, so reject "The rose smelled sweet"
+; Use += because there may be several of these in a sentence.
+; It *might* be better to just add this as
+; <F_L subj nameSource predadj> += <F_R ref>
+; and then later promote this to _predadj if we decide that things are
+; peachy (the same way that subj becomes _subj). But for now, we put
+; it straight in.
+;Pg connects verbs that take present participles with present participles.
+;e.g. The snail is running
+#TemplateActionAlg
+PREDICATIVE_ADJECTIVE_LINKING
+<LAB> = \Pa\.* |\Pg\.*|\Pp\.*
+<F_L obj> = %
+<F_L FILLER-OBJ-FLAG> != T
+<F_L str> = be|is|am|are|were|was
+=
+<F_L subj links _predadj> += <F_R ref>
+;
+;
+; predeterminers with predicative adjectives
+; "All my writings are bad." should have _predadj(writings, bad)
+; This erases the previously created predadj, and replaces it
+; with the predeterminer.
+;
+#TemplateActionAlg
+PREDADJ_PREDET
+<F_L predet> != %
+<F_R subj links _predadj> != %
+=
+<F_R subj links _predadj> = <F_L quantity>
+;
+;
+; If the Pa object is a conjunction, then create a _predadj for
+; each of the conjoined objects.
+#TemplateActionAlg
+PREDADJ_LINKING_CONJOIN
+<LAB> = \Pa\.*
+<F_L obj> = %
+<F_L FILLER-OBJ-FLAG> != T
+<F_L str> = be|is
+<F_L CONJ_SUBJ> = T
+=
+<F_L subj member0 links _predadj> += <F_R ref>
+<F_L subj member1 links _predadj> += <F_R ref>
+<F_L subj member2 links _predadj> += <F_R ref>
+;
+;
+; predictive adjective for comparatives
+; e.g. Jack is more/less ingenious than Ben is crazy. 
+; _predadj(Ben, crazy) plus we dont need _subj(is,Ben)
+
+#TemplateActionAlg
+PREDICATIVE_comparatives1
+<LAB> = \Paf
+<F_L str> = than
+=
+<F_L temp_pred> += <F_R ref>
+;
+#TemplateActionAlg
+PREDICATIVE_comparatives
+<LAB> = \Cta
+<F_L temp_pred> != %
+=
+<F_R ref links _predadj> += <F_L temp_pred>
+<F_L subj> = %
+<F_L temp_pred> = %
+
+;
+#TemplateActionAlg
+CLEAR_SUNJ_comparatives
+<LAB> = \AFd
+=
+<F_R subj> = %
+;
+#TemplateActionAlg
+OBJECT_LINKING
+; Works for gerund, verb-adj, verb-prep, progressive, TO-INF
+;  Jim wants Mike to eat a cat
+;  Jim finds Mike interesting
+<LAB> = \Pg\.*|\Pa\.*|\Pp\.*|\PP\.*|\I\.*
+<F_L obj> != %
+=
+<F_R subj> = <F_L obj>
+;
+#TemplateActionAlg
+INV_OBJECT_LINKING
+;  Look how interesting Jim finds Mike
+<LAB> = \AF\.*
+<F_R obj> != %
+=
+<F_L subj> = <F_R obj>
+;
+#TemplateActionAlg
+SPECIAL-ADJ
+; Used for "easy to read." 
+; The B links back to the adjective.  But it should really be 
+; interpretted as linking back to the subject of the adjective
+<LAB> = \B\.*|\BW\.*
+<F_L POS> = adj
+=
+<F_R obj> = %
+<F_R obj> = <F_L subj>
+<F_L ADJ-OBJ-FLAG> = T
+;
+#TemplateActionAlg
+SUBJECT_LINKING_TO
+; TO-INF only links subject for non-copula
+<LAB> = \TO\.*|\MVi\.*
+<F_L str> != be
+<F_L obj> = %
+<F_L ADJ-OBJ-FLAG> = %
+=
+<F_R subj> = <F_L subj>
+;
+#TemplateActionAlg
+OBJECT_LINKING_TO
+;//TO-INF only links subject for non-copula
+<LAB> = \TO\.*|\MVi\.*
+<F_L str> != be
+<F_L obj> != %
+<F_L ADJ-OBJ-FLAG> = %
+=
+<F_R subj> = <F_L obj>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; TENSE SETTING AND 
+; HEAD RELATION IDENTIFICATION
+;
+; Idea: create a chain of verbs, the initial set of which might be aux
+; or auxpass verbs, and the final verb in the chain is the head-word.
+; e.g. "has been debated", where "has", "been" are aux, auxpass, and 
+; "debated" is the head-word.
+;
+; This applies to the first verb in a tense link sequence.
+; It sets the "first_verb" feature to point itself.
+; This will also apply to a plain verb that is not modified by tense modals.
+; The node <prev> is set earlier, in the tagging-algs file.
+;
+#TemplateActionAlg
+TENSE_LIST_CONNECT1
+<tense prev> = %
+<tense> = $T
+=
+<tense first_verb> = <this>
+;
+; This applies to all links in a tense link sequence
+; It sets a flag in any modal (always to the right of the link)
+; It ensures that all sequence members have pointers to the first verb
+; The TENSE-LINK-FLAG is set in the earlier tagging-algs file.
+#TemplateActionAlg
+TENSE_LIST_CONNECT2
+<TENSE-LINK-FLAG> = T
+=
+<F_L tense MODAL-FLAG> = T
+<F_R tense first_verb> = <F_L tense first_verb>
+;
+; Inverse of TENSE_LIST_CONNECT2
+; Look how big Jim is.
+#TemplateActionAlg
+INV_TENSE_LIST_CONNECT2
+<INV-TENSE-LINK-FLAG> = T
+=
+<F_R tense MODAL-FLAG> = T
+<F_L tense first_verb> = <F_R tense first_verb>
+;
+#TemplateActionAlg
+HEAD_IDENTIFY
+<tense> != %
+<tense MODAL-FLAG> = %
+=
+<HEAD-FLAG> = T
+;
+; This applies only to the last (or only) verb in a tense sequence.
+; It conjoins all of the tense names in the sequence.
+#TenseConjoinAlg
+TENSE_CONJOIN
+<HEAD-FLAG> = T
+=
+;
+; This applies only to the last (or only) verb in a tense sequence.
+; It puts the head links in place.
+#TemplateActionAlg
+HEAD_INIT
+<HEAD-FLAG> = T
+=
+<ref tense> = <tense name>
+;
+; This applies only to the last (or only) verb in a tense sequence
+; It sets the first verb to contain this as a 'head-word' feature
+#TemplateActionAlg
+HEAD_TO_FIRST_VERB
+<HEAD-FLAG> = T
+=
+<tense first_verb head-word> += <this>
+
+#TemplateActionAlg
+INFINITIVE_HEAD_VERB
+<LAB> = \I\.*
+<F_L head-word> = %
+=
+<F_L head-word> = <F_R ref>
+;
+;
+#TemplateActionAlg
+HEAD_TO_SUBJ_AND_OBJ1
+<LAB> = \S\.*|\SX\.*|\B.w\.*|\SF\.*
+=
+<F_L head-word> += <F_R head-word>
+;
+#TemplateActionAlg
+HEAD_TO_SUBJ_AND_OBJ2
+<LAB> = \S\.*|\SX\.*
+=
+<F_L head-word> += <F_R head-word>
+
+#TemplateActionAlg
+HEAD-QUESTION-WORD
+;  Who does John think the man I love wants?
+<LAB> = \Rw\.*|Q|Qd
+=
+<F_L head-question-word> += <F_R head-word>
+;
+#TemplateActionAlg
+HEAD-QUESTION-HOW
+; How quickly does John run?
+<LAB> = \Qe
+=
+<F_L head-word> += <F_R head-word>
+;
+#TemplateActionAlg
+HEAD-QUESTION-WHICH
+;  Which cat/one does he think John wants?
+<LAB> = \D\.*
+<F_R head-question-word> != %
+=
+<F_L head-question-word> += <F_R head-question-word>
+;
+#TemplateActionAlg
+HEAD-QUESTION-WHICH
+;  Which cat/one does he think John wants?
+<LAB> = \D\.*
+<F_R head-question-word> = %
+=
+<F_L head-question-word> += <F_R head-word>
+;
+#TemplateActionAlg
+HEAD-QUESTION-WORD2
+<LAB> = \W[qs]\.*
+<F_R head-question-word> != %
+=
+<F_L head-word> += <F_R head-question-word>
+;
+#TemplateActionAlg
+HEAD-QUESTION-WORD2NULL
+<LAB> = \W[qs]\.*
+<F_R head-question-word> = %
+=
+<F_L head-word> += <F_R head-word>
+;
+#TemplateActionAlg
+HEAD_TO_CLAUSE_AND_WALL
+<LAB> = \W\.*|\C\.*|\RS\.*|\Qd\.*
+<LAB> != \C[ie]|\Ct\.*
+<LAB> != \W[qs]\.*
+; Don't change the head-word for a verb that takes a clausal complement (Ce)
+; Also dont propogate head to "than" (Ct)
+=
+<F_L head-word> += <F_R head-word>
+;
+
+#TemplateActionAlg
+NOUN_PHRASE_HEAD_WORD
+<LAB> = \D\.*
+<F_R head-word> = %
+=
+<F_R head-word> = <F_R ref>
+
+#TemplateActionAlg
+DETERMINER_HEAD_WORD
+<LAB> = \D\.*
+<F_L head-word> = %
+=
+<F_L head-word> = <F_R head-word>
+
+#TemplateActionAlg
+QUANTITY_HEAD_WORD
+<LAB> = \AL\.*
+<F_L head-word> = %
+=
+<F_L head-word> = <F_R head-word>
+
+#TemplateActionAlg
+PROPOGATE_HEAD-WORD
+<tense first_verb head-word> = $Z
+=
+<head-word> = $Z
+;
+; Extend the headword to left.
+; Currently, only stanford-campat needs this one.
+; except that relex is generally broken here.
+; e.g. "I wonder how many people you saw." is just messed up.
+; #TemplateActionAlg
+; HOW-HEAD-WORD
+; <LAB> = H
+; <F_R head-word> != %
+; <F_L head-word> = %
+; =
+; <F_L head-word> = <F_R head-word>
+
+;/////////////////////////////////////////////////////////////////////////////
+;
+; FILLER FIXING
+;
+;
+#TemplateActionAlg
+FILLER_FIX
+; Transfers object to subject for "There appears to [be]/[have been] a problem
+; But only if there is no subject.  So wont tranfer for "Jim appears..."
+<LAB> = \Ix\.*|\PPf\.*
+<F_R subj> = %
+<F_R obj> != %
+=
+<F_R subj> = <F_R obj>
+<F_R obj> = %
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; QUESTION identification
+;
+;
+#TemplateActionAlg
+QUESTION2
+<LAB> = \D\.\.w\.*|JQ
+<F_L POS> != prep
+=
+<F_R ref QUERY-FLAG> = T
+<F_L wall sentence_type> = QUERY
+;
+#TemplateActionAlg
+QUESTION3
+<LAB> = \D\.*
+<F_L str> = which|what
+<F_R POS> = noun
+=
+<F_R ref QUERY-FLAG> = T
+<F_L wall sentence_type> = QUERY
+;
+#TemplateActionAlg
+QUESTION-ID
+<LAB> = \Q\.*
+=
+<F_L wall sentence_type> = QUERY
+;
+#TemplateActionAlg
+QUESTION3_DO
+; TRUTH-QUERY is used when the query variable should not be expanded.
+; For "Who died?" you want "who" and "die" to be query variables.
+; But for "Did John die?" only "die" is a query variable.
+<LAB> = \Qd\.*
+<F_L str> = LEFT-WALL
+=
+<F_R head-word ref TRUTH-QUERY-FLAG> = T
+<F_R head-word ref HYP> = T
+;
+#TemplateActionAlg
+DECLARATIVE_QUESTION1
+<LAB> = \Xp\.*
+=
+<F_L punc> = <F_R str>
+;
+; Declarative questions, such as "Fred is dead?"
+; We are asking for the truth of the question, and "dead" is hypothetical.
+;
+#TemplateActionAlg
+DECLARATIVE_QUESTION2
+; not AND-SAFE!
+; regular expression [\\?] matches just the question mark
+
+<LAB> = \Wd\.*
+<F_L punc> = \[\\?]
+<F_L head-word> != %
+=
+<F_R head-word ref TRUTH-QUERY-FLAG> = T
+<F_R head-word ref HYP> = T
+<F_L wall sentence_type> = QUERY
+
+;
+; Needed to complete dependency of some preposed prep-phrases on verb
+; ('to whom did you sell the children?")
+;
+
+#TemplateActionAlg
+CONNECT_PREPOSED_PREP_QWORD_TO_VERB
+<LAB> = Qd
+<F_L POS> = prep
+=
+<F_R head-word ref links _advmod> += <F_L ref>
+
+#TemplateActionAlg
+QUESTIONS-COPULA
+<LAB> = Q|Qd
+<F_L head-question-word str> = be
+<F_L head-question-word obj> = %
+=
+<F_L head-question-word ref name> = %
+<F_L head-question-word ref name> = _%copula
+;
+#TemplateActionAlg
+WHEN
+<LAB> = Q|Qd
+<F_L str> = When|when
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = when
+<F_L head-question-word ref links _%atTime> += <F_L ref>
+;
+; Rule below not working, not sure why yet . . . 
+;
+#TemplateActionAlg
+PREPWHEN
+<LAB> = \D\.*
+<F_L ref QUERY-TYPE> = when
+=
+<F_L head-question-word ref links _%atTime> += <F_L ref>
+;
+#TemplateActionAlg
+; This algoritm was modified to exclude cases where there isn't a todo 
+; link followed by a verb
+; This case is dealt with in WHERE_HACK_FOR_QP
+WHERE1
+<LAB> = Q|Rw
+<F_L str> = Where|where
+;<F_L head-question-word> != %
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = where
+<F_L head-question-word ref links _%atLocation> = <F_L ref>
+;
+#TemplateActionAlg
+WHERE2q
+<LAB> = \Wq\.*
+<F_R str> = Where|where
+=
+<F_R ref name> = %
+<F_R ref name> = _$qVar
+<F_R ref QUERY-TYPE> = where
+;
+#TemplateActionAlg
+WHERE2
+<LAB> = \WR\.*
+<F_L ref QUERY-TYPE> = where
+=
+<F_R ref links _%atLocation> = <F_L ref>
+;
+;
+; Qw: How can I do it?
+; IV: Tom asked me how to do it.
+;
+#TemplateActionAlg
+HOW
+<LAB> = Q|Qw|AF|AFh|IV
+<F_L str> = How|how
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = how
+; <F_R head-question-word ref links _%how> = <F_L ref>
+<F_R head-word ref links _%how> = <F_L ref>
+;
+;
+#TemplateActionAlg
+WHY
+<LAB> = Q|Qd
+<F_L str> = Why|why
+<F_L head-question-word> != %
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = why
+<F_L head-question-word ref links _%because> = <F_L ref>
+;
+;
+#TemplateActionAlg
+PREPOSED_PREDICATE_WHERE
+<LAB> = \PF\.*
+<F_L str> = where
+=
+<F_R subj links _%atLocation> += <F_L ref>
+
+#TemplateActionAlg
+PREPOSED_PREDICATE_WHEN
+<LAB> = \PF\.*
+<F_L str> = when
+=
+<F_R subj links _%atTime> += <F_L ref>
+
+#TemplateActionAlg
+PREPOSED_PREDICATE_HOW
+<LAB> = \PF\.*
+<F_L str> = how
+=
+<F_R subj links _%how> += <F_L ref>
+
+#TemplateActionAlg
+PREPOSED_PREDICATE_ADJECTIVAL
+<LAB> = \PF\.*
+<F_L str> != where|when|how
+=
+<F_R subj links _predadj> = <F_L ref>
+
+; 
+; How-much/how-many questions: "How much does the book weigh?"
+; Replace the object _obj(weigh, how_much) with _obj(weight, $qVar)
+;
+#TemplateActionAlg
+HOW_MUCH
+<LAB> = \B.m
+<F_L str> = how_much
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = how_much
+<F_L ref polyword-FLAG> = %
+;
+; "How many dogs did you chase?" "How many dogs chased you?"
+; "How many tails does a cat have?" "How much coffee did you drink?"
+; "How many times did I tell you to stop?" 
+;
+#TemplateActionAlg
+HOW_MUCH2
+<LAB> = \Dm.*
+<F_L str> = how_much|how_many
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = how_much
+<F_L ref polyword-FLAG> = %
+<F_R head-word ref HYP> = T
+;
+; "How tall is that building?" "How long is that book?"
+; "How safe is that vehicle?" "How quickly did you read the book?"
+;
+#TemplateActionAlg
+HOW_BIG
+<LAB> = \EAh|\EEh
+<F_L str> = how
+=
+<F_L ref name> = %
+<F_L ref name> = _$qVar
+<F_L ref QUERY-TYPE> = how_much
+<F_R head-word ref HYP> = T
+;
+; Special rules for assigning the adjective or adverb modified by how
+; to its relation with the noun or verb it modifies . . .
+;
+#TemplateActionAlg
+HOW_ADV
+<LAB> = \EEh
+<F_L str> = how
+=
+<F_R head-word ref links _advmod> += <F_R ref>
+#TemplateActionAlg
+HOW_ADJ
+<LAB> = \EAh
+<F_L str> = how
+=
+<F_R ref links _predadj> += <F_R head-word subj>
+;
+; SPECIAL RULE FOR DO-Questions: "What did Ben do?" "What did Ben want
+; to do?" Prevents "do" from having an object.  Instead, turns the head
+; verb into a query variable.  So, for the above sentences, we would be
+; looking for any event with a "subj" relation to Ben.
+;
+#TemplateActionAlg
+DO_QUESTION1
+<LAB> = \B.w
+<F_R str> = do
+=
+<F_R obj> = %
+<F_R ref name> = %
+<F_R ref name> = _$qVar
+<F_R ref QUERY-FLAG> = T
+;
+;
+;SPECIAL RULE FOR COPULA-Questions: "Who/What is the cat?"
+;	"Prevents "who" from acting as the subject.
+;	Instead, "cat" will act as the subject and the object as query variable"
+;	(DIDN'T WORK THEREFORE COMMENTED-OUT FOR NOW)
+;
+;#TemplateActionAlg
+;COPULA_QUESTION1
+;<ref name> = be
+;<subj name> = _$qVar
+;<subj QUERY-FLAG> = T
+;<obj> != %
+;=
+;<subj> = <obj>
+;<obj name> = _$qVar
+;<obj ref name> = _$qVar
+;<obj QUERY-FLAG> = T
+;<subj QUERY-FLAG> = %
+;
+; /////////////////////////////////////////////////////////////////////
+;
+; TRANSFER LINKS TO REF
+;
+;
+#TemplateActionAlg
+SUBJ_TO_LINKS
+<HEAD-FLAG> = T
+<subj> != %
+=
+<ref links _subj> = <subj>
+;above rules applies when the verb is the main verb of the sentence. i.e. <HEAD-FLAG> = T
+;when it is the main verb of the sentence. This rules forms relationships when there are other verbs 
+;e.g. He is faster than John is. forming _subj(be, John) relationship
+#TemplateActionAlg
+SUBJ_TO_LINKS_2
+<LAB> = \Ss
+<F_R linkL0 LAB> = \AFd
+<F_L ref links _predadj> = %
+<F_R HEAD-FLAG> = %
+<F_R POS> = verb
+<F_L POS> = noun
+=
+<F_R ref links _subj> = <F_L ref>
+;
+;
+#TemplateActionAlg
+EXPL_TO_LINKS
+<HEAD-FLAG> = T
+<expl> != %
+=
+<ref links _expl> = <expl>
+;
+#TemplateActionAlg
+OBJ_TO_LINKS
+<HEAD-FLAG> = T
+<obj> != %
+=
+<ref links _obj> = <obj>
+;
+#TemplateActionAlg
+OBJ_TO_LINKS_GERUND
+<POS> = noun
+<obj> != %
+=
+<ref links _obj> = <obj>
+;
+#TemplateActionAlg
+OBJ2_TO_LINKS
+<HEAD-FLAG> = T
+<iobj> != %
+=
+<ref links _iobj> = <iobj>
+;
+#TemplateActionAlg
+OBJ2_TO_LINKS_GERUND
+<POS> = noun
+<iobj> != %
+=
+<ref links _iobj> = <iobj>
+;
+;
+; Err I don't get it. 
+; This is used in the NEGATIVE_CONTR below, but really, I don;'t get it .
+;   
+; #TemplateActionAlg
+; PREPOSITION_MARKING
+; <LAB> = \Pp\.*
+; <F_L str> = be
+; =
+; ;<F_R ref COPULA-FLAG> = T
+; ;<F_L ref COPULA-FLAG> = T
+; <F_L ref name> = %
+; <F_L ref name> = _%copula
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+;  Z-HEAD AND-SAFE REF TRANSFER
+;  When z-heads have been groups, this brings the ref feature outside the group
+;
+;
+#TemplateActionAlg
+HEAD-WORD_GROUP0
+<head-word member0 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP1
+<head-word member1 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP2
+<head-word member2 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP3
+<head-word member3 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP4
+<head-word member4 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP5
+<head-word member5 ref> = $R
+=
+<head-word ref> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP6
+<head-word member6 ref> = $R
+=
+<head-word ref> += $R
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+;  CLAUSAL COMPLEMENTS
+;  (note that HEAD_TO_CLAUSE_AND_WALL must already have run.
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+;
+
+#TemplateActionAlg
+RELATIVE_CLAUSE_TO_BACKGROUND
+<LAB> = \R\.*
+<LAB> != \Rw\.*
+=
+<F_L background ref> += <F_R head-word ref>
+<F_L background wall> = <F_L wall>
+<F_L background BACKGROUND-FLAG> = T
+;
+;
+#TemplateActionAlg
+MODIFYING_PHRASES_TO_BACKGROUND
+<LAB> = \Mv\.*|\Mg\.*
+=
+<F_R BACKGROUND-FLAG> = T
+;
+;
+#TemplateActionAlg
+MARK_TOBE
+<LAB> = \Pa\.*
+=
+<F_L TO-BE-FLAG> = T
+;
+;
+#TemplateActionAlg
+INV-MARK_TOBE
+<LAB> = \AF\.*
+=
+<F_R TO-BE-FLAG> = T
+;
+;
+; Extend the headword to left.
+#TemplateActionAlg
+TO-HEAD-WORD
+<LAB> = \I\.*
+<F_R head-word> != %
+<F_L head-word> = %
+=
+<F_L head-word> = <F_R head-word>
+
+;#TemplateActionAlg
+;TODO1
+;<LAB> = \I\.*|\Pg\.*
+;<F_R TO-BE-FLAG> != T
+;<F_R head-word> = %
+;=
+;<F_L to-do> += <F_R ref>
+; ---
+; clausal complement:
+;  "I like running." -- _to-do(like, running)
+; The exception for Pg*b prevents hypothetical for forms of be: 
+; "They WERE RUNNING." and "what ARE they PLANNING?"
+;
+;
+#TemplateActionAlg
+TODO1z
+<LAB> = \I\.*|\Pg\.*
+<LAB> != Pg*b
+<F_R TO-BE-FLAG> != T
+<F_R head-word> != %
+<F_L str> != can|could|will|would|may|might|must|need|can't|couldn't|won't|wouldn't|mustn't|needn't
+=
+<F_L to-do> += <F_R head-word ref>
+
+#TemplateActionAlg
+MODAL_AUXILLIARIES
+<LAB> = \I\.*|\Pg\.*
+<LAB> != Pg*b
+<F_L str> = can|could|will|would|may|might|must|need|shall|should|can't|couldn't|won't|wouldn't|mustn't|needn't|shouldn't|shan't
+=
+<F_L ref links _modal> += <F_R head-word ref>
+;
+#TemplateActionAlg
+TODO2
+<LAB> = \TO\.*
+<F_R to-do> != %
+=
+<F_L to-do> += <F_R to-do>
+
+;
+; Transfer head links to ref.
+;
+#TemplateActionAlg
+TODO_TO_LINKS
+<HEAD-FLAG> = T
+<to-do> != %
+=
+<ref links _to-do> = <to-do>
+
+
+;
+; For sentences such as "I had a plan to laugh."
+; we want to have the option of having a to-do link from "have" to "laugh".
+; That is, link the main verb to the object of the to-do verb.
+;
+#TemplateActionAlg
+TODO_TO_LINK_FOR_NOUNS
+<POS> = noun
+<to-do> != %
+=
+<ref links _to-do> = <to-do>
+
+;
+; For sentences such as "I had a plan to laugh."
+; we want to have the option of having a to-do link from "have" to "laugh".
+; That is, link the main verb to the object of the to-do verb.
+;
+;#TemplateActionAlg
+;TODO_TO_LINK_FOR_VERBS
+;<POS> = verb
+;<to-do> != %
+;=
+;<ref links _to-do> = <to-do>
+;
+;
+; The rule below is frustratingly wrong/incorrect half the time.
+; What should happen:
+; "She looks good"  _to-be(look, good)
+; "She looks left"  _to-do(look, left)
+; What currently happens:
+; "She looks good"  _to-be(look, good)
+; "She looks left"  _advmod(look, left)
+; "She looks right" _to-be(look, right)
+
+#TemplateActionAlg
+TOBE1
+<LAB> = \Pa\.*
+<F_L str> != be
+<F_R head-word> = %
+<F_R degree> = %
+<F_L str> != than
+=
+<F_L to-be> += <F_R ref>
+;
+#TemplateActionAlg
+INV_TOBE
+;No need to check for head-word, because it might be something else:
+;//Look how big Pat seems.
+<LAB> = \AF\.*
+<F_R str> != be
+<LAB> != \AFd
+=
+<F_R to-be> += <F_L ref>
+;
+#TemplateActionAlg
+TOBE1z
+<LAB> = \Pa\.*
+<F_L str> != be
+<F_R head-word> != %
+<F_R degree> = %
+<F_L str> != than
+=
+<F_L to-be> += <F_R head-word ref>
+;
+#TemplateActionAlg
+TOBE-TOINF
+<LAB> = \I\.*
+<F_R TO-BE-FLAG> = T
+=
+<F_L to-be> += <F_R head-word ref>
+;
+#TemplateActionAlg
+TOBE2
+<LAB> = \TO\.*
+<F_R to-be> != %
+=
+<F_L to-be> += <F_R to-be>
+;
+#TemplateActionAlg
+TOBE_TO_LINKS
+<HEAD-FLAG> = T
+<to-be> != %
+=
+<ref links _to-be> = <to-be>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+;  PREPOSITIONS
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; The rule below replaces the predeterminer with its object.
+; Have to whack the existing object to do this.
+; Example: "Joan thanked Susan for all the help she had given."
+; We want to get for(thank, help) not for(thank, all)
+;
+
+
+#TemplateActionAlg
+COMPLEX_PREPOSTION_CONSTRUCTION
+; "between . . . and"
+<LAB> = \Ju
+<F_R POS> = conjunction
+=
+<F_L ref links conj_prep> += <F_R ref>
+
+#TemplateActionAlg
+MODIFIED_COMPARATIVE_PREPOSITION_CONSTRUCTION
+; "He runs more quickly than John."
+<LAB> = \MVa
+<F_L linkR0 LAB> = \MVt\.*|\MVp|\MVz
+<F_R linkL1 F_L str> = more|less|fewer|same|similar|as
+=
+<F_R linkL1 F_L ref links _compprep> += <F_L linkR0 F_R ref>
+
+#TemplateActionAlg
+MODIFIED_COMPARATIVE_PREPOSITION_CONSTRUCTION_TWO
+; "He runs more quickly than John."
+<LAB> = \MVa
+<F_L linkR0 LAB> = \MVt\.*|\MVp|\MVz
+<F_R linkR2 F_L str> = more|less|fewer|same|similar|as
+=
+<F_R linkR2 F_L ref links _compprep> += <F_L linkR0 F_R ref>
+
+#TemplateActionAlg
+COMPARATIVE_PREPOSITION_CONSTRUCTION
+; "He runs more than John."
+<LAB> = \MVm|\MVy|\MVb|\Om|\MVa
+<F_L linkR0 LAB> = \MVt\.*|\MVp|\MVz
+<F_R linkL1 F_L ref links _compprep> = %
+<F_L linkR2 F_L ref links _compprep> = %
+=
+<F_R ref links _compprep> += <F_L linkR0 F_R ref>
+
+#TemplateActionAlg
+COMPARATIVE_PREPOSITION_SIMILAR_TO
+; "This is similar to more_than."
+<LAB> = \MVp
+<F_L str> = similar
+<F_R str> = to
+=
+<F_L ref links _compprep> += <F_R ref>
+
+#TemplateActionAlg
+SO_THAT_STRUCTURE
+<LAB> = \EExk
+=
+<F_L str> = so_that
+
+#TemplateActionAlg
+PREP_X
+<LAB> = \Mp\.*|\MVp\.*|\MX.x\.*|\OF\.*|\MG\.*|\LI\.*|\Pp\.*
+<F_R obj xpredet> != %
+=
+<F_R xobj> = <F_R obj xpredet>
+<F_R obj> = %
+<F_R obj> = <F_R xobj>
+<F_R xobj> = %
+;
+;This is just to handle cases where the prepositional complement
+;does not yet have a head-word, in preparation for the next alg
+#TemplateActionAlg
+PREP_PHRASE_HEADWORD
+<LAB> = \J\.*|\ON\.*|\MG\.*|\Mgp
+<F_R head-word> = %
+=
+<F_R head-word> = <F_R ref>
+
+#TemplateActionAlg
+PREP_OBJECT
+<LAB> = \J\.*|\ON\.*|\MG\.*|\Mgp
+<F_L str> != all
+=
+<F_L ref links _pobj> += <F_R head-word>
+
+;This is a pretty strange way to regard these structures by my ken,
+;but probably the easiest thing to work within the current 'grammar'
+;of Relex (AN)
+
+;I believe the reason this akg is not doing anything is the POS clause
+; but I don't know why it doesn't work.
+;
+#TemplateActionAlg
+DANGLING_PREP
+<LAB> = \B\.*
+<F_L str> = who|Who|whom|Whom|what|What
+<F_R POS> = prep
+=
+<F_R ref links _pobj> += <F_L ref>
+
+
+; This alg seems designed to generate a different relation than what
+;
+#TemplateActionAlg
+PREP_ADJECTIVAL
+<LAB> = \Mp\.*|\Mj\.*|\MX\.*j|\MG\.*
+<F_L str> != same|different
+=
+<F_L ref links _prepadj> += <F_R ref>
+
+#TemplateActionAlg
+PARTICIPIAL_ADJECTIVAL
+<LAB> = \Mg\.*
+<F_L POS> != conjunction
+=
+<F_L ref links _amod> += <F_R ref>
+
+;
+; Theorder of rules here may seem odd, but it's absolutely necessary because
+; one has to set certain flags to prevent MVp adverbs from getting classified in certain ways. . . 
+; (AN DEC 2014)
+;
+
+#TemplateActionAlg
+EQUATIVE_COMPARATIVE_FIRST_DEGREE
+<LAB> = \EEy\.*|\EAy\.*
+=
+<F_R COMPARED_MOD_FLAG> = T
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _compdeg> += <F_L ref>
+
+#TemplateActionAlg
+COMPARATIVE_CONTEXT
+<LAB> = \MVa\.*
+<F_R COMPARED_MOD_FLAG> = T
+<F_L linkR2> != %
+=
+<F_R ref links _compcontadv1> += <F_L linkR1 F_R ref>
+<F_L ref links _compadvmod> += <F_R ref>
+<F_L linkR1 F_R COMPCONT_FLAG> = T
+
+#TemplateActionAlg
+COMPARATIVE_SECOND_CONTEXT
+<LAB> = \CX\.*
+<F_L linkL0 F_L linkR1 F_R COMPCONT_FLAG> = T
+=
+<F_L linkL0 F_L linkR2 F_R ref links _compcontadv2> += <F_R linkR0 F_R ref>
+<F_L COMPCONT_FLAG> = T
+
+#TemplateActionAlg
+ADVMOD_N
+<LAB> = \MVp\.*|\MVa\.*|\MVs\.*|\MVy\.*
+<F_L POS> = verb
+=
+<F_L ref links _advmod> += <F_R ref>
+<F_R modified> += <F_L ref>
+
+; the following two algorithms have an exception for "as" only 
+; because it can be more specifically handled by the _compdeg()
+; relation.
+
+#TemplateActionAlg
+ADVMOD_OF_ADERBIAL
+<LAB> = \MVp\.*
+<F_R str> != as|to
+<F_L POS> != verb
+=
+<F_R ref links _advmod> += <F_L ref>
+<F_L modified> += <F_R ref>
+
+; The following two algorithms will need to be changed if LG is ever
+; corrected.  It is for "The snail runs exactly as fast as the Cheetah."
+; All current parses are wrong. in that there is no link between "exactly"
+; and "as" and there is no link between "run" and "fast" 
+; so the algs below are a bit round-about. (AN Jan 2015)
+
+#TemplateActionAlg
+ADVMOD_OF_AS
+<LAB> = \EEy
+<F_R linkL0 LAB> = \MVa
+=
+<F_L ref links _advmod> += <F_R linkL0 F_L ref>
+
+#TemplateActionAlg
+ADVERBIAL_DISCONNECTED_FROM_VERB_BY_ADV
+<LAB> = \MVl
+<F_R linkR0 LAB> = \MVa
+=
+<F_L ref links _advmod> += <F_R linkR0 F_R ref>
+
+#TemplateActionAlg
+PREP_ADVERBIAL
+<LAB> = \MVp\.*|\OF\.*|\LI\.*
+<F_R str> != as|to
+<F_L modified> = %
+<F_R COMPCONT_FLAG> !=T
+<F_L COMPCONT_FLAG> !=T
+=
+<F_L ref links _advmod> += <F_R ref>
+
+#TemplateActionAlg
+IMPLICIT_COMPARED_MOD
+<LAB> = \CX\.*
+=
+<F_R ref links _advmod> += <F_L linkL0 F_L ref links _advmod>
+<F_L ref links _comp> += <F_R ref>
+
+; The algorithm below should eventually be rendered obsolete by
+; revisions of link-grammar.  It's here now for sentences like --
+; "The coffee tastes the same as it did last year" where "last year"
+; currently gets a \O link which could be ruled out by the "as".
+; (AN Jan 2015)
+
+#TemplateActionAlg
+IMPLICIT_COMPARATIVE_CONTEXT
+<LAB> = \CV
+<F_L str> = as
+<F_R linkR0 LAB> = \O\.*
+<F_R ref links _obj> != <F_R linkR0 F_R ref>
+=
+<F_R ref links _advmod> += <F_R linkR0 F_R ref>
+
+#TemplateActionAlg
+IMPLICIT_COMPARED_PREDADJ
+<LAB> = \O\.*\.c
+<F_L str> = as|than
+<F_L linkL0 LAB> = \MV\.*
+<F_L linkL0 F_L ref> = be
+=
+<F_R ref links _predadj> += <F_L linkL0 F_L ref>
+<F_L ref links _pobj> += <F_R ref>
+
+#TemplateActionAlg
+OBJECT_OF_COMPARISON
+<LAB> = \O\.*\.c|\U\.*\.c|\CX
+<F_L str> = as|than
+=
+<F_L ref links _compobj> += <F_R ref>
+
+;
+; This is a misplaced question rule: "Where did John put it?"
+;
+#TemplateActionAlg
+PREP_CLAUSE_LINKING_WHERE
+<LAB> = \WR\.*
+<F_L ref QUERY-TYPE> = %
+=
+<F_L head-word> += <F_R ref>
+
+;
+; This is the misplaced 's posession rule: "This is John's wife."
+;
+#TemplateActionAlg
+POSSR_TO_APOSTROPHE
+<LAB> = \YS\.* |\YP\.*
+=
+<F_R possessor> += <F_L ref>
+
+;
+; Apparently MVi is reserved for (in order) to
+;
+#TemplateActionAlg
+IN_ORDER_TO
+<LAB> = \MVi\.*
+<F_R head-word> != %
+=
+<F_L ref links _goal> += <F_R head-word ref>
+
+; The below handles parse 2 of
+;    "Tom asks Roy how they are going to get the gold"
+; Not sure why MVi is a "goal" (although it obviously is for
+; the senence above...)
+#TemplateActionAlg
+GOING_TO
+<LAB> = \MVi\.*
+<F_R to-do> != %
+=
+<F_L ref links _goal> += <F_R to-do>
+
+;
+; For cases such as "He did it largely in his spare time" 
+; to make advmod(do, in) -- not working yet.
+;
+
+#TemplateActionAlg
+ADVERB_OBSTRUCTED_PREPADV
+<LAB> = \MVl\.*
+=
+<F_L ref links _advmod> += <F_R modified>
+
+;
+; John left, carrying a dog.
+;
+#TemplateActionAlg
+APPOSITIVE_ADVERBIAL
+<LAB> = \MVx\.*|\MVg\.*
+=
+<F_L ref links _advmod> += <F_R ref>
+
+; (AN JAN 2015) This next one seems like an LG error; for "He ran so
+; quickly that he flew."  LG has 'that . . .' modifying 'ran' as an
+; adverbial whereas I think that it should be modifying 'quickly';
+; it tells you HOW quickly. And so X that Y, works the same way if 
+; X is an adjective.  If LG gets corrected, you can simplify the alg . . .
+; (This algorithm seems not to be running; I don't know why).
+
+#TemplateActionAlg
+SO_THAT_ADVERBIAL
+<LAB> = \MVh\.*
+<F_L linkR0 LAB> = \MVa\.*|\Ma\.*
+=
+<F_L linkR0 F_R ref links _%howdeg> += so_that
+<F_R str> = so_that
+
+;
+; prepositional relative pronoun:
+; "Jim, on whom we sat, cried."
+; "The man on whom we sat cried."
+;
+#TemplateActionAlg
+INVERSE_RELATIVE_PREP
+<LAB> = \CV\.*
+<F_L POS> = prep
+<F_R POS> = verb
+=
+<F_R ref links _advmod> = <F_L ref>
+<INVERSE-REL-PREP FLAG> = T
+
+;
+; Delete the _prepadj relation for "The man on whom we sat."
+;
+#TemplateActionAlg
+DELETE_REL_PREPADJ
+<LAB> = \Mj\.*|\MX.j\.*
+=
+<F_L ref links _prepadj> = %
+
+;
+#TemplateActionAlg
+; Relative prepositions should have their modified phrases 
+; added to the background
+PREP_RELATIVE_BACKGROUND
+<LAB> = \Mj\.*|\MX.j\.*
+=
+<F_L background ref> += <F_R head-word ref>
+<F_L background wall> = <F_L wall>
+<F_L background BACKGROUND-FLAG> = T
+;
+
+;
+; You are happy because you are here.
+; Because you are here, you are happy.
+; I know that you are happy because you are here."
+; You laugh because you are here.
+; I know that you laugh because you are here.
+;
+
+;
+; I can't figure out why this rule had a \Qd\ in the <LAB> condition,
+; so I deleted it . . .(AN Dec 2014)
+;
+#TemplateActionAlg
+OPENING_PREP_ADVERBIAL
+<LAB> = \CO\.*
+=
+<F_R head-word ref links _advmod> += <F_L ref>
+
+;
+; The following series of algs create some complement phrases
+; and hook them up to the things they modify, picking out some
+; which already have more speciic relations, -- relative clauses
+; are distinguished from because and when, and other complements.
+; And introducing rep() for 'representation' as in 'I think that . . .'
+; these really aren't all related stuff, but they were all previously
+; conflated in one rule in this section, so they get revised here . . .
+; (AN Dec 2014)
+;
+; _rep is the relation of representing something, mentally, verbally,
+; or otherwise. It requires a unique relation because it affects the
+; inferences that can be made about the content within its scope.
+; 
+#TemplateActionAlg
+Relative-cause
+<LAB> = \R\.*
+<LAB> != \Rw
+=
+<F_L ref links _relmod> += <F_R ref> 
+
+#TemplateActionAlg
+Relativizer
+<LAB> = \RS\.*
+<LAB> != \RSe\.*
+=
+<F_L ref links _rel> += <F_R head-word ref> 
+
+#TemplateActionAlg
+RELATIVE_CLAUSE_PHRASE
+<LAB> = \C\.*|\Mg\.*
+<LAB> != \Ce\.*
+<F_L POS> != verb|adj|noun
+<F_L str> != as|than|how
+=
+<F_L ref links _rel> += <F_R head-word ref> 
+
+#TemplateActionAlg
+THAT_REP_COMP
+<LAB> = \TH\.*
+=
+<F_L ref links _rep> += <F_R ref>
+<F_R REP_FLAG> = T
+
+; Represetiontational question:
+;  "Tom asked me how to do it".
+;
+#TemplateActionAlg
+QUESTION_REP
+<LAB> = \QI\.*
+=
+<F_R ref name> = %
+<F_R ref name> = _$qVar
+<F_R ref QUERY-TYPE> = how
+<F_L ref links _repq> += <F_R ref>
+<F_R REP_FLAG> = T
+
+; Representational question complement.
+; "Tom asks Roy how they are going to get the gold."
+; _%how(go, _$qVar)
+;
+#TemplateActionAlg
+QUESTION_REP_COMP
+<LAB> = \C\.*
+<LAB> != \Ce\.*
+<F_L str> = how
+=
+<F_R head-word ref links _%how> += <F_L ref>
+
+#TemplateActionAlg
+OMITTED_THAT_REP
+<LAB> = \Ce\.*|\RSe\.*
+<F_L POS> = verb|adj
+=
+<F_L ref links _rep> += <F_R head-word ref>
+<F_L REP_FLAG> = T
+
+#TemplateActionAlg
+COMP_MOD
+<LAB> = \MVs
+<F_R str> != because|when|while|as
+=
+<F_L ref links _compmod> += <F_R ref>
+
+;
+; The below is for "The dog who Jack said chased me" -- a combination
+; of "the dog who chased me" (relative) and "Jack said the dog chased me"
+; (representation)
+;
+#TemplateActionAlg
+RELATIVE_CLAUSE_PLUS_REP
+<LAB> = \CV
+<F_L linkL0 F_L ref links _relmod> != %
+<F_R ref links _rep> != %
+=
+<F_L ref links _rel> += <F_R ref links _rep>
+
+;
+; Call it a 'complement' only if it's not already assigned as a
+; relative clause or a 'rep' (sentential complement to a mental, verbal,
+; or logical predicate) or its a complement to question of opinion/fact.
+#TemplateActionAlg
+OTHER_COMP_CLAUSE
+<LAB> = \CV|\AFd
+<F_L ref links _rel> = %
+<F_L ref links _rep> = %
+<F_L ref name> != _$qVar
+=
+<F_L ref links _comp> += <F_R ref>
+
+;
+; So far, can't find a sentence that uses this LG link --
+; maybe the dictionary documentation is outdated . . .
+;
+#TemplateActionAlg
+WHEN_COMP
+<LAB> = \WN\.*|\MVs\.*
+<F_R str> = when|while
+=
+<F_L ref links _%atTime> += <F_R ref>
+
+#TemplateActionAlg
+BECAUSE_COMP
+<LAB> = \MVs
+<F_R str> = because
+=
+<F_L ref links _%because> += <F_R ref>
+
+;
+; I can't see how this rule handled anything not handled by the
+; rules above that I just wrote, but I'm not sure, so I'm not
+; deleting it yet . . .(AN Dec 2014)
+;
+;#PrepositionLinkAlg
+;PREP_CLAUSE_OBJECT2
+; The preposition modifies the preceeding phrase
+;<LAB> = MVs|\TH\.*|\WN\.*
+;<F_L head-word> = %
+;<F_L> = $modified
+;<F_R str> = $prep
+;<F_R> = $prep_source
+;<F_R head-word ref> = $prep_obj
+;=
+;
+
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; ADJECTIVE MODIFICATIONS
+;
+; DT == time-related determiner e.g. next, every
+;
+;////////////////////////////////////////////////////////////////////////////
+#TemplateActionAlg
+ADJ1
+<LAB> = \A\.*|\DT\.*|TQ
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _amod> += <F_L ref>
+<F_R ref links _amod> += <F_L conj-member0>
+<F_R ref links _amod> += <F_L conj-member1>
+
+;
+; Treat preps without objects as adjectives -- copula (Pp) is treated
+; separately.
+;
+; Example of Ma link is "appropriate" in 
+;   "It was done in a manner appropriate for the occasion."
+;
+; MVp usually modifies verbs, i.e. so its indicates an adverb.
+; should probably check the POS on the left word to confirm.
+;
+#TemplateActionAlg
+ADJ2_1
+<LAB> = \Mp\.*|\Ma\.*
+<F_R PREP-OBJ> = %
+=
+<F_L BACKGROUND-FLAG> = T
+<F_L ref links _amod> += <F_R ref>
+
+;differentiate forming "_amod()" relationships when connected with "Ma" links
+;e.g. I find maths lessons more enjoyable than science lessons. vs I find maths more difficult than science.
+;in the fist sentence it does have a _amod() relationship but it doesn't in 2nd sentence.
+#TemplateActionAlg
+ADJ2_2
+<LAB> = \Ma\.*
+<F_L linkL0 LAB> = \Opn
+<F_R PREP-OBJ> = %
+=
+<F_L BACKGROUND-FLAG> = T
+<F_L ref links _amod> += <F_R ref>
+
+;this rules applies for adjective-focused comparatives
+;e.g. My sister is much more intelligent than me.
+; ECa is used in connection (much,more) and more is acting as a adjectival adverb for "intelligent".
+#TemplateActionAlg
+ADJ3
+<LAB> = \EAm
+<F_L linkL0 LAB> = \ECa
+=
+<F_L linkL0 F_L ref links _amod> += <F_R ref>
+;
+; Predeterminer
+; All the boys are here. - _quantity(boy, all)
+;
+#TemplateActionAlg
+PREDET
+<LAB> = \AL\.*
+<F_L linkR1 LAB> = \J\.*
+; <F_L linkR1 LAB> = Jp
+=
+<F_L linkR1 F_R ref links _quantity> = <F_L ref> 
+
+; For sentences like "I want aisle seats on all my flights"
+#TemplateActionAlg
+PREDET2
+<LAB> = \AL\.*
+<F_L linkR0 LAB> = \J\.*
+=
+<F_L linkR0 F_R ref links _quantity> = <F_L ref> 
+
+;/////////////////////////////////////////////////////////////////////////////
+; Rules  for handling Extrapositions
+;/////////////////////////////////////////////////////////////////////////////
+;
+; This section has just undergone wholesale revision, and most of the relevant
+; material is now back in the preosition section, bynecessity because of stuff
+; that was incorrectly placed back there when I found it.  When I finish fixing
+; all of this, I will try to finish the re-organization and put headers on it
+; (AN Jan 2015)
+;
+; Example: ... ???
+;
+#TemplateActionAlg
+Adjective-clause-who-2
+<LAB> = \MX\.*
+<F_R str> = who
+=
+<F_L ref links who> +=  <F_R linkR1 F_R ref>
+
+;
+; Example: ... ??? Identical to above...
+;
+#TemplateActionAlg
+Adjective-clause-whose-2
+<LAB> = \MX\.*
+<F_R str> = whose
+=
+<F_L ref links whose> += <F_R linkR1 F_R ref> 
+
+;
+;Example: Bob, whose name is in that book, is the student near the window. 
+; (I have changed this from what it was before in a strange way, which I think
+; will best work with R2L -- I have implied that 'whose' is a preposition here!
+; It is not :) but 'the book whose author . . .' means 'the book of the author who . . . '
+; so this is the most consistent way to treat it.  I didn't want to use _poss b/c
+; this construction can be used in other ways such as 'the man whose deeds . . .' (AN 1/2015)).
+;
+#TemplateActionAlg
+Adjective-clause-whose-4a
+<LAB> = \D\.*
+<F_L linkL0 LAB> = \Mr\.*
+=
+<F_L ref links _pobj> += <F_R ref>
+
+#TemplateActionAlg
+Adjective-clause-whose-4b
+<LAB> = \Mr\.*
+=
+<F_L ref links _det> += <F_R ref>
+
+; ---------------------------------------------------------------
+; that/which constructions.
+;
+; Note that many cases are handled by the PREP_CLAUSE_OBJECT rule
+; For example, "He is glad that she won." which uses a TH link to "that".
+; The rules below take care of various relative clauses that don't use
+; the TH connector.
+;
+;(AN Jan 2015) -- I just deleted a bunch of stuff here which was crazy wrong.
+; The 'that' in 'he is glad that she
+; won' plays a completely different grammatical and semantic role than the
+; 'that' in 'They ate a curry that was recommended'; the first one introduces
+; a proposition towards which the subject has an attitude, and is subject
+; to logical opacity; it refers to a representation, not reality. Whereas
+; the second 'that' is more simply, just a way to modify the noun it follows
+; with a phrase serving the same function as an adjective -- an adjectival
+; complement.  And there's no reason to limit it to clauses with main verb
+; 'to be'; you can also say "They ate the curry that Bill cooked." What is
+; needed are two algorithms -- one to establish modification of the noun
+; or adjective by the adjectival clause, and another to attach the adjectival
+; clause to its complement (who, which, or that).  I have provided the new
+; correct algorithms, but they are back in the preposition section because
+; that is where previous coders had placed certain algorithms that they 
+; need to precede.
+;
+; Example: They ate a special curry which was recommended by the restaurant’s owner. 
+;
+
+;--------
+;
+; Example:  Pizza, which most people love, is not very healthy. 
+;
+#TemplateActionAlg
+Adjective-clause-which-3
+<LAB> = \MX\.*
+<F_R str> = which
+=
+<F_L ref links which> += <F_R linkR1 F_R ref>
+
+;
+;/////////////////////////////////////////////////////////////////////////////
+; SUPERLATIVES
+;
+; L is a superlative modifying a determiner on the left.
+; e.g. "Give me the biggest ball" or "Give me the last six paychecks" 
+; Record the superlative.
+;/////////////////////////////////////////////////////////////////////////////
+;
+;
+#TemplateActionAlg
+SUPERLATIVE-1
+<LAB> = \L\.*
+=
+<F_L det-mod> += <F_R ref>
+;
+; With ordinary determiner: "the biggest ball", 
+; With DD definite determiner: "the last six paychecks", "the six biggest paychecks"
+; (DD conects determiners to numbers or adjectives)
+; The object is on the right of the D or DD link.
+;
+#TemplateActionAlg
+SUPERLATIVE-2
+<LAB> = \D\.*|\DD\.*
+<F_L det-mod> != %
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _amod> += <F_L det-mod>
+;
+; Slap a superlative-flag onto the lemma
+;
+#TemplateActionAlg
+SUPERLATIVE-3
+<LAB> = \L\.*
+<F_R str> != <F_R orig_str>
+=
+<F_R ref SUPERLATIVE-FLAG> = T
+;
+; Fix up conjoined modifiers, make a copy of each.
+; Example: "The red and black cat sleeps."
+#TemplateActionAlg
+CONJ_AMOD
+<F_R ref links _amod> != %
+<F_L conj> != %
+<LAB> != \VJ\.*|\AJ\.*|\SJ\.*|\MJ\.*|\RJ\.*
+;<LAB> != \SJr\.*
+=
+<F_R ref links _amod> = %
+<F_R ref links _amod> += <F_L conj-member0>
+<F_R ref links _amod> += <F_L conj-member1>
+
+#TemplateActionAlg
+CONJ_PREDADJ
+<F_L subj links _predadj> != %
+<F_R conj> != %
+;<LAB> != \SJ\.*|\AJ\.*
+<LAB> != \VJ\.*|\AJ\.*|\SJ\.*|\MJ\.*|\RJ\.*
+=
+<F_L subj links _predadj> = %
+<F_L subj links _predadj> += <F_R conj-member0>
+<F_L subj links _predadj> += <F_R conj-member1>
+;
+;/////////////////////////////////////////////////////////////////////////////
+; COMPARATIVES of various kinds.
+;
+;--------------------------------------------------------
+;The Construction of "More/ Less" Phrases in Comparatives
+;See link-grammar dictionary under MV, Comparatives II: The Construction of "More" Phrases
+;http://www.abisource.com/projects/link-grammar/dict/section-MV.html 
+;--------------------------------------------------------
+;
+;e.g - He runs more/less quickly than John.
+;the word "more" is serving as an adverb to "quickly".( adverbial comparative)
+;In this case, the connector between "more" and "quickly" is specially
+;subscripted with "EEm" (the special subscript "m") to handle such "more/less" cases.
+;
+;e.g - He is more/less intelligent than John.
+;"more" is serving as an adjectival adverb
+;In this case, the connector between "more/less" and "intelligent" is specially
+;subscripted with "EAm" (the special subscript "m") to handle such "more/less" cases.
+;
+;e.g - I find maths lessons more/less enjoyable than science lessons.
+;"more" is serving as an adjectival adverb
+;In this case, the connector between "more/less" and "enjoyable" is specially
+;subscripted with "EAm" (the special subscript "m") to handle such "more/less" cases.
+
+; (AN Jan 2015) The following two algs do a pretty strange thing.  The issue is that
+; in "He eats more pizza than John" we ould like to know that John eats pizza, but in
+; in "He eats more pizza than veggies" we would like to know that he eats veggies, but
+; there is no way to differentiate the two within LG, so I have decided to create a 
+; comp_arg() relation, which means that it is a subject or object of comparison. At least
+; PLN will have that to work with.
+
+#TemplateActionAlg
+COMPARATIVE_ARGUMENT_ID
+<LAB> = \O\.*\.c
+=
+<F_L comp_arg> = <F_R ref>
+
+#TemplateActionAlg
+COMPARATIVE_ARGUMENT_ID_TWO
+<LAB> = \J\.*
+<F_L str> = as|than
+=
+<F_L comp_arg> = <F_R ref>
+
+#TemplateActionAlg
+COMPARATIVE_ARGUMENT_LINK
+<LAB> = \MVt\.*|\MVz
+<F_L ref links comp_arg> = %
+=
+<F_L ref links comp_arg> += <F_R comp_arg>
+
+#TemplateActionAlg
+COMPARATIVE_ARGUMENT_TWO
+<LAB> = \MVp\.*
+<F_R str> = as|than
+=
+<F_L ref links comp_arg> += <F_R comp_arg>
+
+#TemplateActionAlg
+COMPARATIVE_DEGREE
+<LAB> = \EEm\.*|\EAm\.*
+=
+<F_R ref links _compdeg> += <F_L ref>
+<F_R ref degree> = comparative
+
+#TemplateActionAlg
+COMPARATIVE_AMOUNT
+<LAB> = \Dm\.*m
+=
+<F_R ref links _compamt> += <F_L ref>
+<F_R ref degree> = comparative
+
+;e.g. He is more/less intelligent than attractive.
+;the connector between "more/less" and "is" is specially
+;subscripted with "EBmm" (the special subscript "mm") and "is" and "intelligent" connected with "Paf" link
+#TemplateActionAlg
+COMPARATIVE_TWO
+<LAB> = \Pa\.*|\MVt
+<F_L linkR1 LAB> = \EBmm|\Omm|\Om\MVm
+=
+<F_R ref links _compdeg> += <F_L linkR1 F_R ref>
+<F_R ref degree> = comparative
+
+;He did it more/less quickly than carefully.
+;e.g - He runs more/less quickly than John does.
+;e.g - He runs more/less than John.
+;e.g - He runs less miles than John does.
+#TemplateActionAlg
+COMPARATIVE_THREE
+<LAB> = \MVa\.*|\MVp\.*
+<F_L linkR2 LAB> = \MVm|\Omm | \Om
+=
+<F_R ref links _compdeg> = <F_L linkR2 F_R ref>
+
+#TemplateActionAlg
+COMPARATIVE_MVp-Om
+<LAB> = \MVp
+<F_L linkR2 LAB> = \Omm | \Om
+=
+<F_L linkR2 F_R ref degree> = comparative
+
+;
+;Here "more" is serving as a noun-phrase, the number of the noun in the "more" phrase is
+;indicated by the D link ( it should be either noun-phrase  or as determiner of
+;a noun ); if it is a "Dmum", the noun is
+;singular, whereas if it is "Dmcm", the noun is plural.
+;Here it forms the degree relationship of the noun-phrase
+
+; This rule needs more conditions in order not to over-apply
+; so I am commmenting it out temporarily . . .
+; #TemplateActionAlg
+; QUANTITY
+; <LAB> = \Jp\.*
+; =
+; <F_R ref links _quantity> += <F_L ref>
+
+#TemplateActionAlg
+COMPARATIVE_Dmum
+<LAB> = \Dmcm | \Dmum
+<F_L str> = more|much|less|fewer
+=
+<F_L ref degree> = comparative
+
+; This alg is supposed to make a predadj relation for
+; "X is the same as . . ." but it requires a flag for
+; its context that will be really difficult to derive;
+; the real problem is that LG is a mess for comparatives.
+;
+#TemplateActionAlg
+PREDADJ_COMPARATIVE
+<LAB> = \O\.*
+<F_L ref> = be
+<F_R ref> = same|different
+=
+<F_R ref links _predadj> += <F_L ref links _subj>
+<F_L ref links _subj> = %
+
+; The following alg is for sentences such as . . . 
+; "The book's color is the same as that of the pen."
+; It is necessary to make 'color' the logical object of 'as'
+; and sets a 'compared quality' flag to make it possible
+; to make color the subj of 'of'.  All this is necessary
+; because LG is all wrong here.  There's no link between
+; that+of but there is between same+of.  It's a mess.
+#TemplateActionAlg
+PREDADJ_COMP_SECOND
+<LAB> = \Mp
+<F_L ref links _predadj> !=%
+<F_L str> = same|different|similar
+<F_R str> = as|from|than|to
+=
+<F_R ref links _pobj> += <F_L ref links _predadj>
+<F_L COMP-QUAL-FLAG> = T
+
+;#TemplateActionAlg
+;IMPLICIT_COMP_QUALITY
+;<LAB> = \Mp
+;<F_L COMP-QUAL-FLAG> = T
+;<F_R str> = of
+;=
+;<F_R ref links _pobj> += <F_L ref links _predadj>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; ADVERB MODIFICATIONS
+;
+; Exclude "EBx", because this is a modifier to punctuation.
+; For example, "Bling, also known as jewelry, is da bomb."
+; also modified the first comma.
+;
+; Sometimes, big complex sentences fail to get tagged with an
+; appropriate head-word. This seems hard to reproduce, and is
+; partly due to bad parses. So require a head-word, explicitly.
+;
+; Jim runs quickly.
+; MVr: "She handled it quickly and gracefully."
+; MVb: "He sang louder and stronger."
+
+#TemplateActionAlg
+ADV1
+<LAB> = \MVa\.*|\MVb\.*|\MVr\.*|\EB\.*
+<LAB> != \EBx\.*
+<F_R str> != not|more|less
+<F_L head-word> != %
+<F_R degree> = %
+<F_R COMPCONT_FLAG> != T
+<F_L COMPCONT_FLAG> != T
+=
+<F_L head-word BACKGROUND-FLAG> = T
+<F_L head-word advmod> += <F_R ref>
+<F_L ref links _advmod> += <F_R conj-member0>
+<F_L ref links _advmod> += <F_R conj-member1>
+
+; ------------------------------------------------------------- 	
+; Adverb usage in comparaitves 	
+; 	
+;e.g. He runs less quickly than John does. 	
+;Above ADV1 rule only makes _advmod(run, quickly) but we want to make infer that he 	
+;runs (quickly,less) 	
+;Following rule make the binary relationship _advmod(quickly, less) 	
+;Note- The above example sentence is ungrammatical. 	
+;But sentence is commonly used by non-native English speakers. 	
+;So below rule is adding support for common, ungrammatical sentences. 	
+#TemplateActionAlg
+ADV1_1
+<LAB> = \MVa
+<F_R str> != not|more|less
+<F_L head-word> != %
+<F_R degree> = %
+<F_L linkR2 F_R str> = more|less
+=
+<F_R ref links _compdeg> += <F_L linkR2 F_R ref>
+
+
+;e.g. He runs faster than John.
+;Above ADV1 rule won't make _advmod(run, fast) relationship due to "faster" is 
+;POS tagged with ".a-c" and relex-tagging.algs make it's degree as comparative.
+;Following rule make the  binary relationship _advmod(run, fast)
+
+#TemplateActionAlg
+ADV1_2
+<LAB> = \MVb
+=
+<F_L ref links _advmod> += <F_R ref>
+
+; These rules are doing nothing. Don't know why.
+#TemplateActionAlg
+COMPARATIVE_ER_TO_MORE1
+<LAB> = \Pa.*
+<F_R ref degree> = comparative
+=
+<F_R ref links _compdeg> += more
+
+#TemplateActionAlg
+COMPARATIVE_ER_TO_MORE2
+<LAB> = \Am.*
+<F_L ref degree> = comparative
+=
+<F_L ref links _compdeg> += more
+
+;
+; MVp : "find elsewhere" e.g.  "... than you can find elsewhere."
+; XXX should check if left-word is a verb?; if its not then its an amod .. !?
+; We need explicit right-word-not-prep check to handle the usual; MVp
+; cases.
+;
+; Created TO_IOBJ_FLAG relex-taggin file so as not to have to disallow all "to"'s from
+; advmod here, such as "to the nth degree." (AN)
+;
+
+#TemplateActionAlg
+ADV1_ONLY_IF_NOT_PREP
+<LAB> = \MVp\.*
+<F_R str> != not
+<F_L head-word> != %
+<F_R PREP-OBJ> = %
+<F_R Q_TO_IOBJ_FLAG> != T
+<F_R COMPCONT_FLAG> != T
+<F_L COMPCONT_FLAG> != T
+=
+<F_L head-word BACKGROUND-FLAG> = T
+<F_L head-word ref links _advmod> += <F_R ref>
+
+;
+; Jim quickly runs.
+; Jim is very tired.
+
+#TemplateActionAlg
+ADV2
+<LAB> = \E\.*|\EA\.*
+<LAB> != \Eq\.*|\EA[my]\.*|\EAh|\EAy
+<F_L str> != more|less|fewer
+<F_R head-word ref> != %
+=
+<F_R head-word BACKGROUND-FLAG> = T
+<F_R head-word ref links _advmod> += <F_L ref>
+
+;
+; The head-word can be blank in unusual or quirky parses, for example:
+; "There are also bogus plans" where "bogus" is the head, instead of "are".
+; the "bogus" head is handled below, the "are" head is handled above.
+;
+#TemplateActionAlg
+ADV2_HEADLESS
+<LAB> = \E\.*|\EA\.*
+<LAB> != \Eq\.*|\EA[my]\.*|\EAh|\EAy
+<F_L str> != more|less|fewer
+<F_R head-word ref> = %
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _advmod> += <F_L ref>
+
+;Jim runs very quickly  --   EE(very,quickly) 
+;Jim ate a very fat chicken -- has EA(very, fat)
+;"as.y" serves as an adverb, exactly as "more" does, 
+;which is the reason to omits "y" subscripts here
+;He is as smart		EAy+
+;He runs as quickly	EEy+
+
+#TemplateActionAlg
+SO_THAT_STRUCTURE
+<LAB> = \EExk
+=
+<F_L str> = so_that
+
+#TemplateActionAlg
+ADV3
+<LAB> = \EE\.* | EA
+<LAB> != \EEy|\EAy|\EEh|\EAh|\EExk
+<F_L str> != more|less
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _advmod> += <F_L ref>
+
+;EE connects adverbs to other adverbs. Some adverbs can
+;modify other adverbs ("very", "quite"); these carry EE+connectors.
+;e.g. I run more often than Ben.
+;"as.y" serves as an adverb, exactly as "more" does, 
+;which is the reason to omits "y" subscripts here
+;He is as smart		EAy+
+;He runs as quickly	EEy+
+
+#TemplateActionAlg
+ADV3_1
+<LAB> = \EE\.*
+<LAB> != \EEy|\EEh|\EExk|\EAy
+<F_R linkL0 LAB> = \MVa
+<F_L str> != more|less|fewer
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _advmod> += <F_L ref>
+
+#TemplateActionAlg
+SO_THAT_ADV
+<LAB> = \EExk
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _advmod> += <F_L ref>
+<F_L ref links _compmod> += <F_R linkL0 F_L linkR0 F_R ref>
+
+; The below is added to handle the how in 'how-of-degree questions' as
+; in 'how quickly does he run' which were previously being picked up by
+; the rules above and pre-empting the r2l advmod rule; they have their
+; own 2l rule.
+
+#TemplateActionAlg
+ADV3_3_HowDegQ
+<LAB> = \EEh|\EAh
+=
+<F_R BACKGROUND-FLAG> = T
+<F_R ref links _%howdeg> += <F_L ref>
+
+;
+#TemplateActionAlg
+ADV4
+; Often, Jim runs.
+<LAB> = \CO\.*
+<F_L obj> = %
+<F_L head-word> = %
+=
+<F_L POS> = adv
+<F_R head-word BACKGROUND-FLAG> = T
+<F_R head-word ref links _advmod> += <F_L ref>
+
+;
+; Fix up conjunctions; link not to the conjunction,
+; but to each conjoined modifier.
+; Example: "She handled it quickly and gracefully."
+;
+#TemplateActionAlg
+CONJ_ADVMOD
+<F_L ref links _advmod> != %
+<F_R conj> != %
+<LAB> != \VJ\.*|\RJ\.*|\AJ\.*
+=
+<F_L ref links _advmod> = %
+<F_L ref links _advmod> += <F_R conj member0 ref>
+<F_L ref links _advmod> += <F_R conj member1 ref>
+
+#TemplateActionAlg
+COMP_ADVMOD_1_1
+<LAB> = \EBmm|\MVm|\EAm|\Om
+<F_R str> = less | more
+=
+<F_L ref links _compdeg> += <F_R ref>
+
+;EC connects adverbs and comparative adjectives 
+;ECn is used for noun-focused comparative
+;EC connects adjectives and adverbs with comparative adverbs
+;e.g. It is much bigger
+#TemplateActionAlg
+COMP_ADVMOD_1_2
+<LAB> = \EC\.*
+=
+<F_R ref links _compdeg> += <F_L ref>
+
+#TemplateActionAlg
+;Pizza, which most people love, is not very healthy.
+;to handle binary relationship _advmod(very,not)
+COMP_ADVMOD_2_1
+<LAB> = \Paf\.*
+<F_L advmod> != %
+<F_R linkL1 F_L> != %
+=
+<F_R linkL1 F_L ref links _advmod> += <F_L advmod> 
+<F_L advmod> = %
+
+#TemplateActionAlg
+COMP_ADVMOD_2_2
+<LAB> = \Pa\.*
+<F_L advmod> != %
+=
+<F_R ref links _advmod> += <F_L advmod>
+<F_L advmod> = %
+
+;this has been replaced by _compdeg.  Just commenting it out for
+;the moment in case all is not well, then I can bring it back (AN Jan 2015)
+;#TemplateActionAlg
+;COMP_ADVMOD_3
+;<LAB> = \EAm
+;<F_L str> = less|more
+;=
+;<F_R advmod> += <F_L ref>
+
+;case "<F_L str> != much" was introduced to form relationships such as _advmod(more, much)
+;e.g. My sister is much more intelligent than me. 
+;would form a _advmod(more, much) relationship without above condition 
+#TemplateActionAlg
+COMP_ADVMOD_4
+<LAB> = \ECa
+<F_R str> = more|less
+<F_L str> != much
+=
+<F_R ref links _advmod> += <F_L ref>
+
+#TemplateActionAlg
+COMP_ADVMOD_5_1
+<LAB> = \Op
+<F_R advmod> != %
+=
+<F_L ref links _advmod> += <F_R advmod>
+<F_R advmod> = %
+
+#TemplateActionAlg
+ADVMOD_TO_LINKS
+<advmod> != %
+=
+<ref links _advmod> = <advmod>
+
+;/////////////////////////////////////////////////////////////////////////////
+;
+; Parataxis
+; "The guy, John said, left early in the morning."
+; _parataxis(leave, say)
+;
+#TemplateActionAlg
+PARATAXIS
+<LAB> = \Eq\.*
+<F_R head-word ref> != %
+=
+<F_R head-word BACKGROUND-FLAG> = T
+<F_R head-word ref links _parataxis> += <F_L ref>
+;
+;/////////////////////////////////////////////////////////////////////////////
+; We assume that the head-word has been identified by now.
+; Now, tag the head-word as "hypothetical" on questions.
+; For just right now, take a very conservative approach, and only tag
+; "who" questions. More will need to be tagged.
+;
+; The idea here is that the question "Who threw the ball?" implies that
+; something was thrown -- but this is hypothetical, since maybe nothing
+; was thrown.
+
+#TemplateActionAlg
+QUESTION_HEAD_HYP
+<F_R ref QUERY-TYPE> = who
+=
+<F_R head-word ref HYP> = T
+
+;/////////////////////////////////////////////////////////////////////////////
+;
+; NOUN MODIFICATION
+;
+;//////////////////////////////////////////////////////////////////////////
+
+#TemplateActionAlg
+NOUN-MOD
+<LAB> = \AN\.*
+=
+<F_R ref links _nn> += <F_L ref>
+<F_R BACKGROUND-FLAG> = T
+;
+;#TemplateActionAlg
+;NOUN-MODIF_ASSOC
+;<LAB> = \AN\.*
+;=
+;<F_L background ref name> = _association
+;<F_L background ref links _arg0> = <F_R ref>
+;<F_L background ref links _arg1> = <F_L ref>
+;<F_L background wall> = <F_L wall>
+;<F_L background BACKGROUND-FLAG> = T
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; POSSESSIVES aka GENITIVES
+;
+; Example: The students' rooms are large. Mike's sister laughs.
+;
+; We generate _poss for this, although _gen is also in common usage
+; for this relation.
+;
+;POSSR_TO_APOSTROPHE rule is moved up
+;#TemplateActionAlg
+;POSSR_TO_APOSTROPHE
+;<LAB> = \YS\.* |\YP\.*
+;=
+;<F_R possessor> += <F_L ref>
+;
+#TemplateActionAlg
+POSSR_TO_POSS
+<LAB> = \D\.*
+<F_L possessor> != %
+=
+<F_R ref links _poss> += <F_L possessor>
+;
+; Possessive pronouns
+;
+; Using the DP link which connects possessive determiners to gerunds.
+; Example: Your singing is ugly.
+#TemplateActionAlg
+POSSRDET_TO_GERUND
+<LAB> = \DP\.*
+=
+<F_R ref links _poss> += <F_L ref>
+;
+; Other Possessive Pronouns
+;
+#TemplateActionAlg
+POSSR_TO_DET
+<LAB> = \D\.*
+<F_L POSSESSIVE-FLAG> = T
+=
+<F_R ref links _poss> += <F_L ref>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; QUANTITY DETERMINERS
+;
+;////////////////////////////////////////////////////////////////////////////
+
+#TemplateActionAlg
+QUERY_INDEFINATE_DETERMINER1
+;identfies indefinate determiners for the purpose of queries.  For instance: 
+;In the sentence "Did Mike love a cat?" we want "cat" to be a variable so 
+;that reference resolution does not attempt to resolve it.  For a normal statement
+;(a non-query) we would want to resolve it.
+<LAB> = \D\.*|\DD\.*
+<F_L wall sentence_type> = QUERY
+<F_L str> = a|A|an|An|some|Some|any|Any
+=
+<F_L QUERY_INDEFINATE_DETERMINER_FLAG> = T
+
+#TemplateActionAlg
+QUERY_INDEFINATE_DETERMINER2
+; Identfies indefinate determiners for the purpose of queries.  For instance: 
+; In the sentence "Did Mike love a cat?" we want "cat" to be a variable so 
+; that reference resolution does not attempt to resolve it.  For a normal statement
+; (a non-query) we would want to resolve it.
+; This is a truth-query (yes/no answer)
+<LAB> = \D\.*|\DD\.*
+<F_L QUERY_INDEFINATE_DETERMINER_FLAG> = T
+=
+<F_R ref TRUTH-QUERY-FLAG> = T
+;
+; This is suppposed to protect against using "quantity" for comparatives: 
+; "More people like dogs than pigs", "Fewer people like pigs than dogs."
+;
+#TemplateActionAlg
+QUANTITY_EXCEPTION
+<LAB> = \D\.*|\DD\.*
+<F_L str> = more|More|less|Less|'s|fewer|Fewer|'|’s|’
+=
+<F_L QUANTITY-EXCEPTION-FLAG> = T
+
+; I commented out the alg below because "more" is not a quantity, it's a comparative -- these get compdeg (comparative degree or comparative amount).
+;
+;e.g. "I have more chairs than Ben." Here "more" is used to indicate the quantity of chairs
+;to form the relationship _quantity(chair, more)  \Dmcm and \Op connectors are used. 
+;Os- and Op- connectors mark nouns as being singular or plural. 
+;Ou|Oc marks nouns countable and uncountable
+;#TemplateActionAlg
+;QUANTIFIERS_1
+;<LAB> = \Dmcm |\Dmum
+;<F_L DETERMINER_FLAG> != T
+;<F_L QUERY_INDEFINATE_DETERMINER_FLAG> != T
+;<F_L POSSESSIVE-FLAG> != T
+;<F_R linkL0 LAB> = \Op|\Os|\Ou|\Oc
+;<F_L linkL0 LAB> != \ND
+;=
+;<F_R ref links _quantity> = <F_L ref>
+
+;
+; Currently, the IS-NUMBER-FLAG is used only by the Penn tagging algs.
+;
+#TemplateActionAlg
+NUMBER-1
+<LAB> = \D\.*|\NW\.*
+<LAB> != \D..y
+<LAB> != \Dmcn
+<F_L str> != whose
+<F_L DETERMINER_FLAG> != T
+<F_L QUERY_INDEFINATE_DETERMINER_FLAG> != T
+<F_L POSSESSIVE-FLAG> != T
+<F_L QUANTITY-EXCEPTION-FLAG> != T
+<F_L QUERY-FLAG> != T
+=
+<F_R ref links _quantity> = <F_L ref>
+<F_L IS-NUMBER-FLAG> = T
+
+;
+;#TemplateActionAlg
+;NUMBER-2
+;<LAB> = \AL\.*
+;=
+;<F_R temp_q> += <F_L ref>
+
+;#TemplateActionAlg
+;NUMBER-3
+;<LAB> = \D\.*
+;<F_L temp_q> != %
+;=
+;<F_R ref links _quantity> = <F_L temp_q>
+;<F_L temp_q> = %
+;The Dmcn determiner is used for numeric quantifiers
+;the "m" subscript is for "multiple", the "c" subscript is for "count"
+;so "n" here indicates "numeric". 
+;This connector has essentially the same meaning as the ND numeric determiner.
+
+#TemplateActionAlg
+NUMBER-NUMERIC-QUANTIFIERS
+<LAB> = \Dmcn 
+<F_L DETERMINER_FLAG> != T
+<F_L QUERY_INDEFINATE_DETERMINER_FLAG> != T
+<F_L POSSESSIVE-FLAG> != T
+<F_L QUANTITY-EXCEPTION-FLAG> != T
+=
+<F_R ref links _quantity> = <F_L ref>
+<F_L IS-NUMBER-FLAG> = T
+
+;
+;Different uses of the NI connectors are handled separately. 
+;
+;NUMBER-1a handles the following sentences 
+;"It is 6 m in length." -- _quantity(m, 6)
+;"It is from 6 m to 7 m in length." -- _quantity(m, 6), _quantity(m, 7)
+;
+;ND connects numbers with certain expressions which require numerical determiners:
+#TemplateActionAlg
+NUMBER-1a
+;<LAB> = \ND\.*|\NI\.*
+<LAB> = \ND\.*
+<F_R str> != am|pm|AM|PM|o'clock
+=
+<F_R ref links _quantity> += <F_L ref>
+<F_L IS-NUMBER-FLAG> = T
+<F_R NOT_NUMBER_FLAG> = T
+
+;
+;The three algorithmhs below (NUMERICAL_RANGES_L, NUMERICAL_RANGES_R, NUMBER-NUMERICAL_RANGES)
+;handle the sentence "It is from 6 to 7 m in length." -- _quantity(m, 6), _quantity(m, 7)
+;
+#TemplateActionAlg
+NUMERICAL_RANGES_L
+<LAB> = \NIf\.*
+<F_L NOT_NUMBER_FLAG> = %
+=
+<F_R numerical_ranges> += <F_L>
+
+;
+#TemplateActionAlg
+NUMERICAL_RANGES_R
+<LAB> = \NIt\.*
+<F_R NOT_NUMBER_FLAG> = %
+=
+<F_L numerical_ranges> += <F_R>
+
+;
+#TemplateActionAlg
+NUMBER-NUMERICAL_RANGES
+<F_R ref links _quantity> != %
+<F_L numerical_ranges> != %
+<F_L numerical_ranges member0 QUANTITY-EXCEPTION-FLAG> != T
+<F_L numerical_ranges member1 QUANTITY-EXCEPTION-FLAG> != T
+=
+<F_R ref links _quantity> = %
+<F_R ref links _quantity> = <F_L numerical_ranges member0 ref>
+<F_R ref links _quantity> += <F_L numerical_ranges member1 ref>
+<F_L numerical_ranges member0 IS-NUMBER-FLAG> = T
+<F_L numerical_ranges member1 IS-NUMBER-FLAG> = T
+
+;
+;Handles all other cases of NI connectors
+;
+#TemplateActionAlg
+NUMBER-1c
+<LAB> = \NI\.*
+<LAB> != \NIf\.*
+<LAB> != \NIt\.*
+<LAB> != \NIr\.*
+<F_L QUANTITY-EXCEPTION-FLAG> != T
+=
+<F_R ref links _quantity> = <F_L ref>
+<F_L IS-NUMBER-FLAG> = T
+;
+;
+;Converts all _quantity relations that have been created before to _time when the first argument of the relation is
+;AM,PM,am,pm,a.m.,or p.m. 
+;"She came at 6 pm." -- _time(pm,6).
+;"It lasted from 2 pm to 6 pm." -- _time(pm, 2) and _time(pm, 6).
+;"It lasted from 2 to 6 pm." -- _time(pm, 2) and _time(pm, 6).
+;
+;Commented out the section below because it was broken
+;TODO : review starting from Number-1 rule. Add test.
+;#TemplateActionAlg
+;TIME
+;<F_R ref name> = AM|PM|am|pm|a.m.|p.m.
+;=
+;<F_R ref links _time> = <F_R ref links _quantity>
+;<F_R ref links _quantity> = %
+;
+#TemplateActionAlg
+TIME-NEW
+<LAB> = \ND
+<F_R ref name> = AM|PM|am|pm|a.m.|p.m.
+=
+<F_R ref links _time> += <F_L ref>
+
+#TemplateActionAlg
+NUMBER-2
+<LAB> = \NM\.*
+=
+<F_L ref links _quantity> = <F_R ref>
+<F_R IS-NUMBER-FLAG> = T
+;
+#TemplateActionAlg
+NUMBER-MOD
+<LAB> = \EN\.*
+=
+<F_R ref links _quantity_mod> = <F_L ref>
+;
+#TemplateActionAlg
+NUMBER-MULT
+<LAB> = \NN\.*
+=
+<F_R ref links _quantity_mult> = <F_L ref>
+;
+; ---------------------------------------------------------------
+; Measures
+;
+; "the boy is 4 feet tall."
+#TemplateActionAlg
+MEASURE-SIZE
+<LAB> = \Ya\.*
+=
+<F_R ref links _measure_size> = <F_L ref>
+;
+; "the boy is 4 feet away."
+#TemplateActionAlg
+MEASURE-DISTANCE
+<LAB> = \Yd\.*
+=
+<F_R ref links _measure_distance> = <F_L ref>
+;
+;
+; "take these pilss 4 times a day."
+#TemplateActionAlg
+MEASURE-PER
+<LAB> = \Ys\.*
+=
+<F_L ref links _measure_per> = <F_R ref>
+;
+;
+; "the birthday boy is 12 years old" - _measure_time(old, years)
+#TemplateActionAlg
+MEASURE-TIME
+<LAB> = \Yt\.*
+=
+<F_R ref links _measure_time> = <F_L ref>
+;
+; Date and year identification. e.g. "It happened on December 3rd, 1990."
+; Currently, the IS-NUMBER-FLAG is used only by the penn pos tagging rules.
+#TemplateActionAlg
+DATE_DAY
+<LAB> = TM
+=
+<F_L ref links _date_day> = <F_R ref>
+<F_R IS-NUMBER-FLAG> = T
+;
+#TemplateActionAlg
+DATE_YEAR
+<LAB> = TY
+=
+<F_L ref links _date_year> = <F_R ref>
+<F_R IS-NUMBER-FLAG> = T
+;
+;/////////////////////////////////////////////////////////////////////////////
+; Other misc determiners ...
+;
+; determiners for  Bug #200082 
+;  "Ben ate those cookies." "Ben ate that cookie."
+;
+#TemplateActionAlg
+ind_deter
+<LAB> = \D\.*
+<F_R ref definite-FLAG> = T
+<F_R POS> = noun
+<F_L str> != the|THE|'s|'
+<F_L POSSESSIVE-FLAG> != T
+=
+<F_R ref links _det>= <F_L ref>
+
+#TemplateActionAlg
+QUESTION_DETERMINER
+<LAB> = \D\.*
+<F_R POS> = noun
+<F_L str> = which|Which|what|What
+=
+<F_R ref links _det> = <F_L ref>
+
+;/////////////////////////////////////////////////////////////////////////////
+; 
+;  COMPARATIVES
+;
+; XXX This sort of works, but is also broken, on the following sentences:
+; Use more pressure if the bleeding has not stopped after twenty minutes.
+; Cornwallis was expecting more troops to arrive on British ships.
+; The undergrads are gloomier than usual.
+; She eats more pasta.
+; 
+;//////////////////////////////////////////////////////////////////////////////
+
+;
+; Marks the comparative subject with a reference to the relation word
+;    Dave eats more/as_many cats than/as... (D**m/D**y)
+#TemplateActionAlg
+COMPARATIVE_RELATION1
+<LAB> = \D\.\.[my]\.*
+=
+<F_R comparative-relation-word> = <F_L>
+<F_R COMP-SUBJ-FLAG> = T
+
+; General case for than and than1
+#TemplateActionAlg
+COMPARATIVE_1
+<LAB> = \Ss
+<F_R POS> = verb
+<LAB> != \Sp
+=
+<F_R temp> += <F_L ref>
+
+#TemplateActionAlg
+COMPARATIVE_2
+<LAB> = \S\.*|\AN
+<LAB> != \Ss|\Sp
+=
+<F_R temp> += <F_L ref>
+
+#TemplateActionAlg
+COMPARATIVE_3
+<LAB> = \Ju
+=
+<F_L set_flag> = T
+<F_L temp> += <F_R ref>
+
+
+; XXX why is the below looking for past tense ??
+;the past tense makes no sense here for me.
+;I think, intension of one who wrote this is to STOP
+;forming a "than1()" relationship in sentences like below
+;He runs less quickly than John does.
+;He runs more miles than John does. 
+;I made a slight change in the rule "RELATION_THAN1_2" as a workaround for this
+#TemplateActionAlg
+COMPARATIVE_4
+<LAB> = \Ss
+<F_R POS> = verb
+;<F_R tense val> = past
+=
+<F_L temp1> += <F_R ref>
+
+;Rule for Dependency Relation "than"--> comp_temp is used for temporary storage purpose.
+#TemplateActionAlg
+RELATION_THAN_1
+<LAB> = \MVpn
+=
+<F_L comp_temp2> = %
+<F_L comp_temp2> = <F_R ref>
+;
+;e.g. It's much colder today than it was yesterday. --> than(today, yesterday)
+;case <F_L linkR2 LAB> = \MVpn is to avoid forming wrong relationships
+;e.g. Mike runs as fast as he did last year. would form than(year, year) without above condition.
+#TemplateActionAlg
+RELATION_THAN_2
+<LAB> = \MVpn
+<F_L comp_temp2> != %
+<F_L linkR2 LAB> = \MVpn
+=
+<F_R ref links than> += <F_L comp_temp2>
+<F_L comp_temp2> = %
+<F_L SET> = T
+#TemplateActionAlg
+RELATION_THAN_3
+<LAB> = \CX|\Bc|\Mpc|\Opc|\Upc|\MV\.*
+<F_L str> = than|as
+<F_R temp> != %
+=
+<F_L set> = T
+<F_L comp_temp> += <F_R temp>
+<F_R temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_4
+<LAB> = \O\.*|\C\.*|\S\.*|\U\.*|\Bc
+;<LAB> != \Osc
+<F_L str> = than|as
+<F_L set> != T
+=
+<F_L comp_temp> = %
+<F_L comp_temp> += <F_R ref>
+<F_R comp_temp> = %
+
+;e.g. He earns more than I expected
+;For this, "than" is given an Zc+ connector. 
+;Z is also used in subordinate "as"-phrases like "He left, as I expected".
+#TemplateActionAlg
+RELATION_THAN_4_1
+<LAB> = \Zc
+<F_R linkL1 LAB> = \S\.*
+<F_L str> = than|as
+<F_L set> != T
+=
+<F_L comp_temp> = %
+<F_L comp_temp> += <F_R linkL1 F_L ref>
+<F_R comp_temp> = %
+
+;J+ connects prepositions to their objects.
+;YS connects nouns to the possessive suffix "'s". "'s" then acts as a determiner
+;"possessor" tag is created by rule "POSSR_TO_APOSTROPHE"
+;e.g. Amen's hair is as long as Ben's.
+;case <F_L str> = to --> e.g. Jack’s hair color is similar to Ben's
+;case <F_L str> = of --> e.g. Jack’s hair color is similar to that of Ben’s.
+#TemplateActionAlg
+COMPARATIVE_3
+<LAB> = \J
+<F_R possessor> != %
+<F_L str> = as|of|to
+=
+<F_L comp_temp> += <F_R possessor>
+
+#TemplateActionAlg
+RELATION_THAN_5
+<LAB> = \Pafc
+<F_L str> = than|as
+=
+<F_L comp_temp_1> += <F_R ref>
+
+;e.g. Jack’s hair color is similar to that of Ben’s.
+;forming "than(Jack, Ben)" needs to link "Jack" and "Ben" through the "to that of" phrase
+#TemplateActionAlg
+RELATION_THAN_6_1
+<LAB> = \Mp|\Js
+<F_R comp_temp> != %
+=
+<F_L comp_temp> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_6_2
+<LAB> = \Js
+<F_L str> = as
+<F_L comp_temp> = %
+=
+<F_L comp_temp> += <F_R ref>
+
+#TemplateActionAlg
+RELATION_THAN_6_3
+<LAB> = \MVt
+<F_R comp_temp_1> != %
+=
+<F_L ref links than> += <F_R comp_temp_1>
+<F_R comp_temp_1> = %
+
+;MVz is used in comparatives with "As" 
+;e.g. The snail is running  exactly as fast as the cheetah.
+;MVp e.g.  Jack’s hair color is similar to Ben's
+#TemplateActionAlg
+RELATION_THAN_7
+<LAB> = \MVt\.*|\MVp\.*|\MVz\.*
+<F_R comp_temp> != %
+<F_L SET> != T
+=
+<F_L comp_temp> = %
+<F_L comp_temp> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_8
+;<LAB> = \Pa\.*|\I\.*
+<LAB> = \P\.*|\I\.*
+<F_R comp_temp> != %
+=
+<F_L comp_temp> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_9_1
+<LAB> = \Paf
+<F_R comp_temp> != %
+=
+<F_L comp_var> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+;differentiate forming "than()" relationships when connected with "Ma" links
+;e.g. I find maths lessons more enjoyable than science lessons. vs I find maths more difficult than science.
+;
+#TemplateActionAlg
+RELATION_THAN_9_2
+<LAB> = \Ma
+<F_L linkL0 LAB> = \Opn
+<F_R comp_temp> != %
+=
+<F_L comp_var> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_10
+<LAB> = \Opn
+<F_R comp_var> != %
+=
+<F_R SET> = T
+<F_L comp_var> += <F_R comp_var>
+<F_R comp_var> = %
+
+#TemplateActionAlg
+RELATION_THAN_11
+<LAB> = \MVp
+<F_L comp_temp> != %
+<F_R set_flag> = T
+=
+<F_R temp> = %
+<F_R comp_var> += <F_L comp_temp>
+<F_L comp_temp> = %
+;
+
+#TemplateActionAlg
+RELATION_THAN_12
+<LAB> =\Ma
+<F_R comp_temp> != %
+<F_L SET> != T
+=
+<F_L ref links than> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_13
+<LAB> = \Ju|\O\.*
+<F_L comp_var> != %
+=
+<F_L SET> = T
+<F_R ref links than> += <F_L comp_var>
+<F_L comp_var> = %
+
+; XXX FIXME WTF? .. why is the below looking at gender !!??
+#TemplateActionAlg
+RELATION_THAN_14
+<LAB> = \MV\.*|\Usc\.*|\Os\.*
+<F_L str> = than|as
+<F_R str> != in|on 
+; <F_R GENDER> != masculine
+=
+<F_L comp_temp1> += <F_R ref>
+;
+
+#TemplateActionAlg
+RELATION_THAN_15
+<LAB> = \MVt\.*
+<F_R comp_temp1> != %
+=
+<F_L comp_temp1> += <F_R comp_temp1>
+<F_R comp_temp1> = %
+;
+
+#TemplateActionAlg
+RELATION_THAN_16
+<LAB> =\Ou\.*
+<F_L comp_temp1> != %
+=
+<F_R ref links than> += <F_L comp_temp1>
+<F_L comp_temp1> = %
+<F_L comp_temp> = %
+;
+;Case <F_R linkL1 LAB> != \Dmcm 
+;e.g. I have fewer chairs than Ben. So this this sentence we want to form the than()
+;relationship using rule "RELATION_THAN_17_2". The rule "RELATION_THAN_17_1" would form 
+;than(chair, Ben) which is wrong, where correct form should be than(I, Ben) 
+
+#TemplateActionAlg
+RELATION_THAN_17_1
+<LAB> = \Op
+<F_L comp_temp> != %
+<F_L SET> != T
+<F_R linkL1 LAB> != \Dmcm
+=
+<F_R ref links than> += <F_L comp_temp>
+<F_L comp_temp> = %
+<F_L comp_temp1> = %
+
+;YS connects nouns to the possessive suffix "'s". "'s" then acts 
+;as a determiner, making a D connection to a noun.
+;e.g. Jane's dog is black
+#TemplateActionAlg
+RELATION_THAN_17_2
+<LAB> = \Ss
+<F_R comp_temp> != %
+<F_L linkL1 LAB> = \D\.*
+<F_L linkL1 F_L possessor> != %
+<F_R SET> != T
+=
+<F_L linkL1 F_L possessor links than> += <F_R comp_temp>
+<F_R comp_temp> = %
+
+#TemplateActionAlg
+RELATION_THAN_17_3
+<LAB> = \S\.*|\SX
+<F_R comp_temp> != %
+<F_R SET> != T
+=
+<F_L ref links than> += <F_R comp_temp>
+<F_R comp_temp> = %
+<F_R comp_temp1> = %
+;
+
+#TemplateActionAlg
+RELATION_THAN_18
+<LAB> = \MVa
+<F_L comp_temp1> != %
+=
+<F_R ref links than> += <F_L comp_temp1>
+<F_L comp_temp1> = %
+
+;
+;Rule for Dependency Relation "than1".comp_temp1 is used for temporary storage purpose.
+#TemplateActionAlg
+RELATION_THAN1_1
+<LAB> = \Paf\.*
+<LAB> != \Pafc
+<F_L str> = than
+=
+<F_L comp_temp1> += <F_R ref>
+
+#TemplateActionAlg
+RELATION_THAN1_2
+<LAB> = \C\.* 
+<LAB> != \Ct\.*
+<F_R temp1> != %
+=
+<F_L comp_temp1> += <F_R temp1>
+<F_R temp1> = %
+
+#TemplateActionAlg
+RELATION_THAN1_3
+<LAB> = \MVt\.*
+<F_R comp_temp1> != %
+=
+<F_L ref links than1> += <F_R comp_temp1>
+<F_R comp_temp1> = %
+
+;
+;END OF THAN AND THAN1
+;
+;#TemplateActionAlg
+;COMPARATIVE_OBJ2
+;<LAB> = \MV[tz]\.*
+;<F_R comparative-obj-word> != %
+;=
+;<F_L comparative-obj-word> = <F_R comparative-obj-word>
+;
+; Brings the object and comparative 2nd-part into the comparative subject
+; But only if there's a 2nd part -- "She likes more pasta" doesn't have
+; have a comparative object.
+;
+;#TemplateActionAlg
+;COMPARATIVE_OBJ3A
+;<LAB> = \O\.*
+;<F_R COMP-SUBJ-FLAG> = T
+;<F_L comparative-obj-word> != %
+;=
+;<F_R comparative-cvar name> = _$cVar
+;<F_R comparative-cvar links _$crVar> = <F_L comparative-obj-word ref>
+;
+; Use the prep alg to handle the rest.
+;
+#PrepositionLinkAlg
+COMPARATIVE_OBJECT_FINAL
+<COMP-SUBJ-FLAG> = T
+<this> = $modified
+<comparative-relation-word ref name> = $prep
+<comparative-relation-word> = $prep_source
+<comparative-cvar> = $prep_obj
+=
+
+;
+; Send (copy) prep-links to links
+;
+#TemplateActionAlg
+PREP_TO_LINKS
+<ref prep-links> != %
+=
+<ref links> <= <ref prep-links>
+
+;
+; Extracting comparative relations from Non-equal-gradable sentences such as 
+; "He is more/less intelligent than John"
+; 'temp' is used to denote the label is temporary 
+; relWord-temp = a temporary element carrying the relation Word type more|less
+; feat-temp = a temporary element carrying the feature on which the comparison is made on.
+; is-temp = a temporary element carrying the subject for to-be verbs
+; "is_set" =  used to point that a comparative form has been found and set 
+
+#TemplateActionAlg
+MORE_OR_LESS1a
+<LAB> = \EAm|\EEm|\Dm\.*m
+<F_L str> = more|less|many|much|little|fewer
+=
+<F_R relWord-temp> += <F_L str>
+
+#TemplateActionAlg
+MORE_OR_LESS1b
+<LAB> = \MVm|\Om\.*|EBmm
+<F_R str> = more|less
+=
+<F_L relWord-temp> += <F_R str>
+
+#TemplateActionAlg
+;e.g. I find maths lessons more enjoyable than science lessons.
+;relAdj-temp creates the temp adjective for F_R of Opn connector
+MORE_OR_LESS1c
+<LAB> = \Opn
+=
+<F_R relAdj-temp> += <F_L linkR1 F_R ref>
+
+;SX is used to connect the first person pronoun "I" to the verbs "was" and "am".
+#TemplateActionAlg
+TO_BE_TEMP
+<LAB> = \S\.*|\SX
+<F_R str> = is|was|be|am
+=
+<F_R is-temp> += <F_L ref>
+
+#TemplateActionAlg
+MORE_OR_LESS7a_1
+<LAB> = \Pa\.*
+<F_L is-temp> != %
+<F_R relWord-temp> != %
+<F_R relWord-temp> = more|many|much|less|little
+=
+<F_R ref links _comparative> += <F_L is-temp>
+<F_L is-temp> = %
+<F_R relWord-temp> = %
+
+;e.g. The dog was more/less hungry than angry. forming _comparative(hungry, dog) relationship
+#TemplateActionAlg
+MORE_OR_LESS7a_2
+<LAB> = \Pa\.*
+<F_L is-temp> != %
+<F_L relWord-temp> != %
+<F_L relWord-temp> = more|many|much|less|little
+=
+<F_R ref links _comparative> += <F_L is-temp>
+<F_L is-temp> = %
+<F_R relWord-temp> = %
+
+#TemplateActionAlg
+MORE_OR_LESS7b1
+<LAB> = \MVa|\Ou\.*
+<F_R relWord-temp> != %
+<F_R relWord-temp> = more|many|much|less|little|fewer
+=
+<F_L ref links _comparative> += <F_R ref>
+<F_R relWord-temp> = %
+
+#TemplateActionAlg
+MORE_OR_LESS7b2
+<LAB> = \Op\.*
+<F_L relWord-temp> = more|many|much|less|little|fewer
+=
+<F_L ref links _comparative> += <F_R ref>
+
+#TemplateActionAlg
+MORE_OR_LESS7b3
+<LAB> = \Op\.*
+<F_R relWord-temp> = more|many|much|less|little|fewer
+=
+<F_L ref links _comparative> += <F_R ref>
+
+
+#TemplateActionAlg
+MORE_OR_LESS7c
+<LAB> = \Opn|\MVa|\Oun
+<F_L relWord-temp> != %
+<F_R str> != much
+<F_L relWord-temp> = more|many|much|less|little
+=
+<F_L ref links _comparative> += <F_R ref>
+<F_L relWord-temp> = %
+<F_L relWord-temp> = is_set
+
+#TemplateActionAlg
+MORE_OR_LESS7d
+<LAB> = \Om\.*
+<F_L relWord-temp> != is_set
+<F_R str> = more|many|much|less|little
+=
+<F_L ref links _comparative> += <F_R ref>
+
+;e.g. I find maths lessons more enjoyable than science lessons.
+;creating "_comparative(enjoyable, maths)" relationship
+#TemplateActionAlg
+MORE_OR_LESS7e
+<LAB> = \Ma
+<F_R relWord-temp> != %
+<F_L relAdj-temp> != %
+<F_R relWord-temp> = more|many|much|less|little
+=
+<F_R ref links _comparative> += <F_L relAdj-temp>
+<F_R relWord-temp> = %
+<F_L relAdj-temp> = %
+
+;e.g. I find science more difficult than mathematics. _comparative(difficult, science)
+#TemplateActionAlg
+MORE_OR_LESS7f
+<LAB> = \Ma
+<F_R relWord-temp> != %
+<F_R relWord-temp> = more|many|much|less|little
+=
+<F_R ref links _comparative> += <F_L ref>
+<F_R relWord-temp> = %
+
+;Creating more() binary relationships when there is no "more" terms in the sentence
+;A few other words can also perform the function of "more",marking a phrase as the left half of a comparative.
+;Theseinclude adjectives such as "bigger" and adverbs such as "better" and "further".
+;So these these adjectives and adverbs are given special subscripts
+;e.g. He is faster than John. (is,faster ) adjective is given special connecter "Pam"
+;case--> <LAB> = \Pafm e.g. Her great-grandson is nicer than her great-granddaughter."
+#TemplateActionAlg
+MORE_OR_LESS7f1
+<LAB> = \Pam|\Pafm
+<F_L str> = is|are|be|was|am
+<F_L is-temp> != %
+=
+<F_R ref links _comparative> += <F_L is-temp>
+<F_L is-temp> = %
+
+#TemplateActionAlg
+NO_MORE_OR_LESS
+<LAB> = \MVb
+<F_R degree> = comparative
+=
+<F_L ref links _comparative> += <F_R ref>
+
+#TemplateActionAlg
+NO_MODIFIERa
+<LAB> = \MVm
+<F_L relWord-temp> = %
+=
+<F_L ref links _comparative> += <F_R ref>
+
+;#TemplateActionAlg
+;NO_MODIFIERb
+;<LAB> = \MVm
+;<F_L relWord-temp> != %
+;=
+;<F_L ref links _comparative> += <F_L relWord-temp>
+
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; NEGATIVITY
+;
+; By using '+=' we can recognize double negatives by counting the T's
+; "negation" points at the actual word that is the negative.
+#TemplateActionAlg
+NEGATIVE1
+<LAB> = \N\.*|\EB\.*
+<F_R str> = not
+<F_L tense first_verb head-word conj> = %
+=
+<F_L tense first_verb head-word ref NEGATIVE-FLAG> += T
+<F_L tense first_verb head-word negation> += <F_R>
+;
+;negative in the case of conjunction
+;example- "Summer school is not easy but difficult."
+;NEGATIVE-FLAG(easy, T)
+#TemplateActionAlg
+NEGATIVE_CONJ
+<LAB> = \N\.*|\EB\.*
+<F_R str> = not
+<F_L tense first_verb head-word conj> != %
+=
+<F_L tense first_verb head-word ref NEGATIVE-FLAG> = %
+<F_L tense first_verb head-word conj member0 ref NEGATIVE-FLAG> += T
+<F_L tense first_verb head-word conj member0 negation> += <F_R>
+;
+#TemplateActionAlg
+NEGATIVE_CONTR1
+<LAB> = \I\.*|\PP\.*|\P\.*
+<F_L orig_str> = didn't|doesn't|don't|won't|weren't|aren't|isn't|wasn't|hasn't|haven't|hadn't
+;<F_L tense first_verb head-word ref COPULA-FLAG> != T
+<F_L tense first_verb head-word name> != _%copula
+=
+<F_R tense first_verb head-word ref NEGATIVE-FLAG> += T
+;
+#TemplateActionAlg
+NEGATIVE_CONTR2
+<LAB> = \P\.*
+<F_L orig_str> = weren't|aren't|isn't|wasn't
+;<F_L tense first_verb head-word ref COPULA-FLAG> = T
+<F_L tense first_verb head-word name> = _%copula
+=
+<F_L tense first_verb head-word ref NEGATIVE-FLAG> += T
+;
+#TemplateActionAlg
+NEGATIVE_CONTR3
+<LAB> = \I\.*|\O\.*
+<F_L orig_str> = can't|cannot|wouldn't|shouldn't|couldn't|hadn't|haven't|hasn't
+=
+<F_L tense first_verb head-word ref NEGATIVE-FLAG> += T
+;
+; "negation" points at the actual word that is the negative.
+;
+#TemplateActionAlg
+NEGATIVE_INF1
+<LAB> = \NT\.*
+<F_L str> = not
+=
+<F_R NEG-SYN-FLAG> = T
+<F_R negation> = <F_L>
+;
+#TemplateActionAlg
+NEGATIVE_INF2
+<LAB> = \I\.*
+<F_L NEG-SYN-FLAG> = T
+=
+<F_R tense first_verb head-word ref NEGATIVE-FLAG> += T
+<F_R tense first_verb head-word negation> += <F_L negation>
+;
+; Currently, RelEx tags all negative assertions as hypothetical; for
+; example: “John wasn't there” or “that isn't the case”. The linguistic
+; reasoning to support this is not well-grounded, but is based on the
+; notion that such negative assertions are generated as replies to
+; speculative questions, and thus are inherently argumentative, inheriting
+; the speculative nature of the question. A proper study, based on corpus
+; linguistics principles, might clarify whether such tagging is indeed
+; semantically appropriate. More importantly, this case illustrates the
+; limits of a purely syntactic approach to identification of
+; speculative/hypothetical statements. The speculative nature of the
+; sentence is no longer readily appearent from its grammatical
+; construction; the context of the surrounding paragraphs or dialog
+; provides a semantic backdrop that is necessary to properly interpret the
+; remark.
+;
+#TemplateActionAlg
+NEGATIVE-IS-HYP
+<NEGATIVE-FLAG> = T
+<HYP> = %
+=
+<HYP> = T
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; PARENTHETICALS (MX, GN)
+; Also various RELATIVE PREPS
+;
+;
+#TemplateActionAlg
+PAREN_1
+<LAB> = \MX.[rj]\.*
+;The dog, who barked, ...
+=
+<F_R head-word BACKGROUND-FLAG> = T
+;
+; Apposition of a noun phrase
+; "My friend Alice" or "The bird, a robin"
+;
+#TemplateActionAlg
+APPO_RIGHT
+<LAB> = MX|MXs|MXp
+=
+<F_L ref links _appo> += <F_R ref>
+;<F_R background ref name> = _inheritance
+;<F_R background ref links _arg0> = <F_L ref>
+;<F_R background ref links _arg1> = <F_R ref>
+;<F_R background wall> = <F_R wall>
+;<F_R background BACKGROUND-FLAG> = T
+;
+; If its on the left, we'll call it a noun-modifier instead of an 
+; appostive.  Thus, "Senator Smith" gets marked as _nn(Smith, Senator)
+; while "Smith, a Senator" gets marked as _appo(Smith, Senator). The
+; reason for this somewhat inconsistent usage is because other phrases,
+; such as "goal line", get marked as _nn(line, goal). So it would seem
+; to make more sense to use _nn here ... but this is certainly debatable
+; and subject to change.
+; So: per WP: "a non-restrictive appositive must be preceded or set off 
+; by commas, a restrictive appositive is not", we use appo only for the
+; non-restrictive appo.
+;
+#TemplateActionAlg
+APPO_LEFT
+<LAB> = \GN\.*
+=
+<F_R ref links _nn> += <F_L ref>
+;<F_R ref links _appo> += <F_L ref>
+;
+; /////////////////////////////////////////////////////////////////////
+;
+; Conjunction identification and processing.
+; Do this after subject, object, etc. have been put into place.
+; This will look for conjunctions sitting in the place where a noun
+; etc. would normally sit, and boild them down.
+;
+; Merge and-links
+; result is conj_and(Jack, Jill)
+;
+#TemplateActionAlg
+CONJ_AND_MERGE
+<conj member0> != %
+<conj member1> != %
+<str> = and |,
+=
+<conj member0 ref links conj_and> = <conj member1 ref>
+
+; Merge or-links
+; result is conj_or(Jack, Jill)
+;
+#TemplateActionAlg
+CONJ_EITHER_OR_MERGE
+<LAB> = \XJo
+<F_R conj member0> != %
+<F_R conj member1> != %
+=
+<F_R either> = T
+<F_R conj member0 ref links conj_either_or> = <F_R conj member1 ref>
+#TemplateActionAlg
+CONJ_OR_MERGE
+<either> != T
+<conj member0> != %
+<conj member1> != %
+<str> = or
+=
+<conj member0 ref links conj_or> = <conj member1 ref>
+#TemplateActionAlg
+CONJ_NEITHER_NOR_MERGE
+<LAB> = \XJn
+<F_R conj member0> != %
+<F_R conj member1> != %
+=
+<F_R conj member0 ref links conj_neither_nor> = <F_R conj member1 ref>
+;
+#TemplateActionAlg
+CONJ_NOR_MERGE
+<conj member0> != %
+<conj member1> != %
+<str> = but
+=
+<conj member0 ref links conj_but> = <conj member1 ref>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+; HYPOTHETICAL
+;
+; RelEx treats all clausal constructions as inhrently speculative:
+; this seems semantically reasonable, as there is always a claimant who
+; may not be accurately reporting the facts. 
+; _to-do: "John says you like swimming" John may be lying or misinformed.
+; _to-be: "Mary says the rose smelled sweet" likewise.
+;
+#TemplateActionAlg
+HYP-TO-DO
+<to-do> != %
+=
+<to-do HYP> = T
+;
+#TemplateActionAlg
+HYP-TO-BE
+<_to-be> != %
+=
+<_to-be HYP> = T
+;
+#TemplateActionAlg
+HYP-REP
+<_rep> != %
+=
+<_rep HYP> = T
+;
+#TemplateActionAlg
+HYP-THAT2
+<that> != %
+=
+<that HYP> = T
+;
+#TemplateActionAlg
+HYP-IF
+<if> != %
+=
+<if HYP> = T
+;
+; /////////////////////////////////////////////////////////////////////
+;
+; SEND BACKGROUND INFO TO WALL
+;
+; XXX FIXME -- sometimes background flag is set, but ref is null.
+; I don't get it. 
+;
+#TemplateActionAlg
+WALL_BACKGROUND
+<BACKGROUND-FLAG> = T
+<ref> != %
+=
+<wall background> += <ref>
+;
+;/////////////////////////////////////////////////////////////////////////////
+;
+;  SEND HEAD-WORD to HEAD
+;
+;
+;
+#TemplateActionAlg
+HEAD_WORD_REF_TO_HEAD
+<head-word ref> = $R
+=
+<head> = $R
+;
+#TemplateActionAlg
+HEAD-WORD_GROUP0
+<head-word member0 ref> = $R
+=
+<head> += $R
+;
+#TemplateActionAlg
+HEAD-WORD_GROUP1
+<head-word member1 ref> = $R
+=
+<head> += $R
+;
+#TemplateActionAlg
+HEAD-WORD_GROUP2
+<head-word member2 ref> = $R
+=
+<head> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP3
+<head-word member3 ref> = $R
+=
+<head> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP4
+<head-word member4 ref> = $R
+=
+<head> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP5
+<head-word member5 ref> = $R
+=
+<head> += $R
+#TemplateActionAlg
+HEAD-WORD_GROUP6
+<head-word member6 ref> = $R
+=
+<head> += $R
+;
+;
+;
+;
+; Copula questions: "What is yarn?", "Who is Lincoln?"
+;
+#TemplateActionAlg
+COPULA_QUESTION1
+<head name> = be
+<head links _subj name> = _$qVar
+<head links _obj> = $O
+=
+<head> = %
+<head> = $O
+<head COPULA-QUESTION-FLAG> = T
+
+; For cases such "Where did hugo plan to go?" we force the location link upon go
+#TemplateActionAlg
+WHERE_HACK_FOR_QP
+<LAB> = Q|Rw
+<F_L str> = Where|where
+<F_L ref QUERY-TYPE> = where
+<F_L head-question-word ref links _%atLocation> != %
+<F_L head-question-word ref links _to-do> != %
+;<F_L head-question-word> != %
+=
+<F_L head-question-word ref links _to-do links _%atLocation> = <F_L head-question-word ref links _%atLocation>
+<F_L head-question-word ref links _%atLocation> = %
+;
+; ////////////////////////////////////////////////////////////////////////
+;
+; Attempt to make "The dog will eat it" and "The dog is going to eat it"
+; yield the same relex output. This requires dropping _to-do(go,eat) and 
+; the _subj(go,dog) from the list of exported relations. What remains is
+; _subj(eat,dog) _obj(eat,it) HYP(eat,T)
+;
+#TemplateActionAlg
+WILL_TODO
+<links _to-do> != %
+<links _subj> != %
+<name> = go
+<HYP> = T
+<tense> = present_progressive
+=
+<DROP-REF-FLAG> = T
+;
+; Twiddle the tense of the infinitive. So, "is going to eat", eat is
+; marked as "infinitve", but since we dropped "is going", the semantic
+; tense of "eat" is "future".  We look at word order for this: two NEXT
+; word connections (to skip over particle "to").
+#TemplateActionAlg
+WILL_TODO_FUTURE
+<head DROP-REF-FLAG> = T
+<NEXT NEXT head tense> = infinitive
+=
+<NEXT NEXT head tense> = future
+;
+; ////////////////////////////////////////////////////////////////////////
+;
+; Final ref cleanup
+;
+;
+; Copy part-of-speach to where its visible.
+;
+#TemplateActionAlg
+COPY_POS_TO_REF
+<POS> != %
+=
+<ref pos> = <POS>
+;
+; Copy tense to where its visible.
+; We do this since we want to tense-tag some verbs that never
+; make it to the head e.g. misc copular/predicative-adjective verbs.
+; (usually, this is just "to be"...)
+; 
+#TemplateActionAlg
+COPY_TENSE_TO_REF
+<tense val> != %
+<ref tense> != %
+=
+<ref tense> = <tense val>
+;
+; Drop all tagged refs.
+;
+#TemplateActionAlg
+DROP_REF
+<ref DROP-REF-FLAG> = T
+=
+<ref> = %
+;
+#TemplateActionAlg
+CLEAN_UP_BAD_REFS1
+<ref name> != %
+=
+<GOOD-REF-FLAG> = T
+;
+#TemplateActionAlg
+CLEAN_UP_BAD_REFS2
+<GOOD-REF-FLAG> != T
+<ref> != %
+=
+<ref> = %
+;#TemplateActionAlg
+;CLEAN_UP_BAD_REFS3
+;<ref BAD> = T
+;=
+;<ref> = %
+;
+;/////////////////////////////////////////////////////////////////////////////
+;/////////////////////////////// END OF FILE /////////////////////////////////
+;/////////////////////////////////////////////////////////////////////////////

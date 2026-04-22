@@ -1,0 +1,684 @@
+--------------------------------------------------------------------------------
+-- OpenCog Collection - System State Formal Specification (Z++)
+--
+-- This specification formalizes the overall system state, component integration,
+-- and global state invariants of the OpenCog Collection.
+--
+-- Author: Formal Methods Agent
+-- Date: 2025-11-06
+--------------------------------------------------------------------------------
+
+-- Import data model definitions
+include data_model.zpp
+
+--------------------------------------------------------------------------------
+-- SECTION 1: Component State Schemas
+--------------------------------------------------------------------------------
+
+-- AtomSpace subsystem state
+schema AtomSpaceSubsystem
+  instances: UUID ⇸ AtomSpace
+  defaultInstance: UUID
+  storageBackends: UUID ⇸ StorageNode
+  queryCache: QueryCache
+  statistics: AtomSpaceStatistics
+where
+  -- Default instance must exist
+  defaultInstance ∈ dom instances
+  
+  -- All instances must have valid UUIDs
+  ∀ uuid: UUID | uuid ∈ dom instances ⇒ uuid ≠ 0
+  
+  -- Storage backends are optional but must be valid if present
+  ∀ sid: UUID; storage: StorageNode | (sid, storage) ∈ storageBackends ⇒
+    storage.connected = true
+end
+
+-- Query cache for performance optimization
+schema QueryCache
+  cachedQueries: QueryPattern ⇸ QueryResult
+  cacheHits: ℕ
+  cacheMisses: ℕ
+  maxCacheSize: ℕ
+where
+  -- Cache size must not exceed maximum
+  #cachedQueries ≤ maxCacheSize
+  
+  -- Hit rate can be calculated from hits and misses
+  cacheHits + cacheMisses > 0 ⇒ 
+    cacheHits ≤ cacheHits + cacheMisses
+end
+
+QueryPattern ::= String  -- Simplified representation
+QueryResult ::= seq UUID  -- Result atom UUIDs
+
+-- AtomSpace usage statistics
+schema AtomSpaceStatistics
+  totalAtoms: ℕ
+  totalLinks: ℕ
+  totalNodes: ℕ
+  queriesExecuted: ℕ
+  averageQueryTime: ℝ  -- milliseconds
+  memoryUsage: ℕ  -- bytes
+where
+  -- Links + Nodes = Total Atoms
+  totalAtoms = totalLinks + totalNodes
+  
+  -- Query time must be non-negative
+  averageQueryTime ≥ 0
+  
+  -- Memory usage must be reasonable
+  memoryUsage > 0
+end
+
+-- CogServer subsystem state
+schema CogServerSubsystem
+  server: CogServer
+  activeUsers: ℙ String
+  requestQueue: seq Request
+  responseQueue: seq Response
+  networkStatistics: NetworkStatistics
+where
+  -- Active users must correspond to authenticated connections
+  activeUsers = {conn.authenticatedUser | 
+                 conn: Connection | 
+                 conn ∈ ran server.connections ∧ 
+                 conn.state = AUTHENTICATED ∧
+                 conn.authenticatedUser ≠ ""}
+  
+  -- Request and response queues must be bounded
+  #requestQueue ≤ 10000
+  #responseQueue ≤ 10000
+end
+
+-- Network request representation
+schema Request
+  requestID: UUID
+  connectionID: ConnectionID
+  command: String
+  receivedAt: Timestamp
+  status: RequestStatus
+where
+  receivedAt > 0
+  command ≠ ""
+end
+
+RequestStatus ::= {PENDING, PROCESSING, COMPLETED, FAILED}
+
+-- Network response representation
+schema Response
+  responseID: UUID
+  requestID: UUID
+  connectionID: ConnectionID
+  result: String
+  sentAt: Timestamp
+where
+  sentAt > 0
+end
+
+-- Network performance statistics
+schema NetworkStatistics
+  totalRequests: ℕ
+  successfulRequests: ℕ
+  failedRequests: ℕ
+  averageResponseTime: ℝ  -- milliseconds
+  bytesReceived: ℕ
+  bytesSent: ℕ
+  activeConnections: ℕ
+where
+  -- Successful + Failed ≤ Total
+  successfulRequests + failedRequests ≤ totalRequests
+  
+  -- Response time must be non-negative
+  averageResponseTime ≥ 0
+  
+  -- Network traffic must be non-negative
+  bytesReceived ≥ 0 ∧ bytesSent ≥ 0
+end
+
+-- CogGML subsystem state
+schema CogGMLSubsystem
+  microkernel: Microkernel
+  coordinator: ShardCoordinator
+  shardPool: ℙ UUID  -- Available shards
+  executionMetrics: ExecutionMetrics
+where
+  -- All shards in pool must be registered with coordinator
+  shardPool ⊆ dom coordinator.shards
+  
+  -- At least one shard should exist for meaningful operation
+  #shardPool > 0
+end
+
+-- Microkernel state
+schema Microkernel
+  initialized: 𝔹
+  threadPool: ℙ ThreadID
+  taskQueue: seq CognitiveTask
+  maxConcurrentTasks: ℕ
+where
+  -- Thread pool size should not exceed reasonable limits
+  #threadPool ≤ 1000
+  
+  -- Task queue should be bounded
+  #taskQueue ≤ 10000
+  
+  -- Cannot have more concurrent tasks than threads
+  maxConcurrentTasks ≤ #threadPool
+end
+
+ThreadID ::= ℕ
+
+-- Cognitive task representation
+schema CognitiveTask
+  taskID: UUID
+  assignedShard: UUID
+  taskType: TaskType
+  status: TaskStatus
+  createdAt: Timestamp
+  completedAt: Timestamp  -- 0 if not completed
+where
+  -- Temporal consistency
+  completedAt = 0 ∨ completedAt ≥ createdAt
+  
+  -- Completed tasks must have COMPLETED status
+  completedAt > 0 ⇒ status = COMPLETED
+end
+
+TaskType ::= {REASONING, LEARNING, PATTERN_MATCHING, INFERENCE, OPTIMIZATION}
+TaskStatus ::= {QUEUED, ASSIGNED, RUNNING, COMPLETED, FAILED}
+
+-- Execution performance metrics
+schema ExecutionMetrics
+  tasksCompleted: ℕ
+  tasksFailed: ℕ
+  averageExecutionTime: ℝ  -- milliseconds
+  cpuUtilization: {r: ℝ | 0 ≤ r ≤ 1}  -- 0 to 1
+  memoryUtilization: {r: ℝ | 0 ≤ r ≤ 1}  -- 0 to 1
+where
+  -- Utilization must be bounded
+  0 ≤ cpuUtilization ≤ 1
+  0 ≤ memoryUtilization ≤ 1
+  
+  -- Execution time must be non-negative
+  averageExecutionTime ≥ 0
+end
+
+-- CogSelf subsystem state
+schema CogSelfSubsystem
+  framework: CogSelf
+  assessmentHistory: seq AGIAssessment
+  autonomousMode: 𝔹
+  lastSelfImprovement: Timestamp
+where
+  -- Assessment history should track progress over time
+  #assessmentHistory > 0 ⇒
+    ∀ i: ℕ | i < #assessmentHistory - 1 ⇒
+      assessmentHistoryᵢ.timestamp < assessmentHistoryᵢ₊₁.timestamp
+end
+
+-- AGI progress assessment snapshot
+schema AGIAssessment
+  assessmentID: UUID
+  timestamp: Timestamp
+  overallProgress: {r: ℝ | 0 ≤ r ≤ 1}
+  synergyLevel: {r: ℝ | 0 ≤ r ≤ 1}
+  goalProgress: UUID ⇸ {r: ℝ | 0 ≤ r ≤ 1}  -- Per-goal progress
+  recommendations: seq String
+where
+  -- Progress and synergy must be bounded
+  0 ≤ overallProgress ≤ 1
+  0 ≤ synergyLevel ≤ 1
+  
+  -- All goals must have valid progress
+  ∀ gid: UUID; progress: ℝ | (gid, progress) ∈ goalProgress ⇒
+    0 ≤ progress ≤ 1
+end
+
+-- Reasoning subsystem state (PLN + URE)
+schema ReasoningSubsystem
+  plnEngine: PLNEngine
+  ureEngine: UREEngine
+  inferenceCache: InferenceCache
+  reasoningStatistics: ReasoningStatistics
+end
+
+-- PLN (Probabilistic Logic Networks) engine state
+schema PLNEngine
+  ruleBase: ℙ InferenceRule
+  truthValueFunction: TruthValueFunction
+  maxInferenceSteps: ℕ
+  currentInferences: ℙ UUID  -- Currently active inferences
+where
+  -- Rule base should not be empty for useful reasoning
+  #ruleBase > 0
+  
+  -- Max inference steps should be reasonable
+  maxInferenceSteps > 0 ∧ maxInferenceSteps ≤ 1000
+end
+
+-- URE (Unified Rule Engine) state
+schema UREEngine
+  rules: ℙ Rule
+  backwardChainer: BackwardChainer
+  forwardChainer: ForwardChainer
+  ruleApplicationHistory: seq RuleApplication
+where
+  -- Rules should exist
+  #rules > 0
+end
+
+schema InferenceRule
+  ruleID: UUID
+  premise: seq UUID  -- Atom UUIDs forming premise
+  conclusion: UUID  -- Resulting atom
+  confidence: {r: ℝ | 0 ≤ r ≤ 1}
+end
+
+TruthValueFunction ::= Function  -- Abstract function type
+
+schema Rule
+  ruleID: UUID
+  name: String
+  pattern: Pattern
+  action: Action
+end
+
+Pattern ::= String  -- Simplified representation
+Action ::= String  -- Simplified representation
+
+schema BackwardChainer
+  targetGoals: ℙ UUID
+  searchDepth: ℕ
+  maxIterations: ℕ
+where
+  searchDepth ≤ 10  -- Prevent excessive depth
+  maxIterations ≤ 1000
+end
+
+schema ForwardChainer
+  premises: ℙ UUID
+  maxIterations: ℕ
+where
+  maxIterations ≤ 1000
+end
+
+schema RuleApplication
+  applicationID: UUID
+  ruleID: UUID
+  timestamp: Timestamp
+  success: 𝔹
+end
+
+-- Inference result cache
+schema InferenceCache
+  cachedInferences: (Pattern × seq UUID) ⇸ seq UUID  -- Input -> Output
+  cacheSize: ℕ
+  maxCacheSize: ℕ
+where
+  #cachedInferences ≤ maxCacheSize
+  cacheSize = #cachedInferences
+end
+
+-- Reasoning performance statistics
+schema ReasoningStatistics
+  inferencesPerformed: ℕ
+  successfulInferences: ℕ
+  averageInferenceTime: ℝ  -- milliseconds
+  cacheHitRate: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Successful inferences ≤ Total inferences
+  successfulInferences ≤ inferencesPerformed
+  
+  -- Inference time must be non-negative
+  averageInferenceTime ≥ 0
+end
+
+-- Learning subsystem state (MOSES + Learn modules)
+schema LearningSubsystem
+  mosesEngine: MOSESEngine
+  languageLearner: LanguageLearner
+  patternMiner: PatternMiner
+  learningStatistics: LearningStatistics
+end
+
+-- MOSES (Meta-Optimizing Semantic Evolutionary Search) engine
+schema MOSESEngine
+  population: ℙ Program
+  fitnessFunction: FitnessFunction
+  maxGenerations: ℕ
+  currentGeneration: ℕ
+  bestProgram: Program
+where
+  -- Population should not be empty
+  #population > 0
+  
+  -- Current generation should not exceed max
+  currentGeneration ≤ maxGenerations
+  
+  -- Best program should be in population
+  bestProgram ∈ population
+end
+
+Program ::= String  -- Simplified representation
+FitnessFunction ::= Function  -- Abstract function type
+
+-- Language learning state
+schema LanguageLearner
+  corpus: ℙ String  -- Text corpus
+  learnedGrammar: Grammar
+  vocabularySize: ℕ
+where
+  vocabularySize > 0
+end
+
+Grammar ::= String  -- Simplified representation
+
+-- Pattern mining state
+schema PatternMiner
+  minedPatterns: ℙ Pattern
+  supportThreshold: {r: ℝ | 0 ≤ r ≤ 1}
+  confidenceThreshold: {r: ℝ | 0 ≤ r ≤ 1}
+where
+  -- Thresholds must be in valid range
+  0 ≤ supportThreshold ≤ 1
+  0 ≤ confidenceThreshold ≤ 1
+end
+
+-- Learning performance statistics
+schema LearningStatistics
+  patternsDiscovered: ℕ
+  programsEvolved: ℕ
+  vocabularyGrowth: ℕ
+  averageLearningTime: ℝ  -- milliseconds
+where
+  averageLearningTime ≥ 0
+  patternsDiscovered ≥ 0
+  programsEvolved ≥ 0
+end
+
+-- Attention allocation subsystem
+schema AttentionSubsystem
+  economicAttentionNetwork: ECAN
+  importanceUpdates: seq ImportanceUpdate
+  attentionStatistics: AttentionStatistics
+end
+
+-- Economic Attention Networks (ECAN)
+schema ECAN
+  attentionBank: AttentionBank
+  stimulusSources: ℙ StimulusSource
+  forgettingStrategy: ForgettingStrategy
+where
+  -- At least one stimulus source should exist
+  #stimulusSources > 0
+end
+
+schema AttentionBank
+  totalSTI: STI  -- Total short-term importance in system
+  totalLTI: LTI  -- Total long-term importance in system
+  stiWage: STI  -- STI distributed per cycle
+  ltiWage: LTI  -- LTI distributed per cycle
+where
+  -- Wages should be positive for meaningful attention dynamics
+  stiWage > 0
+  ltiWage > 0
+end
+
+StimulusSource ::= String  -- Simplified representation
+ForgettingStrategy ::= {PROBABILISTIC, THRESHOLD, HYBRID}
+
+schema ImportanceUpdate
+  updateID: UUID
+  atomID: UUID
+  oldSTI: STI
+  newSTI: STI
+  timestamp: Timestamp
+where
+  timestamp > 0
+end
+
+schema AttentionStatistics
+  totalUpdates: ℕ
+  averageSTI: ℝ
+  averageLTI: ℝ
+  atomsForgotten: ℕ
+where
+  totalUpdates ≥ 0
+  atomsForgotten ≥ 0
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 2: Integrated System State
+--------------------------------------------------------------------------------
+
+-- Top-level system state integrating all subsystems
+schema OpenCogSystemState
+  atomSpaceSubsystem: AtomSpaceSubsystem
+  cogServerSubsystem: CogServerSubsystem
+  cogGMLSubsystem: CogGMLSubsystem
+  cogSelfSubsystem: CogSelfSubsystem
+  reasoningSubsystem: ReasoningSubsystem
+  learningSubsystem: LearningSubsystem
+  attentionSubsystem: AttentionSubsystem
+  systemStatus: SystemStatus
+  uptime: ℕ  -- seconds
+  lastHeartbeat: Timestamp
+where
+  -- System must have at least one AtomSpace instance
+  #atomSpaceSubsystem.instances > 0
+  
+  -- CogServer must be running if system is operational
+  systemStatus = OPERATIONAL ⇒ 
+    cogServerSubsystem.server.serverState = RUNNING
+  
+  -- Uptime must be consistent with last heartbeat
+  uptime ≥ 0
+  lastHeartbeat > 0
+  
+  -- CogSelf must be monitoring if autonomous mode is enabled
+  cogSelfSubsystem.autonomousMode = true ⇒
+    cogSelfSubsystem.lastSelfImprovement > 0
+  
+  -- AtomSpace instances must be accessible via CogServer
+  atomSpaceSubsystem.defaultInstance ∈ 
+    ran cogServerSubsystem.server.atomSpaces
+end
+
+SystemStatus ::= {INITIALIZING, OPERATIONAL, DEGRADED, MAINTENANCE, SHUTDOWN}
+
+--------------------------------------------------------------------------------
+-- SECTION 3: State Transition Constraints
+--------------------------------------------------------------------------------
+
+-- Initialization state
+schema InitState
+  OpenCogSystemState
+where
+  -- System starts in initializing status
+  systemStatus = INITIALIZING
+  
+  -- No uptime initially
+  uptime = 0
+  
+  -- Default AtomSpace must exist
+  #atomSpaceSubsystem.instances = 1
+  
+  -- No active connections initially
+  cogServerSubsystem.server.connections = ∅
+  
+  -- No active shards initially
+  cogGMLSubsystem.coordinator.activeShards = ∅
+end
+
+-- Operational state
+schema OperationalState
+  OpenCogSystemState
+where
+  -- System is operational
+  systemStatus = OPERATIONAL
+  
+  -- CogServer is running
+  cogServerSubsystem.server.serverState = RUNNING
+  
+  -- At least default AtomSpace exists
+  #atomSpaceSubsystem.instances ≥ 1
+  
+  -- Heartbeat is recent (within last 60 seconds)
+  -- Simplified: heartbeat exists
+  lastHeartbeat > 0
+end
+
+-- Degraded state (some subsystems failing)
+schema DegradedState
+  OpenCogSystemState
+where
+  -- System is degraded
+  systemStatus = DEGRADED
+  
+  -- Core AtomSpace must still be operational
+  #atomSpaceSubsystem.instances ≥ 1
+  
+  -- At least one subsystem has issues
+  (cogServerSubsystem.server.serverState = ERROR ∨
+   cogGMLSubsystem.microkernel.initialized = false ∨
+   #cogSelfSubsystem.framework.goals = 0)
+end
+
+-- Shutdown state
+schema ShutdownState
+  OpenCogSystemState
+where
+  -- System is shutting down or shut down
+  systemStatus = SHUTDOWN
+  
+  -- CogServer is stopped or stopping
+  cogServerSubsystem.server.serverState ∈ {STOPPED, STOPPING}
+  
+  -- No active connections
+  cogServerSubsystem.server.connections = ∅
+  
+  -- No active shards
+  cogGMLSubsystem.coordinator.activeShards = ∅
+end
+
+--------------------------------------------------------------------------------
+-- SECTION 4: Subsystem Interaction Invariants
+--------------------------------------------------------------------------------
+
+-- Invariant: AtomSpace consistency across subsystems
+invariant AtomSpaceConsistency
+  ∀ state: OpenCogSystemState ⇒
+    -- All reasoning operations reference valid atoms
+    (∀ rule: InferenceRule | 
+       rule ∈ state.reasoningSubsystem.plnEngine.ruleBase ⇒
+       (∀ uuid: UUID | uuid ∈ rule.premise ∪ {rule.conclusion} ⇒
+         uuid ∈ dom state.atomSpaceSubsystem.instances
+                    (state.atomSpaceSubsystem.defaultInstance).atoms))
+    ∧
+    -- All attention updates reference valid atoms
+    (∀ update: ImportanceUpdate |
+       update ∈ state.attentionSubsystem.importanceUpdates ⇒
+       update.atomID ∈ dom state.atomSpaceSubsystem.instances
+                         (state.atomSpaceSubsystem.defaultInstance).atoms)
+
+-- Invariant: Shard-AtomSpace coordination
+invariant ShardAtomSpaceCoordination
+  ∀ state: OpenCogSystemState;
+    task: CognitiveTask |
+    task ∈ state.cogGMLSubsystem.microkernel.taskQueue ⇒
+    task.assignedShard ∈ dom state.cogGMLSubsystem.coordinator.shards ∧
+    -- Tasks must have access to AtomSpace
+    state.atomSpaceSubsystem.defaultInstance ≠ 0
+
+-- Invariant: Network session consistency
+invariant NetworkSessionConsistency
+  ∀ state: OpenCogSystemState;
+    session: Session |
+    session ∈ ran state.cogServerSubsystem.server.sessions ⇒
+    -- Session must reference valid AtomSpace
+    session.currentAtomSpace ∈ dom state.atomSpaceSubsystem.instances ∧
+    -- Session must have valid connection
+    session.connectionID ∈ dom state.cogServerSubsystem.server.connections
+
+-- Invariant: Synergy level reflects component integration
+invariant SynergyIntegration
+  ∀ state: OpenCogSystemState ⇒
+    state.cogSelfSubsystem.framework.synergyManager.overallSynergyLevel > 0 ⇒
+    -- Active components must exist
+    #state.cogSelfSubsystem.framework.synergyManager.components > 1 ∧
+    -- CogGML must have active shards
+    #state.cogGMLSubsystem.coordinator.activeShards > 0 ∧
+    -- AtomSpace must be operational
+    state.atomSpaceSubsystem.defaultInstance ∈ 
+      dom state.atomSpaceSubsystem.instances
+
+-- Invariant: Resource bounds
+invariant ResourceBounds
+  ∀ state: OpenCogSystemState ⇒
+    -- Memory utilization should not exceed critical threshold
+    state.cogGMLSubsystem.executionMetrics.memoryUtilization ≤ 0.95 ∧
+    -- CPU utilization should be reasonable
+    state.cogGMLSubsystem.executionMetrics.cpuUtilization ≤ 1.0 ∧
+    -- Task queue should not grow unbounded
+    #state.cogGMLSubsystem.microkernel.taskQueue ≤ 10000 ∧
+    -- Request queue should not grow unbounded
+    #state.cogServerSubsystem.requestQueue ≤ 10000
+
+-- Invariant: Temporal consistency
+invariant TemporalConsistency
+  ∀ state: OpenCogSystemState ⇒
+    -- Heartbeat must be recent relative to uptime
+    state.lastHeartbeat > 0 ∧
+    -- All subsystem timestamps must be monotonic
+    (∀ assessment: AGIAssessment |
+       assessment ∈ state.cogSelfSubsystem.assessmentHistory ⇒
+       assessment.timestamp ≤ state.lastHeartbeat)
+
+--------------------------------------------------------------------------------
+-- SECTION 5: State Aggregations and Derived Properties
+--------------------------------------------------------------------------------
+
+-- Function to calculate overall system health
+function systemHealth(state: OpenCogSystemState): {r: ℝ | 0 ≤ r ≤ 1}
+  let atomspaceHealth = 
+    if #state.atomSpaceSubsystem.instances > 0 then 1.0 else 0.0
+  let networkHealth =
+    if state.cogServerSubsystem.server.serverState = RUNNING then 1.0 else 0.0
+  let shardHealth =
+    (#state.cogGMLSubsystem.coordinator.activeShards / 
+     max(#state.cogGMLSubsystem.shardPool, 1))
+  let synergyHealth =
+    state.cogSelfSubsystem.framework.synergyManager.overallSynergyLevel
+  in
+    (atomspaceHealth + networkHealth + shardHealth + synergyHealth) / 4.0
+end
+
+-- Function to calculate cognitive load
+function cognitiveLoad(state: OpenCogSystemState): {r: ℝ | 0 ≤ r ≤ 1}
+  let taskLoad = #state.cogGMLSubsystem.microkernel.taskQueue /
+                 max(state.cogGMLSubsystem.microkernel.maxConcurrentTasks, 1)
+  let requestLoad = #state.cogServerSubsystem.requestQueue / 10000.0
+  let memoryLoad = state.cogGMLSubsystem.executionMetrics.memoryUtilization
+  in
+    (taskLoad + requestLoad + memoryLoad) / 3.0
+end
+
+-- Function to check if system is healthy
+function isHealthy(state: OpenCogSystemState): 𝔹
+  systemHealth(state) ≥ 0.7 ∧
+  cognitiveLoad(state) ≤ 0.8 ∧
+  state.systemStatus ∈ {OPERATIONAL, MAINTENANCE}
+end
+
+-- Function to determine if autonomous improvement should trigger
+function shouldTriggerImprovement(state: OpenCogSystemState): 𝔹
+  state.cogSelfSubsystem.autonomousMode = true ∧
+  state.cogSelfSubsystem.framework.overallAGIProgress < 1.0 ∧
+  (state.lastHeartbeat - state.cogSelfSubsystem.lastSelfImprovement > 3600000)
+  -- More than 1 hour since last improvement
+end
+
+--------------------------------------------------------------------------------
+-- End of System State Specification
+--------------------------------------------------------------------------------

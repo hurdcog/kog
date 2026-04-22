@@ -1,0 +1,44 @@
+[[!meta copyright="Copyright © 2010, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Linux: vmsig"]]
+
+[[!tag open_issue_gnumach open_issue_hurd]]
+
+  * *cooperating with the VM when memory pressure increases*
+
+  * *notify user applications of virtual memory events via real-time signals*
+
+<http://www.cs.umass.edu/~emery/pubs/bookmarking-collector/>, and discussion at
+<http://lambda-the-ultimate.org/node/2391> and
+<http://marc.info/?t=113269321800003&r=1&w=2>.
+
+Found this via <http://lambda-the-ultimate.org/node/4094#comment-62100>, which
+was linked from [LWN](http://lwn.net/Articles/409416/).
+
+From a quick glance, this sounds to [[me|tschwinge]] quite a bit like
+mechanisms also found in (originating in?) Mach's
+[[microkernel/mach/external_pager_mechanism]].  May be worth having a look at
+it.
+
+
+# IRC, freenode, #hurd, 2013-03-06
+
+    <braunr> tschwinge: from a quick look, this isn't similar to the external
+      pager mechanism
+    <braunr> it's an additional tool to help userspace application manage
+      internal caches
+    <braunr> it's similar to what is done to reclaim memory from the slab
+      allocator for example
+    <braunr> and it would indeed be a very good thing to have so that e.g. the
+      hurd can build a distributed but completely dynamic dentry-like cache
+    <braunr> i'm actually glad to see someone else thought of using real time
+      signals for this
+    <braunr> i didn't do any research on that subject yet

@@ -1,0 +1,57 @@
+[[!meta copyright="Copyright © 2013, 2014 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_porting]]
+
+
+# IRC, freenode, #hurd, 2013-08-01
+
+    <braunr> teythoon: can you stop tmux on darnassus please ?
+    <braunr> i'd like to check something
+    <teythoon> done
+    <braunr> tmux makes load average grow to 5 without any visible activity :/
+    <braunr> can't reproduce it with my instances though
+    <braunr> anyway, that's minor
+    <teythoon> I used tmux before and never encountered that
+    <teythoon> sometimes tmux would hang on attaching or detaching though, but
+      overall I had less problems with tmux than with screen
+    <teythoon> ah, I tried to start tmux on darnassus and now it hangs
+
+
+# IRC, freenode, #hurd, 2014-02-04
+
+    <teythoon> braunr: whoa, i can reproduce gnu_srs' hanging ssh sessions on
+      darnassus
+    <teythoon> here goes
+    <teythoon> run tmux, exit the shell so that tmux quits, start tmux again
+      (tmux hangs now on some socket stuff), log in with ssh again, pkill tmux,
+      rm /tmp/tmux*/default => both ssh sessions hang and time out eventually
+    <braunr> why start tmux twice ?
+    <teythoon> dunno
+    <teythoon> that's what i just did, twice in a row
+    <teythoon> there's a bug somewhere that makes tmux hang if the socket
+      exists but no tmux server is running
+    <teythoon> maybe that contributes to to the other issuse, i don't know
+    <braunr> looks like an infinite loop somewhere
+    <gnu_srs> teythoon: Nice to set that I'm not alone having this problem:P
+    <braunr> teythoon: what's happening ? :)
+    <teythoon> ?
+    <braunr> on darnassus
+    <teythoon> not sure
+    <teythoon> uh, something is very wrong o_O
+    <teythoon> help ?
+    <braunr> :)
+    <braunr> the msg thread of a process is blocked somewhere
+    <braunr> preventing ps/top from completing
+    <braunr> looks like proc is blocked now ..
+    <braunr> restarting the vm
+    <braunr> apparently, removing buggy tmux sockets make pflocal crash
+    <braunr> thanks for the report :)
+    <teythoon> you are welcome :)

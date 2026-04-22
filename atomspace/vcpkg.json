@@ -1,0 +1,34 @@
+{
+  "name": "atomspace",
+  "version-string": "1.0.0",
+  "description": "OpenCog AtomSpace - Hypergraph database for knowledge representation",
+  "license": "AGPL-3.0",
+  "supports": "windows & linux & osx",
+  "dependencies": [
+    "boost-system",
+    "boost-filesystem",
+    "boost-program-options",
+    "boost-thread",
+    "boost-date-time",
+    "boost-serialization",
+    "boost-random",
+    {
+      "name": "guile",
+      "platform": "!windows"
+    },
+    "cxxopts",
+    "catch2",
+    "spdlog",
+    "fmt"
+  ],
+  "features": {
+    "rocksdb-storage": {
+      "description": "RocksDB storage backend support",
+      "dependencies": ["rocksdb"]
+    },
+    "postgres-storage": {
+      "description": "PostgreSQL storage backend support",
+      "dependencies": ["libpq"]
+    }
+  }
+}

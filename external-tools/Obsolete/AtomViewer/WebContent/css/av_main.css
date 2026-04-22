@@ -1,0 +1,78 @@
+/*
+ * This file is provided for application-specific style rules.
+ *
+ * By default, Maqetta includes this CSS file within HTML pages
+ * authored in Maqetta.
+ *
+ * This file is typically used to override style rules found in
+ * theme CSS files. For example, suppose the theme CSS file has:
+ *
+ * .claro .dijitButton .dijitButtonNode {
+ *		padding:2px 4px 4px 4px;
+ * }
+ *
+ * But for your application suppose you want to tighten the padding
+ * for buttons. Then, you might include the following style rule
+ * in this file (assuming that you accept Maqetta's default where
+ * id "myapp" is present on the BODY element, and assuming
+ * that you are using the "claro" theme):
+ *
+ * #myapp.claro .dijitButton .dijitButtonNode {
+ *		padding:1px 3px 3px 3px;
+ * }
+ *
+ * Because of CSS precedence rules (see [1]), the above style rule
+ * (which begins with #myapp.claro) will "win the cascade" versus 
+ * the style rule from the theme CSS file due to the use of the
+ * ID select (#myapp), which has higher specificity than the class
+ * selectors used throughout the Claro theme.
+ *
+ * [1] http://www.w3.org/TR/CSS21/cascade.html#cascade
+ */
+html,body {
+	height: 100%;
+	width: 100%;
+}
+table[class='atomTable'] 
+        {
+		overflow:hidden;
+		border:1px solid #d3d3d3;
+		background:#f6f6f6;
+		width:70%;
+		margin:5% auto 0;
+		-moz-border-radius:5px; 
+		-webkit-border-radius:5px;
+		border-radius:5px;
+		-moz-box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+		-webkit-box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    	}
+	
+	th[class='atomTableHeader'], td[class='cellId']
+	 {
+	 	padding:15px 13px 13px;
+	    text-align:center;
+	    font-size:13px;
+	 }
+	
+	th[class='atomTableHeader'] 
+	{
+		padding-top:22px; 
+		text-shadow: 1px 1px 1px #fff;
+		 background:#e8eaeb;
+    }
+	
+	td[class='cellId'] 
+	{
+		border-top:1px solid #e0e0e0;
+		 border-right:1px solid #e0e0e0;
+		 font-size: 13px;
+	 }
+	 
+	 #idGraphCanvas 
+     {
+	    width:100%;
+	    height:100%;
+	    overflow: hidden;
+    }
+	
+

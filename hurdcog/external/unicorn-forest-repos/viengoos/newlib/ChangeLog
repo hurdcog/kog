@@ -1,0 +1,386 @@
+2009-01-18  Neal H. Walfield  <neal@gnu.org>
+
+	* patches/08-new-newlib-libc-include-inttypes-h.patch: New file.
+	* Makefile.am (patch_files): Add
+	08-new-newlib-libc-include-inttypes-h.patch.
+
+2009-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am [ARCH_X86_64]: Compile with -fPIC.
+	(routines): Add strcpy.
+
+2008-12-12  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/access.c: New file.
+	* addon/newlib/libc/sys/hurd/fd.h: Likewise.
+	* addon/newlib/libc/sys/hurd/fsync.c: Likewise.
+	* addon/newlib/libc/sys/hurd/ftruncate.c: Likewise.
+	* addon/newlib/libc/sys/hurd/getcwd.c: Likewise.
+	* addon/newlib/libc/sys/hurd/getpwuid.c: Likewise.
+	* addon/newlib/libc/sys/hurd/getrusage.c: Likewise.
+	* addon/newlib/libc/sys/hurd/getuid.c: Likewise.
+	* addon/newlib/libc/sys/hurd/memfile.c: Likewise.
+	* addon/newlib/libc/sys/hurd/memfile.h: Likewise.
+	* addon/newlib/libc/sys/hurd/pipefile.c: Likewise.
+	* addon/newlib/libc/sys/hurd/sleep.c: Likewise.
+	* Makefile.am (addon): Add newlib/libc/sys/hurd/access.c,
+	newlib/libc/sys/hurd/fsync.c, newlib/libc/sys/hurd/ftruncate.c,
+	newlib/libc/sys/hurd/getcwd.c, newlib/libc/sys/hurd/getpwuid.c,
+	newlib/libc/sys/hurd/getrusage.c, newlib/libc/sys/hurd/getuid.c,
+	newlib/libc/sys/hurd/sleep.c, newlib/libc/sys/hurd/fd.h,
+	newlib/libc/sys/hurd/pipefile.c and
+	newlib/libc/sys/hurd/memfile.c.
+	* addon/newlib/libc/sys/hurd/Makefile.am (GENERAL_SOURCES): Add
+	access.c, fsync.c, ftruncate.c, getcwd.c, getpwuid.c, getrusage.c,
+	getuid.c, sleep.c, pipefile.c, memfile.c and fd.h.
+	* addon/newlib/libc/sys/hurd/closer.c (close): Reimplement using
+	the descriptor abstraction.
+	* addon/newlib/libc/sys/hurd/lseekr.c (lseek): Likewise.
+	* addon/newlib/libc/sys/hurd/openr.c (open): Likewise.
+	* addon/newlib/libc/sys/hurd/readr.c (read): Likewise.
+	* addon/newlib/libc/sys/hurd/writer.c (write): Likewise.
+
+	* addon/newlib/libc/sys/hurd/fcntlr.c (fcntl): Return true for
+	valid file descriptors.
+
+2008-11-03  Neal H. Walfield  <neal@gnu.org>
+
+	* headers.m4: Don't create an empty newlib/libc.a or an empty
+	newlib/libm.a.
+
+2008-10-08  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/readr.c: Include <hurd/rm.h>.
+	(read): Implement.
+
+2008-06-27  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (noinst_LIBRARIES): Remove variable.
+	(all-local): New target.
+	(.PHONY): Depend on newlib-build/build.stamp.
+	(newlib-build/build.stamp): Run make install here if
+	newlib-build/libc.a is newer than newlib-build/build.stamp.  Only
+	touch newlib-build/build.stamp in this case.
+
+2008-06-26  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/writer.c (io_buffer_flush): New
+	function.
+	(io_buffer_append): Likewise.
+	(write): Don't use rm_putchar but the new functions.
+
+2008-06-17  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/gettimeofdayr.c: Include
+	<l4/schedule.h>.
+	(gettimeofday): Use l4_system_clock to get basic time information.
+
+2008-05-31  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am ($(srcdir)/newlib/patch.stamp): Remove ``PACKAGE_*''
+	definitions from `newlib/newlib/newlib.hin'.
+
+2008-05-30  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* README: No more ``--enable-maintainer-mode'' in the top-level.
+
+	* Makefile.am (newlib-build/build.stamp, newlib-build/install.stamp):
+	New targets.  Used to decouple ``make install'' from ``make all''.
+
+	* patches/04-newlib-newlib-configure-ac.patch: Don't conceal errors.
+
+	* Makefile.am ($(addprefix $(srcdir)/newlib/, $(addon))): Touch the
+	destination file after linking.
+
+2008-05-29  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* headers.m4: New file.
+	* Makefile.am: Include `Makefoo.am'.
+	(patch_files): Remove `00-newlib-configure-ac.patch'.
+	(abs_top_builddir, abs_srcdir, abs_top_srcdir): Don't define.
+	(newlib/patch.stamp): Link to main config.guess, config.sub.
+	(newlib-build/configure.stamp): Configure for building with cross
+	compiler.
+	* patches/00-newlib-configure-ac.patch: Remove.
+
+	* Makefile.am: Rework stamp-tracking system.
+
+	* addon/newlib/libc/sys/hurd/configure: Remove file.
+	* addon/newlib/libc/sys/hurd/Makefile.in: Likewise.
+	* addon/newlib/libc/sys/hurd/aclocal.m4: Likewise.
+	* Makefile.am (addon): Adapt.
+
+2008-03-01  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (addon): Add newlib/libc/sys/hurd/include/signal.h.
+	* patches/03-newlib-newlib-configure-host.patch: Add
+	-DSIGNAL_PROVIDED to newlib_cflags.
+	* patches/05-newlib-newlib-libc-include-machine-setjmp-h.patch:
+	Correctly calcualtesigjmp_buf.
+	* addon/newlib/libc/sys/hurd/include/signal.h: New file.
+
+2008-03-01  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/closer.c (close): New function.
+	(_close_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/fcntlr.c (fcntl): New function.
+	(_fcntl_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/fstatr.c (fstat): New function.
+	(_fstat_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/gettimeofdayr.c (gettimeofday): New
+	function.
+	(_gettimeofday_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/linkr.c (link): New function.
+	(_link_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/lseekr.c (lseek): New function.
+	(_lseek_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/openr.c (open): New function.
+	(_open_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/readr.c (read): New function.
+	(_read_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/renamer.c (rename): New function.
+	(_rename_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/signalr.c (_kill_r): Just call kill.
+	(getpid): New function.
+	(_getpid_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/statr.c (stat): New function.
+	(_stat_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/timesr.c (times): New function.
+	(_times_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/unlinkr.c (unlink): New function.
+	(_unlink_r): Implement in terms of it.
+	* addon/newlib/libc/sys/hurd/writer.c (write): New function.
+	(_write_r): Implement in terms of it.
+
+2008-02-21  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (patch_files): Add
+	05-newlib-newlib-libc-include-machine-setjmp-h.patch,
+	06-newlib-newlib-libc-machine-i386-i386mach-h.patch, and
+	07-newlib-newlib-libm-machine-i386-i386mach-h.patch.
+	(ccheaders): Remove variable.
+	(SYSINCLUDES): Likewise.
+	(newlib-build/libc.a newlib-build/libm.a): Set TARGET_CFLAGS to
+	"$(USER_CPPFLAGS) $(USER_CFLAGS) $(USER_LDFLAGS)".
+	* newlib/patches/05-newlib-newlib-libc-include-machine-setjmp-h.patch:
+	New file.
+	* newlib/patches/06-newlib-newlib-libc-machine-i386-i386mach-h.patch:
+	New file.
+	* newlib/patches/07-newlib-newlib-libm-machine-i386-i386mach-h.patch:
+	New file.
+
+2008-02-13  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/getreent.c (slab_alloc): Update use
+	of storage_alloc to be consistent with new API.
+
+2008-02-11  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/getreent.c (__getreent): Assert
+	MM_INIT_DONE.
+
+2008-02-08  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (noinst_LIBRARIES): Add `libc-routines.a'.
+	(libc-routines.a, routines_subexp, routines): New target and helper
+	expressions, partially ripped from libc-parts.
+	(clean-local): Extend.
+
+2008-02-08  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/sys/lock.h: Include <hurd/stddef.h>.
+	(__newlib_trace_locks): New declaration.
+	(__lock_release): Add debugging output.
+	(__lock_acquire): Likewise.
+	(__lock_try_acquire): Likewise.
+	(__lock_acquire_recursive): Likewise.
+	(__lock_try_acquire_recursive): Likewise.
+	(__lock_release_recursive): Likewise.
+	* addon/newlib/libc/sys/hurd/lock.c (__newlib_trace_locks): New
+	definition.
+
+2008-02-05  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/sys/errno.h: New file.
+	* Makefile.am (addon): Add newlib/libc/sys/hurd/sys/errno.h.
+
+2008-01-27  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am: Typo fixes.
+
+2008-01-26  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (newlib-configure-stamp): Don't pass CPPFLAGS and CFLAGS.
+	(ccheaders, SYSINCLUDES): New variables.
+	(newlib-build/libc.a): Pass TARGET_CFLAGS (summing up all the above
+	flags) to the make invocation.
+
+2008-01-26  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/malloc.c (INITIAL_LOCK): Correctly
+	parenthesize use of LOCK.
+	(ACQUIRE_LOCK): Likewise.
+	(RELEASE_LOCK): Likewise.
+
+2008-01-26  Thomas Schwinge  <tschwinge@gnu.org>
+
+	* Makefile.am (abs_top_builddir, abs_srcdir, abs_top_srcdir): Use
+	on-demand evaluation.
+
+	* patches/04-newlib-newlib-configure-ac.patch: Use ``readlink -f''
+	instead of ``realpath''.
+
+2008-01-25  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (newlib-configure-stamp): Add -fno-stack-protector
+	to the configure invocation.
+
+2008-01-24  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/getreent.c (reent_main): New
+	variable.
+	(reent_main_alloced): Likewise.
+	(reent_key_destroy): Clear utcb[_L4_UTCB_THREAD_WORD0].
+	(__getreent): If REENT_MAIN_ALLOCED is not true, then use
+	REENT_MAIN.  Otherwise, use the slab.  Only initialize the key if
+	we use the slab and then, only after we've initialized the new
+	structure and stashed it in utcb[_L4_UTCB_THREAD_WORD0].
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/isatty.c: New file.
+	* addon/newlib/libc/sys/hurd/Makefile.am (GENERAL_SOURCES): Add
+	isatty.c.
+	* Makefile.am (addon): Add newlib/libc/sys/hurd/isatty.c.
+
+	* addon/newlib/libc/sys/hurd/sys/config.h (_LARGEFILE64_SOURCE):
+	Don't define.
+	(__LARGE64_FILES): Likewise.
+
+	* addon/newlib/libc/sys/hurd/malloc.c: Include <sys/lock.h>
+	(MLOCK_T): Define.
+	(INITIAL_LOCK): Likewise.
+	(ACQUIRE_LOCK): Likewise.
+	(RELEASE_LOCK): Likewise.
+
+	* addon/newlib/libc/sys/hurd/writer.c: Include <hurd/rm.h>.
+	(_write_r): If FD is 1 or 2, then send the buffer to the console.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/malloc.c (HAVE_MREMAP): Define to 0.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/Makefile.am (GENERAL_SOURCES): Add
+	lock.c.
+
+2008-01-23  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am ($(srcdir)/newlib $(srcdir)/newlib-stamp): When
+	extracting the tarball, remove the patch-applied stamps.
+	($(addsuffix -applied,$(patch_files))): Depend on
+	$(srcdir)/newlib, not $(srcdir)/newlib-stamp.
+
+2008-01-22  Neal H. Walfield  <neal@gnu.org>
+
+	* addon/newlib/libc/sys/hurd/Makefile.am: New file.
+	* addon/newlib/libc/sys/hurd/aclocal.m4: Likewise.
+	* addon/newlib/libc/sys/hurd/closer.c: Likewise.
+	* addon/newlib/libc/sys/hurd/configure: Likewise.
+	* addon/newlib/libc/sys/hurd/configure.ac: Likewise.
+	* addon/newlib/libc/sys/hurd/crt0.c: Likewise.
+	* addon/newlib/libc/sys/hurd/fcntlr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/fstatr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/getreent.c: Likewise.
+	* addon/newlib/libc/sys/hurd/gettimeofdayr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/linkr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/lock.c: Likewise.
+	* addon/newlib/libc/sys/hurd/lseekr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/malloc.c: Likewise.
+	* addon/newlib/libc/sys/hurd/mallocr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/openr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/readr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/reent.c: Likewise.
+	* addon/newlib/libc/sys/hurd/renamer.c: Likewise.
+	* addon/newlib/libc/sys/hurd/sbrkr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/signalr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/statr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/timesr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/unlinkr.c: Likewise.
+	* addon/newlib/libc/sys/hurd/writer.c: Likewise.
+	* addon/newlib/libc/sys/hurd/include/assert.h: Likewise.
+	* addon/newlib/libc/sys/hurd/include/pthread.h: Likewise.
+	* addon/newlib/libc/sys/hurd/sys/config.h: Likewise.
+	* addon/newlib/libc/sys/hurd/sys/lock.h: Likewise.
+	* patches/00-newlib-configure-ac.patch: Likewise.
+	* patches/01-newlib-libc-sys-configure-in.patch: Likewise.
+	* patches/02-newlib-newlib-libc-string-makefile-am.patch: Likewise.
+	* patches/03-newlib-newlib-configure-host.patch: Likewise.
+	* patches/04-newlib-newlib-configure-ac.patch: Likewise.
+	* Makefile.am (patch_files): Add 00-newlib-configure-ac.patch,
+	01-newlib-libc-sys-configure-in.patch,
+	02-newlib-newlib-libc-string-makefile-am.patch,
+	03-newlib-newlib-configure-host.patch, and
+	04-newlib-newlib-configure-ac.patch.
+	(addon): newlib/libc/sys/hurd/configure.ac,
+	newlib/libc/sys/hurd/configure, newlib/libc/sys/hurd/Makefile.am,
+	newlib/libc/sys/hurd/Makefile.in, newlib/libc/sys/hurd/aclocal.m4,
+	newlib/libc/sys/hurd/closer.c, newlib/libc/sys/hurd/reent.c,
+	newlib/libc/sys/hurd/fcntlr.c, newlib/libc/sys/hurd/fstatr.c,
+	newlib/libc/sys/hurd/gettimeofdayr.c,
+	newlib/libc/sys/hurd/linkr.c, newlib/libc/sys/hurd/lseekr.c,
+	newlib/libc/sys/hurd/openr.c, newlib/libc/sys/hurd/readr.c,
+	newlib/libc/sys/hurd/renamer.c, newlib/libc/sys/hurd/signalr.c,
+	newlib/libc/sys/hurd/sbrkr.c, newlib/libc/sys/hurd/statr.c,
+	newlib/libc/sys/hurd/timesr.c, newlib/libc/sys/hurd/unlinkr.c,
+	newlib/libc/sys/hurd/writer.c, newlib/libc/sys/hurd/getreent.c,
+	newlib/libc/sys/hurd/malloc.c, newlib/libc/sys/hurd/mallocr.c,
+	newlib/libc/sys/hurd/lock.c, newlib/libc/sys/hurd/crt0.c,
+	newlib/libc/sys/hurd/include/pthread.h,
+	newlib/libc/sys/hurd/include/assert.h,
+	newlib/libc/sys/hurd/sys/lock.h, and
+	newlib/libc/sys/hurd/sys/config.h.
+	(abs_top_srcdir): New variable.
+	(newlib-configure-stamp): Run autoreconf.  Add
+	-I$(abs_top_srcdir)/libc-parts to CPPFLAGS.  Set prefix to
+	newlib-install.  Add include --enable-newlib-multithread when
+	invoking configure.
+	(newlib-configure-stamp): Also run make install.
+	(include): Link to installed include directory.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am: (patches): Remove variable.  Update users to use
+	$(patch_files) directly.
+	(EXTRA_DIST): Prefix the addon fields with `addon/'.
+	($(srcdir)/newlib): Make it depend on the tarball.  When
+	extracted, touch it.
+	($(srcdir)/newlib-patch-stamp): Remove rule.
+	($(addsuffix -applied,$(patch_files))): Replace with rule to copy
+	the applied patch to the build directory and use that as a
+	reference.  If the source patch is changed, revert the original
+	patch before applying the new patch.
+	($(addprefix $(srcdir)/newlib/, $(addon))): Depend on the
+	individual addon files rather than a stamp file.  When linking
+	add-on files into the source tree, pass -f to ln.
+	(newlib-configure-stamp): When configuring, add
+	--enable-maintainer-mode.
+	(clean-local): Remove the source directory.
+	(CLEANFILES): Remove $(srcdir)/newlib-stamp.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* Makefile.am (clean-local): New rule.
+	(distclean-local): Likewise.
+	(CLEANFILES): New variable.
+	(DISTCLEANFILES): Likewise.
+
+2008-01-17  Neal H. Walfield  <neal@gnu.org>
+
+	* .cvsignore: New file.
+	* ChangeLog: New file mentioning itself.
+	* Makefile.am: New file.
+	* README: Likewise.
+	* addon: New directory.
+	* patches: Likewise.

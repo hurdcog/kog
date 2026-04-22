@@ -1,0 +1,11 @@
+usr/lib/opencog/*.so
+usr/share/guile/site/3.0/opencog/oc-config.scm
+usr/share/guile/site/3.0/opencog/nlp/oc.scm
+usr/share/guile/site/3.0/opencog/nlp/oc/*
+usr/share/guile/site/3.0/opencog/nlp/sentiment.scm
+usr/share/guile/site/3.0/opencog/behavior.scm
+usr/share/guile/site/3.0/opencog/eva-behavior/*
+usr/share/guile/site/3.0/opencog/eva-model.scm
+usr/share/guile/site/3.0/opencog/eva-model/*
+usr/etc/opencog/dicts/*
+usr/lib/python2.7/dist-packages/sentiment/*

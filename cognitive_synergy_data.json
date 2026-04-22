@@ -1,0 +1,117 @@
+{
+  "metrics": [
+    {
+      "name": "cogutil",
+      "exists": true,
+      "files": 157,
+      "size_mb": 0.6865777969360352,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.325694"
+    },
+    {
+      "name": "atomspace",
+      "exists": true,
+      "files": 1363,
+      "size_mb": 12.199309349060059,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.329497"
+    },
+    {
+      "name": "cogserver",
+      "exists": true,
+      "files": 170,
+      "size_mb": 1.2509517669677734,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.359228"
+    },
+    {
+      "name": "matrix",
+      "exists": true,
+      "files": 64,
+      "size_mb": 0.8148603439331055,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.363550"
+    },
+    {
+      "name": "learn",
+      "exists": true,
+      "files": 1471,
+      "size_mb": 788.3927049636841,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.365046"
+    },
+    {
+      "name": "agents",
+      "exists": true,
+      "files": 12,
+      "size_mb": 0.06098461151123047,
+      "has_cmake": true,
+      "has_tests": false,
+      "has_docs": true,
+      "health_score": 75.0,
+      "timestamp": "2025-11-03T22:12:43.397994"
+    },
+    {
+      "name": "sensory",
+      "exists": true,
+      "files": 134,
+      "size_mb": 0.48675537109375,
+      "has_cmake": true,
+      "has_tests": true,
+      "has_docs": true,
+      "health_score": 100.0,
+      "timestamp": "2025-11-03T22:12:43.398505"
+    },
+    {
+      "name": "hyperon",
+      "exists": false,
+      "files": 0,
+      "size_mb": 0.0,
+      "has_cmake": false,
+      "has_tests": false,
+      "has_docs": false,
+      "health_score": 0.0,
+      "timestamp": "2025-11-03T22:12:43.401868"
+    },
+    {
+      "name": "python-ml",
+      "exists": false,
+      "files": 0,
+      "size_mb": 0.0,
+      "has_cmake": false,
+      "has_tests": false,
+      "has_docs": false,
+      "health_score": 0.0,
+      "timestamp": "2025-11-03T22:12:43.401895"
+    }
+  ],
+  "analysis": {
+    "synergy_score": 120.0,
+    "integration_percentage": 77.78,
+    "average_health": 75.0,
+    "emergence_detected": true,
+    "anomaly_components": [],
+    "synergy_factor": 1.6,
+    "timestamp": "2025-11-03T22:12:43.402107"
+  },
+  "recommendations": [
+    "\ud83d\udd34 CRITICAL: Initialize missing components: hyperon, python-ml",
+    "\ud83d\udfe1 HIGH: Add test suites to: agents",
+    "\ud83c\udf89 EXCELLENCE: Cognitive synergy achieved! System is performing optimally"
+  ]
+}

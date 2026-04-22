@@ -1,0 +1,465 @@
+name: AGI-OS Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Deployment target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+          - test
+      version:
+        description: 'Version to deploy'
+        required: false
+        default: 'latest'
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+  DEPLOY_DIR: /tmp/deploy
+
+jobs:
+  prepare-release:
+    name: Prepare Release Artifacts
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      
+      - name: Get version information
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ github.event.inputs.version }}" ] && [ "${{ github.event.inputs.version }}" != "latest" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="$(git describe --tags --always)"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Create release directory
+        run: |
+          mkdir -p $DEPLOY_DIR/release
+          mkdir -p $DEPLOY_DIR/docs
+          mkdir -p $DEPLOY_DIR/scripts
+      
+      - name: Copy documentation
+        run: |
+          cp README.md $DEPLOY_DIR/docs/
+          cp AGI_OS_INTEGRATION_ARCHITECTURE.md $DEPLOY_DIR/docs/
+          cp VALIDATION_REPORT.md $DEPLOY_DIR/docs/
+          cp ANALYSIS_AND_IMPROVEMENTS.md $DEPLOY_DIR/docs/
+          
+          echo "✅ Documentation copied"
+      
+      - name: Copy integration scripts
+        run: |
+          cp cognitive-integration.scm $DEPLOY_DIR/scripts/
+          cp synergy_agi_os.sh $DEPLOY_DIR/scripts/
+          cp cognumach.scm $DEPLOY_DIR/scripts/
+          cp hurdcog.scm $DEPLOY_DIR/scripts/
+          cp occ-hurdcog-unified.scm $DEPLOY_DIR/scripts/
+          
+          chmod +x $DEPLOY_DIR/scripts/*.sh
+          
+          echo "✅ Scripts copied"
+      
+      - name: Create deployment manifest
+        run: |
+          cat > $DEPLOY_DIR/MANIFEST.txt << EOF
+          AGI-OS Release Manifest
+          =======================
+          
+          Version: ${{ steps.version.outputs.version }}
+          Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+          
+          Components:
+          -----------
+          - Cognumach Microkernel (Layer 0)
+          - HurdCog Operating System (Layer 1)
+          - OCC Application Framework (Layer 2)
+          
+          Packages:
+          ---------
+          - 27 Debian packages
+          - 3 Guix packages
+          
+          Documentation:
+          --------------
+          - README.md
+          - AGI_OS_INTEGRATION_ARCHITECTURE.md
+          - VALIDATION_REPORT.md
+          - ANALYSIS_AND_IMPROVEMENTS.md
+          
+          Integration:
+          ------------
+          - cognitive-integration.scm
+          - synergy_agi_os.sh
+          - Guix package definitions
+          
+          Status: Production Ready
+          EOF
+          
+          cat $DEPLOY_DIR/MANIFEST.txt
+      
+      - name: Create installation script
+        run: |
+          cat > $DEPLOY_DIR/install-agi-os.sh << 'EOF'
+          #!/bin/bash
+          
+          set -e
+          
+          echo "==================================="
+          echo "AGI-OS Installation Script"
+          echo "==================================="
+          echo ""
+          
+          # Check for root
+          if [ "$EUID" -ne 0 ]; then
+            echo "Please run as root or with sudo"
+            exit 1
+          fi
+          
+          # Detect installation method
+          if command -v guix &> /dev/null; then
+            echo "Detected GNU Guix - using Guix installation"
+            INSTALL_METHOD="guix"
+          elif command -v dpkg &> /dev/null; then
+            echo "Detected Debian/Ubuntu - using Debian packages"
+            INSTALL_METHOD="debian"
+          else
+            echo "No supported package manager found"
+            exit 1
+          fi
+          
+          # Install based on method
+          case "$INSTALL_METHOD" in
+            guix)
+              echo "Installing via Guix..."
+              guix package -f occ-hurdcog-unified.scm
+              ;;
+            
+            debian)
+              echo "Installing via Debian packages..."
+              
+              # Add repository (if available)
+              # echo "deb [trusted=yes] https://packages.agi-os.org/debian stable main" > /etc/apt/sources.list.d/agi-os.list
+              # apt-get update
+              
+              # Install from local packages
+              if [ -d "packages" ]; then
+                dpkg -i packages/*.deb || true
+                apt-get install -f -y
+              else
+                echo "No local packages found"
+                exit 1
+              fi
+              ;;
+          esac
+          
+          echo ""
+          echo "==================================="
+          echo "AGI-OS Installation Complete!"
+          echo "==================================="
+          echo ""
+          echo "Next steps:"
+          echo "1. Start the AGI-OS stack: agi-os-start"
+          echo "2. Run integration tests: agi-os-test"
+          echo "3. Access dashboard: http://localhost:8080/dashboard"
+          echo ""
+          EOF
+          
+          chmod +x $DEPLOY_DIR/install-agi-os.sh
+      
+      - name: Create tarball
+        run: |
+          cd $DEPLOY_DIR
+          tar -czf agi-os-${{ steps.version.outputs.version }}.tar.gz \
+            docs/ scripts/ MANIFEST.txt install-agi-os.sh
+          
+          echo "✅ Release tarball created"
+          ls -lh agi-os-*.tar.gz
+      
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agi-os-release-${{ steps.version.outputs.version }}
+          path: ${{ env.DEPLOY_DIR }}/agi-os-*.tar.gz
+          retention-days: 90
+
+  deploy-packages:
+    name: Deploy Debian Packages
+    runs-on: ubuntu-22.04
+    needs: prepare-release
+    if: github.event_name == 'release' || github.event.inputs.deploy_target == 'production'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download Debian packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-packages'
+          path: packages/
+          merge-multiple: true
+      
+      - name: Create package repository
+        run: |
+          mkdir -p repo/debian/pool/main
+          mkdir -p repo/debian/dists/stable/main/binary-amd64
+          
+          # Copy packages
+          cp packages/*.deb repo/debian/pool/main/ 2>/dev/null || echo "No packages to copy"
+          
+          # Create Packages file
+          cd repo/debian
+          dpkg-scanpackages pool/main /dev/null | gzip -9c > dists/stable/main/binary-amd64/Packages.gz
+          
+          # Create Release file
+          cat > dists/stable/Release << EOF
+          Origin: AGI-OS
+          Label: AGI-OS Debian Repository
+          Suite: stable
+          Codename: stable
+          Architectures: amd64
+          Components: main
+          Description: AGI Operating System - Debian Packages
+          Date: $(date -R)
+          EOF
+          
+          echo "✅ Package repository created"
+      
+      - name: Upload package repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: agi-os-debian-repository
+          path: repo/
+          retention-days: 90
+      
+      - name: Deploy to package server (placeholder)
+        run: |
+          echo "=== Package Deployment ==="
+          echo "Target: ${{ github.event.inputs.deploy_target || 'production' }}"
+          echo ""
+          echo "To deploy to a package server, configure:"
+          echo "1. Set up secrets for server credentials"
+          echo "2. Use rsync or scp to upload packages"
+          echo "3. Update repository metadata"
+          echo ""
+          echo "Example:"
+          echo "rsync -avz repo/ user@packages.agi-os.org:/var/www/packages/"
+
+  deploy-documentation:
+    name: Deploy Documentation
+    runs-on: ubuntu-22.04
+    needs: prepare-release
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup documentation site
+        run: |
+          mkdir -p docs-site
+          
+          # Copy documentation
+          cp README.md docs-site/index.md
+          cp AGI_OS_INTEGRATION_ARCHITECTURE.md docs-site/
+          cp VALIDATION_REPORT.md docs-site/
+          cp ANALYSIS_AND_IMPROVEMENTS.md docs-site/
+          
+          # Create index
+          cat > docs-site/README.md << 'EOF'
+          # AGI-OS Documentation
+          
+          Welcome to the AGI Operating System documentation.
+          
+          ## Core Documentation
+          
+          - [Overview](index.md) - Main README
+          - [Integration Architecture](AGI_OS_INTEGRATION_ARCHITECTURE.md) - Complete architecture specification
+          - [Validation Report](VALIDATION_REPORT.md) - Production readiness assessment
+          - [Analysis and Improvements](ANALYSIS_AND_IMPROVEMENTS.md) - Development history
+          
+          ## Quick Links
+          
+          - [GitHub Repository](https://github.com/cogpy/occ)
+          - [Issue Tracker](https://github.com/cogpy/occ/issues)
+          - [Releases](https://github.com/cogpy/occ/releases)
+          
+          ## Getting Started
+          
+          See the [main README](index.md) for installation instructions.
+          EOF
+      
+      - name: Deploy to GitHub Pages (optional)
+        run: |
+          echo "To deploy to GitHub Pages:"
+          echo "1. Enable GitHub Pages in repository settings"
+          echo "2. Use actions/deploy-pages action"
+          echo "3. Configure custom domain if needed"
+      
+      - name: Upload documentation site
+        uses: actions/upload-artifact@v4
+        with:
+          name: agi-os-documentation-site
+          path: docs-site/
+          retention-days: 90
+
+  create-release-notes:
+    name: Create Release Notes
+    runs-on: ubuntu-22.04
+    needs: [prepare-release, deploy-packages, deploy-documentation]
+    if: github.event_name == 'release'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Generate release notes
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # AGI-OS Release Notes
+          
+          ## Overview
+          
+          This release includes the complete AGI Operating System with vertical integration from microkernel to application layer.
+          
+          ## Components
+          
+          ### Layer 0: Cognumach Microkernel
+          - Enhanced GNU Mach with cognitive primitives
+          - Improved IPC for cognitive messaging
+          - Memory management optimizations
+          
+          ### Layer 1: HurdCog Operating System
+          - Cognitive Kernel (CogKernel)
+          - Cognitive Fusion Reactor
+          - MachSpace integration
+          - OCC Bridge
+          
+          ### Layer 2: OCC Application Framework
+          - AtomSpace (knowledge representation)
+          - PLN (probabilistic reasoning)
+          - ECAN (attention allocation)
+          - Pattern mining
+          - Language learning
+          
+          ## Installation
+          
+          ### Debian/Ubuntu
+          ```bash
+          # Download release
+          wget https://github.com/cogpy/occ/releases/download/VERSION/agi-os-VERSION.tar.gz
+          tar -xzf agi-os-VERSION.tar.gz
+          cd agi-os-VERSION
+          
+          # Install
+          sudo ./install-agi-os.sh
+          ```
+          
+          ### GNU Guix
+          ```bash
+          guix package -f occ-hurdcog-unified.scm
+          ```
+          
+          ## What's New
+          
+          - Complete integration of Cognumach, HurdCog, and OCC
+          - Functional cognitive synergy across all layers
+          - 27 Debian packages ready for deployment
+          - Comprehensive documentation
+          - Automated testing infrastructure
+          
+          ## Testing
+          
+          Run the integration test suite:
+          ```bash
+          ./synergy_agi_os.sh
+          ```
+          
+          ## Documentation
+          
+          - [Integration Architecture](docs/AGI_OS_INTEGRATION_ARCHITECTURE.md)
+          - [Validation Report](docs/VALIDATION_REPORT.md)
+          - [Build Instructions](docs/BUILD_ORDER.md)
+          
+          ## Known Issues
+          
+          - Cognumach requires i686 cross-compilation for full build
+          - Some Guix builds may require additional dependencies
+          - Integration tests may skip some checks without full environment
+          
+          ## Support
+          
+          - GitHub Issues: https://github.com/cogpy/occ/issues
+          - Documentation: https://github.com/cogpy/occ/tree/main/docs
+          
+          ## License
+          
+          See LICENSE file for details.
+          EOF
+          
+          cat RELEASE_NOTES.md
+      
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-22.04
+    needs: [prepare-release, deploy-packages, deploy-documentation]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# AGI-OS Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ github.event.inputs.deploy_target || 'release' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Release Preparation | ${{ needs.prepare-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Package Deployment | ${{ needs.deploy-packages.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation | ${{ needs.deploy-documentation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Release tarball" >> $GITHUB_STEP_SUMMARY
+          echo "- Debian package repository" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation site" >> $GITHUB_STEP_SUMMARY
+          echo "- Release notes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download artifacts from this workflow run" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test installation on target systems" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update package repository (if applicable)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Announce release to community" >> $GITHUB_STEP_SUMMARY

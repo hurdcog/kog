@@ -1,0 +1,177 @@
+[[!meta copyright="Copyright © 2013, 2014 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_hurd]]
+
+
+# IRC, freenode, #hurd, 2013-02-11
+
+    <braunr> now that there is a pthread_hurd_cond_timedwait_np function
+      available, we could replace the ulgy timers in pfinet
+
+
+# IRC, freenode, #hurd, 2013-04-02
+
+    <braunr> youpi: also, i think i know why fakeroot is slow on the hurd
+    <braunr> well, pfinet actually
+    <youpi> tcp flow control?
+    <braunr> i think it's because of our timer resolution
+    <youpi> ah
+    <braunr> and i think i spotted a small mistake in the timer emulation code
+      btw
+    <braunr> it's so obvious i even doubt it's actually true :)
+    <braunr> see timer_emul.c:timer_function
+    <braunr> the code checks for timers->expires < jiffies
+    <braunr> shouldn't it be "<="
+    <braunr> ?
+    <youpi> well it'd be equivalent
+    <youpi> if ==, then wait becomes 0 in the else
+    <braunr> see the second scheck
+    <braunr> the one performed right before running the callback
+    <youpi> ah, the while?
+    <braunr> yes
+    <youpi> I'd say <= could do it yes
+    <braunr> ok
+    <braunr> i have hurd packages ready to be tested
+    <youpi> although I'm unsure it'd make a difference
+    <youpi> do you notice some?
+    <braunr> just waiting for my current glibc to finish building
+    <braunr> and i'll test right after
+    <braunr> i think it would actually
+    <youpi> in which case?
+    <braunr> the timer resolution is 10ms
+    <braunr> it's huge
+    <braunr> well, i hope it fixes fakeroot slowness :)
+    <youpi> so timers below that would trigger immediately?
+    <braunr> or equal
+    <braunr> taht's the problem
+    <braunr> for 10ms, timers that have expired must wait for the next tick to
+      fire
+    <youpi> I include "equal" in below
+    <youpi> actually :)
+    <braunr> then yes :)
+    <braunr> soryy i never know when equal is implicit
+    <youpi> because they boil down to expires = jiffies
+    <youpi> in french it's implicit
+    <youpi> but anyway here equal is not really important
+    <braunr> right
+    <braunr> why ?
+    <youpi> it's the fact that 1ms would be rounded up to 10ms, not down to 0ms
+    <braunr> well, doing that seems reasonable
+    <youpi> or rather, rounded down to 0ms, but waited for 10ms because of the
+      <
+    <braunr> we do want timers not to fire before the time event
+    <youpi> I'm however wondering which part of the code would have timer below
+      10ms
+    <braunr> well, a select with low timeout from a client perhaps ?
+    <youpi> but then we have to round up
+    <youpi> as you say we don't want to fire before some time
+    <braunr> well yes
+    <braunr> that's fine
+    <youpi> all that being said, linux has been having 10ms clock for a long
+      time
+    <braunr> but when the timer fires, i.e. when expires == jiffie, we do want
+      it to fire
+    <youpi> highres timers are only relativeley recent
+    <braunr> not at jiffie + 1
+    <youpi> braunr: ah, right, so we don't wait for 20ms instead of 10ms
+    <braunr> yes
+    <youpi> ok, so it's not a miracle fix, but could bring 2times fix
+    <braunr> well, pfinet eats 40% of my processor when this problem occurs
+    <braunr> which i'm seeing right now
+    <youpi> yes, I've seen that too
+    <braunr> so it may be a visible win
+    <braunr> build finished :) let's see
+    <youpi> Mmm, thinking again
+    <youpi> indeed
+    <youpi> when expires become jiffies
+    <youpi> we mach_msg (0)
+    <youpi> but don't do anything
+    <youpi> and then restart
+    <youpi> so just eaten cpu for nothing
+    <braunr> is there a small package that builds fast and uses fakeroot a lot
+      ?
+    <youpi> something like a package which has a lot of data to install at make
+      install
+    <braunr> or i can rebuild glibc with -nc
+    <youpi> ok, I've checked in linux
+    <pinotree> libarchive's testsuite used to intermittently failing under
+      fakeroot
+    <youpi> it's definitely <= which is meant
+    <braunr> it looks better
+    <braunr> but still not 100% cpu
+    <youpi> at any rate, as long as it doesn't seem to break anything, please
+      push the fix
+    <youpi> it definitely makes sense
+    <youpi> (and I don't see why it could break anything)
+    <braunr> ok
+    <braunr> i'll look into this timer problem a bit more, there may be other
+      code involved
+    <braunr> yes, schedule_timeout could need a review
+    <braunr> actually, fakeroot rm -rf * is a good test
+    <braunr> and it's still damn slow
+
+
+## IRC, freenode, #hurd, 2013-11-04
+
+    <braunr> i think i know why fakeroot is slow no
+    <braunr> now
+    <braunr> schedule_timeout as implemented in pfinet can only be awaken by a
+      timeout
+    <braunr> even when the expected even comes in earlier
+    <braunr> so yes, the proper solution is to rewrite the timers using
+      interruptible_sleep_on_timeout (and in turn
+      pthread_hurd_cond_timedwait_np)
+    <braunr> hm no, it's still not that straightforward :(
+
+
+## IRC, freenode, #hurd, 2013-11-05
+
+    <braunr> youpi: i found the bug slowing down fakeroot-tcp
+    <braunr> it's actually a bug that slows down anything using the loopback
+      device
+    <braunr> (although there still is a problem with fakeroot chown)
+    <youpi> oh!
+    <braunr> basically
+    <braunr> the loopback device calls netif_rx from its xmit function
+    <braunr> which is perfectly fine
+    <braunr> except the glue code makes mark_bh (used to raise bottom halves)
+      broadcast a condition
+    <braunr> and since netif_rx is called from within xmit, which is called
+      from the net_bh worker thread
+    <braunr> the thread itself is never waiting for the condition when it is
+      broadcast
+    <braunr> it's very simple to fix, i'll send a patch later
+    <braunr> netcat to netcat now consumes 100% cpu
+    <braunr> as does fakeroot ls -Rl
+    <braunr> but for some reason fakeroot chown is still extremely slow
+    <braunr> and i've seen deadlocks in glibc (e.g. setlocale() getting the
+      locale lock, which is locked again in case libfakeroot fails and calls
+      strerror)
+    <braunr> so still a bit of debugging work needed
+
+
+## IRC, freenode, #hurd, 2013-11-06
+
+    <braunr> chown being slow with fakeroot-tcp can also be seen on linux
+
+    <teythoon> did your recent patch improve the performance of fakeroot-tcp ?
+    <braunr> yes
+    <teythoon> very nice :)
+    <braunr> but fakeroot chown is still slow
+    <braunr> although it's also slow on linux
+    <braunr> so i'm not looking into that any more for the time being
+    <braunr> as long as it's not used recursively on huge directories, it's
+      fine
+
+
+## IRC, freenode, #hurd, 2013-11-09
+
+    <teythoon> braunr: fakeroot-tcp is indeed much faster now :)

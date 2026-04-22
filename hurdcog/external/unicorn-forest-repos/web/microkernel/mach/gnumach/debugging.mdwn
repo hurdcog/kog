@@ -1,0 +1,259 @@
+[[!meta copyright="Copyright © 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2016
+Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+Here are some hints to debug with GNU Mach.
+
+[[!toc levels=2]]
+
+
+# Kernel Debugger (KDB)
+
+Mach has a built-in kernel debugger.
+[Manual](http://www.gnu.org/software/hurd/gnumach-doc/Kernel-Debugger.html).
+
+First, make sure to enable it. Either by using a pre-packaged gnumach-image-something-dbg, or by passing --enable-kdb to the ./configure invocation.
+
+Then, reproduce the issue again. If something like a kernel trap happens, you will end up in the GNU Mach debugger. Otherwise, type control-alt-d to make Mach enter it by hand.
+
+If you are running in kvm or qemu, it is convenient to use the curses frontend to be able to copy/paste.
+
+To get the register values, type
+
+    show registers
+
+To get a backtrace, type
+
+    trace
+    
+, which will print both function return addresses and function parameters, such as
+
+    0x107cf1(8088488,5e,40000008,2aa008,0)
+    0x1071bc(0,0,0,0,0)
+    0x106831(24fe00,2000,b,800,0)
+
+Run the addr2line tool on the return addresses:
+
+    $ addr2line -i -f -e /boot/gnumach 0x107cf1 0x1071bc 0x106831
+
+This will print the source code lines of the backtrace.
+
+To get the userland backtrace of the thread, you can use
+
+    trace/u
+
+To examine the backtrace of some given thread, use
+
+    show all thread/u
+
+to get the whole listing of all tasks and threads.  You can then use trace/t or trace/tu to trace a specific thread.  gcc however uses the frame pointer as a normal register unless `-fno-omit-frame-pointer` is given.  It can thus be useful to rebuild glibc with that option, by adding `extra_cflags = -fno-omit-frame-pointer` in `glibc/debian/sysdeps/hurd-i386.mk`
+
+To examine a variable, use nm /boot/gnumach to get the address of the variable (e.g. 0x123400), and use
+
+    x 0x123400
+
+to read it. One can also write to it by using
+
+    w 0x123400
+
+Another interesting feature is watching a variable, by using
+
+    watch 0x123400
+
+and then type continue, to let Mach continue execution. The debugger will be entered again on any change in that variable. The watch is implemented in hardware, so it does not disturb or slow down execution at all.  The same can be achieved programmatically, e.g. using
+
+
+    struct db_watchpoint watch = { .task = NULL, .loaddr= 0x40e, .hiaddr = 0x40e+2, .link = NULL};
+    db_set_hw_watchpoint(&watch, 0);
+
+To discover what an arbitrary address points to, try
+
+    whatis  0x123400
+
+# GDB in QEMU
+
+When you're [[running_a_system_in_QEMU|hurd/running/qemu]] you can directly
+[use GDB on the running
+kernel](https://www.qemu.org/docs/master/system/gdb.html).
+
+When debugggin 32-bit gnumach, you can specify the kernel file in the
+command line with the `-kernel` option and the boot modules with
+`-initrd`, as described in [[hurd/running/qemu]].  This however does
+not work for 64-bit gnumach, due to a [limitation in
+qemu](https://gitlab.com/qemu-project/qemu/-/issues/243).  To overcome
+this, you can either patch qemu to enable multiboot also for 64-bit
+ELF, or build a bootable ISO image with `grub-mkrescue`.
+
+To enable the gdbserver on a running instance, you need to access the
+qemu monitor and use the `gdbserver` command. For example, with
+libvirt/virt-manager
+
+    $ virsh --connect qemu:///session qemu-monitor-command --domain hurd --hmp --cmd gdbserver
+
+Otherwise, if you start qemu manually, you can use the `-s` and `-S`
+shortcuts, that will open a tcp connection on port 1234 and wait for
+gdb to attach before starting the vm.
+
+If you don't need a graphical interface, e.g. you're working on the
+boot process, you could use stdio as an emulated serial port with
+`-nographic`, and append `console=com0` to the kernel command line,
+either in grub or with the `-append` option.
+
+Once qemu has started, you can connect to the gdbserver with
+
+    $ gdb gnumach
+    ...
+    (gdb) target remote :1234
+    (gdb) c
+
+You can also automate some steps with a `.gdbinit` file in your
+working directory. For example:
+
+    set print pretty
+    target remote :1234
+    # let's set some breakpoints
+    b Panic
+    b c_boot_entry
+    b user_bootstrap
+    b ../i386/intel/pmap.c:1981
+    # we can also refer to virtual addresses in userspace
+    b *0x804901d
+    # this shows the instruction being executed
+    display/i $pc
+    layout asm
+
+
+## [[open_issues/debugging_gnumach_startup_qemu_gdb]]
+
+## Debug 64-bit gnumach
+
+[[build|microkernel/mach/gnumach/building/]] 64-bit gnumach with:
+
+    $ export CFLAGS=-g
+    $ ../configure --enable-kdb ...
+
+run a spare Hurd vm (prepare for data loss in vm):
+
+* `kvm -net user,hostfwd=tcp:127.0.0.1:2222-:22 -net nic,model=e1000 -drive file=$(echo debian-hurd*.img),cache=writeback -m 1G`
+* `cd gnumach/build`
+* `scp -P 2222 gnumach.gz user@127.0.0.1:/home/user/`
+* You may copy `gnumach.gz` (also create new grub entry) or replace using `mv /home/user/gnumach.gz /boot/gnumach-xxx.gz`
+* Shutdown vm.
+* Append `console=com0` in boot menu and switch to console mode in qemu. (We have known issues with vga output for 64-bit.)
+* You may load only required modules for debugging.
+* `kvm -s -S -net user,hostfwd=tcp:127.0.0.1:2222-:22 -net nic,model=e1000 -drive file=$(echo debian-hurd*.img),cache=writeback -m 1G` (note: `-s -S` added.)
+* `gdb ./gnumach`
+* `(gdb) target remote :1234`
+* Press `c` to continue booting.
+
+
+example `/boot/grub/grub.cfg`:
+
+    multiboot       /boot/gnumach-1.8-486.gz root=part:2:device:hd0 console=com0
+    ...
+    echo            'Loading the Hurd ...'
+    module          /hurd/ext2fs.static ext2fs --readonly \
+                    --multiboot-command-line='${kernel-command-line}' \
+                     \
+                    --host-priv-port='${host-port}' --device-master-port='${device-port}' \
+                    --exec-server-task='${exec-task}' -T typed '${root}' \
+                    '$(fs-task=task-create)' '$(task-resume)'
+    module          /lib/ld.so.1 exec /hurd/exec '$(exec-task=task-create)'
+
+
+
+
+# Code Inside the Kernel
+
+Alternatively you can use an approach like this one: add the following code
+snippet to `device/ds_routines.c`'s `ds_device_open` function, right at the top
+of the function, and modify the code as needed.
+
+      void D (char *s)
+      {
+        switch (s[0] - '0')
+          {
+          case 0:
+           printf ("Hello from %s!\n", __FUNCTION__);
+           break;
+          case 1:
+           printf ("%s: Invoking task_collect_scan.\n", __FUNCTION__);
+           extern void task_collect_scan (void);
+           task_collect_scan ();
+           break;
+          default:
+           printf ("No idea what you want me to do.\n");
+           break;
+          }
+      }
+    
+      if (name && name[0] == 'D')
+        D (name + 1);
+
+Then boot your system and do something like this:
+
+    # devprobe D0
+    Hello from D!
+    # devprobe D1
+    D: Invoking task_collect_scan.
+    # devprobe D2
+    No idea what you want me to do.
+
+This is especially useful if you need to manually trigger some stuff inside the
+running kernel, as with the *D1* example.
+
+
+## Writing to the Screen Buffer
+
+If you're doing real low level debugging, you might want to put variations of
+the following snipped into the code, this code will write a `#` character at
+line `[LINE]`, column `[COLUMN]` on the screen:
+
+    *((char *) 0xb8000 + 2 * ([LINE] * 80 + [COLUMN])) = '#';
+    halt_cpu ();
+
+The call of `halt_cpu` will -- as the name suggests -- halt the system
+afterwards.  This might be what you want or it might not, but it is needed at
+some place when running the kernel inside QEMU, as QEMU somehow decides not to
+update its display buffer anymore under certain conditions.
+
+
+# Halting the CPU and Examining Registers
+
+## IRC, freenode, #hurd, 2011-07-14
+
+    <braunr> one ugly trick i use when printf isn't available is to halt the
+      cpu
+    <braunr> then use info registers to know where the cpu is halted
+    <braunr> and you'll know if you reached that code or not
+    <braunr> (info registers is a qemu command)
+
+
+# Serial Console
+
+## IRC, freenode, #hurd, 2011-11-13
+
+    <youpi> use console=com0
+    <youpi> to activate the console on the first serial port
+
+
+# `ud2` instruction
+
+## IRC, freenode, #hurd, 2013-10-31
+
+    [master-x86_64]
+    <phcoder> GNU Mach 1.3.99
+    <phcoder> Running on xen-3.0-x86_64.
+    <phcoder> AT386 boot: physical memory from 0x0 to 0x40000000
+    <youpi> \o/
+    <phcoder> well when loaded through pvgrub2 i hangs without any message
+    <phcoder> any pointers on debugging?
+    <youpi> I usually put the ud2 instruction along the path to see where it
+      crashes

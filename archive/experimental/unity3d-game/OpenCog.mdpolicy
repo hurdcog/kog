@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PolicySet name="OpenCog">
+  <TextStylePolicy inheritsSet="VisualStudio" inheritsScope="text/plain" scope="text/plain">
+    <TabsToSpaces>False</TabsToSpaces>
+  </TextStylePolicy>
+  <VersionControlPolicy inheritsSet="Mono" />
+  <XmlFormattingPolicy inheritsSet="Mono" inheritsScope="application/xml" scope="application/xml" />
+  <CSharpFormattingPolicy inheritsSet="Mono" inheritsScope="text/x-csharp" scope="text/x-csharp">
+    <IndentNamespaceBody>False</IndentNamespaceBody>
+    <IndentSwitchBody>True</IndentSwitchBody>
+    <AnonymousMethodBraceStyle>NextLine</AnonymousMethodBraceStyle>
+    <PropertyBraceStyle>NextLine</PropertyBraceStyle>
+    <PropertyGetBraceStyle>NextLine</PropertyGetBraceStyle>
+    <PropertySetBraceStyle>NextLine</PropertySetBraceStyle>
+    <EventBraceStyle>NextLine</EventBraceStyle>
+    <EventAddBraceStyle>NextLine</EventAddBraceStyle>
+    <EventRemoveBraceStyle>NextLineShifted2</EventRemoveBraceStyle>
+    <StatementBraceStyle>NextLine</StatementBraceStyle>
+    <IfElseBraceForcement>AddBraces</IfElseBraceForcement>
+    <ForBraceForcement>AddBraces</ForBraceForcement>
+    <WhileBraceForcement>AddBraces</WhileBraceForcement>
+    <BeforeMethodDeclarationParentheses>False</BeforeMethodDeclarationParentheses>
+    <WithinMethodDeclarationParentheses>True</WithinMethodDeclarationParentheses>
+    <BeforeMethodCallParentheses>False</BeforeMethodCallParentheses>
+    <WithinMethodCallParentheses>True</WithinMethodCallParentheses>
+    <BeforeConstructorDeclarationParentheses>False</BeforeConstructorDeclarationParentheses>
+    <WithinConstructorDeclarationParentheses>True</WithinConstructorDeclarationParentheses>
+    <BeforeIndexerDeclarationBracket>False</BeforeIndexerDeclarationBracket>
+    <WithinIndexerDeclarationBracket>True</WithinIndexerDeclarationBracket>
+    <BeforeDelegateDeclarationParentheses>False</BeforeDelegateDeclarationParentheses>
+    <AfterDelegateDeclarationParameterComma>True</AfterDelegateDeclarationParameterComma>
+    <WithinDelegateDeclarationParentheses>True</WithinDelegateDeclarationParentheses>
+    <NewParentheses>False</NewParentheses>
+    <IfParentheses>False</IfParentheses>
+    <WhileParentheses>False</WhileParentheses>
+    <ForParentheses>False</ForParentheses>
+    <ForeachParentheses>False</ForeachParentheses>
+    <CatchParentheses>False</CatchParentheses>
+    <SwitchParentheses>False</SwitchParentheses>
+    <LockParentheses>False</LockParentheses>
+    <UsingParentheses>False</UsingParentheses>
+    <WithinIfParentheses>True</WithinIfParentheses>
+    <WithinNewParentheses>True</WithinNewParentheses>
+    <SpacesBeforeBrackets>False</SpacesBeforeBrackets>
+    <BlankLinesBeforeUsings>1</BlankLinesBeforeUsings>
+    <BlankLinesBeforeFirstDeclaration>1</BlankLinesBeforeFirstDeclaration>
+    <BlankLinesBetweenFields>1</BlankLinesBetweenFields>
+    <BlankLinesBetweenEventFields>1</BlankLinesBetweenEventFields>
+  </CSharpFormattingPolicy>
+  <ChangeLogPolicy inheritsSet="Mono" />
+  <DotNetNamingPolicy>
+    <DirectoryNamespaceAssociation>Hierarchical</DirectoryNamespaceAssociation>
+    <ResourceNamePolicy>MSBuild</ResourceNamePolicy>
+  </DotNetNamingPolicy>
+  <TextStylePolicy inheritsSet="null" scope="application/xml" />
+  <TextStylePolicy inheritsSet="Mono" inheritsScope="text/plain" scope="text/x-csharp">
+    <TabWidth>2</TabWidth>
+    <IndentWidth>2</IndentWidth>
+    <NoTabsAfterNonTabs>True</NoTabsAfterNonTabs>
+  </TextStylePolicy>
+</PolicySet>

@@ -1,0 +1,314 @@
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="Contributing"]]
+
+[[!tag stable_URL]]
+
+So, you are interested in contributing to the GNU Hurd project?  Welcome!
+Every single contribution is very much encouraged.
+
+There are various ways to contribute; read up on contributing to...
+
+[[!toc levels=2]]
+
+If you are lurking around here and would like to contribute, but
+feel you would do so better under formal mentoring: please
+[[contact_us]], or just speak up at one of the [[regular IRC
+meetings|IRC#regular_meetings]]!
+
+We also have a list of [[open_issues]] and one for more elaborate [[project
+ideas|community/gsoc/project_ideas]] - the latter originally written for the
+[[Google Summer of Code|community/gsoc]], but not exclusively.  Even just
+investigating open issues, without being able to fix them, can be useful,
+because a issue that has been tracked down often becomes obvious to address for
+people who know the stuff -- but these people typically don't have the time
+that is needed to track down the issues.
+
+---
+<a name="hurd_on_mach"></a>
+# Improve GNU Hurd Running on GNU Mach
+
+The *[[GNU Hurd|hurd]] running on the [[GNU Mach
+microkernel|microkernel/mach/gnumach]]* is what is commonly meant when people
+are talking about GNU/Hurd systems.
+
+This system has mostly been designed and implemented
+[[in the '90s|history]].  It works and is usable.
+For example, these web pages have been rendered on a GNU/Hurd system.
+
+You can try it out for yourself: for getting access, installing
+[[Debian_GNU/Hurd|hurd/running/debian]] will probably be the easiest and most
+feature-complete solution.  If you don't have spare hardware to use for doing
+so, you can also get a
+[[shell_account_on_a_public_Hurd_machine|public_hurd_boxen]].  Depending on the
+things you're going to work on (and on your internet connection), this may be
+an easy way of getting used to Hurd systems.  Installing in a virtual machine
+is another possibility, see the page about
+[[running_a_Hurd_system|hurd/running]] for the full story.
+In particular, running a Debian GNU/Hurd [[QEMU image|hurd/running/QEMU]] may
+be a viable alternative.
+
+Then you can either play around and eventually strive to do something
+useful or -- if you want -- [[ask_us|contact_us]] to assign something to you, depending
+on the skills you have and the resources you intend to invest.
+
+Please spend some time with thinking about the items in this [[questionnaire]].
+
+Before you can significantly contribute to the operating system itself, you'll
+need to take some time to learn about the system, for example:
+[[microkernels for beginners|microkernel/for_beginners]], [[Mach's
+concepts|microkernel/mach/concepts]], [[Hurd's concepts|hurd/concepts]], the
+*[[hurd/critique]]*.  Until you can understand and do the basic exercises
+listed there, you won't be able to significantly contribute to the Hurd.
+
+You can also have a look at the
+[starting guide talk](https://fosdem.org/2015/schedule/event/hurd/).
+
+In terms of building and hacking on software, the easiest way to avoid having to
+understand the whole picture from the start is install the Debian distribution,
+and patch over the Debian source code. Installing from upstream source is much
+more complexe since you would need to know which piece fits where. Building and
+installing patched packages is much more simple.
+
+For more reading resources, please see these web pages, for example,
+[[Hurd_documentation|hurd/documentation]] and
+[[Mach_documentation|microkernel/mach/documentation]] for links to a bunch of
+documents.
+
+
+<a name="smallhacks"></a>
+## Small hack entries
+
+Here is a list of small hacks, which can serve as entries into the Hurd code for
+people who would like to dive into the code but just lack a "somewhere to begin
+with". Make sure to check out the most up-to-date version on
+<https://darnassus.sceen.net/~hurd-web/contributing>
+
+* Teach rsync to use `*getxattr` and friends on GNU/Hurd too, to enable the -X option, so as to preserve translator entries.
+* Avoid GCC trampolines: as discussed in <https://gcc.gnu.org/onlinedocs/gccint/Trampolines.html> these happen when we pass the address of a nested function to another function. This can be seen by running `readelf -S file.o | grep GNU-stack | grep X`, for instance that happens in libdiskfs/file-exec.c, libdiskfs/io-revoke.c. We can't really use -fno-trampoline, we should instead add `void *data` parameters to iterators such as `ports_class_iterate` or `fshelp_exec_reauth`, so that the nested functions can be made mere static functions that get their information from the `void *data` parameter.
+* Implement `pthread_setschedparam` and `sched_setscheduler` in glibc by calling mach's `thread_policy` and `thread_priority`.
+* Strengthen httpfs: it should append '/' to URL automatically, it should not fallback index.html itself, etc. probably a lot more small easy issues.
+* Create a Wiki page with all presentations about the Hurd.  Many are referenced here in the Wiki, but they are not easy to find.
+    ([[!taglink open_issue_documentation]])
+* Some translators do not support [[hurd/fsysopts]], i.e. support for the
+`file_get_fs_options` and `fsys_set_options` RPCs.
+* Extend `device_read`/`device_write` into supporting > 2TiB disk sizes.
+* Make `host_get_time` much more precise by using the TSC.
+* Add NX / SMEP / SMAP protection support to GNU Mach.
+* Add use of PCID in GNU Mach.
+* Fix 64bit instruction set disassembling in GNU Mach's `/i386/i386/db_disasm.c` `db_disasm` function and tables.
+* Write a partfs translator, to which one gives a disk image, and
+which exposes the partitions of the disk image, using parted, and
+the parted-based storeio (`settrans -c foos1 /hurd/storeio -T typed
+part:1:file:/home/samy/tmp/foo`). This would be libnetfs-based.
+* Write [[virtio drivers for KVM|open_issues/virtio#KVM]].
+* Move the [[mount/umount|open_issues/glibc#mount]] logic from
+`utils/{,u}mount.c` into [[glibc]].
+* Add a tool to trace system calls, by using gnumach's Syscall-Emulation, see <http://www.gnu.org/software/hurd/gnumach-doc/Syscall-Emulation.html>
+* Improve our [[FUSE library|hurd/libfuse]].
+* Fix our [[open_issues/symlink_translator]].
+* Add gnumach support for EFI memory areas report through GetMemoryMap instead of the BIOS E820.
+* Implement `SA_NOCLDWAIT`. It means adding an RPC to proc to implement it, and then making glibc detect when setting `SIG_IGN` on `SIGCLD`, or setting the `SA_NOCLDWAIT` flag, and in that case call into `proc`, similarly to the `S_proc_mod_stopchild` RPC. proc's `S_proc_wait` shall then wait for all children and return `ECHILD`.
+* Implement `lsof`. One can get inspiration from `libshouldbeinlibc/portinfo.c` for the details.
+* Add `VSTATUS` support to `term`. Essentially in `term/munge.c`, `input_character`, just like the `VINTR`, `VQUIT`, `VSUSP`, collect a few stats from the system, and put them into the output queue.
+* Make mig use the `access` function attribute to properly express accesses in arrays, e.g. for `device_read/write_inband`.
+* Add a limitation in the number of a process that a given uid can run. That would be in the `proc` translator. That will allow to avoid crashes when an application goes crazy with forking. Setting a hardcoded limitation would thus already be useful.
+* Complete BPF program validation in `libbpf`. For instance, for now if `BPF_MOD` or `BPF_XOR` are used in a filter, it is accepted, but the matching always fails. We should pre-refuse any unknown instruction (and of course then implement `BPF_MOD` and `BPF_XOR`)
+
+<a name="porting"></a>
+## Porting Packages
+
+Please [[contact_us]] before spending a lot of time on the following porting
+tasks: some work may already have been done that you can base your work upon.
+
+For guidelines, please have a look at the dedicated [[porting_page|hurd/porting]].
+
+
+### Debian GNU/Hurd
+
+Along with the official Debian "jessie" release (but not as an
+official Debian release), in April 2015 the [[Debian
+GNU/Hurd|hurd/running/debian]] team released [[Debian GNU/Hurd
+2015|news/2015-04-29-debian_gnu_hurd_2015]].
+There is a goal of getting Debian GNU/Hurd into shape for a technology
+preview for integration as a proper Debian release candidate.
+
+The *to do* list is on <http://wiki.debian.org/Debian_GNU/Hurd>.
+
+The following missing packages/missing functionality block a lot of other
+packages, and are thus good candidates for porting, in order to increase
+archive coverage:
+
+* umount functionality in busybox
+
+Here is a [[list of packages that need porting|hurd/running/debian/porting]].
+
+You can also just [[install_Debian_GNU/Hurd|hurd/running/debian]] and find what
+doesn't work or suit you and try to improve that.
+
+Or, you can pick one from the [list of failing
+packages](http://people.debian.org/~sthibault/hurd-i386/failed_packages.txt).
+
+
+## TODO List
+
+This is the list of tasks that we *want* to address soon, starting with the most pressing:
+
+* Fix shell output pipe replacement issue on amd64, see
+[discussion](https://lists.gnu.org/archive/html/bug-hurd/2023-10/msg00062.html).
+  - This means adding an `i386x_float_state` and `i386_XFLOAT_STATE` thread status, that glibc would be able to use along `i386_REGS_SEGS_STATE` and `i386_FLOAT_STATE` in `_hurd_setup_sighandler` and `sigtreturn.c`. The structure would contain the `fp_save_kind`. That'll actually be needed both on `i386` and `x86_64` actually, to fix SSE use against signals in general.
+* Check the [packages build failures differences](https://people.debian.org/~sthibault/hurd-amd64/failed_diff.txt) between hurd-i386 and hurd-amd64: they are failing on hurd-amd64 but are successful on hurd-i386. Possibly it's just a mere missing `s/hurd-i386/hurd-any/` in the debian/ directory, or a new bug that actually also affects hurd-i386 if you rebuild the package there now, but possibly it's a more profound issue in the amd64 port.
+* On amd64, fix crash-core
+* On amd64, fix running posixtestsuite (not necessarily fixing the tests themselves, but at least make sure it doesn't crash the box ; it could still be useful to compare the output on 32bit and 64bit are the same with the same gnumach/hurd/glibc).
+* Settle CI for mig+gnumach+hurd+glibc.
+* Port `dhcpcd`, see [call for help](https://lists.debian.org/debian-hurd/2023/11/msg00030.html)
+* Make sure that lwip supports configuration by DHCP.
+* Extensively test (e.g. running testsuites of glibc, perl, curl, rust-mio) and fix the lwip-based TCP/IP stack, to be sure we don't get regressions by switching to it.
+* Fix swapping with `rumpdisk`
+  * Apparently some wiring cases is not effective, we are seeing pageout of rumpdisk memory.
+* Fix the [GPLv2 vs GPLv3 licence incompatibility between ext2fs and libparted](https://bugs.debian.org/838244):
+  * For /hurd/ext2fs, use a different libstore that does not include the parted module.
+  * For /hurd/ext2fs.static in the bootstrap chain (e.g. to access wd0s1), add a storeio translator before it, and have ext2fs open it, use `file_get_storage_info` and access the underlying device. That wouldn't need any code modification if we were using an initial ramfs exposing that storeio on /dev/wd0s1.
+* Prevent duplicate instances of `rumpdisk` from competing for the disk PCI cards (e.g. when a second one gets started from a chroot), otherwise mayhem happens.
+* Fix the memory consumption of `rumpdisk`.
+* Plug acpi shutdown event.
+* Add overcommit limitation support to gnumach (`RLIMIT_AS`): limit the virtual size of processes to half of the memory + swap size. Unless `MAP_NORESERVE` is passed to `mmap`.
+* Fix `tmpfs` losing files, see [discussion](https://lists.gnu.org/archive/html/bug-hurd/2015-02/msg00091.html).
+* Port `libasan`/`lsan`/`ubsan`/`libtasn` so we can use these sanitizers (youpi did some of it, pending clean/submit).
+* Finish moving `pthread_` symbols from `libpthread` to `libc`, see for instance [some moves](https://sourceware.org/pipermail/libc-alpha/2023-March/146425.html), synchronize with Guy-Fleury Iteriteka.
+* Rewrite `pthread_cond_*`, `pthread_rwlock_*`, `pthread_barrier_*` to use `gsync`, like `pthread_mutex_*` do (also see the nptl implementations, possibly just share with them).
+* Improve rumpdisk's asynchronism, see end of `hurd/rumpdisk/block-rump.c`.
+* Check performance of `rumpdisk` against the in-`gnumach` drivers.
+* Finish glib's file monitoring (see [merge request draft](https://gitlab.gnome.org/GNOME/glib/-/merge_requests/3626) and [Debian bug](https://bugs.debian.org/1008208))
+* Extend `ext2fs` to support 64bit time.
+* Fix the `git` testsuite (just a few tests failing, used to pass).
+* Fix the `subversion` testsuite (just a few tests failing).
+* Fix the `vim` testsuite (just a few tests failing, used to pass).
+* Fix building `mesa`.
+* Fix building `wayland`.
+* Port `python-procps`.
+* Implement a `rumpnet`.
+* Implement a `rumpfs`.
+* Fix `SMP` support.
+
+## Open Issues
+
+There is a list of [[open_issues]].  This list includes everything from bug
+reports to open-ended research questions.
+
+
+<a name="insta-dev-env"></a>
+## Instant Development Environment
+
+<!--
+The idea of a one-stop development environment is not bad (I like that), but
+I'd do this differently.  For example, we should add some Git submodules to the
+master hurd.git repository (which is currently empty), to branches that are
+known to build and interface correctly with current GNU/Hurd system
+installations (thus including TLS, etc.), and also add in my cross-gnu scripts
+and a simple build machinery so this is usable from GNU/Linux (and other
+systems), and so on and so forth.
+
+I'll have to think about it some more.
+
+--[[tschwinge]].  -->
+
+*This is a very brief guide to get your development environment set up. Pester ArneBab @ irc.freenode.net on IRC if something does not work :)*
+([[!taglink open_issue_documentation]])
+
+
+First run the hurd in [[qemu|hurd/running/qemu#index1h2]]
+
+After you have a Hurd vm set up and running:
+
+* `apt update`
+* `apt install -y git mercurial emacs vim`
+* `apt build-dep -y hurd gnumach`
+* `git clone git://git.savannah.gnu.org/hurd/hurd.git`
+* `git clone git://git.savannah.gnu.org/hurd/gnumach.git`
+* `git clone git://git.savannah.gnu.org/hurd/incubator.git`
+* You can connect through ssh with `ssh root@localhost -p 2222`
+* Optionally if you connect to the Hurd running on another local
+  machine, then you might want to set up the
+  [[hurd/terrible-mdns-responder]].
+* Get more from the [repo list](https://git.savannah.gnu.org/cgit/hurd/).
+* Read the docs on these pages.
+* Start hacking.
+* For shutting down, use `reboot`, then press `c` in grub and issue halt (to avoid filesystem corruption). Adding `--no-reboot` to the qemu line should help, too.
+
+---
+<a name="hurd_on_modern_microkernel"></a>
+# Design / Research: GNU Hurd on a Modern Microkernel
+
+Developers [[have_identified|hurd/critique]] a number of problem with the *Hurd on
+Mach* system.  Problems, that can not easily be fixed by bug-fixing the
+existing code base, but which require design changes -- deep going ones
+actually.
+
+As such systems (as the desired one) are not in common use, but are -- if at
+all -- research projects, this new *Hurd on a modern microkernel* project
+itself is more a research project than a *sit down and implement/code/hack*
+project.
+
+If you're interested in contributing in this area, knowing the *Hurd on Mach*
+system (see [[above|contributing#hurd_on_mach]]) nevertheless is a
+prerequisite.  At least have a deep look at the documentation pointers.  Also
+read through the [[HurdNG|hurd/ng]] section.
+
+Please send email to the [[mailing lists/l4-hurd]] mailing list for discussing
+this post-Mach system design.
+
+---
+# Documentation
+
+
+## Technical Writer
+
+Our hackers (programmers) typically do what their kind always does: they code.
+What they don't like too much is documenting their wonderful achievements.  On
+the other hand, there are people (you?) who enjoy documenting technical
+matters, so don't hesitate to [[contact_us]] if technical documentation shall
+be your contribution to GNU Hurd development.
+
+A good start is probably to just start using the Hurd, and play with
+the translators. In the process you will probably find that some of the
+documentations are missing some details, are outdated, etc. That is were you can
+start contributing for instance.
+
+As an advice: do not start yet another documentation from scratch. There are
+already a lot of tutorials in the wilds, and they are almost all completely
+outdated. Rather contribute to the existing official documentation: this wiki,
+the documentation in the Hurd source, the Debian Hurd port pages.
+
+## Web Pages
+
+Please read about [[how_to_contribute_to_these_web_pages|web_pages]].
+
+---
+# Final Words -- Difficulties
+
+Please note that doing substantial contributions to a project as big and as
+encompassing as the GNU Hurd is not a trivial task.  For working on the GNU
+Hurd's inner guts and getting useful work done, you have to plan for a
+many-months learning experience which will need sufficient self-motivation.
+Working on an advanced operating system kernel isn't something you can do in a
+few free minutes -- even less so without any previous [[kernel]] hacking
+experience.
+
+Likewise, the Linux kernel maintainers are stating the exactly same
+difficulties, which is well presented by Jonathan Corbet in his 2010 Linux
+Kernel Summit report for the opening sessions about [*welcoming of
+newcomers*](http://lwn.net/Articles/412639/).
+
+But of course, none of this is meant to be dismissive, or to scare you away --
+on the contrary: just [[start
+using|hurd/running]] the GNU Hurd, and either notice yourself what's not
+working as expected, or have a look at one of the [[Open Issues]], and we shall
+see if you'll evolve to be the next core Hurd hacker!
+You'll *just* have to get excited about it!

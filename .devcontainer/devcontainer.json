@@ -1,0 +1,9 @@
+{
+  "name": "Guix Shepherd OpenCog DevContainer",
+  "build": { "dockerfile": "Dockerfile" },
+  "settings": {},
+  "postCreateCommand": "guix pull && guix install shepherd guile",
+  "customizations": { "vscode": { "extensions": [] } },
+  "features": [],
+  "forwardPorts": []
+}

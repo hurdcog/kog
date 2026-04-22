@@ -1,0 +1,1148 @@
+[[!meta copyright="Copyright © 2009, 2011, 2012, 2013, 2014 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_gnumach open_issue_hurd]]
+
+This is a collection of resources concerning *user-space device drivers*.
+
+Also see [[device drivers and IO systems]].
+[[community/gsoc/project ideas/driver glue code]].
+
+[[!toc levels=2]]
+
+
+# Open Issues
+
+## IRQs
+
+  * Can be modeled using [[RPC]]s.
+
+  * Security considerations: IRQ sharing.
+
+  * *Omega0* paper defines an interface.
+
+  * As is can be read in the *Mach 3 Kernel Principles*, there is an *event
+    object* facility in Mach that can be used for having user-space tasks react
+    to IRQs.  However, at least in GNU Mach, that code (`kern/eventcount.c`)
+    doesn't seem functional at all and isn't integrated properly in the kernel.
+
+  * IRC, freenode, #hurd, 2011-07-29
+
+        < antrik> regarding performance of userspace drivers, there is one
+          thing that really adds considerable overhead: interrupt
+          handling. whether this is relevant very much depends on the hardware
+          in question. when sending many small packets over gigabit ethernet,
+          it might be noticable; in most other cases it's irrelevant
+        < youpi> some cards support interrupt coalescin
+        < youpi> could be supported by DDE too
+
+## DMA
+
+  * Security considerations.
+
+      * I/O MMU.
+
+
+### IRC, freenode, #hurd, 2012-08-15
+
+    <carli2> hi. does hurd support mesa?
+    <braunr> carli2: software only, but yes
+    <carli2> :(
+    <carli2> so you did not solve the problem with the CS checkers and GPU DMA
+      for microkernels yet, right?
+    <braunr> cs = ?
+    <carli2> control stream
+    <carli2> the data sent to the gpu
+    <braunr> no
+    <braunr> and to be honest we're not currently trying to
+    <carli2> well, a microkernel containing cs checkers for each hardware is
+      not a microkernel any more
+    <braunr> the problem is having the ability to check
+    <braunr> or rather, giving only what's necessary to delegate checking to
+      mmus
+    <carli2> but maybe the kernel could have a smaller interface like a
+      function to check if a memory block is owned by a process
+    <braunr> i'm not sure what you refer to
+    <carli2> about DMA-capable devices you can send messages to
+    <braunr> carli2: dma must be delegated to a trusted server
+    <carli2> linux checks the data sent to these devices, parses them and
+      checks all pointers if they are in a memory range that the client is
+      allowed to read/write from
+    <braunr> the client ?
+    <carli2> in linux, 3d drivers are in user space, so the kernel side checks
+      the pointer sent to the GPU
+    <youpi> carli2: mach could do that as well
+    <braunr> well, there is a rather large part in kernel space too
+    <carli2> so in hurd I trust some drivers to not do evil things?
+    <braunr> those in the kernel yes
+    <carli2> what does "in the kernel" mean? afaik a microkernel only has
+      memory manager and some basic memory sharing and messaging functionality
+    <braunr> did you read about the hurd ?
+    <braunr> mach is considered an hybrid kernel, not a true microkernel
+    <braunr> even with all drivers outside, it's still an hybrid
+    <youpi> although we're to move some parts into userlands :)
+    <youpi> braunr: ah, why?
+    <braunr> youpi: the vm part is too large
+    <youpi> ok
+    <braunr> the microkernel dogma is no policy inside the kernel
+    <braunr> "except scheduling because it's very complicated"
+    <braunr> but all modern systems have moved memory management outisde the
+      kernel, leaving just the kernel abstraction inside
+    <braunr> the adress space kernel abstraction
+    <braunr> and the two components required to make it work are what l4re
+      calls region mappers (the rough equivalent of our vm_map), which decides
+      how to allocate regions in an address space
+    <braunr> and the pager, like ours, which are already external
+    <carli2> i'm not a OS developer, i mostly develop games, web services and
+      sometimes I fix gpu drivers
+    <braunr> that was just FYI
+    <braunr> but yes, dma must be considered something privileged
+    <braunr> and the hurd doesn't have the infrastructure you seem to be
+      looking for
+
+
+## I/O Ports
+
+  * Security considerations.
+
+## PCI and other buses
+
+  * Security considerations: sharing.
+
+## Latency of doing RPCs
+
+  * [[GNU Mach|microkernel/mach/gnumach]] is said to have a high overhead when
+    doing RPC calls.
+
+
+## System Boot
+
+A similar problem is described in
+[[community/gsoc/project_ideas/unionfs_boot]], and needs to be implemented.
+
+
+### IRC, freenode, #hurd, 2011-07-27
+
+    < braunr> btw, was there any formulation of the modifications required to
+      have disk drivers in userspace ?
+    < braunr> (which would obviously need something like
+      initrd/initramfs/whatever and may also need the root file system not to
+      be the first task started)
+    < braunr> hm actually, we may not need initrd
+    < braunr> the boot loader could just load more modules
+    < antrik> braunr: I have described all that in my thesis report... in
+      German :-(
+    < braunr> and the boot scripts could be adjusted to pass around the right
+      ports
+    < Tekk_> braunr: yeah, we could probably load a module that kciks us into
+      userspace and starts the disk driver
+    < braunr> modules are actualy userspace executables
+    < Tekk_> ah
+    < Tekk_> so what's the issue?
+    < Tekk_> oh! I'm thinking the ext2fs server, which is already in userspce
+    < braunr> change the file systems to tell them which underlying disk driver
+      to use
+    < Tekk_> mhm
+    < braunr> s/disk/storage/
+
+
+#### IRC, freenode, #hurd, 2012-04-25
+
+    <youpi> btw, remember the initrd thing?
+    <youpi> I just came across task.c in libstore/ :)
+
+
+#### IRC, freenode, #hurd, 2013-06-24
+
+    <youpi> we added a new initrd command to gnumach, to expose a new mach
+      device, which ext2fs can open and unzip
+    <youpi> we consider replacing that with simply putting the data in a dead
+      process
+    <youpi> s/process/task
+    <youpi> and let ext2fs read data from the task, and kill it when done
+    <teythoon> ok
+    <youpi> alternatively, tmps would work with an initial .tar.gz payload
+    <youpi> that would be best for memory usage
+    <youpi> tmpfs*
+    <teythoon> can't we replace the initrd concept with sub/neighbourhood?
+    <youpi> setting up tmpfs with an initial payload could be done with a
+      bootstrap subhurd
+    <teythoon> yes
+    <youpi> but it seems to me that having tmpfs being able to have an initial
+      payload is interesting
+    <teythoon> is there any advantage of the tmpfs translator prefilled with a
+      tarball over ext2fs with copy & bunzip?
+    <youpi> memory usage
+    <youpi> ext2fs with copy&bunzip takes memory for zeroes
+    <youpi> and we have to forecast how much data might be stored
+    <youpi> (if writable)
+    <teythoon> ah sure
+    <teythoon> but why would it have to be in the tmpfs translator? I why not
+      start the translator and have tar extract stuff there?
+    <teythoon> with the livecd I had trouble replacing the root translator, but
+      when using subhurds that shouldn't be a prwoblem at all
+    <youpi> I don't have a real opinion on this
+    <youpi> except that people don't usually like initrd :)
+    <braunr> 12:43 < teythoon> but why would it have to be in the tmpfs
+      translator? I why not start the translator and have tar extract stuff
+      there?
+    <braunr> that sounds an awful lot like an initramfs
+    <teythoon> yes, exactly, without actually having an initramfs of course
+    <braunr> yep
+    <braunr> i actually prefer that way too
+    <teythoon> a system on a r/o isofs cannot do much, but it can do this
+    <braunr> on the other hand, i wouldn't spend much time on a virtio disk
+      driver for now
+    <braunr> the hurd as it is can't boot on a device that isn't managed by the
+      kernel
+    <braunr> we'd need to change the boot protocol
+
+[[virtio]].
+
+
+#### IRC, freenode, #hurd, 2013-06-28
+
+    <teythoon> I'm tempted to redo a livecd, simpler and without the initrd
+      hack that youpi used for d-i
+    <braunr> initrd hack ?
+    <braunr> you mean more a la initramfs then ?
+    <teythoon> no, I thought about using a r/o isofs translator, but instead of
+      fixing that one up with a r/w overlay and lot's of firmlinks like I used
+      to, it would just start an ext2fs translator with copy on an image stored
+      on the iso and start a subhurd
+    <braunr> why a subhurd ?
+    <teythoon> neighbourhurd even
+    <teythoon> b/c back in the days I had trouble replacing /
+    <braunr> yes, that's hard
+    <teythoon> subhurd would take of that for free
+    <braunr> are you sure ?
+    <teythoon> somewhat
+    <braunr> i'm not, but this requires thorough thinking
+    <braunr> and i'm not there yet
+    <teythoon> y would it not?
+    <teythoon> just start a subhurd and let that one take over the console and
+      let the user and d-i play nicely in that environment
+    <teythoon> no hacks involved
+    <braunr> because it would require sharing things between the two system
+      instances, and that's not easy
+    <teythoon> no but the bootstrap system does nothing after launching the
+      subhurd
+    <teythoon> I mean yes, technically true, but why would it be hard to share
+      with someone who does nothing?
+    <braunr> the context isn't well defined enough to clearly state anything
+    <braunr> if you don't use the resources of the first hurd, that's ok
+    <braunr> otherwise, it may be easy or not, i don't know yet
+    <teythoon> you think it's worth a shot and see what issues crop up?
+    <braunr> sure
+    <braunr> definitely
+    <teythoon> it doesn't sound complicated at all
+    <braunr> it's easy enough to the point we see something goes wrong or works
+      completely
+    <braunr> so worth testin
+    <teythoon> cool :)
+
+
+#### IRC, freenode, #hurd, 2014-02-10
+
+    <teythoon> braunr: i have a question wrt memory allocation in gnumach
+    <teythoon> i made a live cd with a rather large ramdisk
+    <teythoon> it works fine in qemu, when i tried it on a real machine it
+      failed to allocate the buffer for the ramdisk
+    <teythoon> i was wondering why
+    <teythoon> i believe the function that failed was kmem_alloc trying to
+      allocate 64 megabytes
+    <braunr> teythoon: how much memory on the real machine ?
+    <teythoon> 4 gigs
+    <braunr> so 1.8G
+    <teythoon> yes
+    <braunr> does it fail systematically ?
+    <teythoon> but surely enough
+    <teythoon> uh, i must admit i only tried it once
+    <braunr> it's likely a 64M kernel allocation would fail
+    <braunr> the kmem_map is 128M wide iirc
+    <braunr> and likely fragmented
+    <braunr> it doesn't take much to prevent a 64M contiguous virtual area
+    <teythoon> i see
+    <braunr> i suggest you try my last gnumach patch
+    <teythoon> hm
+    <teythoon> surely there is a way to make this more robust, like using a
+      different map for the allocation ?
+    <braunr> the more you give to the kernel, the less you have for userspace
+    <braunr> merging maps together was actually a goal
+    <braunr> the kernel should never try to allocate such a large region
+    <braunr> can you trace the origin of the allocation request ?
+    <teythoon> i'm pretty sure it is for the ram disk
+    <braunr> makes sense but still, it's huge
+    <teythoon> well...
+    <braunr> the ram disk should behave as any other mapping, i.e. pages should
+      be mapped in on demand
+    <teythoon> right, so the implementation could be improved ?
+    <braunr> we need to understand why the kernel makes such big requests first
+    <teythoon> oh ? i thought i asked it to do so
+    <braunr> ?
+    <teythoon> for the ram disk
+    <braunr> normally, i would expect this to translate to the creation of a
+      64M anonymous memory vm object
+    <braunr> the kernel would then fill that object with zeroed pages on demand
+      (on page fault)
+    <braunr> at no time would there be a single 64M congituous kernel memory
+      allocation
+    <braunr> such big allocations are a sign of a serious bug
+    <braunr> for reference, linux (which is even more demanding because
+      physical memory is directly mapped in kernel space) allows at most 4M
+      contiguous blocks on most architectures
+    <braunr> on my systems, the largest kernel allocation is actually 128k
+    <braunr> and there are only two such allocations
+    <braunr> teythoon: i need you to reproduce it so we understand what happens
+      better
+    <teythoon> braunr: currently the ramdisk implementation kmem_allocs the
+      buffer in the kernel_map
+    <braunr> hum
+    <braunr> did you add this code ?
+    <teythoon> no
+    <braunr> where is it ?
+    <teythoon> debian/patches
+    <braunr> ugh
+    <teythoon> heh
+    <braunr> ok, don't expect that to scale
+    <braunr> it's a quick and dirty hack
+    <braunr> teythoon: why not use tmpfs ?
+    <teythoon> i use it as root filesystem
+    <braunr> :/
+    <braunr> ok so
+    <braunr> update on what i said before
+    <braunr> kmem_map is exclusively used for kernel object (slab) allocations
+    <braunr> kmem_map is a submap of kernel_map
+    <braunr> which is 192M on i386
+    <braunr> so a 64M allocation can't work at all
+    <braunr> it would work on xen, where the kernel map is 224M large
+    <braunr> teythoon: do you use xen ?
+    <teythoon> ok, thanks for the pointers :)
+    <teythoon> i don't use xen
+    <braunr> then i can't explain how it worked in your virtual machine
+    <braunr> unless the size was smaller
+    <teythoon> i'll look into improving the ramdisk patch if time permits
+    <teythoon> no it wasnt
+    <braunr> :/
+    <teythoon> and it works reliably in qemu
+    <braunr> that's very strange
+    <braunr> unless the kernel allocates nothing at all inside kernel_map on
+      qemu
+
+
+##### IRC, freenode, #hurd, 2014-02-11
+
+    <teythoon> braunr: http://paste.debian.net/81339/
+    <braunr> teythoon: oO ?
+    <braunr> teythoon: you can't allocate memory from a non kernel map
+    <braunr> what you're doing here is that you create a separate, non-kernel
+      address space, that overlaps kernel memory, and allocate from that area
+    <braunr> it's like having two overlapping heaps and allocating from them
+    <teythoon> braunr: i do?  o_O
+    <teythoon> so i need to map it instead ?
+    <braunr> teythoon: what do you want to do ?
+    <teythoon> i'm currently reading up on the vm system, any pointers ?
+    <braunr> teythoon: but what do you want to achieve here ?
+    <braunr> 12:24 < teythoon> so i need to map it instead ?
+    <teythoon> i'm trying to do what you said the other day, create a different
+      map to back the ramdisk
+    <braunr> no
+    <teythoon> no ?
+    <braunr> i said an object, not a map
+    <braunr> but it means a complete rework
+    <teythoon> ok
+    <teythoon> i'll head back into hurd-land then, though i'd love to see this
+      done properly
+    <braunr> teythoon: what you want basically is tmpfs as a rootfs right ?
+    <teythoon> sure
+    <teythoon> i'd need a way to populate it though
+    <braunr> how is it done currently ?
+    <teythoon> grub loads an ext2 image, then it's copied into the ramdisk
+      device, and used by the root translator
+    <braunr> how is it copied ?
+    <braunr> what makes use of the kernel ramdisk ?
+    <teythoon> in ramdisk_create, currently via memcpy
+    <teythoon> the ext2fs translator that provides /
+    <braunr> ah so it's a kernel device like hd0 ?
+    <teythoon> yes
+    <braunr> hm ok
+    <braunr> then you could create an anonymous memory object in the kernel,
+      and map read/write requests to object operations
+    <braunr> the object must not be mapped in the kernel though, only temporary
+      on reads/writes
+    <teythoon> right
+    <teythoon> so i'd not use memcpy, but one of the mach functions that copy
+      stuff to memory objects ?
+    <braunr> i'm not sure
+    <braunr> you could simply map the object, memcpy to/from it, and unmap it
+    <teythoon> what documentation should i read ?
+    <braunr> vm/vm_map.h for one
+    <teythoon> i can only find stuff describing the kernel interface to
+      userspace
+    <braunr> vm/vm_kern.h may help
+    <braunr> copyinmap and copyoutmap maybe
+    <braunr> hm no
+    <teythoon> vm_map.h isn't overly verbose :(
+    <braunr> vm_map_enter/vm_map_remove
+    <teythoon> ah, i actually tried vm_map_enter
+    <braunr> look at the .c files, functions are described there
+    <teythoon> that leads to funny results
+    <braunr> vm_map_enter == mmap basically
+    <braunr> and vm_object.h
+    <teythoon> panic: kernel thread accessed user space!
+    <braunr> heh :)
+    <teythoon> right, i hoped vm_map_enter to be the in-kernel equivalent of
+      vm_map
+
+    <teythoon> braunr: uh, it worked
+    <braunr> teythoon: ?
+    <teythoon> weird
+    <teythoon> :)
+    <braunr> teythoon: what's happening ?
+    <teythoon> i refined the ramdisk patch, and it seems to work
+    <teythoon> not sure if i got it right though, i'll paste the patch
+    <braunr> yes please
+    <teythoon> http://paste.debian.net/81376/
+    <braunr> no it can't work either
+    <teythoon> :/
+    <braunr> you can't map the complete object
+    <teythoon> (amusingly it does)
+    <braunr> you have to temporarily map the pages you want to access
+    <braunr> it does for the same obscure reason the previous code worked on
+      qemu
+    <teythoon> ok, i think i see
+    <braunr> increase the size a lot more
+    <braunr> like 512M
+    <braunr> and see
+    <braunr> you could also use the kernel debugger to print the kernel map
+      before and after mapping
+    <teythoon> how ?
+    <braunr> hm
+    <braunr> see show task
+    <braunr> maybe you can call the in kernel function directly with the kernel
+      map as argument
+    <teythoon> which one ?
+    <braunr> the one for "show task"
+    <braunr> hm no it shows threads, show map
+    <braunr> and show map crashes on darnassus ..
+    <teythoon> here as well
+    <braunr> ugh
+    <braunr> personally i'd use something like vm_map_info in x15
+    <braunr> but you may not want to waste time with that
+    <braunr> try with a bigger size and see what it does, should be quick and
+      simple enough
+    <teythoon> right
+    <teythoon> braunr: ok, you were right, mapping the entire object fails if
+      it is too big
+    <braunr> teythoon: fyi, kmem_alloc and vm_map have some common code, namely
+      the allocation of an virtual area inside a vm_map
+    <braunr> kmem_alloc requires a kernel map (kernel_map or a submap) whereas
+      vm_map can operate on any map
+    <braunr> what differs is the backing store
+    <teythoon> braunr: i believe i want to use vm_object_copy_slowly to create
+      and populate the vm object
+    <teythoon> for that, i'd need a source vm_object
+    <teythoon> the data is provided as a multiboot_module
+    <braunr> kmem_alloc backs the virtual range with wired down physical memory
+    <braunr> whereas vm_map maps part of an object that is usually pageable
+    <teythoon> i see
+    <braunr> and you probably want your object to be pageable here
+    <teythoon> yes :)
+    <braunr> yes object copy functions could work
+    <braunr> let me check
+    <teythoon> what would i specify as source object ?
+    <braunr> let's assume a device write
+    <braunr> the source object would be where the source data is
+    <braunr> e.g. the data provided by the user
+    <teythoon> yes
+    <teythoon> trouble is, i'm not sure what the source is
+    <braunr> it looks a bit complicated yes
+    <teythoon> i mean the boot loader put it into memory, not sure what mach
+      makes of that
+    <braunr> i guess there already are device functions that look up the object
+      from the given address
+    <braunr> it's anonymous memory
+    <braunr> but that's not the problem here
+    <teythoon> so i need to create a memory object for that ?
+    <braunr> you probably don't want to populate your ramdisk from the kernel
+    <teythoon> wire it down to the physical memory ?
+    <braunr> don't bother with the wire property
+    <teythoon> oh ?
+    <braunr> if it can't be paged out, it won't be
+    <teythoon> ah, that's not what i meant
+    <braunr> you probably want ext2fs to populate it, or another task loaded by
+      the boot loader
+    <teythoon> interesting idea
+    <braunr> and then, this task will have a memory object somewhere
+    <braunr> imagine a task which sole purpose is to embedd an archive to
+      extract into the ramdisk
+    <teythoon> sweet, my thoughts exactly :)
+    <braunr> the data section of a program will be backed by an anonymous
+      memory object
+    <braunr> the problem is the interface
+    <braunr> the device interface passes addresses and sizes
+    <braunr> you need to look up the object from that
+    <braunr> but i guess there is already code doing that in the device code
+      somewhere
+    <braunr> teythoon: vm_object_copy_slowly seems to create a new object
+    <braunr> that's not exactly what we want either
+    <teythoon> why not ?
+    <braunr> again, let's assume a device_write scenario
+    <teythoon> ah
+    <braunr> you want to populate the ramdisk, which is merely one object
+    <braunr> not a new object
+    <teythoon> yes
+    <braunr> teythoon: i suggest using vm_page_alloc and vm_page_copy
+    <braunr> and vm_page_lookup
+    <braunr> teythoon: perhaps vm_fault_page too
+    <braunr> although you might want wired pages initially
+    <braunr> teythoon: but i guess you see what i mean when i say it needs to
+      be reworked
+    <teythoon> i do
+    <teythoon> braunr: aww, screw that, using a tmpfs is much nicer anyway
+    <teythoon> the ramdisk strikes again ...
+    <braunr> teythoon: :)
+    <braunr> teythoon: an extremely simple solution would be to enlarge the
+      kernel map
+    <braunr> this would reduce the userspace max size to ~1.7G but allow ~64M
+      ramdisks
+    <teythoon> nah
+    <braunr> or we could reduce the kmem_map
+    <braunr> i think i'll do that anyway
+    <braunr> the slab allocator rarely uses more than 50-60M
+    <braunr> and the 64M remaining area in kernel_map can quickly get
+      fragmented
+    <teythoon> braunr: using a tmpfs as the root translator won't be straight
+      forward either ... damn the early boostrapping stuff ...
+    <braunr> yes ..
+    <teythoon> that's one of the downsides of the vfs-as-namespace approach
+    <braunr> i'm not sure
+    <braunr> it could be simplified
+    <teythoon> hm
+    <braunr> it could even use a temporary name server to avoid dependencies
+    <teythoon> indeed
+    <teythoon> there's even still the slot for that somewhere
+    <antrik> braunr: hm... I have a vague recollection that the fixed-sized
+      kmem-map was supposed to be gone with the introduction of the new
+      allocator?...
+    <braunr> antrik: the kalloc_map and kmem_map were merged
+    <braunr> we could directly use kernel_map but we may still want to isolate
+      it to avoid fragmentation
+
+See also the discussion on [[gnumach_memory_management]], *IRC, freenode,
+\#hurd, 2013-01-06*, *IRC, freenode, #hurd, 2014-02-11* (`KENTRY_DATA_SIZE`).
+
+
+### IRC, freenode, #hurd, 2012-07-17
+
+    <bddebian> OK, here is a stupid question  I have always had.  If you move
+      PCI and disk drivers in to userspace, how do do initial bootstrap to get
+      the system booting?
+    <braunr> that's hard
+    <braunr> basically you make the boot loader load all the components you
+      need in ram
+    <braunr> then you make it give each component something (ports) so they can
+      communicate
+
+
+### IRC, freenode, #hurd, 2012-08-12
+
+    <antrik> braunr: so, about booting with userspace disk drivers
+    <antrik> after rereading the chapter in my thesis, I see that there aren't
+      really all than many interesting options...
+    <antrik> I pondered some variants involving a temporary boot filesystem
+      with handoff to the real root FS; but ultimately concluded with another
+      option that is slightly less elegant but probably gets a much better
+      usefulness/complexity ratio:
+    <antrik> just start the root filesystem as the first process as we used to;
+      only hack it so that initially it doesn't try to access the disk, but
+      instead gets the files from GRUB
+    <antrik> once the disk driver is operational, we flip a switch, and the
+      root filesystem starts reading stuff from disk normally
+    <antrik> transparently for all other processes
+    <bddebian> How does grub access the disk without drivers?
+    <antrik> bddebian: GRUB obviously has its own drivers... that's how it
+      loads the kernel and modules
+    <antrik> bddebian: basically, it would have to load additional modules for
+      all the components necessary to get the Hurd disk driver going
+    <bddebian> Right, why wouldn't that be possible?
+    <antrik> (I have some more crazy ideas too -- but these are mostly
+      orthogonal :-) )
+    <antrik> ?
+    <antrik> I'm describing this because I'm pretty sure it *is* possible :-)
+    <bddebian> That grub loads the kernel and whatever server/module gets
+      access to the disk
+    <antrik> not sure what you mean
+    <bddebian> Well as usual I probably don't know the proper terminology but
+      why could grub load gnumach and the hurd "disk server" that contains the
+      userspace drivers?
+    <antrik> disk server?
+    <bddebian> Oh FFS whatever contains the disk drivers :)
+    <bddebian> diskdde, whatever :)
+    <antrik> actually, I never liked the idea of having a big driver blob very
+      much... ideally each driver should have it's own file
+    <antrik> but that's admittedly beside the point :-)
+    <antrik> its
+    <antrik> so to restate: in addition to gnumach, ext2fs.static, and ld.so,
+      in the new scenario GRUB will also load exec, the disk driver, any
+      libraries these two depend upon, and any additional infrastructure
+      involved in getting the disk driver running (for automatic probing or
+      whatever)
+    <antrik> probably some other Hurd core servers too, so we can have a more
+      complete POSIX environment for the disk driver to run in
+    <bddebian> There ya go :)
+    <antrik> the interesting part is modifying ext2fs so it will access only
+      the GRUB-provided files, until it is told that it's OK now to access the
+      real disk
+    <antrik> (and the mechanism how ext2 actually gets at the GRUB-provided
+      files)
+    <bddebian> Or write some new really small ext2fs? :)
+    <antrik> ?
+    <bddebian> I'm just talking out my butt.  Something temporary that gets
+      disposed of when the real disk is available :)
+    <antrik> well, I mentioned above that I considered some handoff
+      schemes... but they would probably be more complex to implement than
+      doing the switchover internally in ext2
+    <bddebian> Ah
+    <bddebian> boot up in a ramdisk? :)
+    <antrik> (and the temporary FS would *not* be an ext2 obviously, but rather
+      some special ramdisk-like filesystem operating from GRUB-loaded files...)
+    <antrik> again, that would require a complicated handoff-scheme
+    <bddebian> Bah, what do I know? :)
+    <antrik> (well, you could of course go with a trivial chroot()... but that
+      would be ugly and inefficient, as the initial processes would still run
+      from the ramdisk)
+    <bddebian> Aren't most things running in memory initially anyway?  At what
+      point must it have access to the real disk?
+    <braunr> antrik: but doesn't that require that disk drivers be statically
+      linked ?
+    <braunr> and having all disk drivers in separate tasks (which is what we
+      prefer to blobs as you put it) seems to pretty much forbid using static
+      linking
+    <braunr> hm actually, i don't see how any solution could work without
+      static linking, as it would create a recursion
+    <braunr> and the only one required is the one used by the root file system
+    <braunr> others can be run from the dynamically linked version
+    <braunr> antrik: i agree, it's a good approach, requiring only a slightly
+      more complicated boot script/sequence
+    <antrik> bddebian: at some point we have to access the real disk so we
+      don't have to work exclusively with stuff loaded by grub... but there is
+      no specific point where it *has* to happen. generally speaking, the
+      sooner the better
+    <antrik> braunr: why wouldn't that work with a dynamically linked disk
+      driver? we only need to make sure all required libraries are loaded by
+      grub too
+    <braunr> antrik: i have a problem with that approach :p
+    <braunr> antrik: it would probably require a reboot when those libraries
+      are upgraded, wouldn't it ?
+    <antrik> I'd actually wish we could run with a dynamically linked ext2fs as
+      well... but that would require a separated boot filesystem and some kind
+      of handoff approach, which would be much more complicated I fear...
+    <braunr> and if a driver is restarted, would it use those libraries too ?
+      and if so, how to find them ?
+    <braunr> but how can you run a dynamically linked root file system ?
+    <braunr> unless the libraries it uses are provided by something else, as
+      you said
+    <antrik> braunr: well, if you upgrade the libraries, *and* want the disk
+      driver to use the upgraded libraries, you are obviously in a tricky
+      situation ;-)
+    <braunr> yes
+    <antrik> perhaps you could tell ext2 to preload the new libraries before
+      restarting the disk driver...
+    <antrik> but that's a minor quibble anyways IMHO
+    <braunr> but that case isn't that important actually, since upgrading these
+      libraries usually means we're upgrading the system, which can imply a
+      reoobt
+    <braunr> i don't think it is
+    <braunr> it looks very complicated to me
+    <braunr> think of restart as after a crash :p
+    <braunr> you can't preload stuff in that case
+    <antrik> uh? I don't see anything particularily complicated. but my point
+      was more that it's not a big thing if that's not implemented IMHO
+    <braunr> right
+    <braunr> it's not that important
+    <braunr> but i still think statically linking is better
+    <braunr> although i'm not sure about some details
+    <antrik> oh, you mean how to make the root filesystem use new libraries
+      without a reboot? that would be tricky indeed... but this is not possible
+      right now either, so that's not a regression
+    <braunr> i assume that, when statically linking, only the .o providing the
+      required symbols are included, right ?
+    <antrik> making the root filesystem restartable is a whole different epic
+      story ;-)
+    <braunr> antrik: not the root file system, but the disk driver
+    <braunr> but i guess it's the same
+    <antrik> no, it's not
+    <braunr> ah
+    <antrik> for the disk driver it's really not that hard I believe
+    <antrik> still some extra effort, but definitely doable
+    <braunr> with the preload you mentioned
+    <antrik> yes
+    <braunr> i see
+    <braunr> i don't think it's worth the trouble actually
+    <braunr> statically linking looks way simpler and should make for smaller
+      binaries than if libraries were loaded by grub
+    <antrik> no, I really don't want statically linked disk drivers
+    <braunr> why ?
+    <antrik> again, I'd prefer even ext2fs to be dynamic -- only that would be
+      much more complicated
+    <braunr> the point of dynamically linking is sharing
+    <antrik> while dynamic disk drivers do not require any extra effort beyond
+      loading the libraries with grub
+    <braunr> but if it means sharing big files that are seldom used (i assume
+      there is a lot of code that simply isn't used by hurd servers), i don't
+      see the point
+    <antrik> right. and with the approach I proposed that will work just as it
+      should
+    <antrik> err... what big files?
+    <braunr> glibc ?
+    <antrik> I don't get your point
+    <antrik> you prefer statically linking everything needed before the disk
+      driver runs (which BTW is much more than only the disk driver itself) to
+      using normal shared libraries like the rest of the system?...
+    <braunr> it's not "like the rest of the system"
+    <braunr> the libraries loaded by grub wouldn't be back by the ext2fs server
+    <braunr> they would be wired in memory
+    <braunr> you'd have two copies of them, the one loaded by grub, and the one
+      shared by normal executables
+    <antrik> no
+    <braunr> i prefer static linking because, if done correctly, the combined
+      size of the root file system and the disk driver should be smaller than
+      that of the rootfs+disk driver and libraries loaded by grub
+    <antrik> apparently I was not quite clear how my approach would work :-(
+    <braunr> probably not
+    <antrik> (preventing that is actually the reason why I do *not* want as
+      simple boot filesystem+chroot approach)
+    <braunr> and initramfs can be easily freed after init
+    <braunr> an*
+    <braunr> it wouldn't be a chroot but something a bit more involved like
+      switch_root in linux
+    <antrik> not if various servers use files provided by that init filesystem
+    <antrik> yes, that's the complex handoff I'm talking about
+    <braunr> yes
+    <braunr> that's one approach
+    <antrik> as I said, that would be a quite elegant approach (allowing a
+      dynamically linked ext2); but it would be much more complicated to
+      implement I believe
+    <braunr> how would it allow a dynamically linked ext2 ?
+    <braunr> how can the root file system be linked with code backed by itself
+      ?
+    <braunr> unless it requires wiring all its memory ?
+    <antrik> it would be loaded from the init filesystem before the handoff
+    <braunr> init sn't the problem here
+    <braunr> i understand how it would boot
+    <braunr> but then, you need to make sure the root fs is never used to
+      service page faults on its own address space
+    <braunr> or any address space it depends on, like the disk driver
+    <braunr> so this basically requires wiring all the system libraries, glibc
+      included
+    <braunr> why not
+    <antrik> ah. yes, that's something I covered in a separate section in my
+      thesis ;-)
+    <braunr> eh :)
+    <antrik> we have to do that anyways, if we want *any* dynamically linked
+      components (such as the disk driver) in the paging path
+    <braunr> yes
+    <braunr> and it should make swapping more reliable too
+    <antrik> so that adds a couple MiB of wired memory... I guess we will just
+      have to live with that
+    <braunr> yes it seems acceptable
+    <braunr> thanks
+    <antrik> (it is actually one reason why I want to avoid static linking as
+      much as possible... so at least we have to wire these libraries only
+      *once*)
+    <antrik> anyways, back to my "simpler" approach
+    <antrik> the idea is that a (static) ext2fs would still be the first task
+      running, and immediately able to serve filesystem access requests -- only
+      it would serve these requests from files preloaded by GRUB rather than
+      the actual disk driver
+    <braunr> i understand now
+    <antrik> until a switch is flipped telling it that now the disk driver (and
+      anything it depends upon) is operational
+    <braunr> you still need to make sure all this is wired
+    <antrik> yes
+    <antrik> that's orthogonal
+    <antrik> which is why I have a separate section about it :-)
+    <braunr> what was the relation with ggi ?
+    <antrik> none strictly speaking
+    <braunr> i'll rephrase it: how did it end up in your thesis ?
+    <antrik> I just covered all aspects of userspace drivers in one of the
+      "introduction" sections of my thesis
+    <braunr> ok
+    <antrik> before going into specifics of KGI
+    <antrik> (and throwing in along the way that most of the issues described
+      do not matter for KGI ;-) )
+    <braunr> hehe
+    <braunr> i'm wondering, do we have mlockall on the hurd ? it seems not
+    <braunr> that's something deeply missing in mach
+    <antrik> well, bootstrap in general *is* actually relevant for KGI as well,
+      because of console messages during boot... but the filesystem bootstrap
+      is mostly irrelevant there ;-)
+    <antrik> braunr: oh? that's a problem then... I just assumed we have it
+    <braunr> well, it's possible to implement MCL_CURRENT, but not MCL_FUTURE
+    <braunr> or at least, it would be a bit difficult
+    <braunr> every allocation would need to be aware of that property
+    <braunr> it's better to have it managed by the vm system
+    <braunr> mach-defpager has its own version of vm_allocate for that
+    <antrik> braunr: I don't think we care about MCL_FUTURE here
+    <antrik> hm, wait... MCL_CURRENT is fine for code, but it might indeed be a
+      problem for dynamically allocated memory :-(
+    <braunr> yes
+
+
+# Plan
+
+  * Examine what other systems are doing.
+
+      * L4
+
+          * Hurd on L4: deva, fabrica
+
+          * [[/DDE]]
+
+      * Minix 3
+
+  * Start with a simple driver and implement the needed infrastructure (see
+    *Issues* above) as needed.
+
+      * <http://savannah.nongnu.org/projects/user-drivers/>
+
+        Some (unfinished?) code written by Robert Millan in 2003: PC keyboard
+        and parallel port drivers, using `libtrivfs`.
+
+
+## I/O Server
+
+### IRC, freenode, #hurd, 2012-08-10
+
+    <braunr> usually you'd have an I/O server, and serveral device drivers
+      using it
+    <bddebian> Well maybe that's my question.  Should there be unique servers
+      for say ISA, PCI, etc or could all of that be served by one "server"?
+    <braunr> forget about ISA
+    <bddebian> How?  Oh because the ISA bus is now served via a PCI bridge?
+    <braunr> the I/O server would merely be there to help device drivers map
+      only what they require, and avoid conflicts
+    <braunr> because it's a relic of the past :p
+    <braunr> and because it requires too high privileges
+    <bddebian> But still exists in several PCs :)
+    <braunr> so usually, you'd directly ask the kernel for the I/O ports you
+      need
+    <mel-> so do floppy drives
+    <mel-> :)
+    <braunr> if i'm right, even the l4 guys do it that way
+    <braunr> he's right, some devices are still considered ISA
+    <bddebian> But that is where my confusion lies.  Something has to figure
+      out what/where those I/O ports are
+    <braunr> and that's why i tell you to forget about it
+    <braunr> ISA has both statically allocated ports (the historical ones) and
+      others usually detected through PnP, when it works
+    <braunr> PCI is much cleaner, and memory mapped I/O is both better and much
+      more popular currently
+    <bddebian> So let's say I have a PCI SCSI card.  I need some device driver
+      to know how to talk to that, right?
+    <bddebian> something is going to enumerate all the PCI devices and map them
+      to and address space
+    <braunr> bddebian: that would be the I/O server
+    <braunr> we'll call it the PCI server
+    <bddebian> OK, that is where I am headed.  What if everything isn't PCI?
+      Is the "I/O server" generic enough?
+    <youpi> nowadays everything is PCI
+    <bddebian> So we are completely ignoring legacy hardware?
+    <braunr> we could have separate servers using a shared library that would
+      provide allocation routines like resource maps
+    <braunr> yes
+    <youpi> for what is not, the translator just needs to be run as root
+    <youpi> to get i/o perm from the kernel
+    <braunr> the idea for projects like ours, where the user base is very small
+      is: don't implement what you can't test
+    <youpi> bddebian: legacy can not be supported in a nice way, so for them we
+      can just afford a bad solution
+    <youpi> i.e. leave the driver in kernel
+    <braunr> right
+    <youpi> e.g. the keyboard
+    <bddebian> Well what if I have a USB keyboard? :-P
+    <braunr> that's a different matter
+    <youpi> USB keyboard is not legacy hardware
+    <youpi> it's usb
+    <youpi> which can be enumerated like pci
+    <braunr> and USB uses PCI
+    <youpi> and pci could be on usb :)
+    <braunr> so it's just a separate stack on top of the PCI server
+    <bddebian> Sure so would SCSI in my example above but is still a seperate
+      bus
+    <braunr> netbsd has a very nice way of attaching drivers to buses
+    <youpi> bddebian: also, yes, and it can be enumerated
+    <bddebian> Which was my original question.  This magic I/O server handles
+      all of the buses?
+    <youpi> no, just PCI, and then you'd have other servers for other busses
+    <braunr> i didn't mean that there would be *one* I/O server instance
+    <bddebian> So then it isn't a generic I/O server is it?
+    <bddebian> Ahhhh
+    <youpi> that way you can even put scsi over ppp or other crazy things
+    <braunr> it's more of an idea
+    <braunr> there would probably be a generic interface for basic stuff
+    <braunr> and i assume it could be augmented with specific (e.g. USB)
+      interfaces for servers that need more detailed communication
+    <braunr> (well, i'm pretty sure of it)
+    <bddebian> So the I/O server generalizes all functions, say read and write,
+      and then the PCI, USB, SCIS, whatever servers are contacted by it?
+    <braunr> no, not read and write
+    <braunr> resource allocation rather
+    <youpi> and enumeration
+    <braunr> probing perhaps
+    <braunr> bddebian: the goal of the I/O server is to make it possible for
+      device drivers to access the resources they need without a chance to
+      interfere with other device drivers
+    <braunr> (at least, that's one of the goals)
+    <braunr> so a driver would request the bus space matching the device(s) and
+      obtain that through memory mapping
+    <bddebian> Shouldn't that be in the "global address space"?  SOrry if I am
+      using the wrong terminology
+    <youpi> well, the i/o server should also trigger the start of that driver
+    <youpi> bddebian: address space is not a matter for drivers
+    <braunr> bddebian: i'm not sure what you think of with "global address
+      space"
+    <youpi> bddebian: it's just a matter for the pci enumerator when (and if)
+      it places the BARs in physical address space
+    <youpi> drivers merely request mapping that, they don't need to know about
+      actual physical addresses
+    <braunr> i'm almost sure you lost him at BARs
+    <braunr> :(
+    <braunr> youpi: that's what i meant with probing actually
+    <bddebian> Actually I know BARs I have been reading on PCI :)
+    <bddebian> I suppose physicall address space is more what I meant when I
+      used "global address space"
+    <braunr> i see
+    <youpi> bddebian: probably, yes
+
+
+# Documentation
+
+  * [An Architecture for Device Drivers Executing as User-Level
+    Tasks](http://portal.acm.org/citation.cfm?id=665603), 1993, David B. Golub,
+    Guy G. Sotomayor, Freeman L. Rawson, III
+
+  * [Performance Measurements of the Multimedia Testbed on Mach 3.0: Experience
+    Writing Real-Time Device Drivers, Servers, and
+    Applications](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.40.8685),
+    1993, Roger B. Dannenberg, David B. Anderson, Tom Neuendorffer, Dean
+    Rubine, Jim Zelenka
+
+  * [User Level IPC and Device Management in the Raven
+    Kernel](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.57.3733),
+    1993, D. Stuart Ritchie, Gerald W. Neufeld
+
+  * [Creating User-Mode Device Drivers with a
+    Proxy](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.26.3055),
+    1997, Galen C. Hunt
+
+  * [The APIC Approach to High Performance Network Interface Design: Protected
+    DMA and Other
+    Techniques](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.56.1198),
+    1997, Zubin D. Dittia, Guru M. Parulkar, Jerome R. Cox, Jr.
+
+  * [The Fluke Device Driver
+    Framework](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.7927),
+    1999, Kevin Thomas Van Maren
+
+  * [Omega0: A portable interface to interrupt hardware for L4
+    system](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.21.5958),
+    2000, Jork Löser, Michael Hohmuth
+
+  * [Userdev: A Framework For User Level Device Drivers In
+    Linux](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.3.4461),
+    2000, Hari Krishna Vemuri
+
+  * [User Mode Drivers](http://www.linuxjournal.com/article/5442), 2002, Bryce
+    Nakatani
+
+  * [Towards Untrusted Device
+    Drivers](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.13.1725),
+    2003, Ben Leslie, Gernot Heiser
+
+  * [Encapsulated User-Level Device Drivers in the Mungi Operating
+    System](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.6.1531),
+    2004, Ben Leslie Nicholas, Nicholas FitzRoy-Dale, Gernot Heiser
+
+  * [Linux Kernel Infrastructure for User-Level Device
+    Drivers](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.10.1408),
+    2004, Peter Chubb
+
+      * [Get More Device Drivers out of the
+        Kernel!](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.6333),
+        2004, Peter Chubb
+
+      * <http://gelato.unsw.edu.au/IA64wiki/UserLevelDrivers>
+
+  * [Initial Evaluation of a User-Level Device
+    Driver](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.4531),
+    2004, Kevin Elphinstone, Stefan Götz
+
+  * [User-level Device Drivers: Achieved
+    Performance](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.6766),
+    2005, Ben Leslie, Peter Chubb, Nicholas FitzRoy-Dale, Stefan Götz, Charles
+    Gray, Luke Macpherson, Daniel Potts, Yueting Shen, Kevin Elphinstone,
+    Gernot Heiser
+
+  * [Virtualising
+    PCI](http://www.ice.gelato.org/about/oct06_presentations.php#pres14), 2006,
+    Myrto Zehnder, Peter Chubb
+
+  * [Microdrivers: A New Architecture for Device
+    Drivers](http://www.cs.rutgers.edu/~vinodg/papers/hotos2007/), 2007, Vinod
+    Ganapathy, Arini Balakrishnan, Michael M. Swift, Somesh Jha
+
+      * <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.109.2623>
+        [[!tag open_issue_documentation]]
+
+      * <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.146.2170>
+        [[!tag open_issue_documentation]]
+
+
+# External Projects
+
+  * [[/DDE]]
+
+  * <http://ertos.nicta.com.au/research/drivers/uldd/>
+
+  * <http://gelato.unsw.edu.au/IA64wiki/UserLevelDrivers>
+
+
+## The Anykernel and Rump Kernels
+
+  * [Running applications on the Xen
+    Hypervisor](http://blog.netbsd.org/tnf/entry/running_applications_on_the_xen),
+    Antti Kantee, 2013-09-17.  [The Anykernel and Rump
+    Kernels](http://www.netbsd.org/docs/rump/).
+
+
+### IRC, freenode, #hurd, 2014-02-13
+
+    <cluck> is anyone working on getting netbsd's rump kernel working under
+      hurd? it seems like a neat way to get audio/usb/etc with little extra
+      work (it might be a great complement to dde)
+    <braunr> noone is but i do agree
+    <braunr> although rump wasn't exactly designed to make drivers portable,
+      more subsystems and higher level "drivers" like file systems and network
+      stacks
+    <braunr> but it's certainly possible to use it for drivers to without too
+      much work
+    <curious_troll> cluck: I am reading about rumpkernels and his thesis.
+    <cluck> braunr: afaiu there is (at least partial) work done on having it
+      run on linux, xen and genode [unless i misunderstood the fosdem'14 talks
+      i've watched so far]
+    <cluck> "Generally speaking, any driver-like kernel functionality can be
+      offered by a rump server. Examples include file systems, networking
+      protocols, the audio subsystem and USB hardware device drivers. A rump
+      server is absolutely standalone and running one does not require for
+      example the creation and maintenance of a root file system."
+    <cluck> from http://www.netbsd.org/docs/rump/sptut.html
+    <braunr> cluck: how do they solve resource sharing problems ?
+    <cluck> braunr: some sort of lock iiuc, not sure if that's managed by the
+      host (haven't looked at the code yet)
+    <braunr> cluck: no, i mean things like irq sharing ;p
+    <braunr> bus sharing in general
+    <braunr> netbsd has a very well defined interface for that, but i'm
+      wondering what rump makes of it
+    <cluck> braunr: yes, i understood
+    <cluck> braunr: just lacking proper terminology to express myself
+    <cluck> braunr: at least from the talk i saw what i picked up is it behaves
+      like netbsd inside but there's some sort of minimum support required from
+      the "host" so the outside can reach down to the hw
+    <braunr> cluck: rump is basically glue code
+    <cluck> braunr: but as i've said, i haven't looked at the code in detail
+      yet
+    <cluck> braunr: yes
+    <braunr> but host support, at least for the hurd, is a bit more involved
+    <braunr> we don't merely want to run standalone netbsd components
+    <braunr> we want to make them act as real hurd servers
+    <braunr> therefore tricky stuff like signals quickly become more
+      complicated
+    <braunr> we also don't want it to use its own RPC format, but instead use
+      the native one
+    <cluck> braunr: antti says required support is minimal
+    <braunr> but again, compared to everything else, the porting effort / size
+      of reusable code base ratio is probably the lowest
+    <braunr> cluck: and i say we don't merely want to run standalone netbsd
+      components on top of a system, we want them to be our system
+    <cluck> braunr: argh.. i hate being unable to express myself properly
+      sometimes :|
+    <cluck> ..the entry point?!
+    <braunr> ?
+    <cluck> dunno what to call them
+    <braunr> i understand what you mean
+    <braunr> the system specific layer
+    <braunr> and *againù i'm telling you our goals are different
+    <cluck> yes, anyways.. just a couple of things, the rest is just C
+    <braunr> when you have portable code such as found in netbsd, it's not that
+      hard to extract it, create some transport between a client and a server,
+      and run it
+    <braunr> if you want to make that hurdish, there is more than that
+    <braunr> 1/ you don't use tcp, you use the native microkernel transport
+    <braunr> 2/ you don't use the rump rpc code over tcp, you create native rpc
+      code over the microkernel transport (think mig over mach)
+    <braunr> 3/ you need to adjust how authentication is performed (use the
+      auth server instead of netbsd internal auth mechanisms)
+    <braunr> 4/ you need to take care of signals (if the server generates a
+      signal, it must correctly reach the client)
+    <braunr> and those are what i think about right now, there are certainly
+      other details
+    <cluck> braunr: yes, some of those might've been solved already, it seems
+      the next genode release already has support for rump kernels, i don't
+      know how they went about it
+    <cluck> braunr: in the talk antii mentions he wanted to quickly implement
+      some i/o when playing on linux so he hacked a fs interface 
+    <cluck> so the requirements can't be all that big
+    <cluck> braunr: in any case i agree with your view, that's why i found rump
+      kernels interesting in the first place
+    <braunr> i went to the presentation at fosdem last year
+    <braunr> and even then considered it the best approach for
+      driver/subsystems reuse on top of a microkernel
+    <braunr> that's what i intend to use in propel, but we're far from there ;p
+    <cluck> braunr: tbh i hadn't paid much attention to rump at first, i had
+      read about it before but thought it was more netbsd specific, the genode
+      mention piked my interest and so i went back and watched the talk, got
+      positively surprised at how far it has come already (in retrospect it
+      shouldn't have been so unexpected, netbsd has always been very small,
+      "modular", with clean interfaces that make porting easier)
+    <braunr> netbsd isn't small at all
+    <braunr> not exactly modular, well it is, but less than other systems
+    <braunr> but yes, clean interfaces, explicitely because their stated goal
+      is portability
+    <braunr> other projects such as minix and qnx didn't wait for rump to reuse
+      netbsd code
+    <cluck> braunr: qnx and minix have had money and free academia labor done
+      in their favor before (sadly hurd doesn't have the luck to enjoy those
+      much)
+    <cluck> :)
+    <braunr> sure but that's not the point
+    <braunr> resources or not, they chose the netbsd code base for a reason
+    <braunr> and that reason is portability
+    <cluck> yes
+    <cluck> but it's more work their way
+    <braunr> more work ?
+    <cluck> with rump we'd get all those interfaces for free
+    <braunr> i don't know
+    <braunr> not for free, certainly not
+    <cluck> "free"
+    <braunr> but the cost would be close to as low as it could possibly be
+      considering what is done
+    <cluck> braunr: the small list of dependencies makes me wonder if it's
+      possible it'd build under hurd without any mods (yes, i know, very
+      unlikely, just dreaming here)
+    <braunr> cluck: i'd say it's likely
+    <youpi> I quickly tried to build it during the talk
+    <youpi> there are PATH_MAX everywhere
+    <braunr> ugh
+    <youpi> but maybe that can be #defined
+    <youpi> since that's most probably for internal use
+    <youpi> not interaction with the host

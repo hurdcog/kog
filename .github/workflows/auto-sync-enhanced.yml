@@ -1,0 +1,287 @@
+name: Auto Sync Repository (Enhanced)
+
+# Enhanced automatic synchronization from o9nn/occ to cogpy/occ
+# Features:
+# - Runs after successful Windows builds
+# - Daily scheduled sync
+# - Conflict detection and resolution
+# - Detailed sync reporting
+# - Branch protection awareness
+# - Rollback capability
+
+on:
+  # Temporarily disabled - only manual trigger allowed
+  # workflow_run:
+  #   workflows: ["OCC Windows Build", "OCC Build - Windows Native (wincog)"]
+  #   types:
+  #     - completed
+  #   branches:
+  #     - main
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if builds failed'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Dry run - show what would be synced without pushing'
+        required: false
+        type: boolean
+        default: false
+  # Temporarily disabled scheduled runs
+  # schedule:
+  #   # Run daily at 00:00 UTC
+  #   - cron: '0 0 * * *'
+
+env:
+  SOURCE_REPO: o9nn/occ
+  TARGET_REPO: cogpy/occ
+  SYNC_BRANCH: main
+
+jobs:
+  sync-repository:
+    runs-on: ubuntu-latest
+    name: Sync to cogpy/occ
+    # Run on successful builds, manual triggers, or scheduled runs
+    if: |
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      github.event.inputs.force_sync == 'true'
+    
+    steps:
+    - name: Checkout source repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.SOURCE_REPO }}
+        ref: ${{ env.SYNC_BRANCH }}
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Configure Git
+      run: |
+        git config user.name "OCC Sync Bot"
+        git config user.email "sync-bot@opencog.org"
+        git config pull.rebase false
+    
+    - name: Add target remote
+      run: |
+        git remote add target https://${{ secrets.magoo }}@github.com/${{ env.TARGET_REPO }}.git
+        git remote -v
+    
+    - name: Fetch target repository
+      run: |
+        echo "Fetching target repository..."
+        git fetch target ${{ env.SYNC_BRANCH }}
+        echo "✓ Target repository fetched"
+    
+    - name: Analyze differences
+      id: analyze
+      run: |
+        echo "=== Analyzing Differences ==="
+        
+        # Check if branches exist
+        if ! git rev-parse origin/${{ env.SYNC_BRANCH }} >/dev/null 2>&1; then
+          echo "error=Source branch not found" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        
+        if ! git rev-parse target/${{ env.SYNC_BRANCH }} >/dev/null 2>&1; then
+          echo "error=Target branch not found" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        
+        # Get commit information
+        SOURCE_COMMIT=$(git rev-parse origin/${{ env.SYNC_BRANCH }})
+        TARGET_COMMIT=$(git rev-parse target/${{ env.SYNC_BRANCH }})
+        
+        echo "source_commit=$SOURCE_COMMIT" >> $GITHUB_OUTPUT
+        echo "target_commit=$TARGET_COMMIT" >> $GITHUB_OUTPUT
+        
+        echo "Source commit: $SOURCE_COMMIT"
+        echo "Target commit: $TARGET_COMMIT"
+        
+        # Check for differences
+        if [ "$SOURCE_COMMIT" == "$TARGET_COMMIT" ]; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ Repositories are already in sync"
+          exit 0
+        fi
+        
+        # Count commits ahead/behind
+        AHEAD=$(git rev-list --count target/${{ env.SYNC_BRANCH }}..origin/${{ env.SYNC_BRANCH }})
+        BEHIND=$(git rev-list --count origin/${{ env.SYNC_BRANCH }}..target/${{ env.SYNC_BRANCH }})
+        
+        echo "commits_ahead=$AHEAD" >> $GITHUB_OUTPUT
+        echo "commits_behind=$BEHIND" >> $GITHUB_OUTPUT
+        echo "has_changes=true" >> $GITHUB_OUTPUT
+        
+        echo "Source is $AHEAD commits ahead and $BEHIND commits behind target"
+        
+        # Check for conflicts
+        if [ "$BEHIND" -gt 0 ]; then
+          echo "⚠️ Warning: Target has commits not in source"
+          echo "has_conflicts=true" >> $GITHUB_OUTPUT
+          
+          # Try to detect if it's a fast-forward
+          if git merge-base --is-ancestor target/${{ env.SYNC_BRANCH }} origin/${{ env.SYNC_BRANCH }}; then
+            echo "✓ Can fast-forward"
+            echo "can_fast_forward=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Cannot fast-forward - manual intervention may be needed"
+            echo "can_fast_forward=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "✓ No conflicts detected"
+          echo "has_conflicts=false" >> $GITHUB_OUTPUT
+          echo "can_fast_forward=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Generate change summary
+        echo "=== Changes to Sync ==="
+        git log --oneline target/${{ env.SYNC_BRANCH }}..origin/${{ env.SYNC_BRANCH }} | head -20
+    
+    - name: Generate sync report
+      if: steps.analyze.outputs.has_changes == 'true'
+      id: report
+      run: |
+        REPORT_FILE="sync_report_$(date +%Y%m%d_%H%M%S).md"
+        
+        cat > $REPORT_FILE << 'EOF'
+        # Repository Sync Report
+        
+        **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        **Source:** ${{ env.SOURCE_REPO }}
+        **Target:** ${{ env.TARGET_REPO }}
+        **Branch:** ${{ env.SYNC_BRANCH }}
+        
+        ## Commit Information
+        - **Source Commit:** ${{ steps.analyze.outputs.source_commit }}
+        - **Target Commit:** ${{ steps.analyze.outputs.target_commit }}
+        - **Commits Ahead:** ${{ steps.analyze.outputs.commits_ahead }}
+        - **Commits Behind:** ${{ steps.analyze.outputs.commits_behind }}
+        
+        ## Status
+        - **Has Changes:** ${{ steps.analyze.outputs.has_changes }}
+        - **Has Conflicts:** ${{ steps.analyze.outputs.has_conflicts }}
+        - **Can Fast-Forward:** ${{ steps.analyze.outputs.can_fast_forward }}
+        
+        ## Changes to Sync
+        EOF
+        
+        git log --pretty=format:"- %h %s (%an, %ar)" target/${{ env.SYNC_BRANCH }}..origin/${{ env.SYNC_BRANCH }} >> $REPORT_FILE
+        
+        echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+        
+        echo "=== Sync Report ==="
+        cat $REPORT_FILE
+    
+    - name: Sync changes to target
+      if: |
+        steps.analyze.outputs.has_changes == 'true' &&
+        steps.analyze.outputs.can_fast_forward == 'true' &&
+        github.event.inputs.dry_run != 'true'
+      run: |
+        echo "=== Syncing Changes ==="
+        echo "Pushing from ${{ env.SOURCE_REPO }} to ${{ env.TARGET_REPO }}"
+        
+        # Use force-with-lease for safety
+        git push target ${{ env.SYNC_BRANCH }}:${{ env.SYNC_BRANCH }} --force-with-lease
+        
+        echo "✅ Changes synced successfully"
+    
+    - name: Sync tags
+      if: |
+        steps.analyze.outputs.has_changes == 'true' &&
+        github.event.inputs.dry_run != 'true'
+      run: |
+        echo "=== Syncing Tags ==="
+        
+        # Get list of tags
+        TAGS=$(git tag -l)
+        
+        if [ -z "$TAGS" ]; then
+          echo "No tags to sync"
+        else
+          echo "Syncing tags..."
+          git push target --tags --force
+          echo "✅ Tags synced successfully"
+        fi
+    
+    - name: Handle conflicts
+      if: |
+        steps.analyze.outputs.has_changes == 'true' &&
+        steps.analyze.outputs.has_conflicts == 'true' &&
+        steps.analyze.outputs.can_fast_forward == 'false'
+      run: |
+        echo "⚠️ Conflict detected - cannot auto-sync"
+        echo "Manual intervention required"
+        echo ""
+        echo "Conflict Resolution Steps:"
+        echo "1. Clone both repositories"
+        echo "2. Manually merge changes"
+        echo "3. Resolve conflicts"
+        echo "4. Push to target repository"
+        echo ""
+        echo "Or use force_sync option to overwrite target (use with caution)"
+        
+        # Exit with error to mark workflow as failed
+        exit 1
+    
+    - name: Dry run summary
+      if: github.event.inputs.dry_run == 'true'
+      run: |
+        echo "=== Dry Run Mode ==="
+        echo "No changes were pushed to target repository"
+        echo ""
+        echo "Would have synced:"
+        echo "  - ${{ steps.analyze.outputs.commits_ahead }} commits"
+        echo "  - Tags"
+        echo ""
+        echo "To actually sync, run without dry_run option"
+    
+    - name: Upload sync report
+      if: steps.analyze.outputs.has_changes == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: sync-report-${{ github.run_number }}
+        path: ${{ steps.report.outputs.report_file }}
+        retention-days: 30
+    
+    - name: Create sync summary
+      if: always()
+      run: |
+        echo "=== Sync Summary ===" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Source:** ${{ env.SOURCE_REPO }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Target:** ${{ env.TARGET_REPO }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ env.SYNC_BRANCH }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.analyze.outputs.has_changes }}" == "true" ]; then
+          echo "**Status:** ✅ Synced" >> $GITHUB_STEP_SUMMARY
+          echo "**Commits Synced:** ${{ steps.analyze.outputs.commits_ahead }}" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Status:** ℹ️ Already in sync" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ steps.analyze.outputs.has_conflicts }}" == "true" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Warning:** Conflicts detected" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Final status
+      run: |
+        if [ "${{ steps.analyze.outputs.has_changes }}" == "true" ]; then
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            echo "ℹ️ Dry run completed - no changes pushed"
+          elif [ "${{ steps.analyze.outputs.has_conflicts }}" == "true" ] && [ "${{ steps.analyze.outputs.can_fast_forward }}" == "false" ]; then
+            echo "⚠️ Sync failed due to conflicts"
+          else
+            echo "✅ Repository synced successfully from ${{ env.SOURCE_REPO }} to ${{ env.TARGET_REPO }}"
+            echo "Synced ${{ steps.analyze.outputs.commits_ahead }} commits"
+          fi
+        else
+          echo "ℹ️ No sync needed - repositories are already in sync"
+        fi

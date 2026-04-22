@@ -1,0 +1,248 @@
+[[!meta copyright="Copyright © 2007, 2008, 2011, 2013, 2015 Free Software
+Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+`if NCPUS > 1` stuff is not being considered so far.
+
+grub starts the execution at boot\_entry
+
+> i386/i386at/boothdr.S: boot\_entry: sets up C environment, i.e. sets up a basic stack and clears BSS, fixes ifunc.
+
+> i386/i386at/model\_dep.c: c\_boot\_entry: gets multiboot parameters
+
+>> i386/i386at/boothdr.S: discover\_x86\_cpu\_type: detect processor type
+
+>> i386/i386at/model\_dep.c: i386at\_init: initialize PC-specific stuff
+
+>>> i386/i386/pic.c: picinit: initialize 8259 PIC
+
+>>> i386/i386at/model\_dep.c: mem\_size\_init: compute memory size
+
+>>> i386/intel/pmap.c: pmap\_bootstrap: initialize x86 page table
+
+>>> i386/i386/gdt.c: gdt\_init: initialize x86 segmentation
+
+>>> i386/i386/idt.c: idt\_init: initialize x86 traps
+
+>>> i386/i386at/int\_init.c: int\_init: initialize PC interrupts
+
+>>> i386/i386/ldt.c: ldt\_init: initialize x86 segmentation
+
+>>> i386/i386/ktss.c: ktss\_init: initialize x86 task switching
+
+>> kern/startup.c: setup\_main: set up non-hardware specific stuff
+
+>>> kern/debug.c: panic\_init: initialize panic data
+
+>>> kern/printf.c: printf\_init: initialize printf
+
+>>> kern/sched\_prim.c: sched\_init: initialize scheduler
+
+>>>> kern/processor.c: pset\_sys\_bootstrap: initialize processor sets
+
+>>>> kern/ast.c: ast\_init: initialize Asychronous System Traps
+
+>>> vm/vm\_init.c: vm\_mem\_bootstrap: initialize virtual memory
+
+>>>> vm/vm\_resident.c: vm\_page\_bootstrap: turn physical pages into virtually allocatable pages
+
+>>>>> vm/vm\_resident.c: pmap\_startup: initialize pages
+
+>>>> kern/slab.c: slab\_bootstrap: early-initialize SLAB
+
+>>>> vm/vm\_object.c: vm\_object\_bootstrap: initialize VM object management
+
+>>>>> vm/vm\_external.c: vm\_external\_module\_initialize: initialize VM external object management
+
+>>>> vm/vm\_map.c: vm\_map\_init: initialize VM maps
+
+>>>> vm/vm\_kern.c: kmem\_init: initialize kernel's virtual memory
+
+>>>> i386/intel/pmap.c: pmap\_init: initialize remainder of x86 page table
+
+>>>> kern/slab.c: slab\_init: initialize remainder of SLAB
+
+>>>> kern/kalloc.c: kalloc\_init: initialize kallocator
+
+>>>> vm/vm\_fault.c: vm\_fault\_init: initialize VM fault management
+
+>>>> vm/vm\_resident.c: vm\_page\_module\_init: initialize remainder of virtual memory
+
+>>>> vm/memory\_object.c: memory\_manager\_default\_init: initialize remainder of VM object management
+
+>>> ipc/ipc\_init.c: ipc\_bootstrap: initialize IPC
+
+>>>> ipc/ipc\_table.c: ipc\_table\_init: initialize IPC tables
+
+>>>> ipc/ipc\_notify.c: ipc\_notify\_init: initialize IPC notification
+
+>>>> ipc/ipc\_hash.c: ipc\_hash\_init: initialize IPC reverse hash table
+
+>>>> ipc/ipc\_marequest.c: ipc\_marequest\_init: initialize msg-accepted request
+
+>>> vm/vm\_init.c: vm\_mem\_init: finish initializing VM
+
+>>>> vm/vm\_object.c: vm\_object\_init: finish initializing kernel object
+
+>>>> vm/memory\_object\_proxy: memory\_object\_proxy\_init: initialize memory object proxy
+
+>>> ipc/ipc\_init.c: ipc\_init: finish initializing IPC
+
+>>>> kern/ipc\_host.c: ipc\_host\_init: initialize host IPC
+
+>>>>> kern/ipc\_host.c: ipc\_pset\_init: initialize processor sets ports
+
+>>>>> kern/ipc\_host.c: ipc\_processor\_init: initialize processor ports
+
+>>> i386/intel/pmap.h: PMAP\_ACTIVATE\_KERNEL: activate kernel page table
+
+>>> kern/timer.c: init\_timers: initialize timers
+
+>>> kern/mach\_clock.c: init\_timeout: initialize timeout
+
+>>> kern/xpr.c: xprbootstrap: initialize xpr buffer
+
+>>> kern/time\_stamp.c: timestamp\_init: initialize tick
+
+>>> kern/mach\_clock.c: [[mapable\_time\_init|interface/device/time]]
+
+>>> i386/i386at/model\_dep.c: machine\_init: initialize x86 machine
+
+>>>> device/cons.c: cninit: initialize console
+
+>>>> i386/i386/fpu.c: init\_fpu: initialize 8087 FPU
+
+>>>> linux/dev/init/main.c: linux\_init: initialize linux drivers
+
+>>>>> linux/dev/arch/i386/kernel/irq.c: init\_IRQ: initialize IRQs
+
+>>>>>> linux/dev/arch/i386/kernel/irq.c: reserve\_mach\_irqs: register IRQs to mach
+
+>>>>> linux/dev/kernel/sched.c: linux\_sched\_init: initialize dumb scheduler
+
+>>>>> linux/dev/init/main.c: calibrate\_delay: calibrate delay loop
+
+>>>>> linux/dev/glue/kmem.c: linux\_kmem\_init: initialize memory management
+
+>>>>> linux/src/drivers/pci/pci.c: pci\_init: initialize PCI bus
+
+>>>>>> linux/src/arch/i386/kernel/bios32.c: pcibios\_init: call PCI BIOS32 initialization
+
+>>>>>> linux/src/drivers/pci/pci.c: scan\_bus: enumerate PCI devices
+
+>>>>>> linux/src/arch/i386/kernel/bios32.c: pcibios\_fixup: apply platform-specific fixes
+
+>>>>> linux/dev/glue/net.c: linux\_net\_emulation\_init: initialize network glue
+
+>>>>> linux/dev/drivers/block/genhd.c: device\_setup: initialize block devices
+
+>>>>>> linux/dev/glue/block.c: blk\_dev\_init: initialize linux block devices
+
+>>>>>>> linux/src/drivers/block/ide.c: ide\_init: initialize IDE driver
+
+>>>>>>> linux/dev/drivers/block/floppy.c: floppy\_init: initialize floppy driver
+
+>>>>>> linux/src/drivers/scsi/scsi.c: scsi\_dev\_init: initialize SCSI drivers
+
+>>>>>> linux/dev/net/core/dev.c: net\_dev\_init: initialize network drivers
+
+>>>>> linux/pcmcia-cs/glue/pcmcia.c: pcmcia\_init: initialize PCMCIA drivers
+
+>>>> i386/i386at/autoconf.c: probeio: probe mach-managed devices (com, lpr)
+
+>>>> i386/i386at/model\_dep.c: inittodr: get RTC time
+
+>>>> i386/intel/pmap.c: pmap\_unmap\_page\_zero: unmap address 0
+
+>>>> kern/mach\_clock.c: mapable\_time\_init: initialize mappable time
+
+>>> kern/task.c: task\_init: initialize gnuamch atsk
+
+>>>> kern/syscall\_emulation.c: eml\_init: initialize user space emulation code
+
+>>> kern/thread.c: thread\_init: initialize thread management
+
+>>>> i386/i386/pcb.c: pcb\_module\_init: initialize PCB management
+
+>>>>> i386/i386/fpu.c: fpu\_module\_init: initialize FPU management
+
+>>> kern/thread\_swap.c: swapper\_init: initialize thread swapper
+
+>>> kern/sched\_prim.c: recompute\_priorities: initial priorities computation
+
+>>> kern/mach\_factor.c: compute\_mach\_factor: initial mach factor computation
+
+>>> kern/startup.c: thread\_start: create initial kernel thread
+
+>>> kern/startup.c: cpu\_launch\_first\_thread: start first user thread
+
+>>>> i386/intel/pmap.h: PMAP\_ACTIVATE\_KERNEL: activate kernel page table
+
+>>>> i386/i386at/model\_dep.c: startrtclock: start clock
+
+>>>>> i386/i386/pit.c: clkstart: start 8254 PIT
+
+>>>> i386/intel/pmap.h: PMAP\_ACTIVATE\_KERNEL: activate user page table
+
+>>>> i386/i386/pcb.c: load\_context: load first context
+
+[...]
+
+> kern/startup.c: start\_kernel\_threads
+
+> Threads get created.
+
+>> kern/sched\_prim.c: idle\_thread
+
+>> One for each CPU.
+
+>> kern/thread.c: reaper\_thread 
+
+>> kern/thread\_swap.c: swapin\_thread
+
+>> kern/sched\_prim.c: sched\_thread
+
+>> [...]
+
+>> kern/bootstrap.c: bootstrap\_create
+
+>>> The [[grub/multiboot]] modules have been put somewhere into memory by
+>>> [[GRUB]].  The boot scripts are parsed.  The modules' ELF image's `PT_LOAD`
+>>> sections are \`\`read'' (that is, `vm_allocate` and `copyout`) and turned
+>>> into real [[task]]s.  The multiboot modules' memory regions can be
+>>> deallocated then.
+
+>> [...]
+
+>> vm\_pageout: run the paging out daemon
+
+>> Does not return.
+
+
+# IRC, freenode, #hurd, 2013-10-07
+
+    <cureOS> look, where should i dig or where from should i start from, if i
+      have desire to know how the kernel was written from baremetal? Can it be
+      ever done nowadays?
+    <youpi> cureOS: the boot entry of the kernel is i386/i386at/boothdr.S ,
+      boot_entry
+    <youpi> that's what grub jumps to
+    <youpi> then that jumps to c_boot_entry
+    <youpi> and everything else is C
+    <cureOS> grub loads it somehow. how does it prepare cpu and memoty, cpu
+      cache control if any... segments for stack..
+    <youpi> see the grub documentation
+    <youpi> basically it's all flat linear space
+    <cureOS> does kernel transform it after that?
+    <youpi> see the ldt/gdt initialization
+    <youpi> from i386at_init and children
+    <youpi> nothing much fancy, a kernel cs/ds, and user cs/ds
+    <braunr> and paging, naturally
+    <youpi> sure

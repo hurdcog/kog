@@ -1,0 +1,1378 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{url} 
+\end_preamble
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "helvet" "default"
+\font_typewriter "courier" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks true
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Meaning as Inverse Interpretation
+\end_layout
+
+\begin_layout Author
+Linas Vepstas
+\end_layout
+
+\begin_layout Date
+24 February 2019
+\end_layout
+
+\begin_layout Abstract
+The extraction of meaning from observed reality can be thought of as an
+ inversion of the process of assigning meaning to axiomatic mathematical
+ systems of formal mathematical logic.
+ This essay formulates the analogy and explores it a little.
+\end_layout
+
+\begin_layout Section*
+Introduction
+\end_layout
+
+\begin_layout Standard
+In mathematical logic,
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Manin1977"
+
+\end_inset
+
+ a collection of axioms, and the language that they form, can be studied
+ independently of the interpretation of their meaning.
+ This statement can be made precise: one defines what a 
+\begin_inset Quotes eld
+\end_inset
+
+language
+\begin_inset Quotes erd
+\end_inset
+
+ is, and separately, one provides a map from that language to a set.
+ That map is called the 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+; when it obeys a certain set of requirements regarding consistency, it
+ can be said to provide the 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ of the axioms.
+\end_layout
+
+\begin_layout Standard
+In exploring the real world - in the activity of performing science, and
+ of discovery, one is faced with the inverse task: one has a collection
+ of evidence, and from this evidence, one attempts to tease out a minimal
+ explanation of the world, as a collection of rules, axioms and theories.
+\end_layout
+
+\begin_layout Standard
+This essay provides a short definition of the formal mathematical concept
+ of an 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+, illustrates why it provides 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+, and then examines how one can find 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ in the evidence obtained from real life.
+ Effectively, the discovery of meaning is the inversion of the process of
+ assigning it: given some evidence collected from real life, we may not
+ know the meaning, but we can seek to find it by discovering the underlying
+ structure, and coupling the two with an interpretation.
+\end_layout
+
+\begin_layout Standard
+This essay could devolve into a philosophical tract; rather, it attempts
+ to be just concrete enough, just grounded and practical enough that one
+ can imagine creating software that actually performs the described process.
+\end_layout
+
+\begin_layout Subsection*
+Meaning
+\end_layout
+
+\begin_layout Standard
+This subsection gives a quasi-formal definition of an interpretation.
+ It is quite brief, providing just enough detail to get the general idea
+ across, but playing fast and loose with important theorems.
+ The reader is urged to consult standard texts for a full and complete definitio
+n.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Manin1977,Dalen1980,Baader1998,Hodges1997"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One defines the concept of 
+\begin_inset Quotes eld
+\end_inset
+
+terms
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+relations
+\begin_inset Quotes erd
+\end_inset
+
+.
+ A 
+\begin_inset Quotes eld
+\end_inset
+
+term
+\begin_inset Quotes erd
+\end_inset
+
+ is either some constant 
+\begin_inset Formula $c$
+\end_inset
+
+ or some variable 
+\begin_inset Formula $x$
+\end_inset
+
+ or some (uninterpreted) expression 
+\begin_inset Formula $f\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ where the 
+\begin_inset Formula $t_{k}$
+\end_inset
+
+ are also terms.
+ In some given, fixed system, there may be zero, one or more constants,
+ and there may be zero or more function-expressions taking some number of
+ arguments.
+ A relation is an expression 
+\begin_inset Formula $R\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ that can be either true, or false.
+ 
+\end_layout
+
+\begin_layout Standard
+One standard example of terms and relations is arithmetic: it has two function-e
+xpressions (or operations): 
+\begin_inset Quotes eld
+\end_inset
+
+plus
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+times
+\begin_inset Quotes erd
+\end_inset
+
+, both taking two arguments, and two relations: 
+\begin_inset Quotes eld
+\end_inset
+
+equals
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+greater-than
+\begin_inset Quotes erd
+\end_inset
+
+, and two constants: 
+\begin_inset Quotes eld
+\end_inset
+
+zero
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+one
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Another standard example is set theory, which has no operations, one constant
+ 
+\begin_inset Quotes eld
+\end_inset
+
+the empty set
+\begin_inset Quotes erd
+\end_inset
+
+, and two relations: 
+\begin_inset Quotes eld
+\end_inset
+
+equals
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+is member of
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Examples can be found everywhere in mathematics: groups, rings, fields,
+ algebras and so on.
+ 
+\end_layout
+
+\begin_layout Standard
+Formulas are obtained by combining relations with logical connectives: 
+\begin_inset Quotes eld
+\end_inset
+
+and
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+or
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+not
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+for all
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+there exists
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This collection of terms, relations and logical connectives, and their
+ various combinations forms a 
+\begin_inset Quotes eld
+\end_inset
+
+language
+\begin_inset Quotes erd
+\end_inset
+
+: a collection of symbols arranged in various ways with respect to one-another.
+ But what is the 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ of that language? What do all of the symbols mean?
+\end_layout
+
+\begin_layout Standard
+The canonical answer is that an interpretation provides 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ to the above formal symbolic expressions.
+ It makes a language concrete by assigning real-world items to each of the
+ symbols, each of the expressions obtained by combining these various elements.
+ It connects the abstract to the real.
+\end_layout
+
+\begin_layout Standard
+An interpretation is a function 
+\begin_inset Formula $\phi$
+\end_inset
+
+ that maps constants, terms and relations to elements of some set 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ For example, the set 
+\begin_inset Formula $M$
+\end_inset
+
+ could consist of an apple, pear and banana, and of all of the different
+ ways that they might be arranged on a table-top.
+ In this example, one might consider the axioms that define the permutation
+ group 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+, which contains abstract expressions such as 
+\begin_inset Formula $a^{2}b$
+\end_inset
+
+ and 
+\begin_inset Formula $e$
+\end_inset
+
+ and 
+\begin_inset Formula $ba$
+\end_inset
+
+ and so on.
+ What do 
+\begin_inset Formula $a^{2}b$
+\end_inset
+
+ and 
+\begin_inset Formula $e$
+\end_inset
+
+ and 
+\begin_inset Formula $ba$
+\end_inset
+
+ mean? Acting on the set of arrangements of an apple, pear and banana on
+ a tabletop, it becomes clear: the element 
+\begin_inset Formula $e$
+\end_inset
+
+ does nothing at all, the element 
+\begin_inset Formula $b$
+\end_inset
+
+ swaps a pair of fruit, and the element 
+\begin_inset Formula $a$
+\end_inset
+
+ exchanges all three pieces of fruit.
+ The equality relation expression as well: the world in which we applied
+ only 
+\begin_inset Formula $e$
+\end_inset
+
+ comes out just the same as the world where we applied 
+\begin_inset Formula $b^{2}$
+\end_inset
+
+.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ of the permutation group 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+ is the re-arrangement of three items.
+\end_layout
+
+\begin_layout Subsection*
+Interpretation
+\end_layout
+
+\begin_layout Standard
+A quick sketch of the more formal definition of an interpretation is in
+ order.
+ An interpretation of a constant 
+\begin_inset Formula $c$
+\end_inset
+
+ is some element 
+\begin_inset Formula $\phi\left(c\right)$
+\end_inset
+
+ of the set 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ (In real life, this 
+\begin_inset Quotes eld
+\end_inset
+
+element
+\begin_inset Quotes erd
+\end_inset
+
+ might be a single object, a movement or action, a color or attribute; nothing
+ is presupposed).
+ In casual speech, the constants 
+\begin_inset Formula $c$
+\end_inset
+
+ are the 
+\begin_inset Quotes eld
+\end_inset
+
+names
+\begin_inset Quotes erd
+\end_inset
+
+ of real-life things 
+\begin_inset Formula $\phi\left(c\right)$
+\end_inset
+
+.
+ We call something 
+\begin_inset Formula $c$
+\end_inset
+
+ whenever we see, in the real world, an object 
+\begin_inset Formula $\phi\left(c\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The interpretation of an 
+\begin_inset Formula $n$
+\end_inset
+
+-ary term 
+\begin_inset Formula $f\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ is a function 
+\begin_inset Formula $\phi\left(f\right):M\times\cdots\times M\to M$
+\end_inset
+
+, that is, it is some function defined on the Cartesian product of 
+\begin_inset Formula $n$
+\end_inset
+
+ copies of 
+\begin_inset Formula $M$
+\end_inset
+
+, returning a value in 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ Here, by 
+\begin_inset Quotes eld
+\end_inset
+
+function
+\begin_inset Quotes erd
+\end_inset
+
+ we mean the usual thing from school: a function that has a domain and a
+ range: takes objects as inputs and generates an output.
+ Its specific and concrete, whereas the uninterpreted term 
+\begin_inset Formula $f\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ had no such constraints: it wasn't a function at all, just a (meaningless)
+ arrangement of the the typographical symbols 
+\begin_inset Formula $f,t,1,n,(,)$
+\end_inset
+
+ on the written page.
+ That the typography of it just happens to resemble that of a function is
+ already a powerful nod to the importance of notation and visual resemblance
+ to understanding...
+ and also to misunderstanding.
+\end_layout
+
+\begin_layout Standard
+The interpretation of a relation 
+\begin_inset Formula $R\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ is a subset 
+\begin_inset Formula $\phi\left(R\right)$
+\end_inset
+
+ of 
+\begin_inset Formula $M\times\cdots\times M$
+\end_inset
+
+.
+ That is, the 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple 
+\begin_inset Formula $\left\langle \phi\left(t_{1}\right),\cdots,\phi\left(t_{n}\right)\right\rangle \in\phi\left(R\right)$
+\end_inset
+
+ if and only if 
+\begin_inset Formula $R\left(t_{1},\cdots,t_{n}\right)$
+\end_inset
+
+ is true.
+ This is just the usual correspondence between set-membership, and indicator
+ functions.
+ So a relation 
+\begin_inset Formula $R$
+\end_inset
+
+ is some intensive predicate; it's interpretation is some extensive set
+ of objects.
+ It is easiest to consider a unary predicate first, i.e.
+ 
+\begin_inset Formula $n=1$
+\end_inset
+
+ so that 
+\begin_inset Formula $R(t)$
+\end_inset
+
+ is either true or false for any given 
+\begin_inset Formula $t$
+\end_inset
+
+.
+ Given the set 
+\begin_inset Formula $\phi\left(R\right)=\left\{ \mbox{cat},\mbox{dog},\mbox{mouse}\right\} $
+\end_inset
+
+ we might conclude that 
+\begin_inset Formula $R\left(t\right)$
+\end_inset
+
+ is true whenever 
+\begin_inset Formula $\phi\left(t\right)$
+\end_inset
+
+ is a mammal.
+ (or perhaps if 
+\begin_inset Formula $\phi\left(t\right)$
+\end_inset
+
+ is furry...)
+\end_layout
+
+\begin_layout Standard
+Terms can also be variables.
+ The interpretation of variables is more abstract and difficult to understand;
+ it is picked up again in a later section.
+ It is, however, the central theme to this essay: the interpretation of
+ variables is how one actually 
+\begin_inset Quotes eld
+\end_inset
+
+learns
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Metaphysics
+\end_layout
+
+\begin_layout Standard
+The above is a broader, and looser sketch of an 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+ than what is canonically found in books on mathematics.
+ There's nothing particularly wrong with the formulas provided; rather,
+ its the examples.
+ Fruit and animals are never used as examples; whereas integers and sets
+ are.
+ The goal here is different: it is to illustrate that the formal, narrow
+ mathematical concept of 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+ has a broader application than just mathematical logic.
+\end_layout
+
+\begin_layout Standard
+But, I can almost hear you object: if the goal is to make analogies between
+ real life and mathematics, there are many ways that this can be done.
+ So, the interpretation 
+\begin_inset Formula $\phi$
+\end_inset
+
+ behaves a lot like a homomorphism, why not talk about homomorphisms, instead?
+ But also, 
+\begin_inset Formula $\phi$
+\end_inset
+
+ behaves a lot like an action, so why not talk about actions? The answer
+ is perhaps a let-down: the interpretation 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is a lot closer to what we really want, than a homomorphism or action is.
+ 
+\end_layout
+
+\begin_layout Standard
+What do we really want? We want a correspondence between an internal mode
+ of thought and perceived external experience, coupled in such a way that
+ the internal system adequately reflects or describes the external world:
+ predicting it, as it were, allowing the external world to be manipulated
+ based on deductions performed on the internal system.
+\end_layout
+
+\begin_layout Standard
+But why mathematical logic? Here the answer is stronger.
+ Mathematical logic is a theory of symbols, and how they work together.
+ Much of (but not all of) human endeavor involves a relationship with the
+ symbolic world: for communication, for science, for deducing evidence in
+ murder-mystery thrillers.
+ The symbolic domain is part of human existence, and vitally important for
+ science; its not going away.
+ Mathematical logic has a well-articulated, deep and broad theory, with
+ a giant treasure-chest of useful results that can be used (here, I am thinking
+ broadly: proof theory, model theory, category theory and type theory all
+ being sub-disciplines of mathematical logic).
+ Many of these results are described as algorithms, with various degrees
+ of efficiency: parsers and solvers coming in a rainbow of different forms.
+\end_layout
+
+\begin_layout Standard
+Perhaps there is a better way of thinking about and talking about the correspond
+ence between abstract understanding and real-world evidence.
+ For right now, though, the concept of 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+ seems adequate.
+ In particular, the previous section is trying to set up the next section:
+ a claim that one can invert this process, and discover interpretations,
+ and meaning, algorithmically, automatically, by machine.
+\end_layout
+
+\begin_layout Subsection*
+Science
+\end_layout
+
+\begin_layout Standard
+One naive way of understanding science is that it is the process of obtaining
+ formal, axiomatic systems that have interpretations in physical reality.
+ To oversimplify: one observes how gravity makes things fall down, and then
+ deduces 
+\begin_inset Formula $\vec{F}=m\vec{a}$
+\end_inset
+
+.
+ What is the meaning of 
+\begin_inset Formula $\vec{F}=m\vec{a}$
+\end_inset
+
+? It means 
+\begin_inset Quotes eld
+\end_inset
+
+things fall down
+\begin_inset Quotes erd
+\end_inset
+
+.
+ How do we know that is what it means? We know in two different ways.
+ First, it has a very large collection of interpretations: one where 
+\begin_inset Formula $m$
+\end_inset
+
+ is an apple, another where 
+\begin_inset Formula $m$
+\end_inset
+
+ is a canon-ball, and yet another where its a planet.
+ The second way is that 
+\begin_inset Formula $\vec{F}=m\vec{a}$
+\end_inset
+
+ can be combined with the logical connectives 
+\begin_inset Quotes eld
+\end_inset
+
+and
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+or
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+for all
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+there exists
+\begin_inset Quotes erd
+\end_inset
+
+, as well as other formulas an symbol manipulation techniques to obtain
+ a very large collection of related formulas, each of which also has an
+ interpretation that is consistent with logical reasoning applied to the
+ formulas.
+ That is, the 
+\begin_inset Quotes eld
+\end_inset
+
+weight of evidence
+\begin_inset Quotes erd
+\end_inset
+
+ is multi-faceted: not just that there is a large body of evidence, but
+ that this evidence can be reverse-mapped to the theory, and to the symbolic
+ articulations of the theory.
+ 
+\end_layout
+
+\begin_layout Standard
+The claim of this essay is that the formal understanding of what an interpretati
+on is, together with the informal explanation provided above, is just enough
+ to be able to design and implement an actual, functional machine that extracts
+ 
+\begin_inset Quotes eld
+\end_inset
+
+meaning
+\begin_inset Quotes erd
+\end_inset
+
+ from 
+\begin_inset Quotes eld
+\end_inset
+
+observation
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In short, 
+\begin_inset Quotes eld
+\end_inset
+
+machine learning
+\begin_inset Quotes erd
+\end_inset
+
+.
+ But this first requires an examination of how variables are interpreted.
+\end_layout
+
+\begin_layout Subsection*
+The Interpretation of Variables
+\end_layout
+
+\begin_layout Standard
+In general, terms can be of the form 
+\begin_inset Formula $f\left(x,y,\cdots,z\right)$
+\end_inset
+
+ containing variables 
+\begin_inset Formula $x,y,\cdots,z$
+\end_inset
+
+ and likewise relations 
+\begin_inset Formula $R\left(x,y,\cdots,z\right)$
+\end_inset
+
+.
+ These two have to be given an interpretation: what do they mean? In colloquial
+ terms, its not hard: one imagines that 
+\begin_inset Formula $x,y,\cdots,z$
+\end_inset
+
+ stands for the set of all of those things that are appropriate for the
+ term, or make the relation true.
+ It takes some work to convert this informal understanding into a formal
+ statement.
+\end_layout
+
+\begin_layout Standard
+One interprets not a single variable at a time, but all of them, at once,
+ assigning to each variable 
+\begin_inset Formula $x$
+\end_inset
+
+ an element 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ The assignment is effectively 
+\begin_inset Quotes eld
+\end_inset
+
+random
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In itself, it has no particular meaning.
+ One defines the space 
+\begin_inset Formula $\overline{M}$
+\end_inset
+
+ as the space of all possible variable assignments.
+ Thus, a single point 
+\begin_inset Formula $\xi\in\overline{M}$
+\end_inset
+
+ corresponds to an assignment of elements in 
+\begin_inset Formula $M$
+\end_inset
+
+ for 
+\begin_inset Formula $x,y,\cdots,z$
+\end_inset
+
+.
+ In formulas, 
+\begin_inset Formula $\phi\left(x\right)\left(\xi\right)=\xi\left(x\right)\in M$
+\end_inset
+
+, so that 
+\begin_inset Formula $\phi\left(x\right):\overline{M}\to M$
+\end_inset
+
+ is a function that maps a point in 
+\begin_inset Formula $\overline{M}$
+\end_inset
+
+ to an element of 
+\begin_inset Formula $M$
+\end_inset
+
+, and (by currying) 
+\begin_inset Formula $\phi:V\times\overline{M}\to M$
+\end_inset
+
+ takes a variable, and some point in 
+\begin_inset Formula $\overline{M}$
+\end_inset
+
+, and produces and element in the 
+\begin_inset Quotes eld
+\end_inset
+
+real world
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ That is, the interpretation of a variable is a function ranging over variable
+ assignments.
+\end_layout
+
+\begin_layout Standard
+This is a bit painfully abstract, but it allows for a natural way of examining
+ statements such as 
+\begin_inset Quotes eld
+\end_inset
+
+if 
+\begin_inset Formula $x$
+\end_inset
+
+ is furry, then 
+\begin_inset Formula $x$
+\end_inset
+
+ is an animal
+\begin_inset Quotes erd
+\end_inset
+
+.
+ We can try to test if this statement is generically true by replacing 
+\begin_inset Formula $x$
+\end_inset
+
+ with an instance of every possible object in the real world.
+ If a formula 
+\begin_inset Formula $p\left(x\right)$
+\end_inset
+
+ remains true as 
+\begin_inset Formula $\xi\in\overline{M}$
+\end_inset
+
+ is varied, i.e.
+ if 
+\begin_inset Formula $\phi\left(p\right)\left(\phi\left(x\right)\left(\xi\right)\right)=\phi\left(p\right)\left(\xi\left(x\right)\right)$
+\end_inset
+
+ remains true for all 
+\begin_inset Formula $\xi\in\overline{M}$
+\end_inset
+
+, then one says that 
+\begin_inset Formula $p\left(x\right)$
+\end_inset
+
+ is a 
+\begin_inset Formula $\phi$
+\end_inset
+
+-true statement.
+ The goal of learning is to discover 
+\begin_inset Formula $\phi$
+\end_inset
+
+-true statements.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+In mathematics, when an interpretation 
+\begin_inset Formula $\phi$
+\end_inset
+
+ of a collection of formulas 
+\begin_inset Formula $\mathcal{E}$
+\end_inset
+
+ renders all of the formulas 
+\begin_inset Formula $\phi$
+\end_inset
+
+-true, then 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is called a 
+\begin_inset Quotes eld
+\end_inset
+
+model
+\begin_inset Quotes erd
+\end_inset
+
+ of 
+\begin_inset Formula $\mathcal{E}$
+\end_inset
+
+.
+ This is perversely backwards from the meaning of the word 
+\begin_inset Quotes eld
+\end_inset
+
+model
+\begin_inset Quotes erd
+\end_inset
+
+ in engineering and process control.
+ In the latter case, one has the evidence 
+\begin_inset Formula $\phi\left(\mathcal{E}\right)$
+\end_inset
+
+ of real life, but doesn't really know what either 
+\begin_inset Formula $\phi$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathcal{E}$
+\end_inset
+
+ are.
+ When some 
+\begin_inset Formula $\phi$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathcal{E}$
+\end_inset
+
+ are found that approximate reality, these are called a 
+\begin_inset Quotes eld
+\end_inset
+
+model
+\begin_inset Quotes erd
+\end_inset
+
+ of reality.
+ Examples include a thermostat, which attempts to model the temperature
+ inside a house.
+ It cannot ever know the true temperature (drafty windows, cold basements),
+ but it can form some reasonable model of what this might be, and then act
+ to turn on the heat (or cooling).
+ Likewise, the casual use of the word 
+\begin_inset Quotes eld
+\end_inset
+
+interpretation
+\begin_inset Quotes erd
+\end_inset
+
+ can mean exactly the opposite of the defintioin given here.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Revising the example might make this clearer.
+ Consider instead the proposition 
+\begin_inset Formula $p\left(x\right)=$
+\end_inset
+
+
+\begin_inset Quotes eld
+\end_inset
+
+if 
+\begin_inset Formula $x$
+\end_inset
+
+ is 
+\begin_inset Formula $c_{f}$
+\end_inset
+
+ then 
+\begin_inset Formula $x$
+\end_inset
+
+ is a 
+\begin_inset Formula $c_{a}$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The symbols 
+\begin_inset Formula $c_{f}$
+\end_inset
+
+ and 
+\begin_inset Formula $c_{a}$
+\end_inset
+
+ are (uninterpreted) constants.
+ What might they mean? Well, if 
+\begin_inset Formula $\phi\left(c_{f}\right)=\mbox{"furry"}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi\left(c_{a}\right)=\mbox{"animal"}$
+\end_inset
+
+ then we are on to something, because when we interpret 
+\begin_inset Formula $\phi\left(x\right)$
+\end_inset
+
+ as a the set of all possible things that could be 
+\begin_inset Formula $x$
+\end_inset
+
+, we can then examine if 
+\begin_inset Formula $p\left(x\right)$
+\end_inset
+
+ is true (or not) (or rather, more precisely, if 
+\begin_inset Formula $\phi\left(p\right)\left(\phi\left(x\right)\right)$
+\end_inset
+
+ is true or not, as it varies over all of 
+\begin_inset Formula $\overline{M}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+This now provides a criterion for determining whether an interpretation
+ is real-world-reasonable, or not.
+ So, 
+\begin_inset Formula $\phi\left(c_{f}\right)=\mbox{"furry"}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi\left(c_{a}\right)=\mbox{"animal"}$
+\end_inset
+
+ seems to work, but 
+\begin_inset Formula $\phi\left(c_{f}\right)=\mbox{"slimey"}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi\left(c_{a}\right)=\mbox{"wooden"}$
+\end_inset
+
+ does not.
+\end_layout
+
+\begin_layout Subsection*
+Machine Learning
+\end_layout
+
+\begin_layout Standard
+The point of this machinery is that it provides just enough specificity
+ to imagine that it could be implemented as a machine learning algorithm.
+ There is no actual machine learning algorithm presented; nor is there any
+ claim that it might be efficient, fast or practical.
+ You are welcome to tell me that doing the above will take longer than the
+ age of the universe when implemented on an IBM-386 PC.
+ Rather, it sketches what one must attempt to do, if one wishes to develop
+ a symbolic understanding of reality.
+\end_layout
+
+\begin_layout Standard
+Nothing presented her so far is in any way astounding, taken from the point
+ of view of machine learning.
+ A standard route in machine learning is to formulate some hypothesis 
+\begin_inset Formula $R\left(x,y,\cdots,z\right)$
+\end_inset
+
+, and then crawl over a dataset of 
+\begin_inset Formula $x,y,\cdots,z$
+\end_inset
+
+ to see if it holds.
+ This is typically CPU-intensive, and most hypothesis do not hold.
+ The holy grail of machine learning is to be able to generate accurate hypothesi
+s from the get-go, and then to evaluate them quickly.
+\end_layout
+
+\begin_layout Standard
+But what it does show is that it is possible, at least in principle, to
+ formulate the hypothesis 
+\begin_inset Quotes eld
+\end_inset
+
+if 
+\begin_inset Formula $x$
+\end_inset
+
+ is 
+\begin_inset Formula $c_{f}$
+\end_inset
+
+ then 
+\begin_inset Formula $x$
+\end_inset
+
+ is a 
+\begin_inset Formula $c_{a}$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ together with an interpretation 
+\begin_inset Formula $\phi\left(c_{f}\right)=\mbox{"furry"}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi\left(c_{a}\right)=\mbox{"animal"}$
+\end_inset
+
+ and then run around, look at things, and see if it is true.
+ If one can confirm this hypothesis, and a handful of others, then one is
+ well on the way of developing an understanding of the real world, in such
+ a way that one can navigate in it, without getting killed.
+\end_layout
+
+\begin_layout Subsection*
+Conclusion
+\end_layout
+
+\begin_layout Standard
+The point here, so far, is perhaps a more philosophical one, after all:
+ a defense of the idea that learning is all about the extraction of patterns
+ from the observation of nature.
+ But there is more: the extraction can be done in such a way that a symbolic
+ structure emerges.
+ The symbols can be arranged into terms and relations, in a concrete enough
+ that they can be compounded with logic connectives to obtain formulas,
+ and that those formulas can then be used to make predictions about reality.
+ We've got tools and theories and systems that know how to manipulate symbols,
+ and to do so reliably: again: the human race is deeply entangled with the
+ processing of symbols.
+ The point here is that symbols can be extracted from observations of nature;
+ once they are, we are home-free.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "/home/linas/src/novamente/src/learn-git/learn-lang-diary/lang"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

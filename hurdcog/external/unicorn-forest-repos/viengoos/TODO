@@ -1,0 +1,197 @@
+* Design
+** physmem should probably support marking a container as being the
+   default paging container for a certain task (providing a specific
+   virtual address for this container).
+   Then the last-resort pager in a task can run on memory in this
+   container, and physmem can freely unmap that memory temporarily
+   (for reorganization).  The last-resort pager would use physmem as
+   its pager.  This relieves the need to wire down the memory the
+   pager is running on.
+   This can also be used for startup code, which is currently mapped
+   directly from starting task to started task.  This is not
+   acceptable under the paranoid constrain that all mappings must be
+   installed by physmem, to avoid DoS attacks on the page tables.
+
+   Deep integration in libhurd-cap-server to handle page fault
+   messages transparently as RPC messages could be provided by hooks.
+   Alternatively, special server thread could be designated to handle
+   the page faults.
+
+   This does not eliminate all need to wire down memory.  Buffers for
+   receiving string items must not page fault, and although physmem
+   could be trusted to handle such a page fault, the server has no way
+   to enforce the use of a trusted pager for such memory on the client
+   side.  So, either some form of wiring must still be supported, or
+   containers or other trusted buffer objects must be used instead of
+   string items.
+
+
+* libl4
+** The main TODO list for libl4 is in the file libl4/TODO.
+** We need cancellable forms of ipc() and lipc()!
+
+
+* configure.ac
+** Allow user to specify location of libc.a.
+
+
+* laden
+** Implement the Generic Booting Protocol (Appendix J
+   l4-x2-20040823.pdf and newer).
+** Overlaps between modules and destination regions should be resolved
+   intelligently.
+** Support for sigma1 needs to be added when sigma1 exists.
+** Shutdown should sleep a couple of seconds before reboot.  How can
+   this be done without any operating system (maybe use the BIOS?).
+** When L4 supports it, the UTCB area of the rootserver should be set
+   in the KIP.
+** Memory descriptors need to be constructed and handled carefully,
+   verify that everything is all-right.  In particular: conventional
+   memory overriding non-conventional memory in the descriptor list is
+   not supported, but should be.
+** Add loaded modules as bootloader specific types to memory
+   descriptor list (for sigma0 and wortel).  But check with the
+   Generic Booting Protocol specification first!
+** Fix the memory descriptors: Consistently set the high value right.
+   Mark all bootloader stuff as bootloader specific, to prevent that
+   L4 scribbles over it accidently.  This includes the GRUB info as
+   well as all modules beyond the rootserver module.
+
+
+* root server libraries
+** More code should be explicitely shared by the root servers.
+** Use ptmalloc, not malloc+USE_MALLOC_LOCK.
+
+
+* wortel
+** Use the Generic Booting Protocol (Appendix J l4-x2-20040823.pdf and
+   newer).  Needs corresponding support in laden.
+** Conventional memory overriding non-conventional memory in the
+   descriptor list is not supported, but should be.
+
+
+* libhurd-slab
+** Ideally this would be a feature in glibc.
+** Support having the pager reap stuff (needs a wrapper around reap()
+   that does locking).
+
+* libhurd-ihash
+** Can be merged back into the Hurd if the callers are changed.
+
+
+* libhurd-cap-server
+** Implement propagation support, so that worker threads like for
+   select or notifications can propagate rpcs to another thread.  This
+   must update the pending_rpc table (the worker thread can then
+   return with ENOREPLY) for cancellation support.  Of course, the new
+   receiver thread must be able to deal with cancellation.
+
+   One problem is that the new processing thread can't know which rpc
+   is cancelled.  Yuck!
+
+   So, maybe, to cancel, the manager could just propagates the
+   cancellation request.  For this to work, we need to be able to
+   differentiate between normal pending workers and such sub-managers.
+** Implement cap transfer.
+** Implement reference management and a no-sender callback when the
+   last reference by a client is dropped.
+** Use of <atomic.h>, which is not a public header file!
+** It should be allowed to call hurd_cap_obj_rele() with only one
+   reference.
+** Neal points out that the placement of the cap-class argument in
+   hurd_cap_class_init and hurd_cap_class_create is very much
+   divergent.
+
+
+* L4 (for lack of a better place)
+** Check that L4 does not schedule the client when the server makes a
+   non-blocking reply.
+** Check that L4 does schedule the server when the client makes a
+   blocking call.
+** What happens with map and grant items if IPC is aborted due to
+   xfer timeout?
+   Answer: Current implementation: They are processed up to the string
+   item in which the page fault occured.
+** Wishlist for ABI changes:
+*** [ia32] Use %fs or %gs:4 for the TCB pointer instead %gs:0, to free
+    that one for the ia32 TLS ABI.
+    Answer: Current patch uses %gs:4 for UTCB and %gs:0 for TLS.
+    Problem: As the gs segment is not 4GB in size (to allow small
+    space protection), %gs:OFFSET access to TLS is not allowed.
+*** Use Xfer timeout of the other side for pagefault timeouts, instead
+    of the minimum (so pageouts on your side don't abort IPC operations
+    if you need to restrict the xfer timeout to zero).  Alternatively:
+    Have another set of xfer timeouts for that use.  Solution: Patches
+    for both have been developed.  Problem of the first approach is its
+    limited generality (but it should be ok for us).  Problem of the
+    alternative approach is that if multiple page faults occur on both
+    sides, the semantics are unclear and sometimes undesirable.
+*** Deferred cancellation: If you want to safely cancel an IPC
+    operation in another thread, you need heavy high-level support
+    (sigstate) to avoid race conditions.  It would be very useful to
+    have support for this at a rather low level of L4-only (without
+    massive libc support), for example in hardware drivers (IRQ
+    handler).
+    Proposal: Extend ExchangeRegisters to allow atomically aborting
+    pending IPC operations or set a deferred cancellation flag.  On
+    the next IPC, the destination thread will then abort the IPC
+    operation before even starting it if the cancel flag is set
+    (and clear it).
+    Response: The L4 people suggest to use preemption delay, but this
+    has trust issues, is not well defined (cpu time vs instruction
+    count) and only works if the interacting threads run on the same
+    CPU.  Could be done for IRQ handlers, for example, but not for user
+    threads.
+*** IPC to stopped threads should succeed: If a thread is stopped
+    while in an IPC receive operation, any attempt to send a message to
+    it (with a short timeout) will fail because the dest thread is not
+    ready.  But this means that you can not safely stop threads if the
+    IPC operating can not be retried (which is usually the case if the
+    timeout is short, for example in the case of server reply messages
+    in an RPC context).  Stopping threads is necessary for debugging,
+    cancellation etc.
+    Same problem occured when implementing debugging support in Sawmill
+    (paper found on the net).
+    Again, this could be worked around with heavy wrappers around IPC
+    operations, and according information in sigstate etc.  But this is
+    undesirable.
+    Suggestion: Allow an IPC operation to a stopped thread to succeed.
+    This is possible because only MRs and string items need to be
+    transferred, and usually no cooperation by the destination thread
+    is necessary.
+    Problem: There is one potentially troublesome boundary condition:
+    If string items are transferred, and a page fault occurs in the
+    receivers address space, what should happen?  Should the receiver's
+    thread state be modified to fake a page fault message to its pager?
+    IMO, this would be OK.  In this case, the pager could immediately
+    process the page fault (in case it is running), and send its reply
+    - which would be received even if the thread is still stopped, and
+    transfering string items could be resumed.
+    Alternatively, the actual page fault message could be delayed until
+    the thread is resumed, in which case the likelyhood is increased
+    that a xfer timeout will occur.
+    Our own needs are more modest: As we will always send reply
+    messages with timeout 0, all page faults in the receiver will abort
+    the IPC anyway.
+
+** Bugs:
+*** See patches in README
+
+
+* Servers
+** The task server can hang if it needs to create a thread and is out
+   of memory, and physmem wants to create a worker thread.  Because
+   then task will contact physmem to allocate more memory, and physmem
+   contacts task to create a new worker thread, and the system will
+   dead-lock.  This needs some hackery to break out of it.
+
+Copyright 2003, 2004 Free Software Foundation, Inc.
+Written by Marcus Brinkmann <marcus@gnu.org>
+
+This file is free software; as a special exception the author gives
+unlimited permission to copy and/or distribute it, with or without
+modifications, as long as this notice is preserved.
+ 
+This file is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

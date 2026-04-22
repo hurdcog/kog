@@ -1,0 +1,83 @@
+[[!meta copyright="Copyright © 2012, 2013 Free Software Foundation, Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!meta title="GDB: attach"]]
+
+[[!tag open_issue_gdb]]
+
+
+# [[gdb_thread_ids]]
+
+
+# IRC, freenode, #hurd, 2012-06-30
+
+    <braunr> hm, gdb isn't able to determine which thread is running when
+      attaching to a process
+
+
+# IRC, freenode, #hurd, 2012-07-02
+
+    <braunr> woah, now that's a weird message !
+    <braunr> when using gdb on a hanged ext2fs :
+    <braunr> Pid 938 has an additional task suspend count of 1; clear it? (y or
+      n) 
+    <braunr> when hanged, gdb thinks the target task is already being debugged
+      :/
+    <braunr> no wonder why it's completely stuck
+    <braunr> hm, the task_suspend might actually be the crash-dump-core server
+      attempting to create the core :/
+    <braunr> hm interesting, looks like a problem with the
+      diskfs_catch_exception macro
+    <pinotree> braunr: what's up with it?
+    <braunr> pinotree: it uses setjmp
+    <braunr> hm random corruptions :/
+    <braunr> definitely looks like a concurrency problem
+
+
+# IRC, freenode, #hurd, 2012-05-23
+
+    <pinotree>
+      /build/buildd-gdb_7.4really-1-hurd-i386-UKStgK/gdb-7.4really/gdb/thread.c:72:
+      internal-error: inferior_thread: Assertion `tp' failed.
+    <pinotree> arg
+    <tschwinge> pinotree: Been doing anything "special"?   Is it reproducible? 
+    <pinotree> trying to debug something
+    <tschwinge> Indeed.  ;-)
+    <pinotree> i'm not sure i'm doing anything special, just trying to attach a
+      process
+    <tschwinge> That is supposed to work.
+    <tschwinge> If the permission match.
+
+
+# `gdb --pid [PID]`
+
+That is, not explicitly specifying an `executable-file`.
+
+
+## IRC, OFTC, debian-hurd, 2013-04-15
+
+    <paravoid> I don't seem to be able to run gdb
+    <paravoid> that happened on the buildd and happens on exodar too
+    <paravoid> #0  0x010c07cc in ?? ()
+    <paravoid> #1  0x010c1078 in ?? ()
+    <paravoid> #2  0x0109eabf in ?? ()
+    <paravoid> [...]
+    <paravoid> Backtrace stopped: previous frame inner to this frame (corrupt
+      stack?)
+    <paravoid> that's pid 24235 on exodar
+    <paravoid> I did gdb -p 24235 and then bt
+    <paravoid> just the output above
+    <youpi> I don't know about gdb -p
+    <youpi> I usually run gdb
+      /home/paravoid/gdnsd-1.8.1/plugins/meta/libgdmaps/t/.libs/lt-t17_extn_empty.bin
+      24235
+    <paravoid> okay, that indeed works 
+    <youpi> I guess the support for finding out the binary automatically wasn't
+      done yet on hurd

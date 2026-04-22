@@ -1,0 +1,14 @@
+{
+  "name": "cogutil",
+  "version-string": "1.0.0",
+  "description": "OpenCog Utility Library - Core C++ utilities for OpenCog",
+  "license": "AGPL-3.0",
+  "supports": "windows & linux & osx",
+  "dependencies": [
+    "boost-system",
+    "boost-filesystem",
+    "boost-program-options",
+    "boost-thread",
+    "boost-date-time"
+  ]
+}

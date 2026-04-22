@@ -1,0 +1,339 @@
+[[!meta copyright="Copyright © 2013, 2014, 2016 Free Software Foundation,
+Inc."]]
+
+[[!meta license="""[[!toggle id="license" text="GFDL 1.2+"]][[!toggleable
+id="license" text="Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no Invariant
+Sections, no Front-Cover Texts, and no Back-Cover Texts.  A copy of the license
+is included in the section entitled [[GNU Free Documentation
+License|/fdl]]."]]"""]]
+
+[[!tag open_issue_glibc]]
+
+Issues with the current 2.17 version of glibc/EGLIBC in Debian experimental.
+Now in unstable.
+
+
+# IRC, OFTC, #debian-hurd, 2013-03-14
+
+    <markus_w1nner> I have a strange tcp via localhost question:
+    <markus_wanner> The other side closes the connection, but I haven't read
+      all data, yet. I should still be able to read the pending data, no?
+    <markus_wanner> At least it seems to work that way on Linux, but not on
+      Hurd.
+    <markus_wanner> Got a simple repro with nc, if you're interested...
+    <youpi> markus_wanner: yes, we're interested
+    <markus_wanner> youpi: okay, here we go:
+    <markus_wanner> session 1: nc -l -p 7777 localhost
+    <markus_wanner> session 2: nc 127.0.0.1 7777
+    <markus_wanner> session 2: a <RET> b <RET> c <RET>
+    <markus_wanner> session 1: [ pause with Ctrl-Z ]
+    <markus_wanner> session 2: [ send more data ] d <RET> e <RET> f <RET>
+    <markus_wanner> session 2: [ quit with Ctrl-C ]
+    <markus_wanner> session 1: [ resume with 'fg' ]
+    <markus_wanner> The server on session 1 doesn't get the data sent after it
+      paused and before the client closed the connection.
+    <markus_wanner> I'm not sure if that's a valid TCP thing. However, on
+      Linux, the server still gets the data. On hurd it doesn't.
+    <markus_wanner> I'm working on a C-code test case, ATM.
+    <youpi> markus_wanner: on which box are you seeing this behavior?
+    <youpi> exodar does not have it
+    <youpi> i.e. I do get the d e f
+    <markus_wanner> a private VM (I'm not a DD)
+    <markus_wanner> ..updated to latest experimental stuff.
+    <markus_wanner> GNU lematur 0.3 GNU-Mach 1.3.99-486/Hurd-0.3 i686-AT386 GNU
+    <youpi> ok, I can't reproduce it on my vm either
+    <youpi> maybe the C program will help
+    <markus_wanner> Hm.. cannot corrently reproduce that in C. (Netcat still
+      shows the issue, though).
+    <markus_wanner> I'll try to strace netcat...
+    <markus_wanner> ..Meh. strace not available on Hurd?
+    <pinotree> no, but there is rpctrace to show the various rpc
+    <markus_wanner> Cool, looks helpful.
+    <markus_wanner> Thx
+    <markus_wanner> Uh.. that introduces another error:
+    <markus_wanner> rpctrace: ../../utils/rpctrace.c:1287: trace_and_forward:
+      Assertion `reply_type == 18' failed.
+
+[[hurd/debugging/rpctrace]].
+
+    <youpi> I'm checking on a box without ipv6 configuration
+    <youpi> maybe that's the difference between you and me
+    <youpi> I guess your /etc/alternatives/nc is /bin/nc.traditional ?
+    <markus_wanner> Yup, nc.traditional.
+    <markus_wanner> Looks like that box only has IPv4 configured.
+    <markus_wanner> Something very strange is going on here. No matter how hard
+      I try, I cannot reproduce this with netcat, anymore.
+    <pinotree> not even after a reboot?
+    <markus_wanner> Woo.. here, it happened, again! This is driving me crazy!
+    <markus_wanner> Now, nc seemingly connects, but is unable to send data
+      between the two. Netcat would somehow complain, if it failed to connect,
+      no?
+    <markus_wanner> No it worked.
+    <markus_wanner> So this seems to be an intermittent issue. So far, I could
+      only ever repro it as a normal user, not as root. May be coincidental,
+      though.
+    <markus_wanner> Now, 'a' and 'b' made it through, but not the 'c' sent
+      manually just after that. Something with that TCP/IP stack is definitely
+      fishy.
+    <markus_wanner> Anything I can try to investigate? Or shall I simply
+      restart and see if the problem persists?
+    <youpi> maybe restart, yes
+    <youpi> did you restart since the upgrade ?
+    <markus_wanner> Yes, I restarted after that.
+    <markus_wanner> Hm.. okay, restarted. Some problem persists.
+    <markus_wanner> I currently have two netcat processes connected, the
+      listening one got some first two messages and seems stuck now.
+    <markus_wanner> With the client, I tried to send more data, but the server
+      doesn't get it, anymore.
+    <markus_wanner> Any idea on what I can do to analyze the situation?
+    <youpi> for the netcat issue, I haven't experienced this
+    <youpi> are you running in kvm or virtualbox or something else?
+    <markus_wanner> I'm currently puzzled about what "experimental" actually
+      ships.
+    <markus_wanner> On kvm.
+    <markus_wanner> My libc0.3 used to be 2.13-39+hurd.3.
+    <markus_wanner> But packages.d.o already shows 2.17.0experimental2.
+    <youpi> experimental ships experimental versions, which you aren't supposed
+      to use
+    <youpi> unless you know what you are doing
+    <youpi> iirc 2.17 is known to be quite broken for now
+    <markus_wanner> Okay. So I guess I'll try to "downgrade" to unstable, then.
+    <markus_wanner> Phew, okay, successfully downgraded to unstable.
+    <markus_wanner> Hopefully monotone's test suite runs through fine, now.
+    <markus_wanner> Yup, WORKING! Looks like some experimental packages caused
+      the problem. The netcat test as well as that one failing monotone test
+      work fine, now.
+
+
+## IRC, OFTC, #debian-hurd, 2013-03-19
+
+    <tschwinge> pinotree, youpi: Is there anything from that markus_wanner
+      discussion about pfinet/netcat/signals that needs to be filed?  I guess
+      we don't know what exactly he changed so that everything workedd fine
+      eventually?  (Some experimental package(s), but which?)
+    <youpi> that was libc0.3 packages
+    <youpi> which are indeed known to break the network
+
+
+# IRC, freenode, #hurd, 2013-06-18
+
+    <braunr> root@darnassus:~# dpkg-reconfigure locales
+    <braunr> Generating locales (this might take a
+      while)... en_US.UTF-8...Segmentation fault
+    <braunr> is it known ?
+    <youpi> uh, no
+
+
+## IRC, OFTC, #debian-hurd, 2013-06-19
+
+    <pinotree> btw i saw too the segmentation fault when generating locales
+
+
+## IRC, freenode, #hurd, 2014-02-04
+
+    <bu^> hello
+    <bu^> I just updated
+    <bu^> Setting up locales (2.17-98~0) ...
+    <bu^> Generating locales (this might take a while)...
+    <bu^>   en_US.UTF-8...Segmentation fault
+    <bu^>  done
+    <gnu_srs> bu^: That's known, it still seems to work, though. If you have
+      the time please debug. I've tried but not found the solution yet:-(
+    <bu^> ok, just wanted to notify
+
+
+## IRC, freenode, #hurd, 2014-02-19
+
+    <braunr> for info, the localedef segfault has been fixed upstream
+    <braunr> or rather, upstream has been written in a way that won't trigger
+      the segfault
+    <braunr> it is caused by the locale archive code that maps the locale
+      archive file in the address space, enlarging the mapping as needed, but
+      unmaps the complete reserved size of 512M on close
+    <braunr> munmap is implemented through vm_deallocate, but it looks like the
+      latter doesn't allow deallocating unmapped regions of the address space
+    <braunr> (to be confirmed)
+    <braunr> upstream code tracks the mapping size so vm_deallocate won't whine
+    <braunr> i expect we'll have that in eglibc 2.18
+    <braunr> hm actually, posix says munmap must refer to memory obtained with
+      mmap :)
+    <braunr> (or actually, that the behaviour is undefined, which most unix
+      systems allow anyway, but not us)
+
+    <braunr> also, before i leave, i have partially traced the localedef
+      segfault
+    <youpi> ah, cool
+    <braunr> localedef maps the locale archive, and enlarges the mapping as
+      needed
+    <braunr> but munmaps the complete 512m reserved area
+    <braunr> and i strongly suspect it unmaps something it shouldn't on the
+      hurd
+    <braunr> since linux mmap has different boundaries depending on the mapping
+      use
+    <braunr> while our glibc will happily maps stacks below text
+    <braunr> the good news is that it looks fixed upstream
+    <youpi> ah :)
+    <braunr>
+      https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=17db6e8d6b12f55e312fcab46faf5d332c806fb6
+    <braunr> see the change about close_archive
+    <braunr> i haven't tested it though
+
+
+## IRC, freenode, #hurd, 2014-02-21
+
+    <gg0> just upgraded to 2.18, locales still segfaults
+    <braunr> ok
+
+
+## IRC, freenode, #hurd, 2014-02-23
+
+    <braunr> ok, as expected, the localdef bug is because of some mmap issue
+
+[[glibc/mmap]].
+
+    <braunr> looks like our mmap doesn't like mapping files with PROT_NONE
+    <braunr> shouldn't be too hard to fix
+    <braunr> gg0: i should have a fix ready soon for localedef
+
+    <braunr> youpi: i have a patch for glibc about the localedef segfault
+    <youpi> is that the backport we talked about, or something else?
+    <braunr> something else
+    <braunr> in short
+    <braunr> mmap() PROT_NONE on files return 0
+    <youpi> ok
+    <youpi> seems like fixable indeed
+    <braunr> nothing is mapped, and the localdef code doesn't consider this an
+      error
+    <braunr> my current fix is to handle PROT_NONE like PROT_READ
+    <youpi> doesn't vm_protect allow to map something without giving read
+      right?
+    <braunr> it probably does
+    <braunr> the problem is in glibc
+    <youpi> ok
+    <braunr> when i say like PROT_READ, i mean a memory object gets a reference
+    <braunr> on the read port returned by io_map
+    <braunr> since it's not accessible anyway, it shouldn't make a difference
+    <braunr> but i preferred to have the memory object referenced anyway to
+      match what i expect is done by other systems
+
+
+## IRC, freenode, #hurd, 2014-02-24
+
+    <youpi> braunr: ah ok
+
+    <braunr> ok that mmap fix looks fine, i'll add comments and commit it soon
+
+
+## IRC, freenode, #hurd, 2014-03-03
+
+    <youpi> braunr: did you test whether
+      https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=17db6e8d6b12f55e312fcab46faf5d332c806fb6
+      does indeed fix locale generation?
+    <braunr> youpi: it doesn't, which is why i applied
+      https://git.sceen.net/hurd/glibc.git/commit/?id=da2d6e677ade278bf34afaa35c6ed4ff2489e7d8
+
+
+# IRC, OFTC, #debian-hurd, 2013-06-20
+
+    <youpi> damn
+    <youpi> hang at ext2fs boot
+    <youpi> static linking issue, clearly
+
+
+## IRC, freenode, #hurd, 2013-06-30
+
+    <youpi> Mmm
+    <youpi>  __access ("/etc/ld.so.nohwcap", F_OK) at startup of ext2fs
+    <youpi> deemed to fail....
+    <pinotree> when does that happen?
+    <youpi> at hwcap initialization
+    <youpi> at least that's were ext2fs.static linked against libc 2.17 hangs
+      at startup
+    <youpi> and this is indeed a very good culprit :)
+    <pinotree> ah, a debian patch
+    <youpi> does anybody know a quick way to know whether one is the / ext2fs ?
+      :)
+    <pinotree> isn't the root fs given a special port?
+    <youpi> I was thinking about something like this, yes
+    <youpi> ok, boots
+    <youpi> I'll build a 8~0 that includes the fix
+    <youpi> so people can easily build the hurd package
+    <youpi> Mmm, no, the bootstrap port is also NULL for normally-started
+      processes :/
+    <youpi> I don't understand why
+    <youpi> ah, only translators get a bootstrap port :/
+    <youpi> perhaps CRDIR then
+    <youpi> (which makes a lot of sense)
+
+
+## IRC, freenode, #hurd, 2013-07-01
+
+    <braunr> youpi: what is local-no-bootstrap-fs-access.diff supposed to fix ?
+    <youpi> ext2fs.static linked againt debian glibc 2.17
+    <youpi> well, as long as you don't build & use ext2fs.static with it...
+    <braunr> that's thing, i want to :)
+    <braunr> +the
+    <youpi> I'd warmly welcome a way to detect whether being the / translator
+      process btw
+    <youpi> it seems far from trivial
+
+
+# glibc 2.18 vs. GCC 4.8
+
+## IRC, freenode, #hurd, 2013-11-25
+
+    <youpi> grmbl, installing a glibc 2.18 rebuilt with gcc-4.8 brings an
+      unbootable system
+
+
+## IRC, freenode, #hurd, 2013-11-29
+
+    <teythoon> so, what do I do? rebuild the glibc 2.18 package with gcc4.8 and
+      see what breaks ?
+    <teythoon> when I boot a system with that libc that is ?
+    <teythoon> I wish youpi would have been more specific, I've never built the
+      libc before...
+    <braunr> debian/rules build in the debian package
+    <braunr> ctrl-c when you see gcc invocations
+    <braunr> cd buildir; make lib others
+    <braunr> although hm
+    <braunr> what breaks is at boot time right ?
+    <teythoon> yes
+    <braunr> heh ..
+    <braunr> then dpkg-buildpackage
+    <braunr> DEB_BUILD_OPTIONS=nocheck speeds things up
+    <braunr> just answer on the mailing list and ask him
+    <braunr> he usually answers quickly
+
+
+## IRC, freenode, #hurd, 2013-12-18
+
+    <gnu_srs> teythoon: k!, any luck with eglibc-2.18?
+    <teythoon> tbh i didn't look into this after two unsuccessful attempts at
+      building the libc package
+    <teythoon> there was a post over at the libc-alpha list that sounded
+      familiar
+    <teythoon> http://www.cygwin.com/ml/libc-alpha/2013-12/msg00281.html
+    <braunr> wow
+    <teythoon> ?
+    <braunr> this looks tricky
+    <braunr> and why ia64 only
+    <teythoon> indeed
+    <braunr> it's rare to see aurel32 ask such questions
+
+
+## IRC, freenode, #hurd, 2014-01-22
+
+    <youpi> btw, did anybody investigate the glibc-built-with-gcc-4.8 issue?
+    <youpi> oddly enough, a subhurd boots completely fine with it
+    <braunr> i didn't
+    <teythoon> no, sorry
+    <youpi> I was wondering whether the bogus deallocation at boot might have
+      something to do
+    <braunr> which one ?
+    <braunr> ah
+    <braunr> yes
+    <braunr> maybe
+    <youpi> quoted earlier here

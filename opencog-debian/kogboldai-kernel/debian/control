@@ -1,0 +1,45 @@
+Source: kogboldai-kernel
+Section: libs
+Priority: optional
+Maintainer: AGI-OS Team <agi-os@opencog.org>
+Build-Depends: debhelper (>= 11),
+               build-essential,
+               cmake (>= 3.15),
+               libcogutil-dev,
+               opencog-atomspace,
+               python3-dev,
+               patchelf
+Standards-Version: 4.6.2
+Homepage: https://github.com/cogpy/KogboldAI
+Vcs-Git: https://github.com/cogpy/KogboldAI.git
+Vcs-Browser: https://github.com/cogpy/KogboldAI/tree/united/kernel
+
+Package: libkogboldai-kernel
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: KogboldAI Kernel - High-performance narrative generation library
+ The KogboldAI Kernel provides optimized C/C++ implementations of AI-assisted
+ writing and storytelling primitives using GGML and llama.cpp backends.
+ .
+ This package contains the shared library.
+
+Package: libkogboldai-kernel-dev
+Architecture: any
+Depends: libkogboldai-kernel (= ${binary:Version}), ${misc:Depends}
+Description: KogboldAI Kernel development files
+ The KogboldAI Kernel provides optimized C/C++ implementations of AI-assisted
+ writing and storytelling primitives using GGML and llama.cpp backends.
+ .
+ This package contains the header files and development libraries.
+
+Package: python3-kogboldai-kernel
+Architecture: any
+Depends: libkogboldai-kernel (= ${binary:Version}),
+         python3,
+         ${python3:Depends},
+         ${misc:Depends}
+Description: Python 3 bindings for KogboldAI Kernel
+ The KogboldAI Kernel provides optimized C/C++ implementations of AI-assisted
+ writing and storytelling primitives using GGML and llama.cpp backends.
+ .
+ This package contains the Python 3 FFI bindings.

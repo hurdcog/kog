@@ -1,0 +1,159 @@
+================================================================================
+Windows Compatibility Issues Report (Code Only)
+================================================================================
+
+Summary:
+  Files with issues: 13
+  POSIX headers: 9
+  Alternative operators: 53
+  Total issues: 62
+
+================================================================================
+
+File: opencog/cogserver/modules/commands/BuiltinRequestsModule.cc
+--------------------------------------------------------------------------------
+  POSIX Headers (1):
+    Line 29: unistd.h
+      → io.h, process.h
+
+
+File: opencog/cogserver/modules/python/PythonModule.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (1):
+    'not' → '!' (1 occurrences)
+      Line 81: logger().info("[PythonModule] Initialising Python CogServer 
+
+
+File: opencog/cogserver/server/CogServer.cc
+--------------------------------------------------------------------------------
+  POSIX Headers (2):
+    Line 20: unistd.h
+      → io.h, process.h
+    Line 22: sys/time.h
+      → winsock2.h
+
+
+File: opencog/cogserver/server/CogServerMain.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (2):
+    'not' → '!' (1 occurrences)
+      Line 133: // unknown option (|| help)
+    'or' → '||' (1 occurrences)
+      Line 133: // unknown option (|| help)
+
+
+File: opencog/cogserver/server/ModuleManager.cc
+--------------------------------------------------------------------------------
+  POSIX Headers (2):
+    Line 22: dlfcn.h
+      → Windows.h (LoadLibrary)
+    Line 24: unistd.h
+      → io.h, process.h
+
+  Alternative Operators (1):
+    'not' → '!' (1 occurrences)
+      Line 365: "libscheme-shell.so, "
+
+
+File: opencog/cogserver/server/RequestManager.cc
+--------------------------------------------------------------------------------
+  POSIX Headers (2):
+    Line 24: unistd.h
+      → io.h, process.h
+    Line 26: sys/time.h
+      → winsock2.h
+
+
+File: opencog/cogserver/server/ServerConsole.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (4):
+    'or' → '||' (4 occurrences)
+      Line 94: unsigned char c = line[i];
+      Line 164: 
+      Line 178: unsigned char ok[] = {'\n', 0};
+      Line 179: Send((const char *) ok);
+
+
+File: opencog/cogserver/shell/JsonShellModule.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (1):
+    'or' → '||' (1 occurrences)
+      Line 50: _cogserver.unregisterRequest(shelloutRequest::info().id);
+
+
+File: opencog/cogserver/shell/SexprShellModule.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (1):
+    'or' → '||' (1 occurrences)
+      Line 54: 
+
+
+File: opencog/network/GenericShell.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (17):
+    'and' → '&&' (4 occurrences)
+      Line 111: show_output = !hush;
+      Line 415: return;
+      Line 680: _pending_output += s;
+      Line 693: // If there's pending output, return that.
+    'not' → '!' (9 occurrences)
+      Line 167: //    expression is an infinite loop (or simply is taking to
+      Line 178: // The above requirements force us to create ! just one, but
+      Line 203: // Queue up the expr, where it will be evaluated in another 
+      Line 458: evalque.push(expr + "\n");
+      Line 522: {
+      ... and 4 more
+    'or' → '||' (4 occurrences)
+      Line 277: //
+      Line 291: while (m <= i)
+      Line 292: {
+      Line 415: return;
+
+
+File: opencog/network/NetworkServer.cc
+--------------------------------------------------------------------------------
+  POSIX Headers (2):
+    Line 21: sys/socket.h
+      → winsock2.h
+    Line 23: sys/time.h
+      → winsock2.h
+
+  Alternative Operators (2):
+    'not' → '!' (2 occurrences)
+      Line 53: 
+      Line 91: // thread exits).  That is why there is no delete of the *ss
+
+
+File: opencog/network/ServerSocket.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (17):
+    'and' → '&&' (6 occurrences)
+      Line 82: rc += ss->connection_header() + "\n";
+      Line 235: // The only problem here is that we don't have CAP_SYS_RESOU
+      Line 321: if (0 == cmdsize) return;
+      Line 538: else
+      Line 542: // talk to us, sending us binary garbage of some kind.
+      ... and 1 more
+    'not' → '!' (11 occurrences)
+      Line 293: Exit();
+      Line 323: // Avoid lonely newlines. The various shells return these fo
+      Line 422: //
+      Line 520: {
+      Line 529: asio::streambuf b;
+      ... and 6 more
+
+
+File: opencog/network/WebSocket.cc
+--------------------------------------------------------------------------------
+  Alternative Operators (7):
+    'and' → '&&' (1 occurrences)
+      Line 252: return;
+    'not' → '!' (5 occurrences)
+      Line 108: }
+      Line 228: /// socket, with keep-alive set. In either case, the remaini
+      Line 252: return;
+      Line 258: {
+      Line 297: //     closed at any time with `throw SilentException()` to
+    'or' → '||' (1 occurrences)
+      Line 33: 
+

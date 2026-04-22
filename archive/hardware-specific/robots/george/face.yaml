@@ -1,0 +1,24 @@
+Jaw:
+  motor_id: 0
+  init: 1424
+  min: 1056
+  max: 1425
+  labelleft: "Jaw"
+EyeBrow:
+  motor_id: 1
+  init: 1656
+  min: 1053
+  max: 1657
+  labelleft: "EyeBrows"
+Smile_L:
+  motor_id: 2
+  init: 1123
+  min: 704
+  max: 1660
+  labelleft: "Smile_L"
+Smile_R:
+  motor_id: 3
+  init: 1422
+  min: 962
+  max: 2250
+  labelleft: "Smile_R"

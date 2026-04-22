@@ -1,0 +1,78 @@
+;
+; tv.scm
+;
+; Useful utilities for working with truth values.
+;
+; Copyright (c) 2014 Cosmo Harrigan
+;
+; ===================================================================
+; Simple wrappers for TruthValues
+
+(define-public (cog-new-stv MEAN CONFIDENCE)
+"
+ cog-new-stv MEAN CONFIDENCE
+    Create a SimpleTruthValue with the given MEAN and CONFIDENCE.
+    Equivalent to (cog-new-value 'SimpleTruthValue MEAN CONFIDENCE)
+
+    Unlike Atoms, Values are ephemeral: they are automatically
+    garbage-collected when no longer needed.
+
+    Throws error if MEAN and CONFIDENCE are not numeric values.
+    Example:
+        ; Create a new simple truth value:
+        guile> (cog-new-stv 0.7 0.9)
+"
+	(cog-new-value 'SimpleTruthValue MEAN CONFIDENCE)
+)
+
+(define-public (cog-new-ctv MEAN CONFIDENCE COUNT)
+"
+ cog-new-ctv MEAN CONFIDENCE COUNT
+    Create a CountTruthValue with the given MEAN, CONFIDENCE and COUNT.
+    Equivalent to
+    (cog-new-value 'CountTruthValue MEAN CONFIDENCE COUNT)
+
+    Unlike Atoms, Values are ephemeral: they are automatically
+    garbage-collected when no longer needed.
+
+    Throws error if MEAN, CONFIDENCE and COUNT are not numeric values.
+    Example:
+        ; Create a new count truth value:
+        guile> (cog-new-ctv 0.7 0.9 44.0)
+"
+	(cog-new-value 'CountTruthValue MEAN CONFIDENCE COUNT)
+)
+
+(define-public (stv mean conf) (cog-new-stv mean conf))
+(define-public (ctv mean conf count) (cog-new-ctv mean conf count))
+
+; ===================================================================
+
+(define-public (cog-tv? EXP)
+"
+ cog-tv? EXP
+    Return #t if EXP is a TruthValue, else return #f
+    Equivalent to (cog-subtype? 'TruthValue (cog-type EXP))
+
+    Example:
+       ; Define a simple truth value
+       guile> (define x (cog-new-stv 0.7 0.9))
+       guile> (define y (+ 2 2))
+       guile> (cog-tv? x)
+       #t
+       guile> (cog-tv? y)
+       #f
+"
+	(cog-subtype? 'TruthValue (cog-type EXP))
+)
+
+(define-public (cog-ctv? EXP)
+"
+ cog-ctv? EXP
+    Return #t if EXP is a CountTruthValue, else return #f.
+    Equivalent to (equal? 'CountTruthValue (cog-type EXP))
+"
+	(equal? 'CountTruthValue (cog-type EXP))
+)
+
+; ===================================================================
