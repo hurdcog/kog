@@ -49,10 +49,12 @@ int atomsettv(ulong id, float strength, float confidence);
 int atomgettv(ulong id, float *strength, float *confidence);
 int atommergetv(ulong id, float strength, float confidence);
 
-/* Attention value operations */
-int atomsetav(ulong id, short sti, short lti, short vlti);
-int atomgetav(ulong id, short *sti, short *lti, short *vlti);
+/* Attention spreading and decay */
 int atomstimulate(ulong id, short amount);
+int atomspreadattn(ulong id, float factor);
+int atomdecayattn(float rate);
+int atomgetsti(ulong id);
+int atomtvpropagate(ulong id, int depth);
 
 /* Link operations */
 ulong linkcreate(ushort type, ulong *targets, uint ntargets);
